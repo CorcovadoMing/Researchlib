@@ -3,26 +3,69 @@ from .test import *
 from ..io import *
 from ..callbacks import *
 from ..utils import *
+import torch
+import torch.nn.functional as F
+from torch.optim import *
+from tqdm.auto import tqdm
 
 class Runner:
-    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None):
+    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None):
+        self.is_cuda = torch.cuda.is_available()
+        self.require_long_ = False
         self.train_loader = train_loader
         self.test_loader = test_loader
-        self.optimizer = optimizer
-        self.model = model
-    
-    def set_optim_lr(self, lr):
+        # Check if cuda available (could be overwrite)
+        if self.is_cuda:
+            self.model = model.cuda()
+        else:
+            self.model = model
+        # Assign loss function
+        if loss_fn == 'nll':
+            self.loss_fn = F.nll_loss
+            self.require_long_ = True
+        elif loss_fn == 'mse':
+            self.loss_fn = F.mse_loss
+        elif loss_fn == 'mae':
+            self.loss_fn = F.l1_loss
+        else:
+            self.loss_fn = loss_fn
+        # Assign optimizer
+        if optimizer == 'adam':
+            self.optimizer = Adam(model.parameters())
+        elif optimizer == 'sgd':
+            self.optimizer = SGD(model.parameters(), lr=1e-3)
+        elif optimizer == 'rmsprop':
+            self.optimizer = RMSprop(model.parameters())
+        else:
+            self.optimizer = optimizer
+
+
+    def set_lr(self, lr):
         for g in self.optimizer.param_groups:
             g['lr'] = lr
 
     def fit(self, epochs, lr=0.001, callbacks=[]):
-        self.set_optim_lr(lr)
-        for epoch in range(1, epochs + 1):
-            train(self.model, self.train_loader, self.optimizer, epoch, callbacks)
-            test(self.model, self.test_loader)
+        self.set_lr(lr)
+        for epoch in tqdm(range(1, epochs + 1)):
+            for callback_func in callbacks:
+                callback_func.on_epoch_begin(model=self.model, 
+                                            train_loader=self.train_loader, 
+                                            optimizer=self.optimizer,
+                                            epoch=epoch)
+            
+            train(self.model, self.train_loader, self.optimizer, self.loss_fn, epoch, self.is_cuda, self.require_long_, callbacks)
+            
+            for callback_func in callbacks:
+                callback_func.on_epoch_end(model=self.model, 
+                                            train_loader=self.train_loader, 
+                                            optimizer=self.optimizer,
+                                            epoch=epoch)
+            
+            if self.test_loader:
+                test(self.model, self.test_loader, self.loss_fn, self.is_cuda, self.require_long_)
     
     def val(self):
-        test(self.model, self.test_loader)
+        test(self.model, self.test_loader, self.loss_fn, self.is_cuda, self.require_long_)
     
     def save(self, path):
         save_model(self.model, path)
@@ -32,7 +75,9 @@ class Runner:
 
     def find_lr(self, plot=False):
         save_model(self.model, 'tmp.h5')
-        loss = train(self.model, self.train_loader, self.optimizer, epoch=1, callbacks=[LRRangeTest(len(self.train_loader))])
+        loss = train(self.model, self.train_loader, self.optimizer, epoch=1, 
+                        loss_fn=self.loss_fn, is_cuda=self.is_cuda, require_long_=self.require_long_, 
+                        callbacks=[LRRangeTest(len(self.train_loader))])
         load_model(self.model, 'tmp.h5')
         
         step = (10 / 1e-5) ** (1 / len(self.train_loader))

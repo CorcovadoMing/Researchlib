@@ -6,10 +6,9 @@ class TimeDistributed(nn.Module):
         super().__init__()
         self.f = f
 
-    def forward(self, x): 
-        print(x.shape)
+    def forward(self, x, time_dim=1): 
         out = []
-        for i in range(x.shape[1]):
-            out.append(self.f(x[:, i, :, :, :]))
-        out = torch.stack(out, dim=1)
+        for i in range(x.shape[time_dim]):
+            out.append(self.f(x[:, i]))
+        out = torch.stack(out, dim=time_dim)
         return out

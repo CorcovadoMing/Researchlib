@@ -1,15 +1,18 @@
 from ..callbacks import *
-import torch.nn.functional as F
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
-def train(model, train_loader, optimizer, epoch, callbacks=[]):
-    return train_minibatch(model, train_loader, optimizer, epoch, callbacks)
+def train(model, train_loader, optimizer, loss_fn, epoch, is_cuda, require_long_, callbacks=[]):
+    return train_minibatch(model, train_loader, optimizer, loss_fn, epoch, is_cuda, require_long_, callbacks)
 
-def train_minibatch(model, train_loader, optimizer, epoch, callbacks):
+def train_minibatch(model, train_loader, optimizer, loss_fn, epoch, is_cuda, require_long_, callbacks):
     model.train()
     loss_history = []
     for batch_idx, (data, target) in enumerate(tqdm(train_loader)):
-        data, target = data.cuda(), target.cuda()
+        if require_long_:
+            target = target.long()
+        if is_cuda:
+            data, target = data.cuda(), target.cuda()
+        
         optimizer.zero_grad()
 
         for callback_func in callbacks:
@@ -22,7 +25,8 @@ def train_minibatch(model, train_loader, optimizer, epoch, callbacks):
                                             target=target)
 
         output = model(data)
-        loss = F.nll_loss(output, target)
+
+        loss = loss_fn(output.view(-1, output.shape[-1]), target.view(-1,))
         loss.backward()
         optimizer.step()
         loss_history.append(loss.item())
