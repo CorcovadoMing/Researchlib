@@ -14,11 +14,15 @@ class Runner:
         self.require_long_ = False
         self.train_loader = train_loader
         self.test_loader = test_loader
+        self.keep_shape_ = False
+        self.require_data_ = False
+        
         # Check if cuda available (could be overwrite)
         if self.is_cuda:
             self.model = model.cuda()
         else:
             self.model = model
+            
         # Assign loss function
         if loss_fn == 'nll':
             self.loss_fn = F.nll_loss
@@ -29,6 +33,12 @@ class Runner:
             self.loss_fn = F.l1_loss
         else:
             self.loss_fn = loss_fn
+            self.keep_shape_ = True
+            try:
+                self.require_data_ = loss_fn.require_data
+            except:
+                pass
+            
         # Assign optimizer
         if optimizer == 'adam':
             self.optimizer = Adam(model.parameters())
@@ -53,7 +63,16 @@ class Runner:
                                             optimizer=self.optimizer,
                                             epoch=epoch)
             
-            train(self.model, self.train_loader, self.optimizer, self.loss_fn, epoch, self.is_cuda, self.require_long_, callbacks)
+            train(self.model, 
+                    self.train_loader, 
+                    self.optimizer, 
+                    self.loss_fn, 
+                    epoch, 
+                    self.is_cuda, 
+                    self.require_long_, 
+                    self.keep_shape_,
+                    self.require_data_,
+                    callbacks)
             
             for callback_func in callbacks:
                 callback_func.on_epoch_end(model=self.model, 
@@ -62,10 +81,10 @@ class Runner:
                                             epoch=epoch)
             
             if self.test_loader:
-                test(self.model, self.test_loader, self.loss_fn, self.is_cuda, self.require_long_)
+                test(self.model, self.test_loader, self.loss_fn, self.is_cuda, self.require_long_, self.require_data_, self.keep_shape_)
     
     def val(self):
-        test(self.model, self.test_loader, self.loss_fn, self.is_cuda, self.require_long_)
+        test(self.model, self.test_loader, self.loss_fn, self.is_cuda, self.require_long_, self.require_data_, self.keep_shape_)
     
     def save(self, path):
         save_model(self.model, path)
@@ -75,21 +94,26 @@ class Runner:
 
     def find_lr(self, plot=False):
         save_model(self.model, 'tmp.h5')
-        loss = train(self.model, self.train_loader, self.optimizer, epoch=1, 
-                        loss_fn=self.loss_fn, is_cuda=self.is_cuda, require_long_=self.require_long_, 
-                        callbacks=[LRRangeTest(len(self.train_loader))])
+        loss = train(self.model, 
+                    self.train_loader, 
+                    self.optimizer, 
+                    self.loss_fn, 
+                    1, 
+                    self.is_cuda, 
+                    self.require_long_, 
+                    self.keep_shape_,
+                    self.require_data_,
+                    callbacks=[LRRangeTest(len(self.train_loader))])
         load_model(self.model, 'tmp.h5')
         
         step = (10 / 1e-5) ** (1 / len(self.train_loader))
         
         self.loss_history = []
         self.lr_history = []
-        best = 1e9
-        for i, j in enumerate(loss):
-            if j > best*5:
+        start_loss = loss[0]*1.1
+        for i, j in enumerate(loss):    
+            if j > start_loss:
                 break
-            if j < best:
-                best = j
             self.loss_history.append(j)
             self.lr_history.append(1e-5 * (step ** i))
         
