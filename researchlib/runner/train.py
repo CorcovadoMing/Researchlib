@@ -4,7 +4,8 @@ from tqdm.auto import tqdm
 def train(**kwargs):
     kwargs['model'].train()
     loss_history = []
-    for batch_idx, (data, target) in enumerate(tqdm(kwargs['train_loader'])):
+    bar = tqdm(kwargs['train_loader'])
+    for batch_idx, (data, target) in enumerate(bar):
         kwargs['batch_idx'] = batch_idx
         
         if kwargs['require_long']:
@@ -17,6 +18,7 @@ def train(**kwargs):
 
         loss_ = train_minibatch(**kwargs)
         loss_history.append(loss_)
+        bar.set_postfix(loss="{:.4f}".format(loss_), refresh=False)
         
         for callback_func in kwargs['callbacks']:
             callback_func.on_iteration_end(**kwargs)
