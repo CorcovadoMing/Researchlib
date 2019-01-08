@@ -116,30 +116,27 @@ class Runner:
 
     def find_lr(self, plot=False):
         save_model(self.model, 'tmp.h5')
-        
-        loss = self.trainer(model=self.model, 
-                            train_loader=self.train_loader, 
-                            optimizer=self.optimizer, 
-                            loss_fn=self.loss_fn, 
-                            epoch=1, 
-                            is_cuda=self.is_cuda, 
-                            require_long=self.require_long_, 
-                            keep_shape=self.keep_shape_,
-                            require_data=self.require_data_,
-                            callbacks=[LRRangeTest(len(self.train_loader))])
-                            
-        load_model(self.model, 'tmp.h5')
-        
-        step = (10 / 1e-5) ** (1 / len(self.train_loader))
-        
-        self.loss_history = []
-        self.lr_history = []
-        start_loss = loss[0] * 3
-        for i, j in enumerate(loss):    
-            if j > start_loss:
-                break
-            self.loss_history.append(j)
-            self.lr_history.append(1e-5 * (step ** i))
-        
-        if plot:
-            plot_utils(self.loss_history, self.lr_history)
+        try:
+            loss = self.trainer(model=self.model, 
+                                train_loader=self.train_loader, 
+                                optimizer=self.optimizer, 
+                                loss_fn=self.loss_fn, 
+                                epoch=1, 
+                                is_cuda=self.is_cuda, 
+                                require_long=self.require_long_, 
+                                keep_shape=self.keep_shape_,
+                                require_data=self.require_data_,
+                                callbacks=[LRRangeTest(len(self.train_loader), cutoff_ratio=3)])
+            
+            step = (10 / 1e-5) ** (1 / len(self.train_loader))
+            self.loss_history = []
+            self.lr_history = []
+            for i, j in enumerate(loss):    
+                self.loss_history.append(j)
+                self.lr_history.append(1e-5 * (step ** i))
+            if plot:
+                plot_utils(self.loss_history, self.lr_history)
+        except:
+            pass
+        finally:
+            load_model(self.model, 'tmp.h5')

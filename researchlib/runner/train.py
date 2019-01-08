@@ -1,7 +1,13 @@
 from ..callbacks import *
 from tqdm.auto import tqdm
 
+class Check:
+    def __init__(self):
+        pass
+
 def train(**kwargs):
+    kwargs['check'] = Check()
+    kwargs['check'].cutoff = False
     kwargs['model'].train()
     loss_history = []
     bar = tqdm(kwargs['train_loader'])
@@ -16,16 +22,20 @@ def train(**kwargs):
         for callback_func in kwargs['callbacks']:
             callback_func.on_iteration_begin(**kwargs)
 
-        loss_ = train_minibatch(**kwargs)
+        loss_ = train_minibatch_(**kwargs)
         loss_history.append(loss_)
+        kwargs['cur_loss'] = loss_
         bar.set_postfix(loss="{:.4f}".format(loss_), refresh=False)
         
         for callback_func in kwargs['callbacks']:
             callback_func.on_iteration_end(**kwargs)
+        
+        if kwargs['check'].cutoff:
+            break
     
     return loss_history
 
-def train_minibatch(**kwargs):
+def train_minibatch_(**kwargs):
     kwargs['optimizer'].zero_grad()
     output = kwargs['model'](kwargs['data'])
 
