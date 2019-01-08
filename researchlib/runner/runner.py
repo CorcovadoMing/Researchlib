@@ -16,10 +16,20 @@ class Runner:
         self.test_loader = test_loader
         self.keep_shape_ = False
         self.require_data_ = False
+        self.multi_model = False
+        
+        self.trainer = train
+        self.tester = test
+        
+        if type(model) == type([]):
+            self.multi_model = True
         
         # Check if cuda available (could be overwrite)
         if self.is_cuda:
-            self.model = model.cuda()
+            if self.multi_model:
+                self.model = [i.cuda for i in model]
+            else:
+                self.model = model.cuda()
         else:
             self.model = model
             
@@ -63,16 +73,16 @@ class Runner:
                                             optimizer=self.optimizer,
                                             epoch=epoch)
             
-            train(self.model, 
-                    self.train_loader, 
-                    self.optimizer, 
-                    self.loss_fn, 
-                    epoch, 
-                    self.is_cuda, 
-                    self.require_long_, 
-                    self.keep_shape_,
-                    self.require_data_,
-                    callbacks)
+            self.trainer(model=self.model, 
+                        train_loader=self.train_loader, 
+                        optimizer=self.optimizer, 
+                        loss_fn=self.loss_fn, 
+                        epoch=epoch, 
+                        is_cuda=self.is_cuda, 
+                        require_long=self.require_long_, 
+                        keep_shape=self.keep_shape_,
+                        require_data=self.require_data_,
+                        callbacks=callbacks)
             
             for callback_func in callbacks:
                 callback_func.on_epoch_end(model=self.model, 
@@ -81,10 +91,22 @@ class Runner:
                                             epoch=epoch)
             
             if self.test_loader:
-                test(self.model, self.test_loader, self.loss_fn, self.is_cuda, self.require_long_, self.require_data_, self.keep_shape_)
+                self.tester(model=self.model, 
+                            test_loader=self.test_loader, 
+                            loss_fn=self.loss_fn, 
+                            is_cuda=self.is_cuda, 
+                            require_long=self.require_long_, 
+                            require_data=self.require_data_, 
+                            keep_shape=self.keep_shape_)
     
-    def val(self):
-        test(self.model, self.test_loader, self.loss_fn, self.is_cuda, self.require_long_, self.require_data_, self.keep_shape_)
+    def validate(self):
+        self.tester(model=self.model, 
+                    test_loader=self.test_loader, 
+                    loss_fn=self.loss_fn, 
+                    is_cuda=self.is_cuda, 
+                    require_long=self.require_long_, 
+                    require_data=self.require_data_, 
+                    keep_shape=self.keep_shape_)
     
     def save(self, path):
         save_model(self.model, path)
@@ -94,23 +116,25 @@ class Runner:
 
     def find_lr(self, plot=False):
         save_model(self.model, 'tmp.h5')
-        loss = train(self.model, 
-                    self.train_loader, 
-                    self.optimizer, 
-                    self.loss_fn, 
-                    1, 
-                    self.is_cuda, 
-                    self.require_long_, 
-                    self.keep_shape_,
-                    self.require_data_,
-                    callbacks=[LRRangeTest(len(self.train_loader))])
+        
+        loss = self.trainer(model=self.model, 
+                            train_loader=self.train_loader, 
+                            optimizer=self.optimizer, 
+                            loss_fn=self.loss_fn, 
+                            epoch=1, 
+                            is_cuda=self.is_cuda, 
+                            require_long=self.require_long_, 
+                            keep_shape=self.keep_shape_,
+                            require_data=self.require_data_,
+                            callbacks=[LRRangeTest(len(self.train_loader))])
+                            
         load_model(self.model, 'tmp.h5')
         
         step = (10 / 1e-5) ** (1 / len(self.train_loader))
         
         self.loss_history = []
         self.lr_history = []
-        start_loss = loss[0]*1.1
+        start_loss = loss[0] * 3
         for i, j in enumerate(loss):    
             if j > start_loss:
                 break

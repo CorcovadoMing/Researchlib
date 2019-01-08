@@ -1,51 +1,43 @@
 from ..callbacks import *
 from tqdm.auto import tqdm
 
-def train(model, train_loader, optimizer, loss_fn, epoch, is_cuda, require_long_, keep_shape_, require_data_, callbacks=[]):
-    return train_minibatch(model, train_loader, optimizer, loss_fn, epoch, is_cuda, require_long_, keep_shape_, require_data_, callbacks)
-
-def train_minibatch(model, train_loader, optimizer, loss_fn, epoch, is_cuda, require_long_, keep_shape_, require_data_, callbacks):
-    model.train()
+def train(**kwargs):
+    kwargs['model'].train()
     loss_history = []
-    for batch_idx, (data, target) in enumerate(tqdm(train_loader)):
-        if require_long_:
+    for batch_idx, (data, target) in enumerate(tqdm(kwargs['train_loader'])):
+        kwargs['batch_idx'] = batch_idx
+        
+        if kwargs['require_long']:
             target = target.long()
-        if is_cuda:
-            data, target = data.cuda(), target.cuda()
+        if kwargs['is_cuda']:
+            kwargs['data'], kwargs['target'] = data.cuda(), target.cuda()
         
-        optimizer.zero_grad()
+        for callback_func in kwargs['callbacks']:
+            callback_func.on_iteration_begin(**kwargs)
 
-        for callback_func in callbacks:
-            callback_func.on_iteration_begin(model=model, 
-                                            train_loader=train_loader, 
-                                            optimizer=optimizer,
-                                            epoch=epoch,
-                                            batch_idx=batch_idx,
-                                            data=data,
-                                            target=target)
-
-        output = model(data)
+        loss_ = train_minibatch(**kwargs)
+        loss_history.append(loss_)
         
-        loss_input = [output, target]
-        if require_data_:
-            loss_input.append(data)
-            
-        if keep_shape_:
-            loss = loss_fn(*loss_input)
-        else:
-            loss = loss_fn(*list(map(lambda x: x.view(-1,), loss_input)))
-            
-        loss.backward()
-        optimizer.step()
-        loss_history.append(loss.item())
-
-        for callback_func in callbacks:
-            callback_func.on_iteration_end(model=model, 
-                                            loss=loss, 
-                                            train_loader=train_loader, 
-                                            optimizer=optimizer,
-                                            epoch=epoch,
-                                            batch_idx=batch_idx,
-                                            data=data,
-                                            target=target)
+        for callback_func in kwargs['callbacks']:
+            callback_func.on_iteration_end(**kwargs)
+    
     return loss_history
+
+def train_minibatch(**kwargs):
+    kwargs['optimizer'].zero_grad()
+    output = kwargs['model'](kwargs['data'])
+
+    loss_input = [output, kwargs['target']]
+    
+    if kwargs['require_data']:
+        loss_input.append(kwargs['data'])
+
+    if not kwargs['keep_shape']:
+        loss_input[0].view(loss_input[0].size(0), -1)
+        loss_input[1].view(-1,)
+    
+    loss = kwargs['loss_fn'](*loss_input)
+
+    loss.backward()
+    kwargs['optimizer'].step()
+    return loss.item()
