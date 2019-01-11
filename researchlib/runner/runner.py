@@ -10,13 +10,19 @@ from tqdm.auto import tqdm
 
 class Runner:
     def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None):
+        '''
+            Multi-model supported
+        '''
         self.is_cuda = torch.cuda.is_available()
         self.require_long_ = False
         self.train_loader = train_loader
         self.test_loader = test_loader
-        self.keep_shape_ = False
+        self.keep_x_shape_ = False
+        self.keep_y_shape_ = False
         self.require_data_ = False
         self.multi_model = False
+        
+        self.default_callbacks = [CyclicalLR(len(train_loader))]
         
         self.trainer = train
         self.tester = test
@@ -39,11 +45,14 @@ class Runner:
             self.require_long_ = True
         elif loss_fn == 'mse':
             self.loss_fn = F.mse_loss
+            self.keep_y_shape_ = True
         elif loss_fn == 'mae':
             self.loss_fn = F.l1_loss
+            self.keep_y_shape_ = True
         else:
             self.loss_fn = loss_fn
-            self.keep_shape_ = True
+            self.keep_x_shape_ = True
+            self.keep_y_shape_ = True
             try:
                 self.require_data_ = loss_fn.require_data
             except:
@@ -51,21 +60,20 @@ class Runner:
             
         # Assign optimizer
         if optimizer == 'adam':
-            self.optimizer = Adam(model.parameters())
+            self.optimizer = Adam(model.parameters(), weight_decay=5e-4)
         elif optimizer == 'sgd':
-            self.optimizer = SGD(model.parameters(), lr=1e-3)
+            self.optimizer = SGD(model.parameters(), lr=1e-3, weight_decay=5e-4)
         elif optimizer == 'rmsprop':
-            self.optimizer = RMSprop(model.parameters())
+            self.optimizer = RMSprop(model.parameters(), weight_decay=5e-4)
         else:
             self.optimizer = optimizer
 
-
-    def set_lr(self, lr):
-        for g in self.optimizer.param_groups:
-            g['lr'] = lr
-
-    def fit(self, epochs, lr=0.001, callbacks=[]):
-        self.set_lr(lr)
+    def fit(self, epochs, lr=1e-3, augmentor=None, callbacks=[]):
+        '''
+            Multi-model supported
+        '''
+        self.default_callbacks[0].base_lr = lr
+        callbacks = self.default_callbacks + callbacks
         for epoch in tqdm(range(1, epochs + 1)):
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(model=self.model, 
@@ -78,9 +86,11 @@ class Runner:
                         optimizer=self.optimizer, 
                         loss_fn=self.loss_fn, 
                         epoch=epoch, 
+                        augmentor=augmentor,
                         is_cuda=self.is_cuda, 
                         require_long=self.require_long_, 
-                        keep_shape=self.keep_shape_,
+                        keep_x_shape=self.keep_x_shape_,
+                        keep_y_shape=self.keep_y_shape_,
                         require_data=self.require_data_,
                         callbacks=callbacks)
             
@@ -97,34 +107,58 @@ class Runner:
                             is_cuda=self.is_cuda, 
                             require_long=self.require_long_, 
                             require_data=self.require_data_, 
-                            keep_shape=self.keep_shape_)
+                            keep_x_shape=self.keep_x_shape_,
+                            keep_y_shape=self.keep_y_shape_)
+
+            for callback_func in callbacks:
+                callback_func.on_validation_end(model=self.model, 
+                                                test_loader=self.test_loader,
+                                                epoch=epoch)
+            
     
     def validate(self):
+        '''
+            Multi-model supported
+        '''
         self.tester(model=self.model, 
                     test_loader=self.test_loader, 
                     loss_fn=self.loss_fn, 
                     is_cuda=self.is_cuda, 
                     require_long=self.require_long_, 
                     require_data=self.require_data_, 
-                    keep_shape=self.keep_shape_)
+                    keep_x_shape=self.keep_x_shape_,
+                    keep_y_shape=self.keep_y_shape_)
     
     def save(self, path):
+        '''
+            Save model to path
+            Multi-model supported
+        '''
         save_model(self.model, path)
     
     def load(self, path):
+        '''
+            Load model from path
+            Multi-model supported
+        '''
         load_model(self.model, path)
 
     def find_lr(self, plot=False):
+        '''
+            Multi-model supported
+        '''
         save_model(self.model, 'tmp.h5')
         try:
             loss = self.trainer(model=self.model, 
                                 train_loader=self.train_loader, 
                                 optimizer=self.optimizer, 
                                 loss_fn=self.loss_fn, 
-                                epoch=1, 
+                                epoch=1,
+                                augmentor=None,
                                 is_cuda=self.is_cuda, 
                                 require_long=self.require_long_, 
-                                keep_shape=self.keep_shape_,
+                                keep_x_shape=self.keep_x_shape_,
+                                keep_y_shape=self.keep_y_shape_,
                                 require_data=self.require_data_,
                                 callbacks=[LRRangeTest(len(self.train_loader), cutoff_ratio=3)])
             

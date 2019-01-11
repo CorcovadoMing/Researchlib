@@ -3,3 +3,6 @@
 *.h5
 *.npy
 *.ipynb
+tmp
+*.pt
+model.py

@@ -1,4 +1,5 @@
 from .callback import Callback
+from ..utils import *
 
 class LRRangeTest(Callback):
     def __init__(self, iterations, max_lr=10, min_lr=1e-5, cutoff_ratio=None):
@@ -10,9 +11,8 @@ class LRRangeTest(Callback):
 
     def on_iteration_begin(self, **kwargs):
         cur_lr = self.min_lr * (self.step ** kwargs['batch_idx'])
-        for g in kwargs['optimizer'].param_groups:
-            g['lr'] = cur_lr
-    
+        set_lr(kwargs['optimizer'], cur_lr)
+        
     def on_iteration_end(self, **kwargs):
         if kwargs['batch_idx'] == 0:
             self.cutoff_loss = kwargs['cur_loss'] * self.cutoff_ratio

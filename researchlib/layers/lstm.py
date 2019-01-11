@@ -3,12 +3,13 @@ from torch import nn
 class LSTMLayer(nn.Module):
     def __init__(self, in_dim, out_dim, return_sequences=False): 
         super().__init__() 
-        self.f = nn.LSTM(in_dim, out_dim)
+        self.f = nn.LSTM(in_dim, out_dim, batch_first=True)
         self.return_sequences = return_sequences
     
     def forward(self, x):
+        out, _ = self.f(x)
         if self.return_sequences:
-            return self.f(x)[0]
+            return out
         else:
-            return self.f(x)[0][:, -1]
+            return out[:, -1, :]
     

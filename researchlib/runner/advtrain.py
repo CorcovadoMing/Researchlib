@@ -45,9 +45,9 @@ def advtrain_minibatch_(**kwargs):
         loss_input.append(kwargs['data'])
 
     if not kwargs['keep_shape']:
-        loss_input[0].view(loss_input[0].size(0), -1)
-        loss_input[1].view(-1,)
-    
+        loss_input[0] = loss_input[0].view(-1, loss_input[0].size(-1))
+        loss_input[1] = loss_input[1].view(-1,)
+        
     loss = kwargs['loss_fn'](*loss_input)
 
     loss.backward()
