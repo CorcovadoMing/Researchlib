@@ -5,6 +5,7 @@ from .time_distributed import *
 from .lstm import *
 from .mgu import *
 from .qrnn import *
+from .dropblock import *
 from .capsule_layer import *
 from .reconstruct_regularized import *
 from .reshape import *

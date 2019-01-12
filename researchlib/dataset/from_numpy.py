@@ -2,7 +2,7 @@ import torch
 import torch.utils.data as utils
 
 
-def FromNumpy(x, y, batch_size=1, shuffle=True, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, drop_last=False):
+def FromNumpy(x, y, batch_size=1, shuffle=False, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, drop_last=False):
     x_ = torch.from_numpy(x).float()
     y_ = torch.from_numpy(y).float()
     dataset_ = utils.TensorDataset(x_, y_)

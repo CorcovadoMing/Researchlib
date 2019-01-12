@@ -9,7 +9,7 @@ from torch.optim import *
 from tqdm.auto import tqdm
 
 class Runner:
-    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None):
+    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, metrics=[]):
         '''
             Multi-model supported
         '''
@@ -22,10 +22,12 @@ class Runner:
         self.require_data_ = False
         self.multi_model = False
         
-        self.default_callbacks = [CyclicalLR(len(train_loader))]
+        self.default_callbacks = CyclicalLR(len(train_loader))
         
         self.trainer = train
         self.tester = test
+        
+        self.metrics = metrics
         
         if type(model) == type([]):
             self.multi_model = True
@@ -72,8 +74,12 @@ class Runner:
         '''
             Multi-model supported
         '''
-        self.default_callbacks[0].base_lr = lr
-        callbacks = self.default_callbacks + callbacks
+        
+        if self.default_callbacks:
+            self.default_callbacks.base_lr = lr
+            self.default_callbacks.acc_iter = 0
+            callbacks = [self.default_callbacks] + callbacks
+        
         for epoch in tqdm(range(1, epochs + 1)):
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(model=self.model, 
@@ -92,7 +98,8 @@ class Runner:
                         keep_x_shape=self.keep_x_shape_,
                         keep_y_shape=self.keep_y_shape_,
                         require_data=self.require_data_,
-                        callbacks=callbacks)
+                        callbacks=callbacks,
+                        metrics=self.metrics)
             
             for callback_func in callbacks:
                 callback_func.on_epoch_end(model=self.model, 
@@ -108,7 +115,8 @@ class Runner:
                             require_long=self.require_long_, 
                             require_data=self.require_data_, 
                             keep_x_shape=self.keep_x_shape_,
-                            keep_y_shape=self.keep_y_shape_)
+                            keep_y_shape=self.keep_y_shape_,
+                            metrics=self.metrics)
 
             for callback_func in callbacks:
                 callback_func.on_validation_end(model=self.model, 
@@ -116,10 +124,11 @@ class Runner:
                                                 epoch=epoch)
             
     
-    def validate(self):
+    def validate(self, metrics=None):
         '''
             Multi-model supported
         '''
+        if not metrics: metrics = self.metrics
         self.tester(model=self.model, 
                     test_loader=self.test_loader, 
                     loss_fn=self.loss_fn, 
@@ -127,7 +136,8 @@ class Runner:
                     require_long=self.require_long_, 
                     require_data=self.require_data_, 
                     keep_x_shape=self.keep_x_shape_,
-                    keep_y_shape=self.keep_y_shape_)
+                    keep_y_shape=self.keep_y_shape_,
+                    metrics=metrics)
     
     def save(self, path):
         '''
@@ -160,7 +170,8 @@ class Runner:
                                 keep_x_shape=self.keep_x_shape_,
                                 keep_y_shape=self.keep_y_shape_,
                                 require_data=self.require_data_,
-                                callbacks=[LRRangeTest(len(self.train_loader), cutoff_ratio=3)])
+                                callbacks=[LRRangeTest(len(self.train_loader), cutoff_ratio=3)],
+                                metrics=[])
             
             step = (10 / 1e-5) ** (1 / len(self.train_loader))
             self.loss_history = []

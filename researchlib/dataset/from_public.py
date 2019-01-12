@@ -2,7 +2,7 @@ from torchvision import datasets, transforms
 import torch
 
 
-def FromPublic(dataset_name, mode='train', batch_size=1, shuffle=True, sampler=None, normalize=False, batch_sampler=None, num_workers=0, pin_memory=False, drop_last=False):
+def FromPublic(dataset_name, mode='train', batch_size=1, shuffle=False, sampler=None, normalize=False, batch_sampler=None, num_workers=0, pin_memory=False, drop_last=False):
     tf = [transforms.ToTensor()]
     
     train_ = True

@@ -5,3 +5,4 @@ from ..callbacks import *
 from ..utils import *
 from ..layers import *
 from ..loss import *
+from ..metrics import *
