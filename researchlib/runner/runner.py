@@ -3,13 +3,14 @@ from .test import *
 from ..io import *
 from ..callbacks import *
 from ..utils import *
+from ..metrics import *
 import torch
 import torch.nn.functional as F
 from torch.optim import *
 from tqdm.auto import tqdm
 
 class Runner:
-    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, metrics=[]):
+    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None):
         '''
             Multi-model supported
         '''
@@ -27,7 +28,7 @@ class Runner:
         self.trainer = train
         self.tester = test
         
-        self.metrics = metrics
+        self.default_metrics = None
         
         if type(model) == type([]):
             self.multi_model = True
@@ -45,6 +46,7 @@ class Runner:
         if loss_fn == 'nll':
             self.loss_fn = F.nll_loss
             self.require_long_ = True
+            self.default_metrics = Acc()
         elif loss_fn == 'mse':
             self.loss_fn = F.mse_loss
             self.keep_y_shape_ = True
@@ -70,7 +72,7 @@ class Runner:
         else:
             self.optimizer = optimizer
 
-    def fit(self, epochs, lr=1e-3, augmentor=None, callbacks=[]):
+    def fit(self, epochs, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
         '''
             Multi-model supported
         '''
@@ -79,6 +81,10 @@ class Runner:
             self.default_callbacks.base_lr = lr
             self.default_callbacks.acc_iter = 0
             callbacks = [self.default_callbacks] + callbacks
+        
+        if self.default_metrics:
+            metrics = [self.default_metrics] + metrics
+        
         
         for epoch in tqdm(range(1, epochs + 1)):
             for callback_func in callbacks:
@@ -98,8 +104,9 @@ class Runner:
                         keep_x_shape=self.keep_x_shape_,
                         keep_y_shape=self.keep_y_shape_,
                         require_data=self.require_data_,
+                        mixup_alpha=mixup_alpha,
                         callbacks=callbacks,
-                        metrics=self.metrics)
+                        metrics=metrics)
             
             for callback_func in callbacks:
                 callback_func.on_epoch_end(model=self.model, 
@@ -116,7 +123,7 @@ class Runner:
                             require_data=self.require_data_, 
                             keep_x_shape=self.keep_x_shape_,
                             keep_y_shape=self.keep_y_shape_,
-                            metrics=self.metrics)
+                            metrics=metrics)
 
             for callback_func in callbacks:
                 callback_func.on_validation_end(model=self.model, 
@@ -153,7 +160,7 @@ class Runner:
         '''
         load_model(self.model, path)
 
-    def find_lr(self, plot=False):
+    def find_lr(self, mixup_alpha=0, plot=False):
         '''
             Multi-model supported
         '''
@@ -170,6 +177,7 @@ class Runner:
                                 keep_x_shape=self.keep_x_shape_,
                                 keep_y_shape=self.keep_y_shape_,
                                 require_data=self.require_data_,
+                                mixup_alpha=mixup_alpha,
                                 callbacks=[LRRangeTest(len(self.train_loader), cutoff_ratio=3)],
                                 metrics=[])
             

@@ -33,5 +33,26 @@ class ConfusionMatrix(Matrix):
         
     def reset(self):
         self.m = np.zeros((self.classes, self.classes)).astype(np.int)
+
+
+class Acc(Matrix):
+    def __init__(self):
+        super().__init__()
+        self.total = 0
+        self.correct = 0
+        
+    def forward(self, y_pred, y_true):
+        y_pred, y_true = self.prepare(y_pred, y_true)
+        for (i, j) in zip(y_pred, y_true):
+            if i == j:
+                self.correct += 1
+            self.total += 1
+        
+    def output(self):
+        print(self.correct / self.total)
+        
+    def reset(self):
+        self.total = 0
+        self.correct = 0
     
     

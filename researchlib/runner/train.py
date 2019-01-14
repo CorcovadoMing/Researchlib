@@ -1,11 +1,15 @@
 from ..callbacks import *
 from tqdm.auto import tqdm
+import numpy as np
 import torch
 
 class Check:
     def __init__(self):
         pass
 
+def mixup_loss_fn(loss_fn, x, y, y_res, lam):
+    return lam * loss_fn(x, y) + (1-lam) * loss_fn(x, y_res)        
+            
 def train(**kwargs):
     kwargs['check'] = Check()
     kwargs['check'].cutoff = False
@@ -23,11 +27,23 @@ def train(**kwargs):
         if kwargs['augmentor']: data, target = kwargs['augmentor'].on(data, target)
             
         if kwargs['require_long']: target = target.long()
+        
+        if kwargs['mixup_alpha'] != 0:
+            lam = np.random.beta(kwargs['mixup_alpha'], kwargs['mixup_alpha'])
+            index = torch.randperm(data.size(0))
+            data = lam * data + (1-lam) * data[index]
+            target_res = target[index]
+            kwargs['check'].lam = lam
+            kwargs['mixup_loss_fn'] = mixup_loss_fn
+        
+        
         if kwargs['is_cuda']:
             kwargs['data'], kwargs['target'] = data.cuda(), target.cuda()
+            if kwargs['mixup_alpha'] != 0: kwargs['target_res'] = target_res.cuda()
         else:
             kwargs['data'], kwargs['target'] = data, target
-        
+            if kwargs['mixup_alpha'] != 0: kwargs['target_res'] = target_res
+            
         # Callback: on_iteration_begin
         for callback_func in kwargs['callbacks']: callback_func.on_iteration_begin(**kwargs)
 
@@ -56,16 +72,24 @@ def train_minibatch_(**kwargs):
     for m in kwargs['metrics']: m.forward(output, kwargs['target'])
     
     loss_input = [output, kwargs['target']]
+    if kwargs['mixup_alpha'] != 0:
+        loss_input.append(kwargs['target_res'])
     
     if kwargs['require_data']: loss_input.append(kwargs['data'])
     
     if not kwargs['keep_x_shape']: loss_input[0] = loss_input[0].contiguous().view(-1, loss_input[0].size(-1))
     if not kwargs['keep_y_shape']:
-        loss_input[1] = loss_input[1].contiguous().view(-1)
+        for i in range(1, len(loss_input)):
+            loss_input[i] = loss_input[i].contiguous().view(-1)
     else:
-        loss_input[1] = loss_input[1].contiguous().view(-1, loss_input[1].size(-1))
+        for i in range(1, len(loss_input)):
+            loss_input[i] = loss_input[i].contiguous().view(-1, loss_input[i].size(-1))
 
-    loss = kwargs['loss_fn'](*loss_input)
+    if kwargs['mixup_alpha'] != 0:
+        loss_input = [kwargs['loss_fn']] + loss_input + [kwargs['check'].lam]
+        loss = kwargs['mixup_loss_fn'](*loss_input)
+    else:    
+        loss = kwargs['loss_fn'](*loss_input)
     loss.backward()
     kwargs['optimizer'].step()
     
