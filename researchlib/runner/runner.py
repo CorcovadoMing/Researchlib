@@ -55,10 +55,8 @@ class Runner:
             self.default_metrics = Acc()
         elif loss_fn == 'mse':
             self.loss_fn = F.mse_loss
-            self.keep_y_shape_ = True
         elif loss_fn == 'mae':
             self.loss_fn = F.l1_loss
-            self.keep_y_shape_ = True
         else:
             self.loss_fn = loss_fn
             self.keep_x_shape_ = True
@@ -70,11 +68,11 @@ class Runner:
             
         # Assign optimizer
         if optimizer == 'adam':
-            self.optimizer = Adam(model.parameters(), betas=(0.9, 0.99), weight_decay=1e-4)
+            self.optimizer = Adam(model.parameters(), betas=(0.9, 0.99))
         elif optimizer == 'sgd':
-            self.optimizer = SGD(model.parameters(), lr=1e-2, weight_decay=1e-4, momentum=0.9)
+            self.optimizer = SGD(model.parameters(), lr=1e-2, momentum=0.9)
         elif optimizer == 'rmsprop':
-            self.optimizer = RMSprop(model.parameters(), weight_decay=1e-4)
+            self.optimizer = RMSprop(model.parameters())
         else:
             self.optimizer = optimizer
             
@@ -146,11 +144,13 @@ class Runner:
                                                 epoch=epoch)
             
     
-    def validate(self, metrics=None):
+    def validate(self, metrics=[]):
         '''
             Multi-model supported
         '''
-        if not metrics: metrics = self.metrics
+        if self.default_metrics:
+            metrics = [self.default_metrics] + metrics
+        
         self.tester(model=self.model, 
                     test_loader=self.test_loader, 
                     loss_fn=self.loss_fn, 

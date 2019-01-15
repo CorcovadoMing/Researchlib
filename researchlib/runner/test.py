@@ -21,13 +21,15 @@ def test(**kwargs):
             
             loss_input = [output, target]
             
-            if kwargs['require_data']: loss_input.append(data)
             if not kwargs['keep_x_shape']: loss_input[0] = loss_input[0].contiguous().view(-1, loss_input[0].size(-1))
             
             if not kwargs['keep_y_shape']: 
-                loss_input[1] = loss_input[1].contiguous().view(-1)
-            else:
-                loss_input[1] = loss_input[1].contiguous().view(-1, loss_input[1].size(-1))
+                if len(loss_input[1].shape) > 1:
+                    loss_input[1] = loss_input[1].contiguous().view(-1, loss_input[1].size(-1))
+                else:
+                    loss_input[1] = loss_input[1].contiguous().view(-1)
+                    
+            if kwargs['require_data']: loss_input.append(data)
             
             test_loss += kwargs['loss_fn'](*loss_input).item()
             
@@ -37,7 +39,8 @@ def test(**kwargs):
                 loss_input[0] = torch.sqrt((loss_input[0]**2).sum(dim=2, keepdim=True))
             
             for m in kwargs['metrics']: m.forward(loss_input)
-    
+
+            
     # Output metrics
     for m in kwargs['metrics']: m.output()    
     

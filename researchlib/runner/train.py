@@ -36,7 +36,6 @@ def train(**kwargs):
             kwargs['check'].lam = lam
             kwargs['mixup_loss_fn'] = mixup_loss_fn
         
-        
         if kwargs['is_cuda']:
             kwargs['data'], kwargs['target'] = data.cuda(), target.cuda()
             if kwargs['mixup_alpha'] != 0: kwargs['target_res'] = target_res.cuda()
@@ -50,7 +49,8 @@ def train(**kwargs):
         loss_ = train_minibatch_(**kwargs)
         loss_history.append(loss_)
         kwargs['cur_loss'] = loss_
-        bar.set_postfix(loss="{:.4f}".format(loss_), refresh=False)
+        loss_avg = sum(loss_history)/len(loss_history)
+        bar.set_postfix(loss="{:.4f}".format(loss_avg), refresh=False)
         
         # Callback: on_iteration_end
         for callback_func in kwargs['callbacks']: callback_func.on_iteration_end(**kwargs)
@@ -61,8 +61,6 @@ def train(**kwargs):
     # Output metrics
     for m in kwargs['metrics']: m.output()
     
-    bar.set_postfix(loss="{:.4f}".format(sum(loss_history)/len(loss_history)), refresh=False)
-        
     return loss_history
 
 def train_minibatch_(**kwargs):
@@ -74,26 +72,30 @@ def train_minibatch_(**kwargs):
     if kwargs['mixup_alpha'] != 0:
         loss_input.append(kwargs['target_res'])
     
-    if kwargs['require_data']: loss_input.append(kwargs['data'])
-    
     if not kwargs['keep_x_shape']: loss_input[0] = loss_input[0].contiguous().view(-1, loss_input[0].size(-1))
     if not kwargs['keep_y_shape']:
         for i in range(1, len(loss_input)):
-            loss_input[i] = loss_input[i].contiguous().view(-1)
-    else:
-        for i in range(1, len(loss_input)):
-            loss_input[i] = loss_input[i].contiguous().view(-1, loss_input[i].size(-1))
+            if len(loss_input[i].shape) > 1:
+                loss_input[i] = loss_input[i].contiguous().view(-1, loss_input[i].size(-1))
+            else:
+                loss_input[i] = loss_input[i].contiguous().view(-1)
+                
+    if kwargs['require_data']: loss_input.append(kwargs['data'])
 
     if kwargs['mixup_alpha'] != 0:
         loss_input = loss_input + [kwargs['check'].lam, kwargs['loss_fn']]
         loss = kwargs['mixup_loss_fn'](*loss_input)
-    else:    
+    else:
         loss = kwargs['loss_fn'](*loss_input)
         
     loss.backward()
     kwargs['optimizer'].step()
     
+    if type(loss_input[0]) == type(()):
+        loss_input[0] = loss_input[0][0]
+        loss_input[0] = torch.sqrt((loss_input[0]**2).sum(dim=2, keepdim=True))
+    
     # Apply metrics
     for m in kwargs['metrics']: m.forward(loss_input)
-
+        
     return loss.item()

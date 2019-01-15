@@ -1,10 +1,4 @@
 from ..utils import *
-from torch import nn
-
-########################################
-#### Licensed under the MIT license ####
-########################################
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

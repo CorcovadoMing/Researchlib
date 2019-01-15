@@ -1,4 +1,6 @@
 from .matrix import *
+from ..utils import *
+
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
@@ -63,4 +65,22 @@ class Acc(Matrix):
         self.total = 0
         self.correct = 0
     
+class CapsuleAcc(Acc):
+    def __init__(self):
+        super().__init__()
     
+    def forward(self, loss_input):
+        if len(loss_input) == 5:
+            # mixup
+            y_pred, y_true, y_true_res, lam = loss_input[0].cpu(), loss_input[1].cpu(), loss_input[2].cpu(), loss_input[3]
+            _, predicted = torch.max(y_pred, 1)
+            predicted = predicted.squeeze()
+            self.total += y_true.size(0)
+            self.correct += (lam * predicted.eq(y_true).sum().float()
+                        + (1 - lam) * predicted.eq(y_true_res).sum().float()).numpy()
+        else:
+            y_pred, y_true = loss_input[0].cpu(), loss_input[1].cpu()
+            _, predicted = torch.max(y_pred, 1)
+            predicted = predicted.squeeze()
+            self.total += y_true.size(0)
+            self.correct += predicted.eq(y_true).sum().float().numpy()
