@@ -1,14 +1,6 @@
 import torch.nn as nn
 import math
-import torch.utils.model_zoo as model_zoo
 from ..layers import *
-
-__all__ = ['vgg_resnet50']
-
-model_urls = {
-    'vgg_resnet50': 'https://download.pytorch.org/models/vggresnet.pth',
-}
-
 
 def conv(ni, nf, ks=3, stride=1):
     return nn.Conv2d(ni, nf, kernel_size=ks, stride=stride, padding=ks//2, bias=False)
@@ -210,8 +202,7 @@ def w5_resnet50 (): return ResNet(Bottleneck, [2, 3, 3, 2], k=1.5)
 def w25_resnet50(): return ResNet(Bottleneck, [3, 4, 4, 3], k=1.25)
 def w125_resnet50(): return ResNet(Bottleneck, [3, 4, 6, 3], k=1.125)
 def vgg_resnet34(): return ResNet(BasicBlock, [3, 4, 6, 3], vgg_head=True)
-def vgg_resnet50(pretrained=False):
+def vgg_resnet50():
     model = ResNet(Bottleneck, [3, 4, 6, 3], vgg_head=True)
-    if pretrained: model.load_state_dict(torch.load('/home/jhoward/.torch/models/vgg_resnet50.pth'))
     return model
 

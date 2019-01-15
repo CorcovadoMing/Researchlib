@@ -36,7 +36,7 @@ def test(**kwargs):
                 loss_input[0] = loss_input[0][0]
                 loss_input[0] = torch.sqrt((loss_input[0]**2).sum(dim=2, keepdim=True))
             
-            for m in kwargs['metrics']: m.forward(output, target)
+            for m in kwargs['metrics']: m.forward(loss_input)
     
     # Output metrics
     for m in kwargs['metrics']: m.output()    

@@ -6,8 +6,10 @@ from ..utils import *
 from ..metrics import *
 import torch
 import torch.nn.functional as F
+from torch import nn
 from torch.optim import *
 from tqdm.auto import tqdm
+import torch.backends.cudnn as cudnn
 
 class Runner:
     def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None):
@@ -47,6 +49,10 @@ class Runner:
             self.loss_fn = F.nll_loss
             self.require_long_ = True
             self.default_metrics = Acc()
+        elif loss_fn == 'crossentropy':
+            self.loss_fn = nn.CrossEntropyLoss()
+            self.require_long_ = True
+            self.default_metrics = Acc()
         elif loss_fn == 'mse':
             self.loss_fn = F.mse_loss
             self.keep_y_shape_ = True
@@ -64,13 +70,21 @@ class Runner:
             
         # Assign optimizer
         if optimizer == 'adam':
-            self.optimizer = Adam(model.parameters(), weight_decay=5e-4)
+            self.optimizer = Adam(model.parameters(), betas=(0.9, 0.99), weight_decay=1e-4)
         elif optimizer == 'sgd':
-            self.optimizer = SGD(model.parameters(), lr=1e-3, weight_decay=5e-4)
+            self.optimizer = SGD(model.parameters(), lr=1e-2, weight_decay=1e-4, momentum=0.9)
         elif optimizer == 'rmsprop':
-            self.optimizer = RMSprop(model.parameters(), weight_decay=5e-4)
+            self.optimizer = RMSprop(model.parameters(), weight_decay=1e-4)
         else:
             self.optimizer = optimizer
+            
+        cudnn.benchmark = True
+        
+        
+    def fit_cycle(self, cycles, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
+        total_epochs = int(cycles*(1+cycles)/2)
+        self.fit(total_epochs, lr, augmentor, mixup_alpha, metrics, callbacks)
+        
 
     def fit(self, epochs, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
         '''
@@ -78,13 +92,14 @@ class Runner:
         '''
         
         if self.default_callbacks:
-            self.default_callbacks.base_lr = lr
+            # Reset cyclical LR
+            self.default_callbacks.max_lr = lr
             self.default_callbacks.acc_iter = 0
+            self.default_callbacks.length = 1
             callbacks = [self.default_callbacks] + callbacks
         
         if self.default_metrics:
             metrics = [self.default_metrics] + metrics
-        
         
         for epoch in tqdm(range(1, epochs + 1)):
             for callback_func in callbacks:

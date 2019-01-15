@@ -7,7 +7,7 @@ class Check:
     def __init__(self):
         pass
 
-def mixup_loss_fn(loss_fn, x, y, y_res, lam):
+def mixup_loss_fn(x, y, y_res, lam, loss_fn):
     return lam * loss_fn(x, y) + (1-lam) * loss_fn(x, y_res)        
             
 def train(**kwargs):
@@ -60,6 +60,8 @@ def train(**kwargs):
     
     # Output metrics
     for m in kwargs['metrics']: m.output()
+    
+    bar.set_postfix(loss="{:.4f}".format(sum(loss_history)/len(loss_history)), refresh=False)
         
     return loss_history
 
@@ -67,9 +69,6 @@ def train_minibatch_(**kwargs):
     kwargs['optimizer'].zero_grad()
     
     output = kwargs['model'](kwargs['data'])
-    
-    # Apply metrics
-    for m in kwargs['metrics']: m.forward(output, kwargs['target'])
     
     loss_input = [output, kwargs['target']]
     if kwargs['mixup_alpha'] != 0:
@@ -86,11 +85,15 @@ def train_minibatch_(**kwargs):
             loss_input[i] = loss_input[i].contiguous().view(-1, loss_input[i].size(-1))
 
     if kwargs['mixup_alpha'] != 0:
-        loss_input = [kwargs['loss_fn']] + loss_input + [kwargs['check'].lam]
+        loss_input = loss_input + [kwargs['check'].lam, kwargs['loss_fn']]
         loss = kwargs['mixup_loss_fn'](*loss_input)
     else:    
         loss = kwargs['loss_fn'](*loss_input)
+        
     loss.backward()
     kwargs['optimizer'].step()
     
+    # Apply metrics
+    for m in kwargs['metrics']: m.forward(loss_input)
+
     return loss.item()
