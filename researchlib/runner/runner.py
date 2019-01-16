@@ -11,6 +11,18 @@ from torch.optim import *
 from tqdm.auto import tqdm
 import torch.backends.cudnn as cudnn
 
+class FocalLoss(nn.Module):
+    def __init__(self, gamma=1):
+        super().__init__()
+        self.gamma = gamma
+        self.softmax = nn.Softmax(-1)
+        
+    def forward(self, x, y):
+        x = self.softmax(x)
+        pt = x[torch.arange(x.size(0)), y]
+        loss = -1 * ((1 - pt) ** self.gamma) * torch.log(pt)
+        return loss.sum(-1).mean()
+        
 class Runner:
     def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None):
         '''
@@ -51,6 +63,10 @@ class Runner:
             self.default_metrics = Acc()
         elif loss_fn == 'crossentropy':
             self.loss_fn = nn.CrossEntropyLoss()
+            self.require_long_ = True
+            self.default_metrics = Acc()
+        elif loss_fn == 'focal':
+            self.loss_fn = FocalLoss()
             self.require_long_ = True
             self.default_metrics = Acc()
         elif loss_fn == 'mse':
