@@ -94,24 +94,41 @@ class Runner:
             
         cudnn.benchmark = True
         
-        
-    def fit_cycle(self, cycles, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
-        total_epochs = int(cycles*(1+cycles)/2)
-        self.fit(total_epochs, lr, augmentor, mixup_alpha, metrics, callbacks)
-        
-
-    def fit(self, epochs, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
-        '''
-            Multi-model supported
-        '''
-        
+    def set_cyclical_(self, lr):
         if self.default_callbacks:
-            # Reset cyclical LR
+            self.default_callbacks.max_lr = lr
+            self.default_callbacks.acc_iter = 0
+        return [self.default_callbacks]
+        
+    def set_sgdr_(self, lr):
+        if self.default_callbacks:
+            self.default_callbacks = SGDR(len(self.train_loader))
             self.default_callbacks.max_lr = lr
             self.default_callbacks.acc_iter = 0
             self.default_callbacks.length = 1
-            callbacks = [self.default_callbacks] + callbacks
+        return [self.default_callbacks]
+    
+    def set_onecycle_(self, lr):
+        if self.default_callbacks:
+            self.default_callbacks = OneCycle(len(self.train_loader))
+            self.default_callbacks.max_lr = lr
+            self.default_callbacks.acc_iter = 0
+        return [self.default_callbacks]
+    
+    def fit_onecycle(self, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
+        callbacks = self.set_onecycle_(lr) + callbacks
+        self.fit_(1, lr, augmentor, mixup_alpha, metrics, callbacks)
         
+    def fit_cycle(self, cycles, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
+        total_epochs = int(cycles*(1+cycles)/2)
+        callbacks = self.set_sgdr_(lr) + callbacks
+        self.fit_(total_epochs, lr, augmentor, mixup_alpha, metrics, callbacks)
+        
+    def fit(self, epochs, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
+        callbacks = self.set_cyclical_(lr) + callbacks
+        self.fit_(epochs, lr, augmentor, mixup_alpha, metrics, callbacks)
+
+    def fit_(self, epochs, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
         if self.default_metrics:
             metrics = [self.default_metrics] + metrics
         
@@ -212,12 +229,12 @@ class Runner:
                                 callbacks=[LRRangeTest(len(self.train_loader), cutoff_ratio=3)],
                                 metrics=[])
             
-            step = (10 / 1e-5) ** (1 / len(self.train_loader))
+            step = (3 / 1e-9) ** (1 / len(self.train_loader))
             self.loss_history = []
             self.lr_history = []
             for i, j in enumerate(loss):    
                 self.loss_history.append(j)
-                self.lr_history.append(1e-5 * (step ** i))
+                self.lr_history.append(1e-9 * (step ** i))
             if plot:
                 plot_utils(self.loss_history, self.lr_history)
         except:

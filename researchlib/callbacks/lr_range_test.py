@@ -2,7 +2,7 @@ from .callback import Callback
 from ..utils import *
 
 class LRRangeTest(Callback):
-    def __init__(self, iterations, max_lr=10, min_lr=1e-5, cutoff_ratio=None):
+    def __init__(self, iterations, max_lr=3, min_lr=1e-9, cutoff_ratio=None):
         super().__init__()
         self.max_lr = max_lr
         self.min_lr = min_lr
