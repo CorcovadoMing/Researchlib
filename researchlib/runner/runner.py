@@ -226,10 +226,10 @@ class Runner:
                                 keep_y_shape=self.keep_y_shape_,
                                 require_data=self.require_data_,
                                 mixup_alpha=mixup_alpha,
-                                callbacks=[LRRangeTest(len(self.train_loader), cutoff_ratio=3)],
+                                callbacks=[LRRangeTest(len(self.train_loader), cutoff_ratio=10)],
                                 metrics=[])
             
-            step = (3 / 1e-9) ** (1 / len(self.train_loader))
+            step = (10 / 1e-9) ** (1 / len(self.train_loader))
             self.loss_history = []
             self.lr_history = []
             for i, j in enumerate(loss):    

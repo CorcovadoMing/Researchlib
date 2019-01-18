@@ -7,4 +7,5 @@ from .googlenet import *
 from .mobilenet import *
 from .densenet3 import *
 from .wideresnet import *
+from .senet import *
 from .builder import *
