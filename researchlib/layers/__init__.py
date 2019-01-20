@@ -9,3 +9,4 @@ from .dropblock import *
 from .capsule_layer import *
 from .reconstruct_regularized import *
 from .reshape import *
+from .binarized import *

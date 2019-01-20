@@ -89,7 +89,16 @@ def train_minibatch_(**kwargs):
         loss = kwargs['loss_fn'](*loss_input)
         
     loss.backward()
+    
+    for p in list(kwargs['model'].parameters()):
+        if hasattr(p,'org'):
+            p.data.copy_(p.org)
+    
     kwargs['optimizer'].step()
+    
+    for p in list(kwargs['model'].parameters()):
+            if hasattr(p,'org'):
+                p.org.copy_(p.data.clamp_(-1,1))
     
     if type(loss_input[0]) == type(()):
         loss_input[0] = loss_input[0][0]
