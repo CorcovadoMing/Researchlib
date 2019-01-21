@@ -85,6 +85,17 @@ class Runner:
             
         cudnn.benchmark = True
         
+    def summary(self):
+        input_shape = self.train_loader.dataset.train_data.shape
+        if len(input_shape) > 4:
+            input_shape = (input_shape[-1], input_shape[-3], input_shape[-2])
+        else:
+            input_shape = (1, input_shape[-2], input_shape[-1])
+        try:
+            summary(self.model, input_shape)
+        except:
+            pass
+        
     def set_cyclical_(self, lr):
         if self.default_callbacks:
             self.default_callbacks.max_lr = lr
