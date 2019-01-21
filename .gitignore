@@ -2,7 +2,7 @@
 .ipynb_checkpoints
 *.h5
 *.npy
-*.ipynb
+Dev*
 tmp
 *.pt
 model.py
