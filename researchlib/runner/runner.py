@@ -5,6 +5,7 @@ from ..callbacks import *
 from ..utils import *
 from ..metrics import *
 from ..loss import *
+from ..layers import *
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -25,6 +26,7 @@ class Runner:
         self.keep_y_shape_ = False
         self.require_data_ = False
         self.multi_model = False
+        self.cam_model = None
         
         self.default_callbacks = CyclicalLR(len(train_loader))
         
@@ -230,3 +232,34 @@ class Runner:
             pass
         finally:
             load_model(self.model, 'tmp.h5')
+    
+    def cam(self, vx, final_layer, out_filters, classes):
+        if not self.cam_model:
+            self.cam_model = nn.Sequential(
+                    *list(self.model.children())[:final_layer+1], 
+                    nn.Conv2d(out_filters, classes, 1), 
+                    nn.AdaptiveAvgPool2d(1), 
+                    Flatten(),
+                ).cuda()
+                
+            module_trainable(self.cam_model[:-3], False)
+            #self.fit_onecycle()
+            r = Runner(self.cam_model, self.train_loader, self.test_loader, 'adam', 'focal')
+            for _ in range(3): r.fit_onecycle(1e-3)
+            
+        self.cam_feature = SaveFeatures(self.cam_model[-3])
+        py = self.cam_model(vx.cuda())
+        py = F.softmax(py, dim=-1)
+        py = py.detach().cpu().numpy()[0]
+        feat = self.cam_feature.features[0].detach().cpu().numpy()
+        feat = np.maximum(0, feat)
+        f2 = np.dot(np.rollaxis(feat,0,3), py)
+        f2 -= f2.min()
+        f2 /= f2.max()
+        dx = vx.cpu().numpy().transpose(0,2,3,1)[0]
+        import skimage
+        plt.imshow(dx)
+        ss = skimage.transform.resize(f2, dx.shape[:2])
+        plt.imshow(ss, alpha=0.5, cmap='hot')
+        module_trainable(self.model, True)
+        self.cam_feature.remove()
