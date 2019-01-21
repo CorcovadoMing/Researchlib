@@ -5,3 +5,4 @@ from .sgdr import *
 from .one_cycle import *
 from .callback import *
 from .ts_soli_cb import *
+from .binarized import *

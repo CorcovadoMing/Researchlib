@@ -90,15 +90,11 @@ def train_minibatch_(**kwargs):
         
     loss.backward()
     
-    for p in list(kwargs['model'].parameters()):
-        if hasattr(p,'org'):
-            p.data.copy_(p.org)
+    for callback_func in kwargs['callbacks']: callback_func.on_update_begin(**kwargs)
     
     kwargs['optimizer'].step()
     
-    for p in list(kwargs['model'].parameters()):
-            if hasattr(p,'org'):
-                p.org.copy_(p.data.clamp_(-1,1))
+    for callback_func in kwargs['callbacks']: callback_func.on_update_end(**kwargs)
     
     if type(loss_input[0]) == type(()):
         loss_input[0] = loss_input[0][0]
