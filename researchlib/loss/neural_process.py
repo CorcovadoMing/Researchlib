@@ -12,6 +12,6 @@ def NormalDistributionKL(mu_q, logvar_q, mu_p, logvar_p):
 def NeuralProcessLoss(output, target):
     y_hat, z_all, z_context = output
     y = target
-    BCE = F.binary_cross_entropy(y_hat, y, reduction='sum')
+    BCE = F.binary_cross_entropy(y_hat, y, reduction="sum")
     KLD = NormalDistributionKL(z_all[0], z_all[1], z_context[0], z_context[1])
     return BCE + KLD
