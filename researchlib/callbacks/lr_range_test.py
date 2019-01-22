@@ -12,9 +12,11 @@ class LRRangeTest(Callback):
     def on_iteration_begin(self, **kwargs):
         cur_lr = self.min_lr * (self.step ** kwargs['batch_idx'])
         set_lr(kwargs['optimizer'], cur_lr)
+        return kwargs
         
     def on_iteration_end(self, **kwargs):
         if kwargs['batch_idx'] == 0:
             self.cutoff_loss = kwargs['cur_loss'] * self.cutoff_ratio
         if kwargs['cur_loss'] > self.cutoff_loss:
             kwargs['check'].cutoff = True
+        return kwargs

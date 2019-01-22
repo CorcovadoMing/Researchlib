@@ -44,7 +44,7 @@ def train(**kwargs):
             if kwargs['mixup_alpha'] != 0: kwargs['target_res'] = target_res
             
         # Callback: on_iteration_begin
-        for callback_func in kwargs['callbacks']: callback_func.on_iteration_begin(**kwargs)
+        for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_begin(**kwargs)
 
         loss_ = train_minibatch_(**kwargs)
         loss_history.append(loss_)
@@ -53,7 +53,7 @@ def train(**kwargs):
         bar.set_postfix(loss="{:.4f}".format(loss_avg), refresh=False)
         
         # Callback: on_iteration_end
-        for callback_func in kwargs['callbacks']: callback_func.on_iteration_end(**kwargs)
+        for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_end(**kwargs)
         
         # Early stop (for find_lr)
         if kwargs['check'].cutoff: break
@@ -66,7 +66,10 @@ def train(**kwargs):
 def train_minibatch_(**kwargs):
     kwargs['optimizer'].zero_grad()
     
-    output = kwargs['model'](kwargs['data'])
+    if type(kwargs['data']) == type([]):
+        output = kwargs['model'](*kwargs['data'])
+    else:
+        output = kwargs['model'](kwargs['data'])
     
     loss_input = [output, kwargs['target']]
     if kwargs['mixup_alpha'] != 0:
@@ -90,11 +93,11 @@ def train_minibatch_(**kwargs):
         
     loss.backward()
     
-    for callback_func in kwargs['callbacks']: callback_func.on_update_begin(**kwargs)
+    for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_begin(**kwargs)
     
     kwargs['optimizer'].step()
     
-    for callback_func in kwargs['callbacks']: callback_func.on_update_end(**kwargs)
+    for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_end(**kwargs)
     
     if type(loss_input[0]) == type(()):
         loss_input[0] = loss_input[0][0]

@@ -41,3 +41,4 @@ class SoliAcc(Callback):
             save_model(kwargs['model'], self.exp_name)
             print('Saving model to ' + self.exp_name)
         
+        return kwargs

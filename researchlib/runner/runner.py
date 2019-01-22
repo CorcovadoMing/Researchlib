@@ -100,22 +100,28 @@ class Runner:
         if self.default_callbacks:
             self.default_callbacks.max_lr = lr
             self.default_callbacks.acc_iter = 0
-        return [self.default_callbacks]
-        
+            return [self.default_callbacks]
+        else:
+            return []
+            
     def set_sgdr_(self, lr):
         if self.default_callbacks:
             self.default_callbacks = SGDR(len(self.train_loader))
             self.default_callbacks.max_lr = lr
             self.default_callbacks.acc_iter = 0
             self.default_callbacks.length = 1
-        return [self.default_callbacks]
+            return [self.default_callbacks]
+        else:
+            return []
     
     def set_onecycle_(self, lr):
         if self.default_callbacks:
             self.default_callbacks = OneCycle(len(self.train_loader))
             self.default_callbacks.max_lr = lr
             self.default_callbacks.acc_iter = 0
-        return [self.default_callbacks]
+            return [self.default_callbacks]
+        else:
+            return []
     
     def fit_onecycle(self, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
         callbacks = self.set_onecycle_(lr) + callbacks
@@ -166,18 +172,14 @@ class Runner:
                 self.tester(model=self.model, 
                             test_loader=self.test_loader, 
                             loss_fn=self.loss_fn, 
-                            is_cuda=self.is_cuda, 
+                            is_cuda=self.is_cuda,
+                            epoch=epoch,
                             require_long=self.require_long_, 
                             require_data=self.require_data_, 
                             keep_x_shape=self.keep_x_shape_,
                             keep_y_shape=self.keep_y_shape_,
-                            metrics=metrics)
-
-            for callback_func in callbacks:
-                callback_func.on_validation_end(model=self.model, 
-                                                test_loader=self.test_loader,
-                                                epoch=epoch)
-            
+                            metrics=metrics,
+                            callbacks=callbacks)
     
     def validate(self, metrics=[]):
         '''
@@ -190,11 +192,13 @@ class Runner:
                     test_loader=self.test_loader, 
                     loss_fn=self.loss_fn, 
                     is_cuda=self.is_cuda, 
+                    epoch=epoch,
                     require_long=self.require_long_, 
                     require_data=self.require_data_, 
                     keep_x_shape=self.keep_x_shape_,
                     keep_y_shape=self.keep_y_shape_,
-                    metrics=metrics)
+                    metrics=metrics,
+                    callbacks=callbacks)
     
     def save(self, path):
         '''
@@ -210,7 +214,7 @@ class Runner:
         '''
         load_model(self.model, path)
 
-    def find_lr(self, mixup_alpha=0, plot=False):
+    def find_lr(self, mixup_alpha=0, plot=False, callbacks=[]):
         '''
             Multi-model supported
         '''
@@ -228,7 +232,7 @@ class Runner:
                                 keep_y_shape=self.keep_y_shape_,
                                 require_data=self.require_data_,
                                 mixup_alpha=mixup_alpha,
-                                callbacks=[LRRangeTest(len(self.train_loader), cutoff_ratio=10)],
+                                callbacks=[LRRangeTest(len(self.train_loader), cutoff_ratio=10)]+callbacks,
                                 metrics=[])
             
             step = (10 / 1e-9) ** (1 / len(self.train_loader))

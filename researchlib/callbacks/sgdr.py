@@ -12,11 +12,13 @@ class SGDR(Callback):
         self.acc_iter = 0
         
     def on_iteration_begin(self, **kwargs):
-        eta = self.acc_iter / self.length
-        if eta >= 180:
-            self.length += 1
-            self.acc_iter = 0
-        val = eta % 180
-        self.acc_iter += self.step_size
-        cur_lr = self.base_lr + (1 + math.cos(math.radians(val))) / 2 * (self.max_lr - self.base_lr)
-        set_lr(kwargs['optimizer'], cur_lr)
+        if kwargs['model'].training:
+            eta = self.acc_iter / self.length
+            if eta >= 180:
+                self.length += 1
+                self.acc_iter = 0
+            val = eta % 180
+            self.acc_iter += self.step_size
+            cur_lr = self.base_lr + (1 + math.cos(math.radians(val))) / 2 * (self.max_lr - self.base_lr)
+            set_lr(kwargs['optimizer'], cur_lr)
+        return kwargs

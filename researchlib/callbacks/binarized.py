@@ -8,8 +8,10 @@ class Binarized(Callback):
         for p in list(kwargs['model'].parameters()):
             if hasattr(p,'org'):
                 p.data.copy_(p.org)
-    
+        return kwargs
+        
     def on_update_end(self, **kwargs):
         for p in list(kwargs['model'].parameters()):
             if hasattr(p,'org'):
                 p.org.copy_(p.data.clamp_(-1,1))
+        return kwargs

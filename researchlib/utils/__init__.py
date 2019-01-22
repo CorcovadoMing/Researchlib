@@ -5,3 +5,4 @@ from .ts_split_soli import *
 from .freeze import *
 from .save_feature import *
 from .torchsummary import *
+from .neural_process import *

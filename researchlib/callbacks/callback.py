@@ -6,40 +6,46 @@ class Callback:
         '''
             Before each epoch start
         '''
-        pass
+        return kwargs
     
     def on_epoch_end(self, **kwargs):
         '''
             End of epoch
         '''
-        pass
+        return kwargs
     
     def on_iteration_begin(self, **kwargs):
         '''
             Before each minibatch start
         '''
-        pass
+        return kwargs
     
     def on_iteration_end(self, **kwargs):
         '''
             End of each minibatch
         '''
-        pass
+        return kwargs
+    
+    def on_validation_begin(self, **kwargs):
+        '''
+            Before validation start
+        '''
+        return kwargs
     
     def on_validation_end(self, **kwargs):
         '''
             After the validation is end
         '''
-        pass
+        return kwargs
     
     def on_update_begin(self, **kwargs):
         '''
             Before the optimzier is applied
         '''
-        pass
+        return kwargs
     
     def on_update_end(self, **kwargs):
         '''
             After the optimzier is applied
         '''
-        pass
+        return kwargs

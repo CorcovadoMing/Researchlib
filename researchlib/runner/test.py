@@ -17,9 +17,16 @@ def test(**kwargs):
             if kwargs['require_long']: target = target.long()
             if kwargs['is_cuda']: data, target = data.cuda(), target.cuda()
             
-            output = kwargs['model'](data)
+            kwargs['data'], kwargs['target'] = data, target
             
-            loss_input = [output, target]
+            for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_begin(**kwargs)
+            
+            if type(kwargs['data']) == type([]):
+                output = kwargs['model'](*kwargs['data'])
+            else:
+                output = kwargs['model'](kwargs['data'])
+            
+            loss_input = [output, kwargs['target']]
             
             if not kwargs['keep_x_shape']: loss_input[0] = loss_input[0].contiguous().view(-1, loss_input[0].size(-1))
             
@@ -39,11 +46,13 @@ def test(**kwargs):
                 loss_input[0] = torch.sqrt((loss_input[0]**2).sum(dim=2, keepdim=True))
             
             for m in kwargs['metrics']: m.forward(loss_input)
-
             
+            for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_end(**kwargs)
+
     # Output metrics
     for m in kwargs['metrics']: m.output()    
     
     test_loss /= len(kwargs['test_loader'].dataset)
     print('\nTest set: Average loss: {:.4f}'.format(test_loss))
     
+    for callback_func in kwargs['callbacks']: kwargs = callback_func.on_validation_end(**kwargs)
