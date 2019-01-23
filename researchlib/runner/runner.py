@@ -1,5 +1,6 @@
 from .train import *
 from .test import *
+from .history import *
 from ..io import *
 from ..callbacks import *
 from ..utils import *
@@ -25,6 +26,7 @@ class Runner:
         self.keep_x_shape_ = False
         self.keep_y_shape_ = False
         self.require_data_ = False
+        self.history_ = History()
         self.multi_model = False
         self.cam_model = None
         
@@ -147,20 +149,23 @@ class Runner:
                                             optimizer=self.optimizer,
                                             epoch=epoch)
             
-            self.trainer(model=self.model, 
-                        train_loader=self.train_loader, 
-                        optimizer=self.optimizer, 
-                        loss_fn=self.loss_fn, 
-                        epoch=epoch, 
-                        augmentor=augmentor,
-                        is_cuda=self.is_cuda, 
-                        require_long=self.require_long_, 
-                        keep_x_shape=self.keep_x_shape_,
-                        keep_y_shape=self.keep_y_shape_,
-                        require_data=self.require_data_,
-                        mixup_alpha=mixup_alpha,
-                        callbacks=callbacks,
-                        metrics=metrics)
+            loss_records, matrix_records = self.trainer(model=self.model, 
+                                                        train_loader=self.train_loader, 
+                                                        optimizer=self.optimizer, 
+                                                        loss_fn=self.loss_fn, 
+                                                        epoch=epoch, 
+                                                        augmentor=augmentor,
+                                                        is_cuda=self.is_cuda, 
+                                                        require_long=self.require_long_, 
+                                                        keep_x_shape=self.keep_x_shape_,
+                                                        keep_y_shape=self.keep_y_shape_,
+                                                        require_data=self.require_data_,
+                                                        mixup_alpha=mixup_alpha,
+                                                        callbacks=callbacks,
+                                                        metrics=metrics)
+            
+            self.history_.add({'train_loss': sum(loss_records)/len(loss_records)})
+            self.history_ += matrix_records
             
             for callback_func in callbacks:
                 callback_func.on_epoch_end(model=self.model, 
@@ -169,19 +174,41 @@ class Runner:
                                             epoch=epoch)
             
             if self.test_loader:
-                self.tester(model=self.model, 
-                            test_loader=self.test_loader, 
-                            loss_fn=self.loss_fn, 
-                            is_cuda=self.is_cuda,
-                            epoch=epoch,
-                            require_long=self.require_long_, 
-                            require_data=self.require_data_, 
-                            keep_x_shape=self.keep_x_shape_,
-                            keep_y_shape=self.keep_y_shape_,
-                            metrics=metrics,
-                            callbacks=callbacks)
+                loss_records, matrix_records = self.tester(model=self.model, 
+                                                            test_loader=self.test_loader, 
+                                                            loss_fn=self.loss_fn, 
+                                                            is_cuda=self.is_cuda,
+                                                            epoch=epoch,
+                                                            require_long=self.require_long_, 
+                                                            require_data=self.require_data_, 
+                                                            keep_x_shape=self.keep_x_shape_,
+                                                            keep_y_shape=self.keep_y_shape_,
+                                                            metrics=metrics,
+                                                            callbacks=callbacks)
+                self.history_.add({'val_loss': loss_records})
+                self.history_ += matrix_records
     
-    def validate(self, metrics=[]):
+    
+    def history(self, plot=False):
+        if plot:
+            import matplotlib.pyplot as plt
+            fig, ax = plt.subplots(1, 2, figsize=(12, 4))
+            legends = [[], []]
+            for key in self.history_.records:
+                if 'loss' in key:
+                    legends[0].append(key)
+                    ax[0].plot(self.history_.records[key])
+                else:
+                    legends[1].append(key)
+                    ax[1].plot(self.history_.records[key])
+            ax[0].legend(legends[0])
+            ax[1].legend(legends[1])
+            plt.show()
+        else:
+            return self.history_
+            
+    
+    def validate(self, metrics=[], callbacks=[]):
         '''
             Multi-model supported
         '''
@@ -192,7 +219,7 @@ class Runner:
                     test_loader=self.test_loader, 
                     loss_fn=self.loss_fn, 
                     is_cuda=self.is_cuda, 
-                    epoch=epoch,
+                    epoch=1,
                     require_long=self.require_long_, 
                     require_data=self.require_data_, 
                     keep_x_shape=self.keep_x_shape_,

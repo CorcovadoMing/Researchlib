@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+from .history import *
 
 def test(**kwargs):
     '''
@@ -8,6 +9,7 @@ def test(**kwargs):
     
     kwargs['model'].eval()
     test_loss = 0
+    matrix_records = History()
     
     # Reset metrics
     for m in kwargs['metrics']: m.reset()
@@ -50,9 +52,11 @@ def test(**kwargs):
             for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_end(**kwargs)
 
     # Output metrics
-    for m in kwargs['metrics']: m.output()    
+    for m in kwargs['metrics']: matrix_records.add(m.output(), prefix='val')    
     
     test_loss /= len(kwargs['test_loader'].dataset)
     print('\nTest set: Average loss: {:.4f}'.format(test_loss))
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_validation_end(**kwargs)
+    
+    return test_loss, matrix_records

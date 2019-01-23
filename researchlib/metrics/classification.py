@@ -33,6 +33,7 @@ class ConfusionMatrix(Matrix):
             plt.title(all_sample_title);
         else:    
             print(self.m)
+        return {}
         
     def reset(self):
         self.m = np.zeros((self.classes, self.classes)).astype(np.int)
@@ -59,7 +60,9 @@ class Acc(Matrix):
             self.correct += predicted.eq(y_true).sum().float().numpy()
                     
     def output(self):
-        print(self.correct / float(self.total))
+        acc = (self.correct / float(self.total))
+        print(acc)
+        return {'acc': acc}
         
     def reset(self):
         self.total = 0

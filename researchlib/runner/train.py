@@ -1,4 +1,5 @@
 from ..callbacks import *
+from .history import *
 from tqdm.auto import tqdm
 import numpy as np
 import torch
@@ -16,6 +17,8 @@ def train(**kwargs):
     kwargs['model'].train()
     
     loss_history = []
+    matrix_records = History()
+    
     bar = tqdm(kwargs['train_loader'])
     
     # Reset metrics
@@ -59,9 +62,11 @@ def train(**kwargs):
         if kwargs['check'].cutoff: break
     
     # Output metrics
-    for m in kwargs['metrics']: m.output()
+    for m in kwargs['metrics']: matrix_records.add(m.output(), prefix='train')
     
-    return loss_history
+    return loss_history, matrix_records
+
+
 
 def train_minibatch_(**kwargs):
     kwargs['optimizer'].zero_grad()

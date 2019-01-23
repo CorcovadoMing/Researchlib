@@ -12,4 +12,4 @@ class FocalLoss(nn.Module):
         x = self.softmax(x)
         pt = x[torch.arange(x.size(0)), y]
         loss = -1 * self.alpha * ((1 - pt) ** self.gamma) * pt.log()
-        return loss.sum(-1).mean()
+        return loss.mean()
