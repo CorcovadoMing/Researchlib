@@ -100,6 +100,7 @@ class Runner:
         
     def set_cyclical_(self, lr):
         if self.default_callbacks:
+            self.default_callbacks = CyclicalLR(len(self.train_loader))
             self.default_callbacks.max_lr = lr
             self.default_callbacks.acc_iter = 0
             return [self.default_callbacks]

@@ -113,7 +113,7 @@ class SENet(nn.Module):
         out = self.layer4(out)
         out = F.adaptive_max_pool2d(out, 1)
         out = self.flat(out)
-        out = F.log_softmax(self.linear(out), dim=1)
+        out = self.linear(out)
         return out
 
 
