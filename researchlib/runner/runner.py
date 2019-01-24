@@ -201,7 +201,13 @@ class Runner:
                 else:
                     legends[1].append(key)
                     ax[1].plot(self.history_.records[key])
+            ax[0].set_title("Loss")
+            ax[0].set_xlabel("Epochs")
+            ax[0].set_ylabel("Loss")
             ax[0].legend(legends[0])
+            ax[1].set_title("Accuracy")
+            ax[1].set_xlabel("Epochs")
+            ax[1].set_ylabel("Accuracy")
             ax[1].legend(legends[1])
             plt.show()
         else:
