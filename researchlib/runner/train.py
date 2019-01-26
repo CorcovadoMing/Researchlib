@@ -19,7 +19,7 @@ def train(**kwargs):
     loss_history = []
     matrix_records = History()
     
-    bar = tqdm(kwargs['train_loader'])
+    bar = tqdm(kwargs['train_loader'], leave=False)
     
     # Reset metrics
     for m in kwargs['metrics']: m.reset()

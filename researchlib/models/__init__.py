@@ -10,3 +10,4 @@ from .wideresnet import *
 from .senet import *
 from .builder import *
 from .neural_process import *
+from .pointer_network import *

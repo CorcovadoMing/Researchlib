@@ -7,3 +7,4 @@ tmp
 *.pt
 model.py
 dirty
+data

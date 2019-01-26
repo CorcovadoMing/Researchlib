@@ -77,7 +77,7 @@ class Runner:
             
         # Assign optimizer
         if optimizer == 'adam':
-            self.optimizer = Adam(model.parameters(), betas=(0.9, 0.99))
+            self.optimizer = Adam(model.parameters(), betas=(0.9, 0.99), amsgrad=True)
         elif optimizer == 'sgd':
             self.optimizer = SGD(model.parameters(), lr=1e-2, momentum=0.9)
         elif optimizer == 'rmsprop':
