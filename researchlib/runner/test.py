@@ -55,7 +55,6 @@ def test(**kwargs):
     for m in kwargs['metrics']: matrix_records.add(m.output(), prefix='val')    
     
     test_loss /= len(kwargs['test_loader'])
-    print('\nTest set: Average loss: {:.4f}'.format(test_loss))
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_validation_end(**kwargs)
     

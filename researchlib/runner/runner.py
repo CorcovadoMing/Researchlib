@@ -144,6 +144,7 @@ class Runner:
             metrics = [self.default_metrics] + metrics
         
         for epoch in tqdm(range(1, epochs + 1)):
+        
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(model=self.model, 
                                             train_loader=self.train_loader, 
@@ -168,6 +169,7 @@ class Runner:
             self.history_.add({'train_loss': sum(loss_records)/len(loss_records)})
             self.history_ += matrix_records
             
+            
             for callback_func in callbacks:
                 callback_func.on_epoch_end(model=self.model, 
                                             train_loader=self.train_loader, 
@@ -188,6 +190,12 @@ class Runner:
                                                             callbacks=callbacks)
                 self.history_.add({'val_loss': loss_records})
                 self.history_ += matrix_records
+            
+            state = []
+            for i in self.history_.records:
+                state.append('{:1} {:.4f}'.format(i+':', self.history_.records[i][-1]))
+            print(',  '.join(state))
+            
     
     
     def history(self, plot=False):

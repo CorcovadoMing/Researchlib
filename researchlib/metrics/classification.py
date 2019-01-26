@@ -61,7 +61,6 @@ class Acc(Matrix):
                     
     def output(self):
         acc = (self.correct / float(self.total))
-        print(acc)
         return {'acc': acc}
         
     def reset(self):
