@@ -192,9 +192,17 @@ class Runner:
                 self.history_ += matrix_records
             
             state = []
+            if epoch == 1:
+                if self.test_loader:
+                    print('{:^10}{:^14}{:^14}{:^14}{:^14}'.format('Epochs', *self.history_.records.keys()))
+                    print('================================================================')
+                else:
+                    print('{:^10}{:^14}{:^14}'.format('Epochs', *self.history_.records.keys()))
+                    print('==============================') # Untested
+            state.append('{:^10d}'.format(epoch))
             for i in self.history_.records:
-                state.append('{:1} {:.4f}'.format(i+':', self.history_.records[i][-1]))
-            print(',  '.join(state))
+                state.append('{:^14.4f}'.format(self.history_.records[i][-1]))
+            print(''.join(state))
             
     
     
