@@ -31,17 +31,27 @@ def train(**kwargs):
             
         if kwargs['require_long']: target = target.long()
         
+        
+        if type(data) != type([]):
+            data = [data]
+        
+        if type(target) != type([]):
+            target = [target]
+        
+        
         if kwargs['mixup_alpha'] != 0:
             lam = np.random.beta(kwargs['mixup_alpha'], kwargs['mixup_alpha'])
-            index = torch.randperm(data.size(0))
-            data = lam * data + (1-lam) * data[index]
-            target_res = target[index]
+            index = torch.randperm(data[0].size(0))
+            data[0] = lam * data[0] + (1-lam) * data[0][index]
+            target_res = target[0][index]
+            target_res = [target_res]
             kwargs['check'].lam = lam
             kwargs['mixup_loss_fn'] = mixup_loss_fn
         
+        
         if kwargs['is_cuda']:
-            kwargs['data'], kwargs['target'] = data.cuda(), target.cuda()
-            if kwargs['mixup_alpha'] != 0: kwargs['target_res'] = target_res.cuda()
+            kwargs['data'], kwargs['target'] = [i.cuda() for i in data], [i.cuda() for i in target]
+            if kwargs['mixup_alpha'] != 0: kwargs['target_res'] = [i.cuda() for i in target_res]
         else:
             kwargs['data'], kwargs['target'] = data, target
             if kwargs['mixup_alpha'] != 0: kwargs['target_res'] = target_res
@@ -71,14 +81,11 @@ def train(**kwargs):
 def train_minibatch_(**kwargs):
     kwargs['optimizer'].zero_grad()
     
-    if type(kwargs['data']) == type([]):
-        output = kwargs['model'](*kwargs['data'])
-    else:
-        output = kwargs['model'](kwargs['data'])
+    output = kwargs['model'](*kwargs['data'])
     
-    loss_input = [output, kwargs['target']]
+    loss_input = [output, *kwargs['target']]
     if kwargs['mixup_alpha'] != 0:
-        loss_input.append(kwargs['target_res'])
+        loss_input.append(*kwargs['target_res'])
     
     if not kwargs['keep_x_shape']: loss_input[0] = loss_input[0].contiguous().view(-1, loss_input[0].size(-1))
     if not kwargs['keep_y_shape']:

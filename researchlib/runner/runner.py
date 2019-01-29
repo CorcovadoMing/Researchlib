@@ -192,12 +192,13 @@ class Runner:
                 self.history_ += matrix_records
             
             state = []
+            fs = '{:^14}'
             if epoch == 1:
                 if self.test_loader:
-                    print('{:^10}{:^14}{:^14}{:^14}{:^14}'.format('Epochs', *self.history_.records.keys()))
+                    print(('{:^10}'+(fs*len(self.history_.records.keys()))).format('Epochs', *self.history_.records.keys()))
                     print('================================================================')
                 else:
-                    print('{:^10}{:^14}{:^14}'.format('Epochs', *self.history_.records.keys()))
+                    print(('{:^10}'+(fs*len(self.history_.records.keys()))).format('Epochs', *self.history_.records.keys()))
                     print('==============================') # Untested
             state.append('{:^10d}'.format(epoch))
             for i in self.history_.records:
@@ -270,7 +271,7 @@ class Runner:
         '''
         save_model(self.model, 'tmp.h5')
         try:
-            loss = self.trainer(model=self.model, 
+            loss, _ = self.trainer(model=self.model, 
                                 train_loader=self.train_loader, 
                                 optimizer=self.optimizer, 
                                 loss_fn=self.loss_fn, 
@@ -293,10 +294,8 @@ class Runner:
                 self.lr_history.append(1e-9 * (step ** i))
             if plot:
                 plot_utils(self.loss_history, self.lr_history)
-        except:
-            pass
-        finally:
-            load_model(self.model, 'tmp.h5')
+        except Exception as e: print('Error:', e)
+        finally: load_model(self.model, 'tmp.h5')
     
     def cam(self, vx, final_layer, out_filters, classes):
         if not self.cam_model:
