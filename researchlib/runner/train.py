@@ -3,6 +3,7 @@ from .history import *
 from tqdm.auto import tqdm
 import numpy as np
 import torch
+from torch.nn.utils import *
 
 class Check:
     def __init__(self):
@@ -107,6 +108,7 @@ def train_minibatch_(**kwargs):
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_begin(**kwargs)
     
+    clip_grad_norm_(kwargs['model'].parameters(), 5.)
     kwargs['optimizer'].step()
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_end(**kwargs)

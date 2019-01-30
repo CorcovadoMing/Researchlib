@@ -16,16 +16,17 @@ class QRNNLayer(nn.Module):
         self.rs = return_sequences
     
     def forward(self, x):
-        x = x.permute(1, 0, 2)
+        # batch, features, length -> length, batch, features
+        x = x.permute(2, 0, 1).contiguous()
         if self.bidirection:
             x_f, _ = self.forward_f(x)
             x_b, _ = self.backward_f(x)
             x = torch.cat((x_f, x_b), dim=-1)
         else:
             x, _ = self.f(x)
-        x = x.permute(1, 0, 2)
+        x = x.permute(1, 2, 0).contiguous()
         
         if self.rs:
             return x
         else:
-            return x[:, -1, :]
+            return x[:, :, -1]
