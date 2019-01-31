@@ -8,23 +8,25 @@ class QRNNLayer(nn.Module):
         self.in_dim = in_dim
         self.out_dim = out_dim
         if bidirection:
-            self.forward_f = QRNNLayer_(in_dim, out_dim)
-            self.backward_f = QRNNLayer_(in_dim, out_dim)
+            self.forward_f = QRNN(in_dim, out_dim, dropout=0.4)
+            self.backward_f = QRNN(in_dim, out_dim, dropout=0.4)
         else:
-            self.f = QRNNLayer_(in_dim, out_dim)
+            self.f = QRNN(in_dim, out_dim, dropout=0.4)
         self.bidirection = bidirection
         self.rs = return_sequences
     
     def forward(self, x):
         # batch, features, length -> length, batch, features
-        x = x.permute(2, 0, 1).contiguous()
+        x = x.permute(2, 0, 1)
+        
         if self.bidirection:
             x_f, _ = self.forward_f(x)
             x_b, _ = self.backward_f(x)
             x = torch.cat((x_f, x_b), dim=-1)
         else:
             x, _ = self.f(x)
-        x = x.permute(1, 2, 0).contiguous()
+        
+        x = x.permute(1, 2, 0)
         
         if self.rs:
             return x

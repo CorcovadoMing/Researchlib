@@ -76,8 +76,8 @@ class QRNNLayer_(nn.Module):
             Y = Y.view(seq_len, batch_size, 2 * self.hidden_size)
             Z, F = Y.chunk(2, dim=2)
         ###
-        Z = torch.nn.functional.tanh(Z)
-        F = torch.nn.functional.sigmoid(F)
+        Z = torch.tanh(Z)
+        F = torch.sigmoid(F)
 
         # If zoneout is specified, we perform dropout on the forget gates in F
         # If an element of F is zero, that means the corresponding neuron keeps the old value
@@ -100,7 +100,7 @@ class QRNNLayer_(nn.Module):
 
         # Apply (potentially optional) output gate
         if self.output_gate:
-            H = torch.nn.functional.sigmoid(O) * C
+            H = torch.sigmoid(O) * C
         else:
             H = C
 
@@ -143,7 +143,7 @@ class QRNN(torch.nn.Module):
 
         super().__init__()
 
-        self.layers = torch.nn.ModuleList(layers if layers else [QRNNLayer(input_size if l == 0 else hidden_size, hidden_size, **kwargs) for l in range(num_layers)])
+        self.layers = torch.nn.ModuleList(layers if layers else [QRNNLayer_(input_size if l == 0 else hidden_size, hidden_size, **kwargs) for l in range(num_layers)])
 
         self.input_size = input_size
         self.hidden_size = hidden_size

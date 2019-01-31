@@ -15,7 +15,7 @@ from tqdm.auto import tqdm
 import torch.backends.cudnn as cudnn
         
 class Runner:
-    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None):
+    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, monitor_mode='min', monitor_state='metrics'):
         '''
             Multi-model supported
         '''
@@ -29,6 +29,11 @@ class Runner:
         self.history_ = History()
         self.multi_model = False
         self.cam_model = None
+        
+        # Monitor best model
+        self.monitor_mode = monitor_mode
+        self.monitor_state = monitor_state
+        self.monitor = None
         
         self.default_callbacks = CyclicalLR(len(train_loader))
         
@@ -66,6 +71,8 @@ class Runner:
             self.loss_fn = F.mse_loss
         elif loss_fn == 'mae':
             self.loss_fn = F.l1_loss
+        elif loss_fn == 'l1l2':
+            self.loss_fn = L1L2()
         else:
             self.loss_fn = loss_fn
             self.keep_x_shape_ = True
@@ -84,6 +91,9 @@ class Runner:
             self.optimizer = RMSprop(model.parameters())
         else:
             self.optimizer = optimizer
+        
+        if monitor_mode == 'min':
+            self.monitor = 1e9
             
         cudnn.benchmark = True
         
@@ -144,6 +154,7 @@ class Runner:
             metrics = [self.default_metrics] + metrics
         
         for epoch in tqdm(range(1, epochs + 1)):
+            epoch_str = str(epoch)
         
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(model=self.model, 
@@ -190,6 +201,23 @@ class Runner:
                                                             callbacks=callbacks)
                 self.history_.add({'val_loss': loss_records})
                 self.history_ += matrix_records
+                
+                cri = None
+                if self.monitor_state == 'metrics':
+                    cri = list(matrix_records.records.values())[-1][-1]
+                else:
+                    cri = loss_records
+                
+                if self.monitor_mode == 'min':
+                    if cri <= self.monitor:
+                        self.monitor = cri
+                        save_model(self.model, 'checkpoint.h5')
+                        epoch_str += '*'
+                else:
+                    if cri >= self.monitor:
+                        self.monitor = cri
+                        save_model(self.model, 'checkpoint.h5')
+                        epoch_str += '*'
             
             state = []
             fs = '{:^14}'
@@ -200,7 +228,7 @@ class Runner:
                 else:
                     print(('{:^10}'+(fs*len(self.history_.records.keys()))).format('Epochs', *self.history_.records.keys()))
                     print('==============================') # Untested
-            state.append('{:^10d}'.format(epoch))
+            state.append('{:^10}'.format(epoch_str))
             for i in self.history_.records:
                 state.append('{:^14.4f}'.format(self.history_.records[i][-1]))
             print(''.join(state))
@@ -239,18 +267,22 @@ class Runner:
         if self.default_metrics:
             metrics = [self.default_metrics] + metrics
         
-        self.tester(model=self.model, 
-                    test_loader=self.test_loader, 
-                    loss_fn=self.loss_fn, 
-                    is_cuda=self.is_cuda, 
-                    epoch=1,
-                    require_long=self.require_long_, 
-                    require_data=self.require_data_, 
-                    keep_x_shape=self.keep_x_shape_,
-                    keep_y_shape=self.keep_y_shape_,
-                    metrics=metrics,
-                    callbacks=callbacks)
-    
+        loss_records, matrix_records = self.tester(model=self.model, 
+                                                            test_loader=self.test_loader, 
+                                                            loss_fn=self.loss_fn, 
+                                                            is_cuda=self.is_cuda,
+                                                            epoch=1,
+                                                            require_long=self.require_long_, 
+                                                            require_data=self.require_data_, 
+                                                            keep_x_shape=self.keep_x_shape_,
+                                                            keep_y_shape=self.keep_y_shape_,
+                                                            metrics=metrics,
+                                                            callbacks=callbacks)
+        if len(metrics) > 0: 
+            print(loss_records, list(matrix_records.records.values())[-1][-1].numpy())
+        else:
+            print(loss_records)
+
     def save(self, path):
         '''
             Save model to path

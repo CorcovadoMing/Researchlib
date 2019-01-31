@@ -7,9 +7,11 @@ class LSTMLayer(nn.Module):
         self.return_sequences = return_sequences
     
     def forward(self, x):
+        x = x.permute(0, 2, 1)
         out, _ = self.f(x)
+        out = out.permute(0, 2, 1)
         if self.return_sequences:
             return out
         else:
-            return out[:, -1, :]
+            return out[:, :, -1]
     

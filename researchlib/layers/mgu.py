@@ -24,7 +24,8 @@ class MGULayer(nn.Module):
             h_t = (1 - f_t) * h_(t-1) + f_t * h_tilda
         '''
         
-        # x: (bs, ns, features)
+        x = x.permute(0, 2, 1)
+        # x: (bs, features, ns)
         h_t = torch.zeros(x.size(0), self.out_dim)
         if next(self.parameters()).is_cuda:
             h_t = h_t.cuda()
@@ -36,9 +37,10 @@ class MGULayer(nn.Module):
             h_t = (1 - f_t) * h_t + f_t * h_tilda
             out.append(h_t)
         out = torch.stack(out, dim=1)
+        out = out.permute(0, 2, 1)
         
         if self.rs:
             return out
         else:
-            return out[:, -1, :]
+            return out[:, :, -1]
             
