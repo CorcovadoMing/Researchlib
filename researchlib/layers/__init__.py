@@ -12,3 +12,4 @@ from .reshape import *
 from .binarized import *
 from .attention import *
 from .seq2seq import *
+from .pairnet import *
