@@ -7,10 +7,9 @@ def count(y, classes=10):
             hist[int(j)] += 1
     print(hist)
 
-def shuffle(x, y):
-    assert len(x) == len(y)
-    p = np.random.permutation(len(x))
-    return x[p], y[p]
+def shuffle(l):
+    p = np.random.permutation(len(l[0]))
+    return [i[p] for i in l]
 
 def exclude_classes(x, y, exclude):
     if type(exclude) != type([]):
