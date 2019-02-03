@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from ..layers import *
+from ...layers import *
 
 class PointerNetLoss(nn.Module):
     def __init__(self):

@@ -55,32 +55,10 @@ class Runner:
             self.model = model
             
         # Assign loss function
-        if loss_fn == 'nll':
-            self.loss_fn = F.nll_loss
-            self.require_long_ = True
-            self.default_metrics = Acc()
-        elif loss_fn == 'crossentropy':
-            self.loss_fn = nn.CrossEntropyLoss()
-            self.require_long_ = True
-            self.default_metrics = Acc()
-        elif loss_fn == 'focal':
-            self.loss_fn = FocalLoss()
-            self.require_long_ = True
-            self.default_metrics = Acc()
-        elif loss_fn == 'mse':
-            self.loss_fn = F.mse_loss
-        elif loss_fn == 'mae':
-            self.loss_fn = F.l1_loss
-        elif loss_fn == 'l1l2':
-            self.loss_fn = L1L2()
+        if type(loss_fn) == type({}):
+            self.loss_fn, self.require_long_, self.keep_x_shape_, self.keep_y_shape_, self.require_data_, self.default_metrics = loss_ensemble(loss_fn)
         else:
-            self.loss_fn = loss_fn
-            self.keep_x_shape_ = True
-            self.keep_y_shape_ = True
-            try:
-                self.require_data_ = loss_fn.require_data
-            except:
-                pass
+            self.loss_fn, self.require_long_, self.keep_x_shape_, self.keep_y_shape_, self.require_data_, self.default_metrics = loss_mapping(loss_fn)
             
         # Assign optimizer
         if optimizer == 'adam':

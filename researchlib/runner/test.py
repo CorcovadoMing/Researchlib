@@ -15,7 +15,7 @@ def test(**kwargs):
     for m in kwargs['metrics']: m.reset()
     
     with torch.no_grad():
-        for data, target in kwargs['test_loader']:
+        for batch_idx, (data, target) in enumerate(kwargs['test_loader']):
             if kwargs['require_long']: target = target.long()
             if kwargs['is_cuda']: data, target = data.cuda(), target.cuda()
             
