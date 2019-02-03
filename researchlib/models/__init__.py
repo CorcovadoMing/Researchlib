@@ -11,3 +11,4 @@ from .senet import *
 from .builder import *
 from .neural_process import *
 from .pointer_network import *
+from .lstnet import *

@@ -1,7 +1,4 @@
 from .adaptive_concat_pool import *
-from .flatten import *
-from .lambda_layer import *
-from .time_distributed import *
 from .lstm import *
 from .mgu import *
 from .qrnn import *
@@ -13,3 +10,6 @@ from .binarized import *
 from .attention import *
 from .seq2seq import *
 from .pairnet import *
+
+from .activator import *
+from .wrapper import *
