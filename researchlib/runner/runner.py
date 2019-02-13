@@ -72,6 +72,10 @@ class Runner:
         
         if monitor_mode == 'min':
             self.monitor = 1e9
+            self.monitor_mode = min
+        elif monitor_mode == 'max':
+            self.monitor = 0
+            self.monitor_mode = max
             
         cudnn.benchmark = True
         
@@ -186,17 +190,12 @@ class Runner:
                 else:
                     cri = loss_records
                 
-                if self.monitor_mode == 'min':
-                    if cri <= self.monitor:
-                        self.monitor = cri
-                        save_model(self.model, 'checkpoint.h5')
-                        epoch_str += '*'
-                else:
-                    if cri >= self.monitor:
-                        self.monitor = cri
-                        save_model(self.model, 'checkpoint.h5')
-                        epoch_str += '*'
-            
+                # Checkpoint
+                if self.monitor_mode(cri, self.monitor) == cri:
+                    self.monitor = cri
+                    save_model(self.model, 'checkpoint.h5')
+                    epoch_str += '*'
+                
             state = []
             fs = '{:^14}'
             if epoch == 1:

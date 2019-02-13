@@ -5,7 +5,6 @@ from .qrnn import *
 from .dropblock import *
 from .capsule_layer import *
 from .reconstruct_regularized import *
-from .reshape import *
 from .binarized import *
 from .attention import *
 from .seq2seq import *
