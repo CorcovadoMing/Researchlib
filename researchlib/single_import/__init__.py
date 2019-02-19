@@ -6,4 +6,7 @@ from ..utils import *
 from ..layers import *
 from ..loss import *
 from ..metrics import *
-from ..ml import *
+from ..search import *
+
+import ..ml as ml
+import ..deploy as deploy
