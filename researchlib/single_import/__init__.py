@@ -8,5 +8,5 @@ from ..loss import *
 from ..metrics import *
 from ..search import *
 
-import ..ml as ml
-import ..deploy as deploy
+from ..ml import *
+from ..deploy import *

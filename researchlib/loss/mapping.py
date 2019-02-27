@@ -17,6 +17,18 @@ def loss_mapping(loss_fn):
             pass
         default_metrics = Acc()
         
+    elif loss_fn == 'bce':
+        loss_fn = nn.BCELoss()
+        require_long_ = False
+        keep_x_shape_ = False
+        keep_y_shape_ = False
+        require_data_ = False
+        try:
+            require_data_ = loss_fn.require_data
+        except:
+            pass
+        default_metrics = BCEAcc()
+        
     elif loss_fn == 'crossentropy':
         loss_fn = nn.CrossEntropyLoss()
         require_long_ = True

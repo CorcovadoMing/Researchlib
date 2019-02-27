@@ -256,7 +256,7 @@ class Runner:
                                                             metrics=metrics,
                                                             callbacks=callbacks)
         if len(metrics) > 0: 
-            print(loss_records, list(matrix_records.records.values())[-1][-1].numpy())
+            print(loss_records, list(matrix_records.records.values())[-1][-1])
         else:
             print(loss_records)
 
