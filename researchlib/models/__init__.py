@@ -1,3 +1,5 @@
+from .builder import *
+
 from .vgg import *
 from .lenet import *
 from .resnet import *
@@ -8,7 +10,6 @@ from .mobilenet import *
 from .densenet3 import *
 from .wideresnet import *
 from .senet import *
-from .builder import *
 from .neural_process import *
 from .pointer_network import *
 from .lstnet import *
