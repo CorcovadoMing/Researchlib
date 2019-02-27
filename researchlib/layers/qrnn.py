@@ -18,7 +18,8 @@ class QRNNLayer(nn.Module):
     def forward(self, x):
         # batch, features, length -> length, batch, features
         x = x.permute(2, 0, 1)
-        
+        #x = x.transpose(1, 2)
+        #x = x.transpose(0, 1)
         if self.bidirection:
             x_f, _ = self.forward_f(x)
             x_b, _ = self.backward_f(x)
@@ -26,6 +27,8 @@ class QRNNLayer(nn.Module):
         else:
             x, _ = self.f(x)
         
+        #x = x.transpose(1, 2)
+        #x = x.transpose(0, 2)
         x = x.permute(1, 2, 0)
         
         if self.rs:
