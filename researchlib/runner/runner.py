@@ -82,6 +82,8 @@ class Runner:
         
         
         # Assign optimizer
+        # 
+        # self.optimizer
         # --------------------------------------------------------------------------------------------------------------------------------
         if optimizer == 'adam':
             self.optimizer = Adam(model.parameters(), betas=(0.9, 0.99), amsgrad=True)
