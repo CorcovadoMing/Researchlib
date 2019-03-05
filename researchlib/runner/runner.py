@@ -57,6 +57,13 @@ class Runner:
         
         
         # Assign loss function
+        # 
+        # self.loss_fn
+        # self.require_long_
+        # self.keep_x_shape_
+        # self.keep_y_shape_
+        # self.require_data_
+        # self.default_metric
         # --------------------------------------------------------------------------------------------------------------------------------
         def _process_loss_fn(loss_fn):
             if type(loss_fn) == type({}):
