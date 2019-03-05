@@ -20,20 +20,12 @@ class Runner:
             Multi-model supported
         '''
         self.is_cuda = torch.cuda.is_available()
-        self.require_long_ = False
         self.train_loader = train_loader
         self.test_loader = test_loader
-        self.keep_x_shape_ = False
-        self.keep_y_shape_ = False
-        self.require_data_ = False
         self.history_ = History()
         self.multi_model = False
         self.cam_model = None
         
-        # Monitor best model
-        self.monitor_mode = monitor_mode
-        self.monitor_state = monitor_state
-        self.monitor = None
         
         self.default_callbacks = CyclicalLR(len(train_loader))
         
@@ -64,6 +56,12 @@ class Runner:
         # self.keep_y_shape_
         # self.require_data_
         # self.default_metric
+        self.loss_fn = []
+        self.require_long_ = False
+        self.keep_x_shape_ = False
+        self.keep_y_shape_ = False
+        self.require_data_ = False
+        self.default_metric = None
         # --------------------------------------------------------------------------------------------------------------------------------
         def _process_loss_fn(loss_fn):
             if type(loss_fn) == type({}):
@@ -73,18 +71,18 @@ class Runner:
             return process_func(loss_fn)
         
         if type(loss_fn) == type([]):
-            self.loss_fn = []
             for lf in loss_fn:
                 _loss_fn, self.require_long_, self.keep_x_shape_, self.keep_y_shape_, self.require_data_, self.default_metrics = _process_loss_fn(lf)
                 self.loss_fn.append(_loss_fn)
         else:
             _loss_fn, self.require_long_, self.keep_x_shape_, self.keep_y_shape_, self.require_data_, self.default_metrics = _process_loss_fn(loss_fn)
-            self.loss_fn = [_loss_fn]
+            self.loss_fn.append(_loss_fn)
         # --------------------------------------------------------------------------------------------------------------------------------
         
         
         
         # Assign optimizer
+        # --------------------------------------------------------------------------------------------------------------------------------
         if optimizer == 'adam':
             self.optimizer = Adam(model.parameters(), betas=(0.9, 0.99), amsgrad=True)
         elif optimizer == 'sgd':
@@ -93,14 +91,28 @@ class Runner:
             self.optimizer = RMSprop(model.parameters())
         else:
             self.optimizer = optimizer
+        # --------------------------------------------------------------------------------------------------------------------------------
         
+        
+        
+        
+        # Assign monitoring
+        #
+        # self.monitor_mode
+        # self.monitor_state
+        # self.monitor
+        self.monitor_mode = monitor_mode
+        self.monitor_state = monitor_state
+        self.monitor = None
+        # --------------------------------------------------------------------------------------------------------------------------------
         if monitor_mode == 'min':
             self.monitor = 1e9
             self.monitor_mode = min
         elif monitor_mode == 'max':
             self.monitor = 0
             self.monitor_mode = max
-            
+        # --------------------------------------------------------------------------------------------------------------------------------
+        
         cudnn.benchmark = True
         
     def summary(self):
