@@ -54,12 +54,29 @@ class Runner:
         else:
             self.model = model
             
+        
+        
         # Assign loss function
-        if type(loss_fn) == type({}):
-            self.loss_fn, self.require_long_, self.keep_x_shape_, self.keep_y_shape_, self.require_data_, self.default_metrics = loss_ensemble(loss_fn)
+        # --------------------------------------------------------------------------------------------------------------------------------
+        def _process_loss_fn(loss_fn):
+            if type(loss_fn) == type({}):
+                process_func = loss_ensemble
+            else:
+                process_func = loss_mapping
+            return process_func(loss_fn)
+        
+        if type(loss_fn) == type([]):
+            self.loss_fn = []
+            for lf in loss_fn:
+                _loss_fn, self.require_long_, self.keep_x_shape_, self.keep_y_shape_, self.require_data_, self.default_metrics = _process_loss_fn(lf)
+                self.loss_fn.append(_loss_fn)
         else:
-            self.loss_fn, self.require_long_, self.keep_x_shape_, self.keep_y_shape_, self.require_data_, self.default_metrics = loss_mapping(loss_fn)
-            
+            _loss_fn, self.require_long_, self.keep_x_shape_, self.keep_y_shape_, self.require_data_, self.default_metrics = _process_loss_fn(loss_fn)
+            self.loss_fn = [_loss_fn]
+        # --------------------------------------------------------------------------------------------------------------------------------
+        
+        
+        
         # Assign optimizer
         if optimizer == 'adam':
             self.optimizer = Adam(model.parameters(), betas=(0.9, 0.99), amsgrad=True)

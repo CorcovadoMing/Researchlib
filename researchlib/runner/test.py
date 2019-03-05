@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from .history import *
+from ..utils import *
 
 def test(**kwargs):
     '''
@@ -28,26 +29,30 @@ def test(**kwargs):
             else:
                 output = kwargs['model'](kwargs['data'])
             
-            loss_input = [output, kwargs['target']]
+            auxout = get_aux_out(kwargs['model'])
+            auxout.append(output)
             
-            if not kwargs['keep_x_shape']: loss_input[0] = loss_input[0].contiguous().view(-1, loss_input[0].size(-1))
+            loss_input = [kwargs['target']]
+            
+            if not kwargs['keep_x_shape']: auxout[-1] = auxout[-1].contiguous().view(-1, auxout[-1].size(-1))
             
             if not kwargs['keep_y_shape']: 
-                if len(loss_input[1].shape) > 1:
-                    loss_input[1] = loss_input[1].contiguous().view(-1, loss_input[1].size(-1))
+                if len(loss_input[0].shape) > 1:
+                    loss_input[0] = loss_input[0].contiguous().view(-1, loss_input[0].size(-1))
                 else:
-                    loss_input[1] = loss_input[1].contiguous().view(-1)
+                    loss_input[0] = loss_input[0].contiguous().view(-1)
                     
             if kwargs['require_data']: loss_input.append(data)
             
-            test_loss += kwargs['loss_fn'](*loss_input).item()
+            for i in range(len(auxout)):
+                test_loss += kwargs['loss_fn'][i](auxout[i], *loss_input).item()
             
             # Capsule, TODO: refine the part
-            if type(loss_input[0]) == type(()):
-                loss_input[0] = loss_input[0][0]
-                loss_input[0] = torch.sqrt((loss_input[0]**2).sum(dim=2, keepdim=True))
+            if type(auxout[-1]) == type(()):
+                auxout[-1] = auxout[-1][0]
+                auxout[-1] = torch.sqrt((auxout[-1]**2).sum(dim=2, keepdim=True))
             
-            for m in kwargs['metrics']: m.forward(loss_input)
+            for m in kwargs['metrics']: m.forward([auxout[-1]] + loss_input)
             
             for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_end(**kwargs)
 

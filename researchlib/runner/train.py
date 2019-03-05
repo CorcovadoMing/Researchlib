@@ -4,6 +4,7 @@ from tqdm.auto import tqdm
 import numpy as np
 import torch
 from torch.nn.utils import *
+from ..utils import *
 
 class Check:
     def __init__(self):
@@ -83,12 +84,14 @@ def train_minibatch_(**kwargs):
     kwargs['optimizer'].zero_grad()
     
     output = kwargs['model'](*kwargs['data'])
+    auxout = get_aux_out(kwargs['model'])
+    auxout.append(output)
     
-    loss_input = [output, *kwargs['target']]
+    loss_input = [*kwargs['target']]
     if kwargs['mixup_alpha'] != 0:
         loss_input.append(*kwargs['target_res'])
     
-    if not kwargs['keep_x_shape']: loss_input[0] = loss_input[0].contiguous().view(-1, loss_input[0].size(-1))
+    if not kwargs['keep_x_shape']: auxout[-1] = auxout[-1].contiguous().view(-1, auxout[-1].size(-1))
     if not kwargs['keep_y_shape']:
         for i in range(1, len(loss_input)):
             if len(loss_input[i].shape) > 1:
@@ -98,11 +101,14 @@ def train_minibatch_(**kwargs):
                 
     if kwargs['require_data']: loss_input.append(kwargs['data'])
 
+    loss = torch.zeros(1).cuda()
     if kwargs['mixup_alpha'] != 0:
         loss_input = loss_input + [kwargs['check'].lam, kwargs['loss_fn']]
-        loss = kwargs['mixup_loss_fn'](*loss_input)
+        for i in range(len(auxout)):
+            loss += kwargs['mixup_loss_fn'](auxout[i], *loss_input)
     else:
-        loss = kwargs['loss_fn'](*loss_input)
+        for i in range(len(auxout)):
+            loss += kwargs['loss_fn'][i](auxout[i], *loss_input)
         
     loss.backward()
     
@@ -113,11 +119,11 @@ def train_minibatch_(**kwargs):
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_end(**kwargs)
     
-    if type(loss_input[0]) == type(()):
-        loss_input[0] = loss_input[0][0]
-        loss_input[0] = torch.sqrt((loss_input[0]**2).sum(dim=2, keepdim=True))
+    if type(auxout[-1]) == type(()):
+        auxout[-1] = auxout[-1][0]
+        auxout[-1] = torch.sqrt((auxout[-1]**2).sum(dim=2, keepdim=True))
     
     # Apply metrics
-    for m in kwargs['metrics']: m.forward(loss_input)
+    for m in kwargs['metrics']: m.forward([auxout[-1]] + loss_input)
         
     return loss.item()
