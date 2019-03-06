@@ -1,12 +1,11 @@
 from torchvision import datasets, transforms
 import torch
 
-
 def MNIST(train=True, normalize=True, custom_tf=[]):
     tf = custom_tf + [transforms.ToTensor()]
     if normalize: tf.append(transforms.Normalize((0.1307,), (0.3081,)))
     return datasets.MNIST('../data', train=train, download=True, transform=transforms.Compose(tf))
-
+    
 
 def CIFAR10(train=True, normalize=True, custom_tf=[]):
     tf = custom_tf + [transforms.ToTensor()]

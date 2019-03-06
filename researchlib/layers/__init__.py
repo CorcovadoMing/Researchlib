@@ -9,6 +9,7 @@ from .binarized import *
 from .attention import *
 from .seq2seq import *
 from .pairnet import *
+from .act import *
 
 from .activator import *
 from .wrapper import *
