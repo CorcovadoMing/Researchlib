@@ -10,8 +10,10 @@ class Check:
     def __init__(self):
         pass
 
-def mixup_loss_fn(x, y, y_res, lam, loss_fn):
-    return lam * loss_fn(x, y) + (1-lam) * loss_fn(x, y_res)        
+
+def mixup_loss_fn(loss_fn, x, y, y_res, lam):
+    return lam * loss_fn(x, y) + (1 - lam) * loss_fn(x, y_res)
+            
             
 def train(**kwargs):
     kwargs['check'] = Check()
@@ -103,9 +105,9 @@ def train_minibatch_(**kwargs):
 
     loss = torch.zeros(1).cuda()
     if kwargs['mixup_alpha'] != 0:
-        loss_input = loss_input + [kwargs['check'].lam, kwargs['loss_fn']]
+        loss_input = loss_input + [kwargs['check'].lam]
         for i in range(len(auxout)):
-            loss += kwargs['mixup_loss_fn'](auxout[i], *loss_input)
+            loss += kwargs['mixup_loss_fn'](kwargs['loss_fn'][i], auxout[i], *loss_input)
     else:
         for i in range(len(auxout)):
             loss += kwargs['loss_fn'][i](auxout[i], *loss_input)
