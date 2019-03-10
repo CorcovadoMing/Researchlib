@@ -3,10 +3,25 @@ import torch.nn.functional as F
 from .custom_loss import *
 from ..metrics import *
 
+def log_likelihood(input, target, weight=None, size_average=None, ignore_index=-100, reduce=None, reduction='mean'):
+    return F.nll_loss(input.exp(), target, weight=None, size_average=None, ignore_index=-100, reduce=None, reduction='mean')
+
 def loss_mapping(loss_fn):
     # Assign loss function
     if loss_fn == 'nll':
         loss_fn = F.nll_loss
+        require_long_ = True
+        keep_x_shape_ = False
+        keep_y_shape_ = False
+        require_data_ = False
+        try:
+            require_data_ = loss_fn.require_data
+        except:
+            pass
+        default_metrics = Acc()
+        
+    elif loss_fn == 'll':
+        loss_fn = log_likelihood
         require_long_ = True
         keep_x_shape_ = False
         keep_y_shape_ = False

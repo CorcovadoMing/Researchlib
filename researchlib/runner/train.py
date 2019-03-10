@@ -12,8 +12,8 @@ class Check:
 
 def mixup_loss_fn(loss_fn, x, y, y_res, lam):
     return lam * loss_fn(x, y) + (1 - lam) * loss_fn(x, y_res)
-            
-            
+
+
 def train(**kwargs):
     kwargs['check'] = Check()
     kwargs['check'].cutoff = False
@@ -35,7 +35,7 @@ def train(**kwargs):
         
         if kwargs['augmentor']: data, target = kwargs['augmentor'].on(data, target)
         
-        if kwargs['require_long']: target = [target[0].float(), target[-1].long()] #target = [i.long() for i in target]
+        target = [i.long() if j else i for i, j in zip(target, kwargs['require_long'])]
         
         
         if type(data) != type([]) and type(data) != type(()):

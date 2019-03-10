@@ -12,10 +12,10 @@ def po_meta_heuristic_(x, objective, epoch, mode, accept, opt, opt_tune):
     # 1. fitness
     for (i, data) in enumerate(x):
         x_fitness[i] = objective(data)
-    best_fitness, index = torch.min(x_fitness, 0)
+    best_fitness, index = torch.max(x_fitness, 0)
     if fitness_record is None:
         fitness_record = best_fitness
-    if min(best_fitness, fitness_record) == best_fitness: 
+    if max(best_fitness, fitness_record) == best_fitness: 
         x_record = x[index]
         fitness_record = best_fitness
     
@@ -40,8 +40,8 @@ def po_meta_heuristic_(x, objective, epoch, mode, accept, opt, opt_tune):
         for (i, data) in enumerate(child):
             child_fitness[i] = objective(data)
 
-        x_fitness, x_index = x_fitness.sort()
-        child_fitness, child_index = child_fitness.sort()
+        x_fitness, x_index = x_fitness.sort(descending=True)
+        child_fitness, child_index = child_fitness.sort(descending=True)
         x = x[x_index]
         child = child[child_index]
         x[int(x.size(0)/2):] = child[:int(x.size(0)/2)] 
@@ -52,13 +52,13 @@ def po_meta_heuristic_(x, objective, epoch, mode, accept, opt, opt_tune):
         # 5. fitness
         for (i, data) in enumerate(x):
             x_fitness[i] = objective(data)
-        best_fitness, index = torch.min(x_fitness, 0)
-        if min(best_fitness, fitness_record) == best_fitness: 
+        best_fitness, index = torch.max(x_fitness, 0)
+        if max(best_fitness, fitness_record) == best_fitness: 
             x_record = x[index]
             fitness_record = best_fitness
             
         # 6. Eliteness
-        x[-1] = x_record
+        x[0] = x_record
         records.append(fitness_record)
     
     return x_record, fitness_record, records

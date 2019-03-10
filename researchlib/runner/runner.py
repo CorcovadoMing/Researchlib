@@ -55,13 +55,13 @@ class Runner:
         # self.keep_x_shape_
         # self.keep_y_shape_
         # self.require_data_
-        # self.default_metric
+        # self.default_metrics
         self.loss_fn = []
-        self.require_long_ = False
-        self.keep_x_shape_ = False
-        self.keep_y_shape_ = False
-        self.require_data_ = False
-        self.default_metric = None
+        self.require_long_ = []
+        self.keep_x_shape_ = []
+        self.keep_y_shape_ = []
+        self.require_data_ = []
+        self.default_metrics = None
         # --------------------------------------------------------------------------------------------------------------------------------
         def _process_loss_fn(loss_fn):
             if type(loss_fn) == type({}):
@@ -72,11 +72,19 @@ class Runner:
         
         if type(loss_fn) == type([]):
             for lf in loss_fn:
-                _loss_fn, self.require_long_, self.keep_x_shape_, self.keep_y_shape_, self.require_data_, self.default_metrics = _process_loss_fn(lf)
+                _loss_fn, require_long_, keep_x_shape_, keep_y_shape_, require_data_, self.default_metrics = _process_loss_fn(lf)
                 self.loss_fn.append(_loss_fn)
+                self.require_long_.append(require_long_)
+                self.keep_x_shape_.append(keep_x_shape_)
+                self.keep_y_shape_.append(keep_y_shape_)
+                self.require_data_.append(require_data_)
         else:
-            _loss_fn, self.require_long_, self.keep_x_shape_, self.keep_y_shape_, self.require_data_, self.default_metrics = _process_loss_fn(loss_fn)
+            _loss_fn, require_long_, keep_x_shape_, keep_y_shape_, require_data_, self.default_metrics = _process_loss_fn(loss_fn)
             self.loss_fn.append(_loss_fn)
+            self.require_long_.append(require_long_)
+            self.keep_x_shape_.append(keep_x_shape_)
+            self.keep_y_shape_.append(keep_y_shape_)
+            self.require_data_.append(require_data_)
         # --------------------------------------------------------------------------------------------------------------------------------
         
         

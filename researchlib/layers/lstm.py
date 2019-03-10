@@ -1,14 +1,21 @@
 from torch import nn
 
 class LSTMLayer(nn.Module):
-    def __init__(self, in_dim, out_dim, return_sequences=False): 
+    def __init__(self, in_dim, out_dim, return_sequences=False, bidirection=False): 
         super().__init__() 
-        self.f = nn.LSTM(in_dim, out_dim, batch_first=True)
+        self.ff = nn.LSTM(in_dim, out_dim, batch_first=True)
         self.return_sequences = return_sequences
+        self.bidirection = bidirection
+        if bidirection:
+            self.bf = nn.LSTM(in_dim, out_dim, batch_first=True)
     
     def forward(self, x):
         x = x.transpose(2, 1)
-        out, _ = self.f(x)
+        out, _ = self.ff(x)
+        if self.bidirection:
+            ts = list(range(x.size(1)))[::-1]
+            b_out, _ = self.bf(x[:, ts, :])    
+            out = torch.cat([out, b_out], dim=-1)
         out = out.transpose(2, 1)
         if self.return_sequences:
             return out

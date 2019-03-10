@@ -21,8 +21,9 @@ class QRNNLayer(nn.Module):
         #x = x.transpose(1, 2)
         #x = x.transpose(0, 1)
         if self.bidirection:
+            ts = list(range(x.size(0)))
             x_f, _ = self.forward_f(x)
-            x_b, _ = self.backward_f(x)
+            x_b, _ = self.backward_f(x[ts, :, :])
             x = torch.cat((x_f, x_b), dim=-1)
         else:
             x, _ = self.f(x)
