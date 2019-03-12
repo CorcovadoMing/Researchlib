@@ -4,7 +4,7 @@ from .custom_loss import *
 from ..metrics import *
 
 def log_likelihood(input, target, weight=None, size_average=None, ignore_index=-100, reduce=None, reduction='mean'):
-    return F.nll_loss(input.exp(), target, weight=None, size_average=None, ignore_index=-100, reduce=None, reduction='mean')
+    return (-1 * (input[torch.arange(input.size(0)), target]).log()).mean()
 
 def loss_mapping(loss_fn):
     # Assign loss function

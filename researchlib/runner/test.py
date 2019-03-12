@@ -20,7 +20,8 @@ def test(**kwargs):
             data = data_pack[0]
             target = data_pack[1:]
         
-            if kwargs['require_long']: target = [target[0].float(), target[-1].long()]
+            target = [i.long() if j else i for i, j in zip(target, kwargs['require_long'])]
+            
             if kwargs['is_cuda']: data, target = data.cuda(), [i.cuda() for i in target]
             
             kwargs['data'], kwargs['target'] = data, target
