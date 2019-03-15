@@ -36,20 +36,9 @@ def test(**kwargs):
             auxout = get_aux_out(kwargs['model'])
             auxout.append(output)
             
-            loss_input = [kwargs['target']]
-            
-            if not kwargs['keep_x_shape']: auxout[-1] = auxout[-1].contiguous().view(-1, auxout[-1].size(-1))
-            if not kwargs['keep_y_shape']:
-                for i in range(len(loss_input)):
-                    for j in range(len(loss_input[i])):
-                        if len(loss_input[i][j].shape) > 1:
-                            loss_input[i][j] = loss_input[i][j].contiguous().view(-1, loss_input[i][j].size(-1))
-                        else:
-                            loss_input[i][j] = loss_input[i][j].contiguous().view(-1)
-
-            kwargs['target'] = loss_input[0]
-            #if kwargs['require_data']: loss_input.append(data)
-            
+            auxout = [i if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(auxout, kwargs['keep_x_shape'])]
+            kwargs['target'] = [i if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])]
+    
             for i in range(len(auxout)):
                 test_loss += kwargs['loss_fn'][i](auxout[i], kwargs['target'][i]).item()
             

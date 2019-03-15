@@ -12,20 +12,20 @@ class ACTCell(nn.Module):
         self.out_linear = nn.Linear(self.hidden_dim, self.out_dim)
         self.max_ponder = max_ponder
         self.epison = epison
-        
-    def forward(self, x, state):
+    
+    def forward(self, x, hx, cx):
         # Initialize
-        hx, cx = state
-        batch_size = x.size()[0]
+        batch_size = x.size(0)
         ponder_count = 0
         
         gx_acc = torch.zeros(batch_size, 1).cuda()
+        halt_after = gx_acc > (1 - self.epison)
         aggregate_hx = torch.zeros(batch_size, self.hidden_dim).cuda()
         aggregate_cx = torch.zeros(batch_size, self.hidden_dim).cuda()
         aggregate_out = torch.zeros(batch_size, self.out_dim).cuda()
         binary_flag = torch.ones(batch_size, 1).cuda()
 
-        while ponder_count < self.max_ponder:
+        while ponder_count < self.max_ponder or halt_after.sum() != batch_size:
             if ponder_count == 1:
                 binary_flag = 1 - binary_flag
 
@@ -45,24 +45,19 @@ class ACTCell(nn.Module):
             aggregate_cx += p * cx
             aggregate_out += p * self.out_linear(hx)
 
-            if halt_after.sum() == batch_size:
-                break
-                
-        return (aggregate_hx, aggregate_cx), aggregate_out, ponder_count
+        return aggregate_hx, aggregate_cx, aggregate_out, ponder_count
 
     
-    
+
 class ACT(nn.Module):
     def __init__(self, in_dim, hidden_dim, out_dim):
         super().__init__()
         self.cell = ACTCell(nn.LSTMCell, in_dim, hidden_dim, out_dim)
         self.hidden_dim = hidden_dim
-        
+
     def forward(self, x):
-        hx = torch.zeros(x.size()[0], self.hidden_dim).cuda()
-        cx = torch.zeros(x.size()[0], self.hidden_dim).cuda()
-        ponder_count = 0.
-        for i in range(x.size()[2]):
-            (hx, cx), out, pc = self.cell(x[:, :, i], (hx, cx))
-            ponder_count += pc
+        hx = torch.zeros(x.size(0), self.hidden_dim).cuda()
+        cx = torch.zeros(x.size(0), self.hidden_dim).cuda()
+        for i in range(x.size(2)):
+            hx, cx, out, pc = self.cell(x[:, :, i], hx, cx)
         return out

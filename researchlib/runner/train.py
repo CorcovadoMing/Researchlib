@@ -35,14 +35,10 @@ def train(**kwargs):
         
         if kwargs['augmentor']: data, target = kwargs['augmentor'].on(data, target)
         
+        if type(data) != type([]) and type(data) != type(()): data = [data]
+        if type(target) != type([]) and type(target) != type(()): target = [target]
+        
         target = [i.long() if j else i for i, j in zip(target, kwargs['require_long'])]
-        
-        
-        if type(data) != type([]) and type(data) != type(()):
-            data = [data]
-        
-        if type(target) != type([]) and type(target) != type(()):
-            target = [target]
         
         if kwargs['mixup_alpha'] != 0:
             lam = np.random.beta(kwargs['mixup_alpha'], kwargs['mixup_alpha'])
@@ -88,28 +84,11 @@ def train_minibatch_(**kwargs):
     auxout = get_aux_out(kwargs['model'])
     auxout.append(output)
     
-    loss_input = [kwargs['target']]
+    auxout = [i if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(auxout, kwargs['keep_x_shape'])]
+    kwargs['target'] = [i if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])]
     if kwargs['mixup_alpha'] != 0:
-        loss_input.append(kwargs['target_res'])
-    
-    if not kwargs['keep_x_shape']: auxout[-1] = auxout[-1].contiguous().view(-1, auxout[-1].size(-1))
-    
-    if not kwargs['keep_y_shape']:
-        for i in range(len(loss_input)):
-            for j in range(len(loss_input[i])):
-                if len(loss_input[i][j].shape) > 1:
-                    loss_input[i][j] = loss_input[i][j].contiguous().view(-1, loss_input[i][j].size(-1))
-                else:
-                    loss_input[i][j] = loss_input[i][j].contiguous().view(-1)
-                    
-    kwargs['target'] = loss_input[0]
-    if kwargs['mixup_alpha'] != 0:
-        kwargs['target_res'] = loss_input[1]
-    
-    '''
-    if kwargs['require_data']: loss_input.append(kwargs['data'])
-    '''
-    
+        kwargs['target_res'] = [i if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(kwargs['target_res'], kwargs['keep_y_shape'])]
+
     loss = torch.zeros(1).cuda()
     if kwargs['mixup_alpha'] != 0:
         for i in range(len(auxout)):
@@ -117,6 +96,11 @@ def train_minibatch_(**kwargs):
     else:
         for i in range(len(auxout)):
             loss += kwargs['loss_fn'][i](auxout[i], kwargs['target'][i])
+        
+    # Reg
+    regs = get_reg_out(kwargs['model'])
+    for key in regs:
+        loss += kwargs['reg_fn'][key](*regs[key])
         
     loss.backward()
     

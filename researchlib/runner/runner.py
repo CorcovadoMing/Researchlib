@@ -15,7 +15,7 @@ from tqdm.auto import tqdm
 import torch.backends.cudnn as cudnn
         
 class Runner:
-    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, monitor_mode='min', monitor_state='metrics'):
+    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn=None, monitor_mode='min', monitor_state='metrics'):
         '''
             Multi-model supported
         '''
@@ -123,6 +123,8 @@ class Runner:
             self.monitor_mode = max
         # --------------------------------------------------------------------------------------------------------------------------------
         
+        self.reg_fn = reg_fn
+        
         cudnn.benchmark = True
         
     def summary(self):
@@ -196,7 +198,8 @@ class Runner:
             loss_records, matrix_records = self.trainer(model=self.model, 
                                                         train_loader=self.train_loader, 
                                                         optimizer=self.optimizer, 
-                                                        loss_fn=self.loss_fn, 
+                                                        loss_fn=self.loss_fn,
+                                                        reg_fn=self.reg_fn,
                                                         epoch=epoch, 
                                                         augmentor=augmentor,
                                                         is_cuda=self.is_cuda, 
@@ -332,7 +335,8 @@ class Runner:
             loss, _ = self.trainer(model=self.model, 
                                 train_loader=self.train_loader, 
                                 optimizer=self.optimizer, 
-                                loss_fn=self.loss_fn, 
+                                loss_fn=self.loss_fn,
+                                reg_fn=self.reg_fn,
                                 epoch=1,
                                 augmentor=None,
                                 is_cuda=self.is_cuda, 
