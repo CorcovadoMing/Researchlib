@@ -169,17 +169,15 @@ class Runner:
             
     def fit(self, epochs, lr=1e-3, cycle='default', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
         if cycle == 'sc' or cycle == 'superconverge':
+            total_epochs = epochs
             callbacks = self.set_onecycle_(lr) + callbacks
-            for _ in range(epochs):
-                self.fit_(1, lr, augmentor, mixup_alpha, metrics, callbacks)
-        else:
-            if cycle == 'default':
-                total_epochs = epochs 
-                callbacks = self.set_cyclical_(lr) + callbacks
-            elif cycle == 'cycle':
-                total_epochs = int(epochs * (1 + epochs) / 2)
-                callbacks = self.set_sgdr_(lr) + callbacks
-            self.fit_(total_epochs, lr, augmentor, mixup_alpha, metrics, callbacks)
+        elif cycle == 'default':
+            total_epochs = epochs 
+            callbacks = self.set_cyclical_(lr) + callbacks
+        elif cycle == 'cycle':
+            total_epochs = int(epochs * (1 + epochs) / 2)
+            callbacks = self.set_sgdr_(lr) + callbacks
+        self.fit_(total_epochs, lr, augmentor, mixup_alpha, metrics, callbacks)
         
 
     def fit_(self, epochs, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
