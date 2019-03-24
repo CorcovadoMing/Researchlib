@@ -129,7 +129,8 @@ class Runner:
         
         cudnn.benchmark = True
         
-        self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level="O2", loss_scale=128, enabled=fp16)
+        # FP16
+        self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level="O2", enabled=fp16)
         
     def summary(self):
         input_shape = self.train_loader.dataset.train_data.shape
