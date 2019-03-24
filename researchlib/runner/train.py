@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from torch.nn.utils import *
 from ..utils import *
+from apex import amp
 
 class Check:
     def __init__(self):
@@ -89,7 +90,7 @@ def train_minibatch_(**kwargs):
     if kwargs['mixup_alpha'] != 0:
         kwargs['target_res'] = [i if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(kwargs['target_res'], kwargs['keep_y_shape'])]
 
-    loss = torch.zeros(1).cuda()
+    loss = 0
     if kwargs['mixup_alpha'] != 0:
         for i in range(len(auxout)):
             loss += kwargs['mixup_loss_fn'](kwargs['loss_fn'][i], auxout[i], kwargs['target'][i], kwargs['target_res'][i], kwargs['check'].lam)
@@ -101,12 +102,14 @@ def train_minibatch_(**kwargs):
     regs = get_reg_out(kwargs['model'])
     for key in regs:
         loss += kwargs['reg_fn'][key](*regs[key])
-        
-    loss.backward()
+
+    with amp.scale_loss(loss, kwargs['optimizer']) as scaled_loss:
+        scaled_loss.backward()
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_begin(**kwargs)
     
     clip_grad_norm_(kwargs['model'].parameters(), 5.)
+    
     kwargs['optimizer'].step()
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_end(**kwargs)

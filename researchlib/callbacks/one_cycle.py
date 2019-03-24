@@ -22,3 +22,6 @@ class OneCycle(Callback):
                 cur_lr = self.base_lr
             set_lr(kwargs['optimizer'], cur_lr)
         return kwargs
+    
+    def on_epoch_end(self, **kwargs):
+        self.acc_iter = 0

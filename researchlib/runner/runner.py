@@ -13,9 +13,12 @@ from torch import nn
 from torch.optim import *
 from tqdm.auto import tqdm
 import torch.backends.cudnn as cudnn
-        
+from apex import amp
+
+#amp.register_float_function(torch.nn, 'Sigmoid')
+
 class Runner:
-    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn=None, monitor_mode='min', monitor_state='metrics'):
+    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn=None, monitor_mode='min', monitor_state='metrics', fp16=True):
         '''
             Multi-model supported
         '''
@@ -25,7 +28,6 @@ class Runner:
         self.history_ = History()
         self.multi_model = False
         self.cam_model = None
-        
         
         self.default_callbacks = CyclicalLR(len(train_loader))
         
@@ -94,11 +96,11 @@ class Runner:
         # self.optimizer
         # --------------------------------------------------------------------------------------------------------------------------------
         if optimizer == 'adam':
-            self.optimizer = Adam(model.parameters(), betas=(0.9, 0.99), amsgrad=True)
+            self.optimizer = Adam(model.parameters(), betas=(0.9, 0.99), amsgrad=True, weight_decay=5e-5)
         elif optimizer == 'sgd':
-            self.optimizer = SGD(model.parameters(), lr=1e-2, momentum=0.9)
+            self.optimizer = SGD(model.parameters(), lr=1e-2, momentum=0.9, weight_decay=5e-5)
         elif optimizer == 'rmsprop':
-            self.optimizer = RMSprop(model.parameters())
+            self.optimizer = RMSprop(model.parameters(), weight_decay=5e-5)
         else:
             self.optimizer = optimizer
         # --------------------------------------------------------------------------------------------------------------------------------
@@ -126,6 +128,8 @@ class Runner:
         self.reg_fn = reg_fn
         
         cudnn.benchmark = True
+        
+        self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level="O2", loss_scale=128, enabled=fp16)
         
     def summary(self):
         input_shape = self.train_loader.dataset.train_data.shape

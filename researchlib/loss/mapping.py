@@ -3,9 +3,6 @@ import torch.nn.functional as F
 from .custom_loss import *
 from ..metrics import *
 
-def log_likelihood(input, target, weight=None, size_average=None, ignore_index=-100, reduce=None, reduction='mean'):
-    return (-1 * (input[torch.arange(input.size(0)), target]).log()).mean()
-
 def loss_mapping(loss_fn):
     # Assign loss function
     if loss_fn == 'nll':
@@ -20,20 +17,8 @@ def loss_mapping(loss_fn):
             pass
         default_metrics = Acc()
         
-    elif loss_fn == 'll':
-        loss_fn = log_likelihood
-        require_long_ = True
-        keep_x_shape_ = False
-        keep_y_shape_ = False
-        require_data_ = False
-        try:
-            require_data_ = loss_fn.require_data
-        except:
-            pass
-        default_metrics = Acc()
-        
     elif loss_fn == 'bce':
-        loss_fn = nn.BCELoss()
+        loss_fn = F.binary_cross_entropy
         require_long_ = False
         keep_x_shape_ = False
         keep_y_shape_ = False

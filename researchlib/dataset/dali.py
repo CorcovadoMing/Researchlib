@@ -49,3 +49,8 @@ class AugPipeline(Pipeline):
         output_img = self.flip(x)
         output_label = self.flip(y)
         return (output_img, output_label)
+        
+def FromDALI(x, y, batch_size=1, num_workers=4):
+    pipe = AugPipeline(iter(NumpyIterator(batch_size, x, y)), batch_size=batch_size, num_threads=num_workers, device_id=0)
+    pipe.build()
+    return DALIGenericIterator(pipe, ['data', 'label'], len(x), auto_reset=True)
