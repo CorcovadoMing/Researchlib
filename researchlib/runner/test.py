@@ -5,7 +5,7 @@ from ..utils import *
 
 def test(**kwargs):
     '''
-        kwargs: model, test_loader, loss_fn, is_cuda, require_long, require_data, keep_x_shape, keep_y_shape, metrics
+        kwargs: model, test_loader, loss_fn, is_cuda, require_long, keep_x_shape, keep_y_shape, metrics
     '''
     
     kwargs['model'].eval()
@@ -41,11 +41,6 @@ def test(**kwargs):
     
             for i in range(len(auxout)):
                 test_loss += kwargs['loss_fn'][i](auxout[i], kwargs['target'][i]).item()
-            
-            # Capsule, TODO: refine the part
-            if type(auxout[-1]) == type(()):
-                auxout[-1] = auxout[-1][0]
-                auxout[-1] = torch.sqrt((auxout[-1]**2).sum(dim=2, keepdim=True))
             
             for m in kwargs['metrics']: m.forward([auxout[-1]] + [kwargs['target'][-1]])
             

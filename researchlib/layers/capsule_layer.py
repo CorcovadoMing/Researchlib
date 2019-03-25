@@ -1,7 +1,3 @@
-########################################
-#### Licensed under the MIT license ####
-########################################
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -128,3 +124,16 @@ class RoutingCapsules(nn.Module):
 		v = squash(s)
 
 		return v
+
+
+class CapsuleMasked(nn.Module):
+    def __init__(self):
+        super().__init__()
+        
+    def forward(self, x):
+        out = torch.norm(x, dim=-1)
+        _, max_length_idx = out.max(dim=1)	
+        y = torch.eye(10).cuda()
+        y = y.index_select(dim=0, index=max_length_idx).unsqueeze(2)
+        masked = (x*y).view(x.size(0), -1)
+        return masked

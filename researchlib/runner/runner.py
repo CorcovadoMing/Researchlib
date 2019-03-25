@@ -18,7 +18,7 @@ from apex import amp
 #amp.register_float_function(torch.nn, 'Sigmoid')
 
 class Runner:
-    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn=None, monitor_mode='min', monitor_state='metrics', fp16=True):
+    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, monitor_mode='min', monitor_state='metrics', fp16=True):
         '''
             Multi-model supported
         '''
@@ -56,13 +56,11 @@ class Runner:
         # self.require_long_
         # self.keep_x_shape_
         # self.keep_y_shape_
-        # self.require_data_
         # self.default_metrics
         self.loss_fn = []
         self.require_long_ = []
         self.keep_x_shape_ = []
         self.keep_y_shape_ = []
-        self.require_data_ = []
         self.default_metrics = None
         # --------------------------------------------------------------------------------------------------------------------------------
         def _process_loss_fn(loss_fn):
@@ -74,19 +72,17 @@ class Runner:
         
         if type(loss_fn) == type([]):
             for lf in loss_fn:
-                _loss_fn, require_long_, keep_x_shape_, keep_y_shape_, require_data_, self.default_metrics = _process_loss_fn(lf)
+                _loss_fn, require_long_, keep_x_shape_, keep_y_shape_, self.default_metrics = _process_loss_fn(lf)
                 self.loss_fn.append(_loss_fn)
                 self.require_long_.append(require_long_)
                 self.keep_x_shape_.append(keep_x_shape_)
                 self.keep_y_shape_.append(keep_y_shape_)
-                self.require_data_.append(require_data_)
         else:
-            _loss_fn, require_long_, keep_x_shape_, keep_y_shape_, require_data_, self.default_metrics = _process_loss_fn(loss_fn)
+            _loss_fn, require_long_, keep_x_shape_, keep_y_shape_, self.default_metrics = _process_loss_fn(loss_fn)
             self.loss_fn.append(_loss_fn)
             self.require_long_.append(require_long_)
             self.keep_x_shape_.append(keep_x_shape_)
             self.keep_y_shape_.append(keep_y_shape_)
-            self.require_data_.append(require_data_)
         # --------------------------------------------------------------------------------------------------------------------------------
         
         
@@ -209,7 +205,6 @@ class Runner:
                                                         require_long=self.require_long_, 
                                                         keep_x_shape=self.keep_x_shape_,
                                                         keep_y_shape=self.keep_y_shape_,
-                                                        require_data=self.require_data_,
                                                         mixup_alpha=mixup_alpha,
                                                         callbacks=callbacks,
                                                         metrics=metrics)
@@ -230,8 +225,7 @@ class Runner:
                                                             loss_fn=self.loss_fn, 
                                                             is_cuda=self.is_cuda,
                                                             epoch=epoch,
-                                                            require_long=self.require_long_, 
-                                                            require_data=self.require_data_, 
+                                                            require_long=self.require_long_,  
                                                             keep_x_shape=self.keep_x_shape_,
                                                             keep_y_shape=self.keep_y_shape_,
                                                             metrics=metrics,
@@ -305,7 +299,6 @@ class Runner:
                                                             is_cuda=self.is_cuda,
                                                             epoch=1,
                                                             require_long=self.require_long_, 
-                                                            require_data=self.require_data_, 
                                                             keep_x_shape=self.keep_x_shape_,
                                                             keep_y_shape=self.keep_y_shape_,
                                                             metrics=metrics,
@@ -346,7 +339,6 @@ class Runner:
                                 require_long=self.require_long_, 
                                 keep_x_shape=self.keep_x_shape_,
                                 keep_y_shape=self.keep_y_shape_,
-                                require_data=self.require_data_,
                                 mixup_alpha=mixup_alpha,
                                 callbacks=[LRRangeTest(len(self.train_loader), cutoff_ratio=10)]+callbacks,
                                 metrics=[])

@@ -6,4 +6,4 @@ class Reshape(nn.Module):
         self.shape = shape
     
     def forward(self, x):
-        return x.view(self.shape).continuous()
+        return x.view(self.shape).contiguous()

@@ -10,11 +10,6 @@ def loss_mapping(loss_fn):
         require_long_ = True
         keep_x_shape_ = False
         keep_y_shape_ = False
-        require_data_ = False
-        try:
-            require_data_ = loss_fn.require_data
-        except:
-            pass
         default_metrics = Acc()
         
     elif loss_fn == 'bce':
@@ -22,11 +17,6 @@ def loss_mapping(loss_fn):
         require_long_ = False
         keep_x_shape_ = False
         keep_y_shape_ = False
-        require_data_ = False
-        try:
-            require_data_ = loss_fn.require_data
-        except:
-            pass
         default_metrics = BCEAcc()
         
     elif loss_fn == 'crossentropy':
@@ -34,11 +24,6 @@ def loss_mapping(loss_fn):
         require_long_ = True
         keep_x_shape_ = False
         keep_y_shape_ = False
-        require_data_ = False
-        try:
-            require_data_ = loss_fn.require_data
-        except:
-            pass
         default_metrics = Acc()
         
     elif loss_fn == 'focal':
@@ -46,11 +31,6 @@ def loss_mapping(loss_fn):
         require_long_ = True
         keep_x_shape_ = False
         keep_y_shape_ = False
-        require_data_ = False
-        try:
-            require_data_ = loss_fn.require_data
-        except:
-            pass
         default_metrics = Acc()
         
         
@@ -59,11 +39,6 @@ def loss_mapping(loss_fn):
         require_long_ = False
         keep_x_shape_ = False
         keep_y_shape_ = False
-        require_data_ = False
-        try:
-            require_data_ = loss_fn.require_data
-        except:
-            pass
         default_metrics = None
 
     elif loss_fn == 'mae' or loss_fn == 'l1':
@@ -71,11 +46,6 @@ def loss_mapping(loss_fn):
         require_long_ = False
         keep_x_shape_ = False
         keep_y_shape_ = False
-        require_data_ = False
-        try:
-            require_data_ = loss_fn.require_data
-        except:
-            pass
         default_metrics = None
         
     else:
@@ -83,11 +53,6 @@ def loss_mapping(loss_fn):
         require_long_ = False
         keep_x_shape_ = True
         keep_y_shape_ = True
-        require_data_ = False
-        try:
-            require_data_ = loss_fn.require_data
-        except:
-            pass
         default_metrics = None
     
-    return loss_fn, require_long_, keep_x_shape_, keep_y_shape_, require_data_, default_metrics
+    return loss_fn, require_long_, keep_x_shape_, keep_y_shape_, default_metrics

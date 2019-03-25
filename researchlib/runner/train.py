@@ -100,7 +100,7 @@ def train_minibatch_(**kwargs):
         
     # Reg
     regs = get_reg_out(kwargs['model'])
-    for key in regs:
+    for key in kwargs['reg_fn']:
         loss += kwargs['reg_fn'][key](*regs[key])
 
     with amp.scale_loss(loss, kwargs['optimizer']) as scaled_loss:
@@ -108,16 +108,9 @@ def train_minibatch_(**kwargs):
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_begin(**kwargs)
     
-    clip_grad_norm_(kwargs['model'].parameters(), 5.)
-    
     kwargs['optimizer'].step()
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_end(**kwargs)
-    
-    # Capsule
-    if type(auxout[-1]) == type(()):
-        auxout[-1] = auxout[-1][0]
-        auxout[-1] = torch.sqrt((auxout[-1]**2).sum(dim=2, keepdim=True))
     
     # Apply metrics
     for m in kwargs['metrics']: m.forward([auxout[-1]] + [kwargs['target'][-1]])
