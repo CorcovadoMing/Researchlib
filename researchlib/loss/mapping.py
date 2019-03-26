@@ -3,6 +3,8 @@ import torch.nn.functional as F
 from .custom_loss import *
 from ..metrics import *
 
+from .margin import *
+
 def loss_mapping(loss_fn):
     # Assign loss function
     if loss_fn == 'nll':
@@ -32,7 +34,13 @@ def loss_mapping(loss_fn):
         keep_x_shape_ = False
         keep_y_shape_ = False
         default_metrics = Acc()
-        
+    
+    elif loss_fn == 'margin':
+        loss_fn = MarginLoss()
+        require_long_ = False
+        keep_x_shape_ = False
+        keep_y_shape_ = False
+        default_metrics = Acc()
         
     elif loss_fn == 'mse' or loss_fn == 'l2':
         loss_fn = F.mse_loss

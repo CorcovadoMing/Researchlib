@@ -18,7 +18,7 @@ from apex import amp
 #amp.register_float_function(torch.nn, 'Sigmoid')
 
 class Runner:
-    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, monitor_mode='min', monitor_state='metrics', fp16=True):
+    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, reg_weights={}, monitor_mode='min', monitor_state='metrics', fp16=True, multigpu=False):
         '''
             Multi-model supported
         '''
@@ -36,18 +36,11 @@ class Runner:
         
         self.default_metrics = None
         
-        if type(model) == type([]):
-            self.multi_model = True
-        
-        # Check if cuda available (could be overwrite)
+        self.model = model
+        if multigpu:
+            self.model = nn.DataParallel(model)
         if self.is_cuda:
-            if self.multi_model:
-                self.model = [i.cuda for i in model]
-            else:
-                self.model = model.cuda()
-        else:
-            self.model = model
-            
+            self.model = self.model.cuda()
         
         
         # Assign loss function
@@ -122,6 +115,12 @@ class Runner:
         # --------------------------------------------------------------------------------------------------------------------------------
         
         self.reg_fn = reg_fn
+        for key in self.reg_fn:
+            if type(reg_fn[key]) == type(''):
+                fn, _, _, _, _ = loss_mapping(reg_fn[key])
+                reg_fn[key] = fn
+        
+        self.reg_weights = reg_weights
         
         cudnn.benchmark = True
         
@@ -199,6 +198,7 @@ class Runner:
                                                         optimizer=self.optimizer, 
                                                         loss_fn=self.loss_fn,
                                                         reg_fn=self.reg_fn,
+                                                        reg_weights=self.reg_weights,
                                                         epoch=epoch, 
                                                         augmentor=augmentor,
                                                         is_cuda=self.is_cuda, 
@@ -333,6 +333,7 @@ class Runner:
                                 optimizer=self.optimizer, 
                                 loss_fn=self.loss_fn,
                                 reg_fn=self.reg_fn,
+                                reg_weights=self.reg_weights,
                                 epoch=1,
                                 augmentor=None,
                                 is_cuda=self.is_cuda, 

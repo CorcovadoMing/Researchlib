@@ -101,7 +101,15 @@ def train_minibatch_(**kwargs):
     # Reg
     regs = get_reg_out(kwargs['model'])
     for key in kwargs['reg_fn']:
-        loss += kwargs['reg_fn'][key](*regs[key])
+        try: 
+            weight = kwargs['reg_weights'][key] 
+        except: 
+            weight = 1
+        i = [k.cpu() for k in regs[key][0]]
+        j = [k.cpu() for k in regs[key][1]]    
+        for index in range(len(i)):
+            reg_loss = (kwargs['reg_fn'][key](i[index], j[index])) * weight
+            loss += reg_loss.cuda()
 
     with amp.scale_loss(loss, kwargs['optimizer']) as scaled_loss:
         scaled_loss.backward()

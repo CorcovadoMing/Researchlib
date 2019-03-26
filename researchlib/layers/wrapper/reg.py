@@ -1,25 +1,22 @@
 from torch import nn
 
 class Reg(nn.Module):
-    def __init__(self, f, group, get='weight', out_through=False):
+    def __init__(self, f, group, get='weight'):
         super().__init__()
         self.f = f
         self.get = get
-        self.reg_store = None
+        self.reg_store = []
         self.reg_group = group
-        self.out = out_through
-        
-    def forward(self, x):
-        out = self.f(x)
-        if self.get == 'weight':
-            self.reg_store = self.f.weight
-        elif self.get == 'out':
-            self.reg_store = out
-        elif self.get == 'in':
-            self.reg_stroe = x
-        
-        if self.out:
-            return x
-        else:
-            return out
+        self.hook = f.register_forward_hook(self.hook_fn)
     
+    def hook_fn(self, module, input, output):
+        if module.training:
+            if self.get == 'weight':
+                self.reg_store.append(self.module.weight)
+            elif self.get == 'out':
+                self.reg_store.append(output)
+            elif self.get == 'in':
+                self.reg_store.append(input)
+
+    def forward(self, x):
+        return self.f(x)
