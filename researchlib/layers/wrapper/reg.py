@@ -12,7 +12,7 @@ class Reg(nn.Module):
     def hook_fn(self, module, input, output):
         if module.training:
             if self.get == 'weight':
-                self.reg_store.append(self.module.weight)
+                self.reg_store.append(module.weight)
             elif self.get == 'out':
                 self.reg_store.append(output)
             elif self.get == 'in':

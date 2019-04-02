@@ -14,3 +14,5 @@ from .norm import *
 
 from .activator import *
 from .wrapper import *
+
+from .noisy_linear import *

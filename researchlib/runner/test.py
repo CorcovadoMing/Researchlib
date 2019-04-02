@@ -46,11 +46,12 @@ def test(**kwargs):
             
             for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_end(**kwargs)
 
-    # Output metrics
-    for m in kwargs['metrics']: matrix_records.add(m.output(), prefix='val')    
-    
     test_loss /= len(kwargs['test_loader'])
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_validation_end(**kwargs)
+
+    # Output metrics
+    for m in kwargs['metrics']: matrix_records.add(m.output(), prefix='val')    
     
+
     return test_loss, matrix_records

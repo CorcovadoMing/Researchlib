@@ -1,0 +1,10 @@
+{
+  "load_extensions": {
+    "jupyter-js-widgets/extension": true
+  },
+  "Cell": {
+    "cm_config": {
+      "lineNumbers": false
+    }
+  }
+}

@@ -35,6 +35,13 @@ def loss_mapping(loss_fn):
         keep_y_shape_ = False
         default_metrics = Acc()
     
+    elif loss_fn == 'adaptive_focal':
+        loss_fn = AdaptiveFocalLoss()
+        require_long_ = True
+        keep_x_shape_ = False
+        keep_y_shape_ = False
+        default_metrics = Acc()
+    
     elif loss_fn == 'margin':
         loss_fn = MarginLoss()
         require_long_ = False
