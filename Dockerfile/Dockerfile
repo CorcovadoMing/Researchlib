@@ -15,4 +15,6 @@ RUN cd apex && pip install -v --no-cache-dir --global-option="--cpp_ext" --globa
 RUN pip install --extra-index-url https://developer.download.nvidia.com/compute/redist/cuda/10.0 nvidia-dali
 
 RUN pip install jupyterlab
+RUN pip install ipywidgets
+RUN jupyter nbextension enable --py widgetsnbextension
 COPY jupyter /root/.jupyter

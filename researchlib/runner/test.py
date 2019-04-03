@@ -35,6 +35,7 @@ def test(**kwargs):
             
             auxout = get_aux_out(kwargs['model'])
             auxout.append(output)
+            kwargs['auxout'] = auxout
             
             auxout = [i if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(auxout, kwargs['keep_x_shape'])]
             kwargs['target'] = [i if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])]
