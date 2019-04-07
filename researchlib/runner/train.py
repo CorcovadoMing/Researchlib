@@ -104,11 +104,11 @@ def train_minibatch_(**kwargs):
         try: 
             weight = kwargs['reg_weights'][key] 
         except: 
-            weight = 1
-        i = [k.cpu() for k in regs[key][0]]
-        j = [k.cpu() for k in regs[key][1]]    
-        for index in range(len(i)):
-            reg_loss = (kwargs['reg_fn'][key](i[index], j[index])) * weight
+            weight = 1    
+        reg_args = zip(*regs[key])
+        for arg in reg_args:
+            arg = [i.cpu() for i in arg]
+            reg_loss = (kwargs['reg_fn'][key](*arg)) * weight
             loss += reg_loss.cuda()
 
     with amp.scale_loss(loss, kwargs['optimizer']) as scaled_loss:

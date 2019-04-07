@@ -1,5 +1,8 @@
 FROM nvcr.io/nvidia/pytorch:19.03-py3
 
+# PyTorch
+RUN pip install -U torch torchvision
+
 # Graph
 RUN pip install -U torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric
 
@@ -14,6 +17,7 @@ RUN cd apex && pip install -v --no-cache-dir --global-option="--cpp_ext" --globa
 # DALI
 RUN pip install --extra-index-url https://developer.download.nvidia.com/compute/redist/cuda/10.0 nvidia-dali
 
+# Jupyter
 RUN pip install jupyterlab
 RUN pip install ipywidgets
 RUN jupyter nbextension enable --py widgetsnbextension
