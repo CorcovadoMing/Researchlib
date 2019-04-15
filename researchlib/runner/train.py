@@ -29,8 +29,10 @@ def train(**kwargs):
     for m in kwargs['metrics']: m.reset()
     
     for batch_idx, data_pack in enumerate(bar):
-        data = data_pack[0]
-        target = data_pack[1:]
+        if type(data_pack[0]) == type({}):
+            data, target = data_pack[0]['data'], data_pack[0]['label']
+        else:
+            data, target = data_pack[0], data_pack[1:]
         
         kwargs['batch_idx'] = batch_idx
         
@@ -86,9 +88,9 @@ def train_minibatch_(**kwargs):
     auxout.append(output)
     
     auxout = [i if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(auxout, kwargs['keep_x_shape'])]
-    kwargs['target'] = [i if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])]
+    kwargs['target'] = [i.squeeze() if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])]
     if kwargs['mixup_alpha'] != 0:
-        kwargs['target_res'] = [i if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(kwargs['target_res'], kwargs['keep_y_shape'])]
+        kwargs['target_res'] = [i.squeeze() if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(kwargs['target_res'], kwargs['keep_y_shape'])]
 
     loss = 0
     if kwargs['mixup_alpha'] != 0:

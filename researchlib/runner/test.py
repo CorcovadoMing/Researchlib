@@ -17,8 +17,14 @@ def test(**kwargs):
     
     with torch.no_grad():
         for batch_idx, data_pack in enumerate(kwargs['test_loader']):
-            data = data_pack[0]
-            target = data_pack[1:]
+            if type(data_pack[0]) == type({}):
+                data, target = data_pack[0]['data'], data_pack[0]['label']
+            else:
+                data, target = data_pack[0], data_pack[1:]
+                
+            kwargs['batch_idx'] = batch_idx
+
+            if type(target) != type([]) and type(target) != type(()): target = [target]
         
             target = [i.long() if j else i for i, j in zip(target, kwargs['require_long'])]
             
@@ -38,7 +44,7 @@ def test(**kwargs):
             kwargs['auxout'] = auxout
             
             auxout = [i if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(auxout, kwargs['keep_x_shape'])]
-            kwargs['target'] = [i if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])]
+            kwargs['target'] = [i.squeeze() if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])]
     
             for i in range(len(auxout)):
                 test_loss += kwargs['loss_fn'][i](auxout[i], kwargs['target'][i]).item()
@@ -47,7 +53,7 @@ def test(**kwargs):
             
             for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_end(**kwargs)
 
-    test_loss /= len(kwargs['test_loader'])
+    test_loss /= kwargs['batch_idx']
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_validation_end(**kwargs)
 

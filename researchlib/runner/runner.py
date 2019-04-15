@@ -17,6 +17,15 @@ from apex import amp
 
 #amp.register_float_function(torch.nn, 'Sigmoid')
 
+def _get_iteration(train_loader):
+    iteration = None
+    try:
+        iteration = len(train_loader)
+    except:
+        iteration = (train_loader._size / train_loader.batch_size)
+    assert iteration != None
+    return iteration
+
 class Runner:
     def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, reg_weights={}, monitor_mode='min', monitor_state='metrics', fp16=True, multigpu=False):
         '''
@@ -29,19 +38,12 @@ class Runner:
         self.multi_model = False
         self.cam_model = None
         
-        self.default_callbacks = CyclicalLR(len(train_loader))
+        self.default_callbacks = CyclicalLR(_get_iteration(self.train_loader))
         
         self.trainer = train
         self.tester = test
         
         self.default_metrics = None
-        
-        self.model = model
-        if multigpu:
-            self.model = nn.DataParallel(model)
-        if self.is_cuda:
-            self.model = self.model.cuda()
-        
         
         # Assign loss function
         # 
@@ -124,8 +126,18 @@ class Runner:
         
         cudnn.benchmark = True
         
+        # Model
+        self.model = model
+        
         # FP16
-        self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level="O2", enabled=fp16)
+        if self.is_cuda:
+            self.model = self.model.cuda()
+            self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level="O2", enabled=fp16)
+        
+        # Multi GPU
+        if multigpu:
+            self.model = nn.DataParallel(self.model)
+        
         
     def summary(self):
         input_shape = self.train_loader.dataset.train_data.shape
@@ -140,7 +152,7 @@ class Runner:
         
     def set_cyclical_(self, lr):
         if self.default_callbacks:
-            self.default_callbacks = CyclicalLR(len(self.train_loader))
+            self.default_callbacks = CyclicalLR(_get_iteration(self.train_loader))
             self.default_callbacks.max_lr = lr
             self.default_callbacks.acc_iter = 0
             return [self.default_callbacks]
@@ -149,7 +161,7 @@ class Runner:
             
     def set_sgdr_(self, lr):
         if self.default_callbacks:
-            self.default_callbacks = SGDR(len(self.train_loader))
+            self.default_callbacks = SGDR(_get_iteration(self.train_loader))
             self.default_callbacks.max_lr = lr
             self.default_callbacks.acc_iter = 0
             self.default_callbacks.length = 1
@@ -159,7 +171,7 @@ class Runner:
     
     def set_onecycle_(self, lr):
         if self.default_callbacks:
-            self.default_callbacks = OneCycle(len(self.train_loader))
+            self.default_callbacks = OneCycle(_get_iteration(self.train_loader))
             self.default_callbacks.max_lr = lr
             self.default_callbacks.acc_iter = 0
             return [self.default_callbacks]
@@ -341,10 +353,10 @@ class Runner:
                                 keep_x_shape=self.keep_x_shape_,
                                 keep_y_shape=self.keep_y_shape_,
                                 mixup_alpha=mixup_alpha,
-                                callbacks=[LRRangeTest(len(self.train_loader), cutoff_ratio=10)]+callbacks,
+                                callbacks=[LRRangeTest(_get_iteration(self.train_loader), cutoff_ratio=10)]+callbacks,
                                 metrics=[])
             
-            step = (10 / 1e-9) ** (1 / len(self.train_loader))
+            step = (10 / 1e-9) ** (1 / _get_iteration(self.train_loader))
             self.loss_history = []
             self.lr_history = []
             for i, j in enumerate(loss):    

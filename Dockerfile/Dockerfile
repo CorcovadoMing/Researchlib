@@ -3,6 +3,9 @@ FROM nvcr.io/nvidia/pytorch:19.03-py3
 # PyTorch
 RUN pip install -U torch torchvision
 
+# Basic images processing
+RUN pip install -U imageio numpy scipy opencv-python-headless
+
 # Graph
 RUN pip install -U torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric
 

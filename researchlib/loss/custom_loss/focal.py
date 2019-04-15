@@ -7,10 +7,13 @@ class FocalLoss(nn.Module):
         super().__init__()
         self.gamma = gamma
         self.alpha = alpha
-        self.softmax = nn.Softmax(-1)
+        self.softmax = nn.Softmax(1)
         
     def forward(self, x, y):
         x = self.softmax(x)
+        x = x.permute(0,2,3,1)
+        x = x.contiguous().view(-1, 4)
+        y = y.view(-1)
         pt = x[torch.arange(x.size(0)), y]
         loss = -1 * self.alpha * ((1 - pt) ** self.gamma) * pt.log()
         return loss.mean()
