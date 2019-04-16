@@ -53,7 +53,7 @@ def test(**kwargs):
             
             for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_end(**kwargs)
 
-    test_loss /= kwargs['batch_idx']
+    test_loss /= (kwargs['batch_idx'] + 1)
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_validation_end(**kwargs)
 

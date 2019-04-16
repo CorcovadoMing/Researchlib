@@ -5,16 +5,11 @@ from ..metrics import *
 import torch
 from .margin import *
 
-def nll_wrap(x, y):
-    w = torch.Tensor([1,1,1,100]).cuda()
-    return F.nll_loss(x, y, w)
-    
 
 def loss_mapping(loss_fn):
     # Assign loss function
     if loss_fn == 'nll':
-#         loss_fn = F.nll_loss
-        loss_fn = nll_wrap
+        loss_fn = F.nll_loss
         require_long_ = True
         keep_x_shape_ = False
         keep_y_shape_ = True
@@ -76,4 +71,4 @@ def loss_mapping(loss_fn):
         keep_y_shape_ = True
         default_metrics = None
     
-    return loss_fn, require_long_, keep_x_shape_, keep_y_shape_, default_metrics
+    return loss_fn, [require_long_], [keep_x_shape_], [keep_y_shape_], default_metrics
