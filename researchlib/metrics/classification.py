@@ -25,9 +25,9 @@ class ConfusionMatrix(Matrix):
             for i in range(self.classes):
                 for j in range(self.classes):
                     plt.text(j, i, self.m[i, j], horizontalalignment='center', verticalalignment='center', color='gray')
-            plt.ylabel('Actual');
+            plt.ylabel('Predicted');
             plt.yticks(range(self.classes))
-            plt.xlabel('Predicted');
+            plt.xlabel('Actual');
             plt.xticks(range(self.classes))
             all_sample_title = 'Accuracy Score: {0}'.format(score)
             plt.title(all_sample_title);
