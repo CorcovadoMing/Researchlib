@@ -60,5 +60,4 @@ def test(**kwargs):
     # Output metrics
     for m in kwargs['metrics']: matrix_records.add(m.output(), prefix='val')    
     
-
     return test_loss, matrix_records
