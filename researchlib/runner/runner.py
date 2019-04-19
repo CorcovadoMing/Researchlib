@@ -27,7 +27,7 @@ def _get_iteration(train_loader):
     return iteration
 
 class Runner:
-    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, reg_weights={}, monitor_mode='min', monitor_state='metrics', fp16=True, multigpu=False):
+    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, reg_weights={}, monitor_mode='min', monitor_state='loss', fp16=False, multigpu=False):
         '''
             Multi-model supported
         '''
@@ -107,6 +107,10 @@ class Runner:
         self.monitor_mode = monitor_mode
         self.monitor_state = monitor_state
         self.monitor = None
+        # --------------------------------------------------------------------------------------------------------------------------------
+        if self.default_metrics:
+            self.monitor_state = 'metrics'
+            self.monitor_mode = 'max'
         # --------------------------------------------------------------------------------------------------------------------------------
         if monitor_mode == 'min':
             self.monitor = 1e9
@@ -273,10 +277,10 @@ class Runner:
             
     
     
-    def history(self, plot=False):
+    def history(self, plot=True):
         if plot:
             import matplotlib.pyplot as plt
-            fig, ax = plt.subplots(1, 2, figsize=(12, 4))
+            fig, ax = plt.subplots(1, 2, figsize=(24, 8))
             legends = [[], []]
             for key in self.history_.records:
                 if 'loss' in key:
