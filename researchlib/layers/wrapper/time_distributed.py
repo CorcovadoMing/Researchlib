@@ -6,11 +6,9 @@ class TimeDistributed(nn.Module):
         super().__init__()
         self.f = f
 
-    def forward(self, x, time_dim=1):
-        x = x.transpose(1, 2)
-        b, t = x.size(0), x.size(1)
-        x = x.contiguous().view(-1, *x.shape[2:])
+    def forward(self, x):
+        bs, feature, rest = x.size(0), x.size(1), x.shape[2:]
+        x = x.contiguous().view(bs, *rest, feature)
         x = self.f(x)
-        x = x.view(b, t, *x.shape[1:])
-        x = x.transpose(1, 2)
+        x = x.contiguous().view(bs, -1, *rest)
         return x

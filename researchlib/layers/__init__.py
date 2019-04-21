@@ -16,3 +16,6 @@ from .activator import *
 from .wrapper import *
 
 from .noisy_linear import *
+
+from .multihead_attention import *
+from .position_encoding import *
