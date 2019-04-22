@@ -19,3 +19,6 @@ from .noisy_linear import *
 
 from .multihead_attention import *
 from .position_encoding import *
+from .octconv import *
+
+from .block import *
