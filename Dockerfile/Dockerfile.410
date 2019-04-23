@@ -14,8 +14,8 @@ RUN pip install -U cupy
 RUN pip install git+https://github.com/CorcovadoMing/pynvrtc.git
 
 # Apex
-RUN git clone https://github.com/NVIDIA/apex.git
-RUN cd apex && pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" .
+RUN apt update && apt install -y curl
+RUN curl https://raw.githubusercontent.com/apex/apex/master/install.sh | sh
 
 # DALI
 RUN pip install --extra-index-url https://developer.download.nvidia.com/compute/redist/cuda/10.0 nvidia-dali
