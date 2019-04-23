@@ -17,13 +17,13 @@ class EnsembleLoss(nn.Module):
 def loss_ensemble(cfg):
     loss_fns = []
     loss_weights = []
-    rl, kx, ky, dm = [], [], [], []
+    rl, kx, ky, dm = None, None, None, []
     for i in cfg:
         res = loss_mapping(i)
         loss_fns.append(res[0])
-        rl.append(res[1])
-        kx.append(res[2])
-        ky.append(res[3])
+        rl = res[1]
+        kx = res[2]
+        ky = res[3]
         if res[4]:
             dm = res[4]
         loss_weights.append(cfg[i])
