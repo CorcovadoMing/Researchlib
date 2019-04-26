@@ -21,10 +21,10 @@ class MultiHeadAttention(nn.Module):
         bs = x.size(0)
         ts = x.size(2)
         x = x.transpose(-1, -2) # bs, ts, features
-        q = self.qw(x).view(bs, ts, self.heads, self.inter_feature).transpose(1, 2)
+        q = self.qw(x).view(bs, ts, self.heads, self.inter_feature).transpose(1, 2) # bs, head, ts, feature
         k = self.kw(x).view(bs, ts, self.heads, self.inter_feature).transpose(1, 2)
         v = self.vw(x).view(bs, ts, self.heads, self.inter_feature).transpose(1, 2)
-        e = self.softmax((q @ k.transpose(-1, -2)) / self.inter_feature**0.5) @ v
+        e = (self.softmax((q @ k.transpose(-1, -2)) / self.inter_feature**0.5)) @ v # (ts, ts) @ (ts, feature)
         out = e.transpose(1, 2).contiguous().view(bs, ts, self.out_feature)
         out = self.norm(out + x).transpose(-1, -2)
         return out

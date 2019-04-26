@@ -7,8 +7,13 @@ class TimeDistributed(nn.Module):
         self.f = f
 
     def forward(self, x):
-        bs, feature, rest = x.size(0), x.size(1), x.shape[2:]
-        x = x.contiguous().view(bs, *rest, feature)
-        x = self.f(x)
-        x = x.contiguous().view(bs, -1, *rest)
+        index = list(range(x.dim()))
+        index = [index[0], index[-1]] + index[1:-1]
+        x = x.permute(*index)
+        bs, ts = x.size(0), x.size(1)
+        x = self.f(x.contiguous().view(bs*ts, *x.shape[2:]))
+        x = x.view(bs, ts, *x.shape[1:])
+        index = list(range(x.dim()))
+        index = [index[0]] + index[2:] + [index[1]]
+        x = x.permute(*index)
         return x

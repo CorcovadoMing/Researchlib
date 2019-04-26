@@ -1,6 +1,8 @@
 from torch import nn
 import numpy as np
 import torch
+import math
+from torch.autograd import Variable
 
 class PositionEncoding(nn.Module):
     def __init__(self, dk=512):
@@ -25,3 +27,4 @@ class PositionEncoding(nn.Module):
         elif self.encode_map.size(0) != x.size(1) or self.encode_map.size(1) != x.size(2):
             self._gen_map(x.size(2), x.size(1), x.device)
         return x + self.encode_map
+    
