@@ -15,7 +15,15 @@ class MultiHeadAttention(nn.Module):
         self.kw = nn.Linear(in_feature, out_feature)
         self.vw = nn.Linear(in_feature, out_feature)
         self.softmax = nn.Softmax(-1)
-        self.norm = nn.LayerNorm(out_feature)
+        self.norm1 = nn.LayerNorm(out_feature)
+        self.norm2 = nn.LayerNorm(out_feature)
+        self.drop1 = nn.Dropout(0.1)
+        self.drop2 = nn.Dropout(0.1)
+        self.projection = nn.Linear(out_feature, out_feature)
+        
+        self.ffn1 = nn.Conv1d(out_feature, out_feature*4, 1)
+        self.ffn2 = nn.Conv1d(out_feature*4, out_feature, 1)
+        self.activator = nn.ReLU()
         
     def forward(self, x):
         bs = x.size(0)
@@ -26,5 +34,11 @@ class MultiHeadAttention(nn.Module):
         v = self.vw(x).view(bs, ts, self.heads, self.inter_feature).transpose(1, 2)
         e = (self.softmax((q @ k.transpose(-1, -2)) / self.inter_feature**0.5)) @ v # (ts, ts) @ (ts, feature)
         out = e.transpose(1, 2).contiguous().view(bs, ts, self.out_feature)
-        out = self.norm(out + x).transpose(-1, -2)
-        return out
+        out_inter = self.norm1(out + x) # bs, ts, features 
+        out = self.drop1(out_inter)
+        out = self.projection(out).transpose(-1, -2) # bs, features, ts
+        out = self.activator(self.ffn1(out))
+        out = self.ffn2(out)
+        out = self.norm2(out.transpose(-1, -2) + out_inter)
+        out = self.drop2(out)
+        return out.transpose(-1, -2)
