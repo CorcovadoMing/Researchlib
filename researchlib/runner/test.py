@@ -19,7 +19,7 @@ def test(**kwargs):
     with torch.no_grad():
         for batch_idx, data_pack in enumerate(kwargs['test_loader']):
             if type(kwargs['test_loader']) == torchtext.data.iterator.BucketIterator:
-                data, target = data_pack.text, data_pack.label - 1
+                data, target = data_pack.text, data_pack.label
             elif type(data_pack[0]) == type({}):
                 data, target = data_pack[0]['data'], data_pack[0]['label']
             else:
