@@ -14,8 +14,8 @@ from torch.optim import *
 from tqdm.auto import tqdm
 import torch.backends.cudnn as cudnn
 from apex import amp
+import torch.nn.init as init
 
-#amp.register_float_function(torch.nn, 'Sigmoid')
 
 def _get_iteration(train_loader):
     iteration = None
@@ -25,6 +25,7 @@ def _get_iteration(train_loader):
         iteration = (train_loader._size / train_loader.batch_size)
     assert iteration != None
     return iteration
+
 
 class Runner:
     def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, reg_weights={}, monitor_mode='min', monitor_state='loss', fp16=False, multigpu=False):
@@ -323,6 +324,31 @@ class Runner:
             print(loss_records, list(matrix_records.records.values())[-1][-1])
         else:
             print(loss_records)
+    
+    def init_model(self, init_distribution='xavier_normal', module_list=[]):    
+        def _is_init_module(m, module_list):
+            if len(module_list):
+                if type(m) in module_list:
+                    return True
+                else:
+                    return False
+            else:
+                return True
+            
+        def _init(m):
+            if _is_init_module(m, module_list):
+                for p in m.parameters():
+                    if p.dim() > 1:
+                        if init_distribution == 'xavier_normal':
+                            print('Init: ', m)
+                            init.xavier_normal_(p.data)
+                        elif init_distribution == 'orthogonal':
+                            print('Init: ', m)
+                            init.orthogonal_(p.data)
+                    else:
+                        init.normal_(p.data)
+        self.model.apply(_init)
+
 
     def save(self, path):
         '''
