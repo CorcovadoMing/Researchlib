@@ -2,7 +2,7 @@ from .torchqrnn import *
 from torch import nn
 import torch 
 
-class QRNNLayer(nn.Module):
+class _QRNN(nn.Module):
     def __init__(self, in_dim, out_dim, return_sequences=False, bidirection=False):
         super().__init__()
         self.in_dim = in_dim
@@ -16,10 +16,8 @@ class QRNNLayer(nn.Module):
         self.rs = return_sequences
     
     def forward(self, x):
-        # batch, features, length -> length, batch, features
-        x = x.permute(2, 0, 1)
-        #x = x.transpose(1, 2)
-        #x = x.transpose(0, 1)
+        # bs, ts, feature -> ts, bs, feature
+        x = x.transpose(0, 1)
         if self.bidirection:
             ts = list(range(x.size(0)))
             x_f, _ = self.forward_f(x)
@@ -27,12 +25,9 @@ class QRNNLayer(nn.Module):
             x = torch.cat((x_f, x_b), dim=-1)
         else:
             x, _ = self.f(x)
-        
-        #x = x.transpose(1, 2)
-        #x = x.transpose(0, 2)
-        x = x.permute(1, 2, 0)
+        x = x.transpose(0, 1)
         
         if self.rs:
             return x
         else:
-            return x[:, :, -1]
+            return x[:, -1, :]

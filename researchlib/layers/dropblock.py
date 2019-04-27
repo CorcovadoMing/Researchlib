@@ -2,8 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-
-class DropBlock2D(nn.Module):
+class _DropBlock2d(nn.Module):
     r"""Randomly zeroes 2D spatial blocks of the input tensor.
 
     As described in the paper
@@ -38,8 +37,7 @@ class DropBlock2D(nn.Module):
     def forward(self, x):
         # shape: (bsize, channels, height, width)
         
-        assert x.dim() == 4, \
-            "Expected input with 4 dimensions (bsize, channels, height, width)"
+        assert x.dim() == 4, "Expected input with 4 dimensions (bsize, channels, height, width)"
 
         if not self.training or self.drop_prob == 0.:
             return x
@@ -84,7 +82,7 @@ class DropBlock2D(nn.Module):
         return self.cur_prob / (self.block_size ** 2)
 
 
-class DropBlock3D(DropBlock2D):
+class _DropBlock3d(_DropBlock2d):
     r"""Randomly zeroes 3D spatial blocks of the input tensor.
 
     An extension to the concept described in the paper

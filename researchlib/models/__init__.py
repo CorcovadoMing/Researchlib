@@ -11,5 +11,5 @@ from .densenet3 import *
 from .wideresnet import *
 from .senet import *
 from .neural_process import *
-from .pointer_network import *
+#from .pointer_network import *
 from .lstnet import *

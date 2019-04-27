@@ -2,7 +2,6 @@ from torch import nn
 import numpy as np
 import torch
 import math
-from torch.autograd import Variable
 
 class PositionEncoding(nn.Module):
     def __init__(self, dk=512):

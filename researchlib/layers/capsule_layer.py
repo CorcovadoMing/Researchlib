@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-def squash(s, dim=-1):
+def _squash(s, dim=-1):
 	'''
 	"Squashing" non-linearity that shrunks short vectors to almost zero length and long vectors to a length slightly below 1
 	Eq. (1): v_j = ||s_j||^2 / (1 + ||s_j||^2) * s_j / ||s_j||
@@ -17,14 +17,8 @@ def squash(s, dim=-1):
 	squared_norm = torch.sum(s**2, dim=dim, keepdim=True)
 	return squared_norm / (1 + squared_norm) * s / (torch.sqrt(squared_norm) + 1e-8)
 
-class ActivityCapsule(nn.Module):
-    def __init__(self):
-        super().__init__()
-    
-    def forward(self, x):
-        return torch.norm(x, dim=-1)
 
-class PrimaryCapsules(nn.Module):
+class _PrimaryCapsules(nn.Module):
 	def __init__(self, in_channels, out_channels, dim_caps,
 	kernel_size=9, stride=2, padding=0):
 		"""
@@ -45,10 +39,10 @@ class PrimaryCapsules(nn.Module):
 		out = self.conv(x)
 		out = out.view(out.size(0), self._caps_channel, out.size(2), out.size(3), self.dim_caps)
 		out = out.view(out.size(0), -1, self.dim_caps)
-		return squash(out)
+		return _squash(out)
 
 
-class RoutingCapsules(nn.Module):
+class _RoutingCapsules(nn.Module):
 	def __init__(self, in_dim, in_caps, num_caps, dim_caps, num_routing):
 		"""
 		Initialize the layer.
@@ -110,7 +104,7 @@ class RoutingCapsules(nn.Module):
 			# (batch_size, num_caps, dim_caps)
 			s = (c * temp_u_hat).sum(dim=2)
 			# apply "squashing" non-linearity along dim_caps
-			v = squash(s)
+			v = _squash(s)
 			# dot product agreement between the current output vj and the prediction uj|i
 			# (batch_size, num_caps, in_caps, dim_caps) @ (batch_size, num_caps, dim_caps, 1)
 			# -> (batch_size, num_caps, in_caps, 1)
@@ -121,12 +115,10 @@ class RoutingCapsules(nn.Module):
 		c = F.softmax(b, dim=1)
 		s = (c * u_hat).sum(dim=2)
 		# apply "squashing" non-linearity along dim_caps
-		v = squash(s)
-
+		v = _squash(s)
 		return v
 
-
-class CapsuleMasked(nn.Module):
+class _CapsuleMasked(nn.Module):
     def __init__(self):
         super().__init__()
         

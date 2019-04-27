@@ -1,7 +1,7 @@
 from torch import nn
-from ..octconv import OctConv2d
+from ..octconv import _OctConv2d
 
-class OctConvBlock2d(nn.Module):
+class _OctConvBlock2d(nn.Module):
     def __init__(self, ch_in, ch_out, kernel_size, stride=1, padding=0, alphas=(0.5, 0.5), pool=False, pooling_factor=2, activator=nn.ReLU, norm=nn.BatchNorm2d):
         super().__init__()
         self.alpha_in, self.alpha_out = alphas

@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-class OctConv2d(nn.Module):
+class _OctConv2d(nn.Module):
     def __init__(self, ch_in, ch_out, kernel_size, stride=1, padding=0, alphas=(0.5, 0.5)):
         super().__init__()
         self.alpha_in, self.alpha_out = alphas
