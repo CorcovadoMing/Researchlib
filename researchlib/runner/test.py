@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 from .history import *
 from ..utils import *
+import torchtext
 
 def test(**kwargs):
     '''
@@ -17,7 +18,9 @@ def test(**kwargs):
     
     with torch.no_grad():
         for batch_idx, data_pack in enumerate(kwargs['test_loader']):
-            if type(data_pack[0]) == type({}):
+            if type(kwargs['test_loader']) == torchtext.data.iterator.BucketIterator:
+                data, target = data_pack.text, data_pack.label - 1
+            elif type(data_pack[0]) == type({}):
                 data, target = data_pack[0]['data'], data_pack[0]['label']
             else:
                 data, target = data_pack[0], data_pack[1:]

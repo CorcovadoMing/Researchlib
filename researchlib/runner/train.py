@@ -6,6 +6,7 @@ import torch
 from torch.nn.utils import *
 from ..utils import *
 from apex import amp
+import torchtext
 
 class Check:
     def __init__(self):
@@ -29,19 +30,21 @@ def train(**kwargs):
     for m in kwargs['metrics']: m.reset()
     
     for batch_idx, data_pack in enumerate(bar):
-        if type(data_pack[0]) == type({}):
+        if type(kwargs['train_loader']) == torchtext.data.iterator.BucketIterator:
+            data, target = data_pack.text, data_pack.label - 1
+        elif type(data_pack[0]) == type({}):
             data, target = data_pack[0]['data'], data_pack[0]['label']
         else:
             data, target = data_pack[0], data_pack[1:]
         
         kwargs['batch_idx'] = batch_idx
         
-        if kwargs['augmentor']: data, target = kwargs['augmentor'].on(data, target)
-        
         if type(data) != type([]) and type(data) != type(()): data = [data]
         if type(target) != type([]) and type(target) != type(()): target = [target]
         
         target = [i.long() if j else i for i, j in zip(target, kwargs['require_long'])]
+        
+        if kwargs['augmentor']: data, target = kwargs['augmentor'].on(data, target)
         
         if kwargs['mixup_alpha'] != 0:
             lam = np.random.beta(kwargs['mixup_alpha'], kwargs['mixup_alpha'])
