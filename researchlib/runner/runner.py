@@ -340,11 +340,10 @@ class Runner:
                 for p in m.parameters():
                     if p.dim() > 1:
                         if init_distribution == 'xavier_normal':
-                            print('Init: ', m)
                             init.xavier_normal_(p.data)
                         elif init_distribution == 'orthogonal':
-                            print('Init: ', m)
                             init.orthogonal_(p.data)
+                        print('Init ' + str(init_distribution) + ':', m)
                     else:
                         init.normal_(p.data)
         self.model.apply(_init)
