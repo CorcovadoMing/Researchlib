@@ -140,7 +140,8 @@ class Runner:
             self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level="O2", enabled=fp16)
         
         # Multi GPU
-        if multigpu:
+        self.multigpu = multigpu
+        if self.multigpu:
             self.model = nn.DataParallel(self.model)
         
         
@@ -350,18 +351,10 @@ class Runner:
 
 
     def save(self, path):
-        '''
-            Save model to path
-            Multi-model supported
-        '''
         save_model(self.model, path)
     
     def load(self, path):
-        '''
-            Load model from path
-            Multi-model supported
-        '''
-        load_model(self.model, path)
+        self.model = load_model(self.model, path, self.multigpu)
 
     def find_lr(self, mixup_alpha=0, plot=False, callbacks=[]):
         '''
@@ -394,7 +387,7 @@ class Runner:
             if plot:
                 plot_utils(self.loss_history, self.lr_history)
         except Exception as e: print('Error:', e)
-        finally: load_model(self.model, 'tmp.h5')
+        finally: self.model = load_model(self.model, 'tmp.h5')
     
     def cam(self, vx, final_layer, out_filters, classes):
         if not self.cam_model:
