@@ -8,4 +8,3 @@ from ..loss import *
 from ..metrics import *
 from ..search import *
 from ..ml import *
-from ..deploy import *
