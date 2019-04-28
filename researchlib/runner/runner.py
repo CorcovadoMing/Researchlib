@@ -1,12 +1,12 @@
 from .train import *
 from .test import *
 from .history import *
-from ..io import *
 from ..callbacks import *
 from ..utils import *
 from ..metrics import *
 from ..loss import *
 from ..layers import *
+from .save_model import _save_model, _load_model
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -351,16 +351,16 @@ class Runner:
 
 
     def save(self, path):
-        save_model(self.model, path)
+        _save_model(self.model, path)
     
     def load(self, path):
-        self.model = load_model(self.model, path, self.multigpu)
+        self.model = _load_model(self.model, path, self.multigpu)
 
     def find_lr(self, mixup_alpha=0, plot=False, callbacks=[]):
         '''
             Multi-model supported
         '''
-        save_model(self.model, 'tmp.h5')
+        _save_model(self.model, 'tmp.h5')
         try:
             loss, _ = self.trainer(model=self.model, 
                                 train_loader=self.train_loader, 
@@ -387,7 +387,7 @@ class Runner:
             if plot:
                 plot_utils(self.loss_history, self.lr_history)
         except Exception as e: print('Error:', e)
-        finally: self.model = load_model(self.model, 'tmp.h5')
+        finally: self.model = _load_model(self.model, 'tmp.h5', self.multigpu)
     
     def cam(self, vx, final_layer, out_filters, classes):
         if not self.cam_model:
