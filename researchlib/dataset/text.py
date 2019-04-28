@@ -4,7 +4,7 @@ import spacy
 import pandas as pd
 import numpy as np
 
-def AGNews(train=True):
+def _AGNews(train=True):
     NLP = spacy.load('en_core_web_sm')
     tokenizer = lambda sent: [x.text for x in NLP.tokenizer(sent) if x.text != " "]
     

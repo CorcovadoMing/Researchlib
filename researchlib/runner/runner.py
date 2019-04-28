@@ -6,7 +6,7 @@ from ..utils import *
 from ..metrics import *
 from ..loss import *
 from ..layers import *
-from .save_model import _save_model, _load_model
+from .save_load import _save_model, _load_model
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -260,7 +260,7 @@ class Runner:
                 # Checkpoint
                 if self.monitor_mode(cri, self.monitor) == cri:
                     self.monitor = cri
-                    save_model(self.model, 'checkpoint.h5')
+                    self.save('checkpoint.h5')
                     epoch_str += '*'
                 
             state = []
