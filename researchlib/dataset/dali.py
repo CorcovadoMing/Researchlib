@@ -1,6 +1,6 @@
 import math
 
-class NumpyIterator(object):
+class _NumpyIterator(object):
     def __init__(self, batch_size, x, y):
         self.x = x
         self.y = y
@@ -26,7 +26,7 @@ import nvidia.dali.ops as ops
 import nvidia.dali.types as types
 from nvidia.dali.plugin.pytorch import DALIGenericIterator
 
-class AugPipeline(Pipeline):
+class _AugPipeline(Pipeline):
     def __init__(self, iterator, batch_size, num_threads, device_id):
         super().__init__(batch_size, num_threads, device_id)
         self.input = ops.ExternalSource()
@@ -50,7 +50,7 @@ class AugPipeline(Pipeline):
         output_label = self.flip(y)
         return (output_img, output_label)
         
-def FromDALI(x, y, batch_size=1, num_workers=4):
-    pipe = AugPipeline(iter(NumpyIterator(batch_size, x, y)), batch_size=batch_size, num_threads=num_workers, device_id=0)
+def FromDali(x, y, batch_size=1, num_workers=4):
+    pipe = _AugPipeline(iter(_NumpyIterator(batch_size, x, y)), batch_size=batch_size, num_threads=num_workers, device_id=0)
     pipe.build()
     return DALIGenericIterator(pipe, ['data', 'label'], len(x), auto_reset=True)

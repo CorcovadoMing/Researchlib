@@ -4,7 +4,6 @@ import spacy
 import pandas as pd
 import numpy as np
 
-
 def AGNews(train=True):
     NLP = spacy.load('en_core_web_sm')
     tokenizer = lambda sent: [x.text for x in NLP.tokenizer(sent) if x.text != " "]
@@ -33,6 +32,3 @@ def AGNews(train=True):
     vocab = TEXT.vocab
     print('VOC:', len(vocab))
     return datas
-
-class text(object):
-    AGNews=AGNews

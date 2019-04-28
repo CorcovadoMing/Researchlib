@@ -1,11 +1,11 @@
 import torch
 from torchtext import data
 
-def FromTextDataset(dataset, batch_size, shuffle=True):
+def TextDataset(dataset, batch_size, train=True):
     loader = data.BucketIterator(
-                dataset,
+                dataset(train),
                 batch_size=batch_size,
                 sort_key=lambda x: len(x.text),
                 repeat=False,
-                shuffle=shuffle)
+                shuffle=train)
     return loader
