@@ -1,7 +1,7 @@
 from torch import nn
 import torch
 
-class Norm(nn.Module):
+class _Norm(nn.Module):
     def __init__(self):
         super().__init__()
     

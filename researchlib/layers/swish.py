@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-class Swish(nn.Module):
+class _Swish(nn.Module):
     def __init__(self):
         super().__init__()
     

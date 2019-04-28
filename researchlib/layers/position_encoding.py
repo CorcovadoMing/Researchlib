@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import math
 
-class PositionEncoding(nn.Module):
+class _PositionEncoding(nn.Module):
     def __init__(self, dk=512):
         super().__init__()
         self.encode_map = None

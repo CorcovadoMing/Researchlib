@@ -2,7 +2,7 @@ import torch
 from torch import nn
 import math
 
-class GeLU(nn.Module):
+class _GeLU(nn.Module):
     def __init__(self):
         super().__init__()
     
