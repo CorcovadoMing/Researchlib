@@ -67,6 +67,6 @@ def po_meta_heuristic_(x, objective, epoch, mode, accept, opt, opt_tune):
 # Interface
 # -----------------------------------------------------------
 
-def GeneticAlgorithm(x, objective, epoch, population=20):
+def _GeneticAlgorithm(x, objective, epoch, population=20):
     x = x.repeat(population).view(population, -1)
     return po_meta_heuristic_(x, objective, epoch, None, None, None, None)
