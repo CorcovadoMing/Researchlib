@@ -72,7 +72,7 @@ def train(**kwargs):
         # Training
         model_ffn = kwargs['model'].forward
         loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        loss_ = train_minibatch_(model_ffn, loss_ffn, **kwargs)
+        loss_ = train_minibatch_(model_ffn, loss_ffn, False, **kwargs)
         
         # Record loss
         loss_history.append(loss_)
@@ -108,7 +108,7 @@ def cal_regularization(**kwargs):
             loss += reg_loss.cuda()
     return loss
 
-def train_minibatch_(model_ffn, loss_ffn, **kwargs):
+def train_minibatch_(model_ffn, loss_ffn, unsupervised, **kwargs):
     # Reset optimizer
     kwargs['optimizer'].zero_grad()
     
@@ -117,20 +117,24 @@ def train_minibatch_(model_ffn, loss_ffn, **kwargs):
     auxout = get_aux_out(kwargs['model'])
     auxout.append(output)
     
-    # Shape outputs
-    auxout = [i if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(auxout, kwargs['keep_x_shape'])]
-    kwargs['target'] = [i.squeeze() if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])]
-    if kwargs['mixup_alpha'] != 0:
-        kwargs['target_res'] = [i.squeeze() if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(kwargs['target_res'], kwargs['keep_y_shape'])]
-
     # Calulate loss
     loss = 0
-    if kwargs['mixup_alpha'] != 0:
+    auxout = [i if j else i.view(i.size(0), -1) for i, j in zip(auxout, kwargs['keep_x_shape'])]
+    if not unsupervised:
+        kwargs['target'] = [i if j else i.view(i.size(0), -1) for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])]
         for i in range(len(auxout)):
-            loss += kwargs['mixup_loss_fn'](loss_ffn[i], auxout[i], kwargs['target'][i], kwargs['target_res'][i], kwargs['check'].lam)
+            if kwargs['mixup_alpha'] != 0:
+                if not kwargs['keep_y_shape'][i]:
+                    kwargs['target_res'][i] = kwargs['target_res'][i].view(kwargs['target_res'][i].size(0), -1)
+                loss += kwargs['mixup_loss_fn'](loss_ffn[i], auxout[i], kwargs['target'][i], kwargs['target_res'][i], kwargs['check'].lam)
+            else:
+                loss += loss_ffn[i](auxout[i], kwargs['target'][i])
     else:
         for i in range(len(auxout)):
-            loss += loss_ffn[i](auxout[i], kwargs['target'][i])
+            if kwargs['mixup_alpha'] != 0:
+                loss += kwargs['mixup_loss_fn'](loss_ffn[i], auxout[i], kwargs['check'].lam)
+            else:
+                loss += loss_ffn[i](auxout[i])
         
     # Calculate Regularization
     loss += cal_regularization(**kwargs)
