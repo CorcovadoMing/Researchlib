@@ -88,6 +88,22 @@ def train(**kwargs):
     
     return loss_history, matrix_records
     
+def cal_regularization(**kwargs):
+    loss = 0
+    regs = get_reg_out(kwargs['model'])
+    for key in kwargs['reg_fn']:
+        try: 
+            weight = kwargs['reg_weights'][key] 
+        except: 
+            weight = 1    
+        
+        reg_args = zip(*regs[key])
+        
+        for arg in reg_args:
+            arg = [i.cpu() for i in arg]
+            reg_loss = (kwargs['reg_fn'][key](*arg)) * weight
+            loss += reg_loss.cuda()
+    return loss
 
 def train_minibatch_(**kwargs):
     # Reset optimizer
@@ -114,17 +130,7 @@ def train_minibatch_(**kwargs):
             loss += kwargs['loss_fn'][i](auxout[i], kwargs['target'][i])
         
     # Calculate Regularization
-    regs = get_reg_out(kwargs['model'])
-    for key in kwargs['reg_fn']:
-        try: 
-            weight = kwargs['reg_weights'][key] 
-        except: 
-            weight = 1    
-        reg_args = zip(*regs[key])
-        for arg in reg_args:
-            arg = [i.cpu() for i in arg]
-            reg_loss = (kwargs['reg_fn'][key](*arg)) * weight
-            loss += reg_loss.cuda()
+    loss += cal_regularization(kwargs)
 
     # Backward
     with amp.scale_loss(loss, kwargs['optimizer']) as scaled_loss:
