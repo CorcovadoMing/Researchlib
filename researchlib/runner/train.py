@@ -30,6 +30,9 @@ def train(**kwargs):
     for m in kwargs['metrics']: m.reset()
     
     for batch_idx, data_pack in enumerate(bar):
+        kwargs['batch_idx'] = batch_idx
+        
+        # Load dataset
         if type(kwargs['train_loader']) == torchtext.data.iterator.BucketIterator:
             data, target = data_pack.text, data_pack.label
         elif type(data_pack[0]) == type({}):
@@ -37,15 +40,15 @@ def train(**kwargs):
         else:
             data, target = data_pack[0], data_pack[1:]
         
-        kwargs['batch_idx'] = batch_idx
-        
         if type(data) != type([]) and type(data) != type(()): data = [data]
         if type(target) != type([]) and type(target) != type(()): target = [target]
         
         target = [i.long() if j else i for i, j in zip(target, kwargs['require_long'])]
         
+        # On the fly augmentation
         if kwargs['augmentor']: data, target = kwargs['augmentor'].on(data, target)
         
+        # Mixup
         if kwargs['mixup_alpha'] != 0:
             lam = np.random.beta(kwargs['mixup_alpha'], kwargs['mixup_alpha'])
             index = torch.randperm(data[0].size(0))
@@ -54,7 +57,7 @@ def train(**kwargs):
             kwargs['check'].lam = lam
             kwargs['mixup_loss_fn'] = mixup_loss_fn
         
-        
+        # Move to GPU
         if kwargs['is_cuda']:
             kwargs['data'], kwargs['target'] = [i.cuda() for i in data], [i.cuda() for i in target]
             if kwargs['mixup_alpha'] != 0: kwargs['target_res'] = [i.cuda() for i in target_res]
@@ -65,7 +68,10 @@ def train(**kwargs):
         # Callback: on_iteration_begin
         for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_begin(**kwargs)
 
+        # Training
         loss_ = train_minibatch_(**kwargs)
+        
+        # Record loss
         loss_history.append(loss_)
         kwargs['cur_loss'] = loss_
         loss_avg = sum(loss_history)/len(loss_history)
@@ -84,17 +90,21 @@ def train(**kwargs):
     
 
 def train_minibatch_(**kwargs):
+    # Reset optimizer
     kwargs['optimizer'].zero_grad()
     
+    # Forward
     output = kwargs['model'](*kwargs['data'])
     auxout = get_aux_out(kwargs['model'])
     auxout.append(output)
     
+    # Shape outputs
     auxout = [i if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(auxout, kwargs['keep_x_shape'])]
     kwargs['target'] = [i.squeeze() if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])]
     if kwargs['mixup_alpha'] != 0:
         kwargs['target_res'] = [i.squeeze() if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(kwargs['target_res'], kwargs['keep_y_shape'])]
 
+    # Calulate loss
     loss = 0
     if kwargs['mixup_alpha'] != 0:
         for i in range(len(auxout)):
@@ -103,7 +113,7 @@ def train_minibatch_(**kwargs):
         for i in range(len(auxout)):
             loss += kwargs['loss_fn'][i](auxout[i], kwargs['target'][i])
         
-    # Reg
+    # Calculate Regularization
     regs = get_reg_out(kwargs['model'])
     for key in kwargs['reg_fn']:
         try: 
@@ -116,11 +126,13 @@ def train_minibatch_(**kwargs):
             reg_loss = (kwargs['reg_fn'][key](*arg)) * weight
             loss += reg_loss.cuda()
 
+    # Backward
     with amp.scale_loss(loss, kwargs['optimizer']) as scaled_loss:
         scaled_loss.backward()
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_begin(**kwargs)
     
+    # Update
     kwargs['optimizer'].step()
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_end(**kwargs)

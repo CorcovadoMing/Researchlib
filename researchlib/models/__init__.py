@@ -1,4 +1,5 @@
-from .builder import *
+from .builder import builder
+from .gan import GANModel
 
 from .vgg import *
 from .lenet import *

@@ -1,7 +1,7 @@
 import torch
 
 def VisionDataset(dataset, batch_size, train=True, sampler=None, normalize=True, batch_sampler=None, num_workers=8, pin_memory=True, drop_last=False, custom_tf=[]):
-    loader = torch.utils.data.DataLoader(dataset(train),
+    loader = torch.utils.data.DataLoader(dataset(train, normalize=normalize, custom_tf=custom_tf),
                                     batch_size=batch_size,
                                     shuffle=train,
                                     sampler=sampler,
