@@ -15,6 +15,7 @@ from tqdm.auto import tqdm
 import torch.backends.cudnn as cudnn
 from apex import amp
 import torch.nn.init as init
+from ..models import *
 
 
 def _get_iteration(train_loader):
@@ -87,14 +88,20 @@ class Runner:
         # 
         # self.optimizer
         # --------------------------------------------------------------------------------------------------------------------------------
-        if optimizer == 'adam':
-            self.optimizer = Adam(model.parameters(), betas=(0.9, 0.99))
-        elif optimizer == 'sgd':
-            self.optimizer = SGD(model.parameters(), lr=1e-2, momentum=0.9, weight_decay=5e-5)
-        elif optimizer == 'rmsprop':
-            self.optimizer = RMSprop(model.parameters(), weight_decay=5e-5)
+        def _assign_optim(model, optimizer):
+            if optimizer == 'adam':
+                return Adam(model.parameters(), betas=(0.9, 0.99))
+            elif optimizer == 'sgd':
+                return SGD(model.parameters(), lr=1e-2, momentum=0.9, weight_decay=5e-5)
+            elif optimizer == 'rmsprop':
+                return RMSprop(model.parameters(), weight_decay=5e-5)
+            else:
+                return optimizer
+        
+        if type(model) == GANModel:
+            self.optimizer = [_assign_optim(model.discriminator, optimizer), _assign_optim(model.generator, optimizer)]
         else:
-            self.optimizer = optimizer
+            self.optimizer = _assign_optim(model, optimizer)
         # --------------------------------------------------------------------------------------------------------------------------------
         
         
@@ -227,7 +234,7 @@ class Runner:
                                                         callbacks=callbacks,
                                                         metrics=metrics)
             
-            self.history_.add({'train_loss': sum(loss_records)/len(loss_records)})
+            self.history_.add(loss_records, prefix='train')
             self.history_ += matrix_records
             
             

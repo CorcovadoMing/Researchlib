@@ -18,7 +18,8 @@ class GANLoss(nn.Module):
             self.g_loss = _wgan_g_loss
             self.extra_step = _wgan_extra_step
     
-    def forward_d(self, real, fake):
+    def forward_d(self, x):
+        real, fake = x
         return self.d_loss(real, fake)
     
     def forward_g(self, fake):

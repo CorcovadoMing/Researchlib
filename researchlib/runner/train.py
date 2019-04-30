@@ -8,6 +8,7 @@ from ..utils import *
 from apex import amp
 import torchtext
 from torch import nn
+from ..models import *
 
 class Check:
     def __init__(self):
@@ -23,6 +24,8 @@ def train(**kwargs):
     kwargs['model'].train()
     
     loss_history = []
+    g_loss_history = []
+    d_loss_history = []
     matrix_records = History()
     
     bar = tqdm(kwargs['train_loader'], leave=False)
@@ -70,15 +73,41 @@ def train(**kwargs):
         for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_begin(**kwargs)
 
         # Training
-        model_ffn = kwargs['model'].forward
-        loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        loss_ = train_minibatch_(model_ffn, loss_ffn, False, **kwargs)
+        if type(kwargs['model']) == GANModel:
+            # Discriminator
+            model_ffn = kwargs['model'].forward_d
+            loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
+            loss_ = train_minibatch_(model_ffn, loss_ffn, kwargs['optimizer'][0], True, **kwargs)
+            
+            # Record loss
+            d_loss_history.append(loss_)
+            d_loss_avg = sum(d_loss_history)/len(d_loss_history)
+            
+            # Extra
+            for i in kwargs['loss_fn']:
+                i.extra_step(kwargs['model'])
+            
+            # Generator
+            model_ffn = kwargs['model'].forward_g
+            loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
+            loss_ = train_minibatch_(model_ffn, loss_ffn, kwargs['optimizer'][1], True, **kwargs)
+            
+            # Record loss
+            g_loss_history.append(loss_)
+            kwargs['cur_loss'] = loss_
+            g_loss_avg = sum(g_loss_history)/len(g_loss_history)
+            bar.set_postfix(d_loss="{:.4f}".format(d_loss_avg), g_loss="{:.4f}".format(g_loss_avg), refresh=False)
+            
+        else:
+            model_ffn = kwargs['model'].forward
+            loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
+            loss_ = train_minibatch_(model_ffn, loss_ffn, kwargs['optimizer'], False, **kwargs)
         
-        # Record loss
-        loss_history.append(loss_)
-        kwargs['cur_loss'] = loss_
-        loss_avg = sum(loss_history)/len(loss_history)
-        bar.set_postfix(loss="{:.4f}".format(loss_avg), refresh=False)
+            # Record loss
+            loss_history.append(loss_)
+            kwargs['cur_loss'] = loss_
+            loss_avg = sum(loss_history)/len(loss_history)
+            bar.set_postfix(loss="{:.4f}".format(loss_avg), refresh=False)
         
         # Callback: on_iteration_end
         for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_end(**kwargs)
@@ -89,7 +118,10 @@ def train(**kwargs):
     # Output metrics
     for m in kwargs['metrics']: matrix_records.add(m.output(), prefix='train')
     
-    return loss_history, matrix_records
+    if type(kwargs['model']) == GANModel:
+        return {'d_loss': sum(d_loss_history)/len(d_loss_history), 'g_loss': sum(g_loss_history)/len(g_loss_history)}, matrix_records
+    else:
+        return {'loss': sum(loss_history)/len(loss_history)}, matrix_records
     
 def cal_regularization(**kwargs):
     loss = 0
@@ -108,9 +140,9 @@ def cal_regularization(**kwargs):
             loss += reg_loss.cuda()
     return loss
 
-def train_minibatch_(model_ffn, loss_ffn, unsupervised, **kwargs):
+def train_minibatch_(model_ffn, loss_ffn, optim, unsupervised, **kwargs):
     # Reset optimizer
-    kwargs['optimizer'].zero_grad()
+    optim.zero_grad()
     
     # Forward
     output = model_ffn(*kwargs['data'])
@@ -140,13 +172,13 @@ def train_minibatch_(model_ffn, loss_ffn, unsupervised, **kwargs):
     loss += cal_regularization(**kwargs)
 
     # Backward
-    with amp.scale_loss(loss, kwargs['optimizer']) as scaled_loss:
+    with amp.scale_loss(loss, optim) as scaled_loss:
         scaled_loss.backward()
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_begin(**kwargs)
     
     # Update
-    kwargs['optimizer'].step()
+    optim.step()
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_end(**kwargs)
     
