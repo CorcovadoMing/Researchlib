@@ -69,7 +69,9 @@ def train(**kwargs):
         for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_begin(**kwargs)
 
         # Training
-        loss_ = train_minibatch_(**kwargs)
+        model_ffn = kwargs['model'].forward
+        loss_ffn = [i.forward for i in kwargs['loss_fn']]
+        loss_ = train_minibatch_(model_ffn, loss_ffn, **kwargs)
         
         # Record loss
         loss_history.append(loss_)
@@ -105,12 +107,12 @@ def cal_regularization(**kwargs):
             loss += reg_loss.cuda()
     return loss
 
-def train_minibatch_(**kwargs):
+def train_minibatch_(model_ffn, loss_ffn, **kwargs):
     # Reset optimizer
     kwargs['optimizer'].zero_grad()
     
     # Forward
-    output = kwargs['model'](*kwargs['data'])
+    output = model_ffn(*kwargs['data'])
     auxout = get_aux_out(kwargs['model'])
     auxout.append(output)
     
@@ -124,10 +126,10 @@ def train_minibatch_(**kwargs):
     loss = 0
     if kwargs['mixup_alpha'] != 0:
         for i in range(len(auxout)):
-            loss += kwargs['mixup_loss_fn'](kwargs['loss_fn'][i], auxout[i], kwargs['target'][i], kwargs['target_res'][i], kwargs['check'].lam)
+            loss += kwargs['mixup_loss_fn'](loss_ffn[i], auxout[i], kwargs['target'][i], kwargs['target_res'][i], kwargs['check'].lam)
     else:
         for i in range(len(auxout)):
-            loss += kwargs['loss_fn'][i](auxout[i], kwargs['target'][i])
+            loss += loss_ffn[i](auxout[i], kwargs['target'][i])
         
     # Calculate Regularization
     loss += cal_regularization(kwargs)
