@@ -7,6 +7,7 @@ from torch.nn.utils import *
 from ..utils import *
 from apex import amp
 import torchtext
+from torch import nn
 
 class Check:
     def __init__(self):
@@ -70,7 +71,7 @@ def train(**kwargs):
 
         # Training
         model_ffn = kwargs['model'].forward
-        loss_ffn = [i.forward for i in kwargs['loss_fn']]
+        loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
         loss_ = train_minibatch_(model_ffn, loss_ffn, **kwargs)
         
         # Record loss
@@ -132,7 +133,7 @@ def train_minibatch_(model_ffn, loss_ffn, **kwargs):
             loss += loss_ffn[i](auxout[i], kwargs['target'][i])
         
     # Calculate Regularization
-    loss += cal_regularization(kwargs)
+    loss += cal_regularization(**kwargs)
 
     # Backward
     with amp.scale_loss(loss, kwargs['optimizer']) as scaled_loss:
