@@ -19,8 +19,10 @@ class GANModel(nn.Module):
             return self.generator(noise).detach()
     
     def forward_d(self, x):
-        fake = self.discriminator(self.sample(x.size(0)))
-        real = self.discriminator(x)
+        self.real_data = x
+        self.fake_data = self.sample(x.size(0))
+        fake = self.discriminator(self.fake_data)
+        real = self.discriminator(self.real_data)
         return real, fake
     
     def forward_g(self, x):

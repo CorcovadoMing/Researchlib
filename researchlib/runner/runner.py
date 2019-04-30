@@ -140,6 +140,8 @@ class Runner:
         
         # Model
         self.model = model
+        if type(model) == GANModel:
+            self.loss_fn[0].set_model(self.model)
         
         # FP16
         if self.is_cuda:
