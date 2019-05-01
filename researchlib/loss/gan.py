@@ -30,6 +30,12 @@ def _vanilla_d_loss(real, fake, *args):
 def _vanilla_g_loss(fake, *args):
     return F.binary_cross_entropy(fake, torch.ones(fake.size(0), 1).cuda())
 
+def _lsgan_d_loss(real, fake, *args):
+    return F.mse_loss(real, torch.ones(real.size(0), 1).cuda()) + F.mse_loss(fake, torch.zeros(fake.size(0), 1).cuda())
+    
+def _lsgan_g_loss(fake, *args):
+    return F.mse_loss(fake, torch.ones(fake.size(0), 1).cuda())
+
 
 def _wgan_extra_step(model, *args):
     for p in model.discriminator.parameters():
@@ -53,6 +59,10 @@ class GANLoss(nn.Module):
         if arch == 'vanilla':
             self.d_loss = _vanilla_d_loss
             self.g_loss = _vanilla_g_loss
+            self.extra_step = _noop_extra_step
+        if arch == 'lsgan':
+            self.d_loss = _lsgan_d_loss
+            self.g_loss = _lsgan_g_loss
             self.extra_step = _noop_extra_step
         
     def set_model(self, model):
