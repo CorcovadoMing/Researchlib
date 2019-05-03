@@ -18,7 +18,7 @@ def mixup_loss_fn(loss_fn, x, y, y_res, lam):
     return lam * loss_fn(x, y) + (1 - lam) * loss_fn(x, y_res)
 
 
-def train(**kwargs):
+def train_fn(**kwargs):
     kwargs['check'] = Check()
     kwargs['check'].cutoff = False
     kwargs['model'].train()

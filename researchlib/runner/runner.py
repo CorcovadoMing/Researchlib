@@ -1,5 +1,5 @@
-from .train import *
-from .test import *
+from .train import train_fn
+from .test import test_fn
 from .history import *
 from ..callbacks import *
 from ..utils import *
@@ -42,8 +42,8 @@ class Runner:
         
         self.default_callbacks = CyclicalLR(_get_iteration(self.train_loader))
         
-        self.trainer = train
-        self.tester = test
+        self.trainer = train_fn
+        self.tester = test_fn
         
         self.default_metrics = None
         
@@ -247,6 +247,7 @@ class Runner:
                                             epoch=epoch)
             
             if self.test_loader:
+                print(self.tester)
                 loss_records, matrix_records = self.tester(model=self.model, 
                                                             test_loader=self.test_loader, 
                                                             loss_fn=self.loss_fn, 
@@ -257,14 +258,15 @@ class Runner:
                                                             keep_y_shape=self.keep_y_shape_,
                                                             metrics=metrics,
                                                             callbacks=callbacks)
-                self.history_.add({'val_loss': loss_records})
+                                                            
+                self.history_.add(loss_records, prefix='val')
                 self.history_ += matrix_records
                 
                 cri = None
                 if self.monitor_state == 'metrics':
                     cri = list(matrix_records.records.values())[-1][-1]
                 else:
-                    cri = loss_records
+                    cri = [loss_records[key] for key in loss_records][-1]
                 
                 # Checkpoint
                 if self.monitor_mode(cri, self.monitor) == cri:

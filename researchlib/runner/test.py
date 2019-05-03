@@ -4,7 +4,7 @@ from .history import *
 from ..utils import *
 import torchtext
 
-def test(**kwargs):
+def test_fn(**kwargs):
     '''
         kwargs: model, test_loader, loss_fn, is_cuda, require_long, keep_x_shape, keep_y_shape, metrics
     '''
@@ -46,8 +46,8 @@ def test(**kwargs):
             auxout.append(output)
             kwargs['auxout'] = auxout
             
-            auxout = [i if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(auxout, kwargs['keep_x_shape'])]
-            kwargs['target'] = [i.squeeze() if j else i.contiguous().view(-1, *tuple(i.shape)[1:]) for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])]
+            auxout = [i if j else i.view(i.size(0), -1) for i, j in zip(auxout, kwargs['keep_x_shape'])]
+            kwargs['target'] = [i if j else i.view(i.size(0), -1) for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])]
     
             for i in range(len(auxout)):
                 test_loss += kwargs['loss_fn'][i](auxout[i], kwargs['target'][i]).item()
@@ -63,4 +63,4 @@ def test(**kwargs):
     # Output metrics
     for m in kwargs['metrics']: matrix_records.add(m.output(), prefix='val')    
     
-    return test_loss, matrix_records
+    return {'loss': test_loss}, matrix_records

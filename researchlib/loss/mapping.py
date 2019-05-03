@@ -54,14 +54,14 @@ def loss_mapping(loss_fn):
         loss_fn = F.mse_loss
         require_long_ = False
         keep_x_shape_ = False
-        keep_y_shape_ = True
+        keep_y_shape_ = False
         default_metrics = None
 
     elif loss_fn == 'mae' or loss_fn == 'l1':
         loss_fn = F.l1_loss
         require_long_ = False
         keep_x_shape_ = False
-        keep_y_shape_ = True
+        keep_y_shape_ = False
         default_metrics = None
         
     else:
