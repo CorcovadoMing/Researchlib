@@ -4,11 +4,15 @@ from torch.autograd import grad
 import torch
 
 def _wgan_gp_d_loss(real, fake, *args):
+    model = args[0]
     alpha = torch.rand((real.size(0), 1, 1, 1)).cuda()
-    x_hat = alpha * args[0].real_data + (1 - alpha) * args[0].fake_data
+    x_hat = alpha * model.real_data + (1 - alpha) * model.fake_data
     x_hat.requires_grad = True
 
-    pred_hat = args[0].discriminator(x_hat)
+    if model.d_condition:
+        pred_hat = model.discriminator((x_hat, model.condition_data))
+    else:    
+        pred_hat = model.discriminator(x_hat)
     gradients = grad(outputs=pred_hat, inputs=x_hat, grad_outputs=torch.ones(pred_hat.size()).cuda(),
                     create_graph=True, retain_graph=True, only_inputs=True)[0]
     gradient_penalty = 10 * ((gradients.view(gradients.size()[0], -1).norm(2, 1) - 1) ** 2)
@@ -46,8 +50,10 @@ def _noop_extra_step(model, *args):
 
 
 class GANLoss(nn.Module):
-    def __init__(self, arch='wgan'):
+    def __init__(self, arch='wgan', aux_loss=None):
         super().__init__()
+        self.extra_step = _noop_extra_step
+        self.aux_loss = aux_loss
         if arch == 'wgan':
             self.d_loss = _wgan_d_loss
             self.g_loss = _wgan_g_loss
@@ -55,25 +61,28 @@ class GANLoss(nn.Module):
         if arch == 'wgan-gp':
             self.d_loss = _wgan_gp_d_loss
             self.g_loss = _wgan_gp_g_loss
-            self.extra_step = _noop_extra_step
         if arch == 'vanilla':
             self.d_loss = _vanilla_d_loss
             self.g_loss = _vanilla_g_loss
-            self.extra_step = _noop_extra_step
         if arch == 'lsgan':
             self.d_loss = _lsgan_d_loss
             self.g_loss = _lsgan_g_loss
-            self.extra_step = _noop_extra_step
         
     def set_model(self, model):
         self.model = model
     
-    def forward_d(self, x):
+    def forward_d(self, x, aux=None):
         real, fake = x
-        return self.d_loss(real, fake, self.model)
-    
-    def forward_g(self, fake):
-        return self.g_loss(fake, self.model)
+        if aux is not None:
+            return self.aux_loss(real, aux) + self.aux_loss(fake, aux)
+        else:
+            return self.d_loss(real, fake, self.model)
+        
+    def forward_g(self, fake, aux=None):
+        if aux is not None:
+            return self.aux_loss(*fake, aux)
+        else:
+            return self.g_loss(fake, self.model)
     
     def extra_step(self):
         self.extra_step(self.model)

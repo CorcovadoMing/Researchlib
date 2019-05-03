@@ -74,10 +74,13 @@ def train_fn(**kwargs):
 
         # Training
         if type(kwargs['model']) == GANModel:
+            condition = kwargs['model'].d_condition or kwargs['model'].g_condition
+        
             # Discriminator
+            model = kwargs['model'].discriminator
             model_ffn = kwargs['model'].forward_d
             loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-            loss_ = train_minibatch_(model_ffn, loss_ffn, kwargs['optimizer'][0], True, **kwargs)
+            loss_ = train_minibatch_(model, model_ffn, loss_ffn, kwargs['optimizer'][0], True, condition, **kwargs)
             
             # Record loss
             d_loss_history.append(loss_)
@@ -88,9 +91,10 @@ def train_fn(**kwargs):
                 i.extra_step(kwargs['model'])
             
             # Generator
+            #model = kwargs['model'].generator
             model_ffn = kwargs['model'].forward_g
             loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-            loss_ = train_minibatch_(model_ffn, loss_ffn, kwargs['optimizer'][1], True, **kwargs)
+            loss_ = train_minibatch_(model, model_ffn, loss_ffn, kwargs['optimizer'][1], True, condition, **kwargs)
             
             # Record loss
             g_loss_history.append(loss_)
@@ -99,9 +103,10 @@ def train_fn(**kwargs):
             bar.set_postfix(d_loss="{:.4f}".format(d_loss_avg), g_loss="{:.4f}".format(g_loss_avg), refresh=False)
             
         else:
+            model = kwargs['model']
             model_ffn = kwargs['model'].forward
             loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-            loss_ = train_minibatch_(model_ffn, loss_ffn, kwargs['optimizer'], False, **kwargs)
+            loss_ = train_minibatch_(model, model_ffn, loss_ffn, kwargs['optimizer'], False, False, **kwargs)
         
             # Record loss
             loss_history.append(loss_)
@@ -123,9 +128,9 @@ def train_fn(**kwargs):
     else:
         return {'loss': sum(loss_history)/len(loss_history)}, matrix_records
     
-def cal_regularization(**kwargs):
+def cal_regularization(_model, **kwargs):
     loss = 0
-    regs = get_reg_out(kwargs['model'])
+    regs = get_reg_out(_model)
     for key in kwargs['reg_fn']:
         try: 
             weight = kwargs['reg_weights'][key] 
@@ -140,15 +145,28 @@ def cal_regularization(**kwargs):
             loss += reg_loss.cuda()
     return loss
 
-def train_minibatch_(model_ffn, loss_ffn, optim, unsupervised, **kwargs):
+def train_minibatch_(_model, model_ffn, loss_ffn, optim, unsupervised, condition, **kwargs):
     # Reset optimizer
     optim.zero_grad()
     
     # Forward
-    output = model_ffn(*kwargs['data'])
-    auxout = get_aux_out(kwargs['model'])
+    if condition:
+        output = model_ffn(*kwargs['data'], *kwargs['target'])
+    else:
+        output = model_ffn(*kwargs['data'])
+    
+    auxout = get_aux_out(_model)
+    if len(auxout) > 0:
+        unsupervised = False
     auxout.append(output)
     
+    # Padding target (local copy, no need to remove), DIRTY TRICK DON'T MODIFIED IT!!
+    while len(kwargs['target']) != len(auxout):
+        kwargs['target'] = kwargs['target'] + [None]
+        kwargs['keep_y_shape'] = kwargs['keep_y_shape'] + [True]
+        kwargs['keep_x_shape'] = kwargs['keep_x_shape'] + [True]
+        loss_ffn.append(loss_ffn[-1])
+
     # Calulate loss
     loss = 0
     auxout = [i if j else i.view(i.size(0), -1) for i, j in zip(auxout, kwargs['keep_x_shape'])]
@@ -167,9 +185,9 @@ def train_minibatch_(model_ffn, loss_ffn, optim, unsupervised, **kwargs):
                 loss += kwargs['mixup_loss_fn'](loss_ffn[i], auxout[i], kwargs['check'].lam)
             else:
                 loss += loss_ffn[i](auxout[i])
-        
+    
     # Calculate Regularization
-    loss += cal_regularization(**kwargs)
+    loss += cal_regularization(_model, **kwargs)
 
     # Backward
     with amp.scale_loss(loss, optim) as scaled_loss:
@@ -184,5 +202,4 @@ def train_minibatch_(model_ffn, loss_ffn, optim, unsupervised, **kwargs):
     
     # Apply metrics
     for m in kwargs['metrics']: m.forward([auxout[-1]] + [kwargs['target'][-1]])
-        
     return loss.item()
