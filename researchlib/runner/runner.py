@@ -247,7 +247,6 @@ class Runner:
                                             epoch=epoch)
             
             if self.test_loader:
-                print(self.tester)
                 loss_records, matrix_records = self.tester(model=self.model, 
                                                             test_loader=self.test_loader, 
                                                             loss_fn=self.loss_fn, 
