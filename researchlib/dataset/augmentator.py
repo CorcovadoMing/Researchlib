@@ -10,21 +10,26 @@ class Augmentator:
         self.oneof_p = 0.5
     
     def on(self, x, y):
-        # Apply on Probability
+        x = [i.numpy() for i in x]
+        y = [i.numpy() for i in y]
+        
+        # Apply on Probability        
         if len(self.someof):
-            x, y = x.numpy(), y.numpy()
             p_list = np.random.uniform(0, 1, len(self.someof))
             for i, func in enumerate(self.someof):
                 if p_list[i] < self.someof_p:
-                    x, y = func(x, y)
+                    for ind in range(len(x)):
+                        x[ind], y[ind] = func(x[ind], y[ind])
 
         # Choose one
         if len(self.oneof):
             func = random.choice(self.oneof)
             if np.random.uniform(0, 1, 1)[0] < self.oneof_p:
-                x, y = func(x, y)
+                for ind in range(len(x)):
+                    x[ind], y[ind] = func(x[ind], y[ind])
 
-        x, y = torch.from_numpy(x).float(), torch.from_numpy(y).float()
+        x = [torch.from_numpy(i).float() for i in x]
+        y = [torch.from_numpy(i).float() for i in y]
         
         return x, y
         

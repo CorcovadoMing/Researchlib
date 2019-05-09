@@ -17,9 +17,9 @@ class AdaptiveFocalUpdate(Callback):
             
             output = output.argmax(1)
             for i in range(len(output)):
-                if output[i] == target[i]:
-                    self.correct_map[target[i]] += 1
-                self.total_map[target[i]] += 1
+                if output[i] == target[i].long():
+                    self.correct_map[target[i].long()] += 1
+                self.total_map[target[i].long()] += 1
             
         return kwargs
 

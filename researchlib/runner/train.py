@@ -47,10 +47,10 @@ def train_fn(**kwargs):
         if type(data) != type([]) and type(data) != type(()): data = [data]
         if type(target) != type([]) and type(target) != type(()): target = [target]
         
-        target = [i.long() if j else i for i, j in zip(target, kwargs['require_long'])]
-        
         # On the fly augmentation
         if kwargs['augmentor']: data, target = kwargs['augmentor'].on(data, target)
+        
+        target = [i.long() if j else i for i, j in zip(target, kwargs['require_long'])]
         
         # Mixup
         if kwargs['mixup_alpha'] != 0:

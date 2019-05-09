@@ -58,9 +58,8 @@ def ssvi(x_, y_, s_min=2, s_max=4):
     '''
     s = np.random.randint(s_min, s_max, 1)[0]
     x = copy.deepcopy(x_)
-    y = copy.deepcopy(y_)
     m = list(range(0, x.shape[1], s))
-    return np.delete(x, m, 1), np.delete(y, m, 1)
+    return np.delete(x, m, 1), y_
 
 def ssvd(x_, y_, s_min=1, s_max=2):
     '''
@@ -70,21 +69,15 @@ def ssvd(x_, y_, s_min=1, s_max=2):
     d = int(x_.shape[1]/s)
     x_sh = list(x_.shape)
     x_sh[1] += d
-    y_sh = list(y_.shape)
-    y_sh[1] += d
     x = np.zeros(x_sh)
-    y = np.zeros(y_sh)
     m = list(range(0, x_.shape[1], s))
     counter = 0
     for i in range(x_.shape[1]):
         if i in m:
             if i == 0:
                 x[:, i+counter] = x_[:, i]
-                y[:, i+counter] = y_[:, i]
             else:
                 x[:, i+counter] = (x[:, i+counter-1]+x_[:, i])/2.
-                y[:, i+counter] = y_[:, i]
             counter += 1
         x[:, i+counter] = x_[:, i]
-        y[:, i+counter] = y_[:, i]
-    return x, y
+    return x, y_
