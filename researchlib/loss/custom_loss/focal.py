@@ -27,7 +27,8 @@ class AdaptiveFocalLoss(nn.Module):
         self.softmax = nn.Softmax(-1)
         
     def update_alpha(self, alpha_p):
-        self.alpha = (alpha_p ** 3)
+        self.alpha = alpha_p
+        self.alpha[0] = 0
         #self.alpha /= (3 * self.alpha.std())
         #self.alpha += (1 - self.alpha.mean())
         print(self.alpha)
