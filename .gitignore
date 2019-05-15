@@ -7,7 +7,7 @@ tmp
 *.pt
 model.py
 dirty
-data
+data*
 gym-results/
 __pycached__
 
