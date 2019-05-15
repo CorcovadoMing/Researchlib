@@ -23,13 +23,13 @@ class _DropBlock2d(nn.Module):
 
     """
 
-    def __init__(self, drop_prob, block_size, steps=5e-6):
+    def __init__(self, drop_prob, block_size, steps=1e-5):
         super().__init__()
         self.cur_prob = 0
         self.drop_prob = drop_prob
         self.block_size = block_size
-        self.steps=1e-5
-
+        self.steps = steps
+        
     def _anneal_prob(self):
         if self.cur_prob < self.drop_prob:
             self.cur_prob += self.steps
@@ -103,7 +103,7 @@ class _DropBlock3d(_DropBlock2d):
 
     """
 
-    def __init__(self, drop_prob, block_size, steps):
+    def __init__(self, drop_prob, block_size, steps=1e-5):
         super().__init__(drop_prob, block_size, steps)
 
     def forward(self, x):
