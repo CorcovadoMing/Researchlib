@@ -52,3 +52,4 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/.mujoco/mjpro150/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin
 RUN echo $MUJOCO_KEY | base64 --decode > /root/.mujoco/mjkey.txt
 RUN pip install 'gym[all]'
+COPY run.sh /

@@ -3,6 +3,7 @@ from .from_numpy import FromNumpy
 from .from_vision_dataset import VisionDataset
 from .from_text_dataset import TextDataset
 from .dali import FromDali
+from .environment import GymEnv
 
 # Dataset
 from .vision import _MNIST, _CIFAR10
