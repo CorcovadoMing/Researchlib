@@ -1,12 +1,14 @@
 import torch.nn.init as init
-from ..utils import _register_method
+from ..utils import _register_method, _is_container
 
 __methods__ = []
 register_method = _register_method(__methods__)
 
 @register_method
-def init_model(self, init_distribution='xavier_normal', module_list=[], verbose=False):    
+def init_model(self, init_distribution='xavier_normal', module_list=[], verbose=False):                
     def _is_init_module(m, module_list):
+        if _is_container(m):
+            return False
         if len(module_list):
             if type(m) in module_list:
                 return True
@@ -24,7 +26,7 @@ def init_model(self, init_distribution='xavier_normal', module_list=[], verbose=
                     elif init_distribution == 'orthogonal':
                         init.orthogonal_(p.data)
                     if verbose:
-                        print('Init ' + str(init_distribution) + ':', m)
+                        print('Initialize to ' + str(init_distribution) + ':', m)
                 else:
                     init.normal_(p.data)
     self.model.apply(_init)
