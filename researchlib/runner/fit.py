@@ -52,6 +52,9 @@ def fit(self, epochs, lr=1e-3, cycle='default', augmentor=None, mixup_alpha=0, m
 
 @register_method
 def _fit(self, epochs, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
+    if len(self.experiment_name) == 0:
+        self.start_experiment('default')
+        
     if self.default_metrics:
         metrics = [self.default_metrics] + metrics
 
@@ -105,20 +108,21 @@ def _fit(self, epochs, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callb
             self.history_.add(loss_records, prefix='val')
             self.history_ += matrix_records
 
-            cri = None
-            if self.monitor_state == 'metrics':
-                cri = list(matrix_records.records.values())[-1][-1]
-            else:
-                cri = [loss_records[key] for key in loss_records][-1]
+        
+        monitor_target = 'val_' + self.monitor_state if self.test_loader else 'train_' + self.monitor_state
+        if monitor_target in self.history_.records:
+            critic = self.history_.records[monitor_target][-1]
+        else:
+            critic = None
 
-            # Checkpoint
-            checkpoint_model_name = os.path.join(self.checkpoint_path, 'checkpoint_model_epoch_' + str(epoch) + '.h5')
-            self.save(checkpoint_model_name)
-            if self.monitor_mode(cri, self.monitor) == cri:
-                self.monitor = cri
-                best_checkpoint_model_name = os.path.join(self.checkpoint_path, 'best.h5')
-                self.save(best_checkpoint_model_name)
-                epoch_str += '*'
+        # Checkpoint
+        checkpoint_model_name = os.path.join(self.checkpoint_path, 'checkpoint_model_epoch_' + str(epoch) + '.h5')
+        self.save(checkpoint_model_name)
+        if critic is not None and self.monitor_mode(critic, self.monitor) == critic:
+            self.monitor = critic
+            best_checkpoint_model_name = os.path.join(self.checkpoint_path, 'best.h5')
+            self.save(best_checkpoint_model_name)
+            epoch_str += '*'
 
         state = []
         fs = '{:^14}'

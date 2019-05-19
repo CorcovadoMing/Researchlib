@@ -110,15 +110,11 @@ class Runner:
         self.monitor_state = monitor_state
         self.monitor = None
         # --------------------------------------------------------------------------------------------------------------------------------
-        if self.default_metrics:
-            self.monitor_state = 'metrics'
-            self.monitor_mode = 'max'
-        # --------------------------------------------------------------------------------------------------------------------------------
         if monitor_mode == 'min':
             self.monitor = 1e9
             self.monitor_mode = min
         elif monitor_mode == 'max':
-            self.monitor = 0
+            self.monitor = -1e9
             self.monitor_mode = max
         # --------------------------------------------------------------------------------------------------------------------------------
         
