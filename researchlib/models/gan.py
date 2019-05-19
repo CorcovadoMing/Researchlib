@@ -3,23 +3,23 @@ import torch
 from ..utils import to_one_hot
 
 class GANModel(nn.Module):
-    def __init__(self, generator, discriminator, condition_vector=False, condition_onehot=False):
+    def __init__(self, generator, discriminator, latent_vector_len=100, condition_vector_len=False, condition_onehot=False):
         super().__init__()
         self.generator = generator
         self.discriminator = discriminator
         self.condition_onehot = condition_onehot
-        if type(condition_vector) == type([]) or type(condition_vector) == type(()):
-            self.g_condition_vector_len, self.g_condition = self._parse_condition(condition_vector[0])
-            self.d_condition_vector_len, self.d_condition = self._parse_condition(condition_vector[1])
+        self.latent_vector_len = latent_vector_len
+        if type(condition_vector_len) == list or type(condition_vector_len) == tuple:
+            self.g_condition_vector_len, self.g_condition = self._parse_condition(condition_vector_len[0])
+            self.d_condition_vector_len, self.d_condition = self._parse_condition(condition_vector_len[1])
         else:
-            self.g_condition_vector_len, self.g_condition = self._parse_condition(condition_vector)
-            self.d_condition_vector_len, self.d_condition = self._parse_condition(condition_vector)
+            self.g_condition_vector_len, self.g_condition = self._parse_condition(condition_vector_len)
+            self.d_condition_vector_len, self.d_condition = self._parse_condition(condition_vector_len)
     
     @staticmethod
     def _parse_condition(condition):
         _vector, _condition = 0, False
-        if condition is not None and condition > 0:
-            _vector, _condition = condition, True
+        if condition is not None and condition > 0: _vector, _condition = condition, True
         return _vector, _condition
     
     def set_optim(self, optim, lr=1e-3):
@@ -27,13 +27,14 @@ class GANModel(nn.Module):
         self.optim_d = optim(self.discriminator.parameters(), lr=lr)
     
     def _parse_condition_data(self, condition_data, onehot, condition_vector):
+        if type(condition_data) == range: condition_data = list(condition_data)
+        if type(condition_data) == list or type(condition_data) == tuple: condition_data = torch.LongTensor(condition_data)
         condition_data = to_one_hot(condition_data.long(), condition_vector).cuda().float() if onehot else condition_data.float()
-        if condition_data.dim() < 2:
-            condition_data = condition_data.unsqueeze(-1)
+        if condition_data.dim() < 2: condition_data = condition_data.unsqueeze(-1)
         return condition_data
     
-    def sample(self, bs, length=100, condition_data=None, inference=True, requires_grad=False):
-        noise = torch.randn(bs, length).cuda()
+    def sample(self, bs, condition_data=None, inference=True, requires_grad=False):
+        noise = torch.randn(bs, self.latent_vector_len).cuda()
         if condition_data is not None:
             if inference: condition_data = self._parse_condition_data(condition_data, self.condition_onehot, self.g_condition_vector_len)
             noise = torch.cat([noise, condition_data], dim=1)

@@ -1,3 +1,4 @@
+import os
 from tqdm.auto import tqdm
 from ..callbacks import *
 from ..utils import _register_method, _get_iteration
@@ -111,9 +112,12 @@ def _fit(self, epochs, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callb
                 cri = [loss_records[key] for key in loss_records][-1]
 
             # Checkpoint
+            checkpoint_model_name = os.path.join(self.checkpoint_path, 'checkpoint_model_epoch_' + str(epoch) + '.h5')
+            self.save(checkpoint_model_name)
             if self.monitor_mode(cri, self.monitor) == cri:
                 self.monitor = cri
-                self.save('checkpoint.h5')
+                best_checkpoint_model_name = os.path.join(self.checkpoint_path, 'best.h5')
+                self.save(best_checkpoint_model_name)
                 epoch_str += '*'
 
         state = []

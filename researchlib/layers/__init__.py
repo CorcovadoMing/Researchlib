@@ -13,6 +13,7 @@ from .position_encoding import _PositionEncoding
 from .noisy_linear import _NoisyLinear
 from .flatten import _Flatten
 from .reshape import _Reshape
+from .condition_projection import _ConditionProjection
 
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
@@ -51,6 +52,8 @@ class layer(object):
 
     Flatten=_Flatten
     Reshape=_Reshape
+    
+    ConditionProjection=_ConditionProjection
 
 # Blocks
 from .block import block

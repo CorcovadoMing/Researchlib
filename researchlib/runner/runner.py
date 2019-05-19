@@ -16,6 +16,7 @@ from torch.cuda import is_available
 from torch.nn import DataParallel
 import torch.backends.cudnn as cudnn
 from apex import amp
+import os
 
 from . import init_model
 from . import fit
@@ -26,9 +27,8 @@ from . import cam
 @_add_methods_from(cam)
 class Runner:
     def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, reg_weights={}, monitor_mode='min', monitor_state='loss', fp16=False, multigpu=False):
-        '''
-            Multi-model supported
-        '''
+        self.experiment_name = ''
+        self.checkpoint_path = ''
         self.is_cuda = is_available()
         self.train_loader = train_loader
         self.test_loader = test_loader
@@ -146,7 +146,15 @@ class Runner:
         self.multigpu = multigpu
         if self.multigpu:
             self.model = DataParallel(self.model)
-        
+    
+    
+    # ===================================================================================================
+    # ===================================================================================================
+    
+    def start_experiment(self, name):
+        self.experiment_name = name
+        self.checkpoint_path = os.path.join('.', 'checkpoint', self.experiment_name)
+        os.makedirs(self.checkpoint_path, exist_ok=True)
     
     def history(self, plot=True):
         if plot:
