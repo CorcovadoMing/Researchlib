@@ -17,6 +17,7 @@ from torch.nn import DataParallel
 import torch.backends.cudnn as cudnn
 from apex import amp
 import os
+import pandas as pd
 
 from . import init_model
 from . import fit
@@ -159,7 +160,13 @@ class Runner:
         self.load(os.path.join(self.checkpoint_path, 'checkpoint_model_epoch_' + str(epoch) + '.h5'))
     
     def report(self):
-        pass
+        print('Experiment:', self.experiment_name)
+        print('Checkpoints are saved in', self.checkpoint_path)
+        df = pd.DataFrame.from_dict(self.history_.records)
+        df.index += 1
+        df.columns.name = 'Epoch'
+        return df
+        
     
     def history(self, plot=True):
         if plot:

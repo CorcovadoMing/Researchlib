@@ -7,7 +7,10 @@ class History:
     def __add__(self, target):
         for key in target.records:
             self.records.setdefault(key, [])
-            self.records[key] += target.records[key]
+            try:
+                self.records[key] += list(map(float, target.records[key]))
+            except:
+                self.records[key] += list(map(str, target.records[key]))
         return History(self.records)
     
     def add(self, d, prefix=None):
@@ -17,5 +20,8 @@ class History:
             else:
                 ckey = key
             self.records.setdefault(ckey, [])
-            self.records[ckey].append(d[key])
+            try:
+                self.records[ckey].append(float(d[key]))
+            except:
+                self.records[ckey].append(str(d[key]))
             

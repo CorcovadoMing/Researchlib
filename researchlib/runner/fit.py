@@ -123,18 +123,19 @@ def _fit(self, epochs, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callb
             best_checkpoint_model_name = os.path.join(self.checkpoint_path, 'best.h5')
             self.save(best_checkpoint_model_name)
             epoch_str += '*'
+            self.history_.add({'saved': '*'})
+        else:
+            self.history_.add({'saved': ''})
 
         state = []
         fs = '{:^14}'
         if epoch == 1:
+            print(('{:^10}' + (fs * (len(self.history_.records.keys()) - 1))).format('Epochs', *list(self.history_.records.keys())[:-1]))
             if self.test_loader:
-                print(('{:^10}'+(fs*len(self.history_.records.keys()))).format('Epochs', *self.history_.records.keys()))
                 print('================================================================')
             else:
-                print(('{:^10}'+(fs*len(self.history_.records.keys()))).format('Epochs', *self.history_.records.keys()))
-                print('==============================') # Untested
+                print('==============================')
         state.append('{:^10}'.format(epoch_str))
         for i in self.history_.records:
-            state.append('{:^14.4f}'.format(self.history_.records[i][-1]))
-        print(self.history_.records)
+            if i != 'saved': state.append('{:^14.4f}'.format(self.history_.records[i][-1]))
         print(''.join(state))
