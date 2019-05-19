@@ -6,7 +6,7 @@ from .dali import FromDali
 from .environment import GymEnv
 
 # Dataset
-from .vision import _MNIST, _CIFAR10
+from .vision import _MNIST, _FashionMNIST, _KMNIST, _CIFAR10
 from .text import _AGNews
 
 # Augmentation
@@ -20,4 +20,6 @@ class text(object):
     
 class vision(object):
     MNIST=_MNIST
+    KMNIST=_KMNIST
+    FashionMNIST=_FashionMNIST
     CIFAR10=_CIFAR10

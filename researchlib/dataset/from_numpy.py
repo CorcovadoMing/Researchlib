@@ -2,7 +2,7 @@ import torch
 import torch.utils.data as utils
 
 
-def FromNumpy(x, y, batch_size=1, shuffle=True, sampler=None, batch_sampler=None, num_workers=0, pin_memory=True, drop_last=False):
+def FromNumpy(x, y, batch_size=1, shuffle=True, sampler=None, batch_sampler=None, num_workers=8, pin_memory=True, drop_last=False):
     x_ = torch.from_numpy(x).float()
     if type(y) == type(()) or type(y) == type([]):
         y_ = [torch.from_numpy(i).float() for i in y]

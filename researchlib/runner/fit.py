@@ -1,7 +1,7 @@
 import os
 from tqdm.auto import tqdm
 from ..callbacks import *
-from ..utils import _register_method, _get_iteration
+from ..utils import _register_method, _get_iteration, set_lr
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -38,16 +38,19 @@ def _set_onecycle(self, lr):
         return []
 
 @register_method
-def fit(self, epochs, lr=1e-3, cycle='default', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
-    if cycle == 'sc' or cycle == 'superconverge':
+def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
+    if policy == 'sc' or policy == 'superconverge':
         total_epochs = epochs
         callbacks = self._set_onecycle(lr) + callbacks
-    elif cycle == 'default':
+    elif policy == 'cyclical':
         total_epochs = epochs 
         callbacks = self._set_cyclical(lr) + callbacks
-    elif cycle == 'cycle':
+    elif policy == 'cycle':
         total_epochs = int(epochs * (1 + epochs) / 2)
         callbacks = self._set_sgdr(lr) + callbacks
+    elif policy == 'fixed':
+        set_lr(self.optimizer, lr)
+        total_epochs = epochs
     self._fit(total_epochs, lr, augmentor, mixup_alpha, metrics, callbacks)
 
 @register_method

@@ -43,7 +43,7 @@ def _lsgan_g_loss(fake, *args):
 
 def _wgan_extra_step(model, *args):
     for p in model.discriminator.parameters():
-        p.data.clamp_(-0.05, 0.05)
+        p.data.clamp_(-0.1, 0.1)
 
 def _noop_extra_step(model, *args):
     pass
