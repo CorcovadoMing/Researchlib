@@ -14,7 +14,6 @@ RUN pip install -U cupy
 RUN pip install git+https://github.com/CorcovadoMing/pynvrtc.git
 
 # Apex
-RUN pip uninstall -y apex
 RUN git clone https://github.com/NVIDIA/apex apex_build
 RUN cd apex_build && pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" .
 
@@ -36,3 +35,21 @@ RUN jupyter nbextension enable --py widgetsnbextension
 RUN curl -sL https://deb.nodesource.com/setup_11.x | bash -
 RUN apt install -y nodejs
 RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
+
+# OpenAI gym
+RUN apt install -y python3-dev zlib1g-dev libjpeg-dev cmake swig python-pyglet python3-opengl libboost-all-dev libsdl2-dev libosmesa6-dev patchelf ffmpeg xvfb
+RUN pip install -U lockfile
+RUN mkdir /root/.mujoco && \
+    cd /root/.mujoco  && \
+    wget https://www.roboti.us/download/mjpro150_linux.zip  && \
+    unzip mjpro150_linux.zip && \
+    wget https://www.roboti.us/download/mujoco200_linux.zip && \
+    unzip mujoco200_linux.zip && \
+    mv mujoco200_linux mujoco200
+ARG MUJOCO_KEY
+ENV MUJOCO_KEY=$MUJOCO_KEY
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/.mujoco/mjpro150/bin
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin
+RUN echo $MUJOCO_KEY | base64 --decode > /root/.mujoco/mjkey.txt
+RUN pip install 'gym[all]'
+COPY run.sh /
