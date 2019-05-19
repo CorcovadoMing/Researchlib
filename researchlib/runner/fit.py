@@ -136,4 +136,5 @@ def _fit(self, epochs, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callb
         state.append('{:^10}'.format(epoch_str))
         for i in self.history_.records:
             state.append('{:^14.4f}'.format(self.history_.records[i][-1]))
+        print(self.history_.records)
         print(''.join(state))

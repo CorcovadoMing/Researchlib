@@ -151,6 +151,15 @@ class Runner:
         self.experiment_name = name
         self.checkpoint_path = os.path.join('.', 'checkpoint', self.experiment_name)
         os.makedirs(self.checkpoint_path, exist_ok=True)
+        
+    def load_best(self):
+        self.load(os.path.join(self.checkpoint_path, 'best.h5'))
+    
+    def load_epoch(self, epoch):
+        self.load(os.path.join(self.checkpoint_path, 'checkpoint_model_epoch_' + str(epoch) + '.h5'))
+    
+    def report(self):
+        pass
     
     def history(self, plot=True):
         if plot:
