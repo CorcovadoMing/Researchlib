@@ -84,7 +84,8 @@ def _fit(self, epochs, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callb
                                                     keep_y_shape=self.keep_y_shape_,
                                                     mixup_alpha=mixup_alpha,
                                                     callbacks=callbacks,
-                                                    metrics=metrics)
+                                                    metrics=metrics,
+                                                    inputs=self.inputs)
 
         self.history_.add(loss_records, prefix='train')
         self.history_ += matrix_records
@@ -106,7 +107,8 @@ def _fit(self, epochs, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callb
                                                         keep_x_shape=self.keep_x_shape_,
                                                         keep_y_shape=self.keep_y_shape_,
                                                         metrics=metrics,
-                                                        callbacks=callbacks)
+                                                        callbacks=callbacks,
+                                                        inputs=self.inputs)
 
             self.history_.add(loss_records, prefix='val')
             self.history_ += matrix_records

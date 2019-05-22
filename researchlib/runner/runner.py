@@ -33,6 +33,13 @@ class Runner:
         self.is_cuda = is_available()
         self.train_loader = train_loader
         self.test_loader = test_loader
+        self.inputs = 1
+        if type(self.train_loader) == tuple:
+            self.train_loader = self.train_loader[0]
+            self.inputs = self.train_loader[1]
+        if type(self.test_loader) == tuple:
+            self.test_loader = self.test_loader[0]
+            self.inputs = self.test_loader[1]
         self.history_ = History()
         self.multi_model = False
         self.cam_model = None
@@ -209,7 +216,8 @@ class Runner:
                                                             keep_x_shape=self.keep_x_shape_,
                                                             keep_y_shape=self.keep_y_shape_,
                                                             metrics=metrics,
-                                                            callbacks=callbacks)
+                                                            callbacks=callbacks,
+                                                            inputs=self.inputs)
         if len(metrics) > 0: 
             print(loss_records, list(matrix_records.records.values())[-1][-1])
         else:
@@ -240,7 +248,8 @@ class Runner:
                                 keep_y_shape=self.keep_y_shape_,
                                 mixup_alpha=mixup_alpha,
                                 callbacks=[LRRangeTest(_get_iteration(self.train_loader), cutoff_ratio=10)]+callbacks,
-                                metrics=[])
+                                metrics=[],
+                                inputs=self.inputs)
             
             step = (10 / 1e-9) ** (1 / _get_iteration(self.train_loader))
             self.loss_history = []

@@ -27,20 +27,18 @@ def test_fn(**kwargs):
                 
             kwargs['batch_idx'] = batch_idx
 
+            if type(data) != type([]) and type(data) != type(()): data = [data]
             if type(target) != type([]) and type(target) != type(()): target = [target]
         
             target = [i.long() if j else i for i, j in zip(target, kwargs['require_long'])]
             
-            if kwargs['is_cuda']: data, target = data.cuda(), [i.cuda() for i in target]
+            if kwargs['is_cuda']: data, target = [i.cuda() for i in data], [i.cuda() for i in target]
             
             kwargs['data'], kwargs['target'] = data, target
             
             for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_begin(**kwargs)
             
-            if type(kwargs['data']) == type([]):
-                output = kwargs['model'](*kwargs['data'])
-            else:
-                output = kwargs['model'](kwargs['data'])
+            output = kwargs['model'](*kwargs['data'])
             
             auxout = get_aux_out(kwargs['model'])
             auxout.append(output)

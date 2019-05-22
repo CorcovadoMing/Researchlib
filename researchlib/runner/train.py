@@ -39,10 +39,10 @@ def train_fn(**kwargs):
         # Load dataset
         if type(kwargs['train_loader']) == torchtext.data.iterator.BucketIterator:
             data, target = data_pack.text, data_pack.label
-        elif type(data_pack[0]) == type({}):
+        elif type(data_pack[0]) == dict:
             data, target = data_pack[0]['data'], data_pack[0]['label']
         else:
-            data, target = data_pack[0], data_pack[1:]
+            data, target = data_pack[0:kwargs['inputs']], data_pack[kwargs['inputs']:]
         
         if type(data) != type([]) and type(data) != type(()): data = [data]
         if type(target) != type([]) and type(target) != type(()): target = [target]
