@@ -1,7 +1,8 @@
-FROM nvcr.io/nvidia/pytorch:19.03-py3
+FROM nvcr.io/nvidia/pytorch:19.04-py3
 
 # PyTorch
-RUN pip install -U torch torchvision
+RUN pip install https://download.pytorch.org/whl/cu100/torch-1.1.0-cp36-cp36m-linux_x86_64.whl
+RUN pip install https://download.pytorch.org/whl/cu100/torchvision-0.3.0-cp36-cp36m-linux_x86_64.whl
 
 # Basic images processing
 RUN pip install -U imageio numpy scipy opencv-python-headless scikit-image
@@ -14,8 +15,8 @@ RUN pip install -U cupy
 RUN pip install git+https://github.com/CorcovadoMing/pynvrtc.git
 
 # Apex
-RUN git clone https://github.com/NVIDIA/apex apex_build
-RUN cd apex_build && pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" .
+#RUN git clone https://github.com/NVIDIA/apex apex_build
+#RUN cd apex_build && pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" .
 
 # DALI
 RUN pip install --extra-index-url https://developer.download.nvidia.com/compute/redist/cuda/10.0 nvidia-dali
@@ -53,3 +54,4 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin
 RUN echo $MUJOCO_KEY | base64 --decode > /root/.mujoco/mjkey.txt
 RUN pip install 'gym[all]'
 COPY run.sh /
+
