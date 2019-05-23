@@ -107,23 +107,19 @@ class Runner:
         
         self.reg_fn = reg_fn
         for key in self.reg_fn:
-            if type(reg_fn[key]) == type(''):
+            if type(reg_fn[key]) == str:
                 fn, _, _, _, _ = loss_mapping(reg_fn[key])
                 reg_fn[key] = fn
         
         self.reg_weights = reg_weights
         
-        cudnn.benchmark = True
-        
         # Model
         self.model = model
-        if type(model) == GANModel:
-            self.loss_fn[0].set_model(self.model)
-        
-        # Multi GPU
         self.multigpu = multigpu
-        if self.multigpu:
-            self.model = DataParallel(self.model)
+        if type(model) == GANModel: self.loss_fn[0].set_model(self.model)        
+        if self.multigpu: self.model = DataParallel(self.model)
+    
+        cudnn.benchmark = True
     
     
     # ===================================================================================================
@@ -140,21 +136,22 @@ class Runner:
         else:
             self.optimizer = _assign_optim(self.model, optimizer)
         
-        # FP16
-#         if self.is_cuda:
-#             self.model = self.model.cuda()
         self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level="O2", enabled=self.fp16)
+    
     
     def start_experiment(self, name):
         self.experiment_name = name
         self.checkpoint_path = os.path.join('.', 'checkpoint', self.experiment_name)
         os.makedirs(self.checkpoint_path, exist_ok=True)
-        
+    
+    
     def load_best(self):
         self.load(os.path.join(self.checkpoint_path, 'best.h5'))
     
+    
     def load_epoch(self, epoch):
         self.load(os.path.join(self.checkpoint_path, 'checkpoint_model_epoch_' + str(epoch) + '.h5'))
+    
     
     def report(self):
         print('Experiment:', self.experiment_name)
@@ -191,9 +188,6 @@ class Runner:
             
     
     def validate(self, metrics=[], callbacks=[]):
-        '''
-            Multi-model supported
-        '''
         if self.default_metrics:
             metrics = [self.default_metrics] + metrics
         
