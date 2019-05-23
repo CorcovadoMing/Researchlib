@@ -1,3 +1,5 @@
+import torch
+
 class Pipe:
     def __init__(self, runners, process):
         self.runners = runners
@@ -16,7 +18,7 @@ class Pipe:
     def fit(self, epochs):
         if self.process == 'parallel':
             for _ in range(epochs):
-                for runner in self.runners:
+                for i, runner in enumerate(self.runners):
                     runner.fit(1)
     
     def ensemble(self, x):

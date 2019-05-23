@@ -106,10 +106,18 @@ def _process_data(self, data, target, augmentor, mixup_alpha):
         target_res = None
     
     return data, target, target_res
-        
+
+@register_method
+def _unload_data(self, data, target, target_res):
+    del data, target, target_res
+    torch.cuda.empty_cache()
 
 @register_method
 def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks):
+    self.set_optimizer('adam')
+    self.model.cuda()
+
+
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
         
@@ -157,6 +165,9 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks):
                         d_loss_history=d_loss_history,
                         matrix_records=matrix_records,
                         bar=bar)
+
+        self._unload_data(data, target, target_res)
+        
         # Output metrics
         for m in metrics: matrix_records.add(m.output(), prefix='train')
         if type(self.model) == GANModel:
@@ -221,3 +232,7 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks):
         for i in self.history_.records:
             if i != 'saved': state.append('{:^14.4f}'.format(self.history_.records[i][-1]))
         print(''.join(state))
+        
+        self.model.cpu()
+        del self.optimizer
+        torch.cuda.empty_cache()

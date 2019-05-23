@@ -23,6 +23,7 @@ from . import init_model
 from . import fit
 from . import cam
 
+
 @_add_methods_from(init_model)
 @_add_methods_from(fit)
 @_add_methods_from(cam)
@@ -41,8 +42,8 @@ class Runner:
             self.test_loader = self.test_loader[0]
             self.inputs = self.test_loader[1]
         self.history_ = History()
-        self.multi_model = False
         self.cam_model = None
+        self.fp16 = fp16
         
         self.default_callbacks = CyclicalLR(_get_iteration(self.train_loader))
         
@@ -87,28 +88,6 @@ class Runner:
         # --------------------------------------------------------------------------------------------------------------------------------
         
         
-        
-        # Assign optimizer
-        # 
-        # self.optimizer
-        # --------------------------------------------------------------------------------------------------------------------------------
-        def _assign_optim(model, optimizer):
-            if optimizer == 'adam':
-                return Adam(model.parameters(), betas=(0.9, 0.99))
-            elif optimizer == 'sgd':
-                return SGD(model.parameters(), lr=1e-2, momentum=0.9, weight_decay=5e-5)
-            elif optimizer == 'rmsprop':
-                return RMSprop(model.parameters(), weight_decay=5e-5)
-            else:
-                return optimizer
-        
-        if type(model) == GANModel:
-            self.optimizer = [_assign_optim(model.discriminator, optimizer), _assign_optim(model.generator, optimizer)]
-        else:
-            self.optimizer = _assign_optim(model, optimizer)
-        # --------------------------------------------------------------------------------------------------------------------------------
-        
-        
         # Assign monitoring
         #
         # self.monitor_mode
@@ -141,11 +120,6 @@ class Runner:
         if type(model) == GANModel:
             self.loss_fn[0].set_model(self.model)
         
-        # FP16
-        if self.is_cuda:
-            self.model = self.model.cuda()
-            self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level="O2", enabled=fp16)
-        
         # Multi GPU
         self.multigpu = multigpu
         if self.multigpu:
@@ -154,6 +128,22 @@ class Runner:
     
     # ===================================================================================================
     # ===================================================================================================
+    def set_optimizer(self, optimizer):
+        def _assign_optim(model, optimizer):
+            if optimizer == 'adam': return Adam(model.parameters(), betas=(0.9, 0.99))
+            elif optimizer == 'sgd': return SGD(model.parameters(), lr=1e-2, momentum=0.9, weight_decay=5e-5)
+            elif optimizer == 'rmsprop': return RMSprop(model.parameters(), weight_decay=5e-5)
+            else: return optimizer
+        
+        if type(self.model) == GANModel:
+            self.optimizer = [_assign_optim(self.model.discriminator, optimizer), _assign_optim(self.model.generator, optimizer)]
+        else:
+            self.optimizer = _assign_optim(self.model, optimizer)
+        
+        # FP16
+#         if self.is_cuda:
+#             self.model = self.model.cuda()
+        self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level="O2", enabled=self.fp16)
     
     def start_experiment(self, name):
         self.experiment_name = name

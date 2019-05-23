@@ -121,14 +121,18 @@ def train_minibatch_(_model, model_ffn, loss_ffn, optim, unsupervised, condition
     # Backward
     with amp.scale_loss(loss, optim) as scaled_loss:
         scaled_loss.backward()
+        del scaled_loss
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_begin(**kwargs)
     
     # Update
     optim.step()
+    optim.zero_grad()
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_end(**kwargs)
     
     # Apply metrics
     for m in kwargs['metrics']: m.forward([auxout[-1]] + [kwargs['target'][-1]])
-    return loss.item()
+    
+    record = loss.detach().cpu()
+    return record
