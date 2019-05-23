@@ -2,6 +2,8 @@ import os
 from tqdm.auto import tqdm
 from ..callbacks import *
 from ..utils import _register_method, _get_iteration, set_lr
+from .history import History
+from ..models import GANModel
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -54,6 +56,59 @@ def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0,
     self._fit(total_epochs, lr, augmentor, mixup_alpha, metrics, callbacks)
 
 @register_method
+def _process_type(self, data_pack):
+    ''' INTERNAL_FUNCTION:
+        Split the x and y in loader for training
+        Move x and y to GPU if cuda is available
+    '''
+        
+    if type(data_pack[0]) == dict: # DALI
+        data, target = data_pack[0]['data'], data_pack[0]['label']
+    else:
+        data, target = data_pack[0:self.inputs], data_pack[self.inputs:]
+
+    if type(data) != type([]) and type(data) != type(()): data = [data]
+    if type(target) != type([]) and type(target) != type(()): target = [target]
+    
+    # GPU
+    if self.is_cuda: data, target = [i.cuda() for i in data], [i.cuda() for i in target]
+    
+    return data, target
+    
+@register_method
+def _process_data(self, data, target, augmentor, mixup_alpha):
+    ''' INTERNAL_FUNCTION:
+        Augmentation and Mixup
+    '''
+    
+    def mixup_loss_fn(loss_fn, x, y, y_res, lam):
+        return lam * loss_fn(x, y) + (1 - lam) * loss_fn(x, y_res)
+
+    
+    # On the fly augmentation
+    if augmentor: data, target = augmentor.on(data, target)
+
+    # Target type refine
+    target = [i.long() if j else i for i, j in zip(target, self.require_long_)]
+
+    # Mixup
+    if mixup_alpha > 0:
+        lam = np.random.beta(mixup_alpha, mixup_alpha)
+        index = torch.randperm(data[0].size(0))
+        data[0] = lam * data[0] + (1-lam) * data[0][index]
+        target_res = [i[index] for i in target]
+        if self.is_cuda: target_res = [i.cuda() for i in target_res]
+        self.lam = lam
+        self.mixup_loss_fn = mixup_loss_fn
+    else:
+        self.lam = None
+        self.mixup_loss_fn = None
+        target_res = None
+    
+    return data, target, target_res
+        
+
+@register_method
 def _fit(self, epochs, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
@@ -70,22 +125,44 @@ def _fit(self, epochs, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callb
                                         optimizer=self.optimizer,
                                         epoch=epoch)
 
-        loss_records, matrix_records = self.trainer(model=self.model, 
-                                                    train_loader=self.train_loader, 
-                                                    optimizer=self.optimizer, 
-                                                    loss_fn=self.loss_fn,
-                                                    reg_fn=self.reg_fn,
-                                                    reg_weights=self.reg_weights,
-                                                    epoch=epoch, 
-                                                    augmentor=augmentor,
-                                                    is_cuda=self.is_cuda, 
-                                                    require_long=self.require_long_, 
-                                                    keep_x_shape=self.keep_x_shape_,
-                                                    keep_y_shape=self.keep_y_shape_,
-                                                    mixup_alpha=mixup_alpha,
-                                                    callbacks=callbacks,
-                                                    metrics=metrics,
-                                                    inputs=self.inputs)
+        loss_history = []
+        g_loss_history = []
+        d_loss_history = []
+        matrix_records = History()
+        
+        for m in metrics: m.reset()
+        bar = tqdm(self.train_loader, leave=False)
+        
+        for batch_idx, data_pack in enumerate(bar):
+            data, target = self._process_type(data_pack)
+            data, target, target_res = self._process_data(data, target, augmentor, mixup_alpha)
+            
+            self.trainer(model=self.model,
+                        data=data,
+                        target=target,
+                        target_res=target_res,
+                        optimizer=self.optimizer, 
+                        loss_fn=self.loss_fn,
+                        mixup_loss_fn=self.mixup_loss_fn,
+                        reg_fn=self.reg_fn,
+                        reg_weights=self.reg_weights,
+                        epoch=epoch, 
+                        keep_x_shape=self.keep_x_shape_,
+                        keep_y_shape=self.keep_y_shape_,
+                        mixup_alpha=mixup_alpha,
+                        callbacks=callbacks,
+                        metrics=metrics,
+                        loss_history=loss_history,
+                        g_loss_history=g_loss_history,
+                        d_loss_history=d_loss_history,
+                        matrix_records=matrix_records,
+                        bar=bar)
+        # Output metrics
+        for m in metrics: matrix_records.add(m.output(), prefix='train')
+        if type(self.model) == GANModel:
+            loss_records = {'d_loss': sum(d_loss_history)/len(d_loss_history), 'g_loss': sum(g_loss_history)/len(g_loss_history)}
+        else:
+            loss_records = {'loss': sum(loss_history)/len(loss_history)}
 
         self.history_.add(loss_records, prefix='train')
         self.history_ += matrix_records

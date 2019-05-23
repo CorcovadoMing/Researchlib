@@ -1,6 +1,4 @@
 from ..callbacks import *
-from .history import *
-from tqdm.auto import tqdm
 import numpy as np
 import torch
 from torch.nn.utils import *
@@ -8,125 +6,56 @@ from ..utils import *
 from apex import amp
 import torchtext
 from torch import nn
-from ..models import *
-
-class Check:
-    def __init__(self):
-        pass
-
-def mixup_loss_fn(loss_fn, x, y, y_res, lam):
-    return lam * loss_fn(x, y) + (1 - lam) * loss_fn(x, y_res)
-
+from ..models import GANModel
 
 def train_fn(**kwargs):
-    kwargs['check'] = Check()
-    kwargs['check'].cutoff = False
-    kwargs['model'].train()
-    
-    loss_history = []
-    g_loss_history = []
-    d_loss_history = []
-    matrix_records = History()
-    
-    bar = tqdm(kwargs['train_loader'], leave=False)
-    
-    # Reset metrics
-    for m in kwargs['metrics']: m.reset()
-    
-    for batch_idx, data_pack in enumerate(bar):
-        kwargs['batch_idx'] = batch_idx
-        
-        # Load dataset
-        if type(kwargs['train_loader']) == torchtext.data.iterator.BucketIterator:
-            data, target = data_pack.text, data_pack.label
-        elif type(data_pack[0]) == dict:
-            data, target = data_pack[0]['data'], data_pack[0]['label']
-        else:
-            data, target = data_pack[0:kwargs['inputs']], data_pack[kwargs['inputs']:]
-        
-        if type(data) != type([]) and type(data) != type(()): data = [data]
-        if type(target) != type([]) and type(target) != type(()): target = [target]
-        
-        # On the fly augmentation
-        if kwargs['augmentor']: data, target = kwargs['augmentor'].on(data, target)
-        
-        target = [i.long() if j else i for i, j in zip(target, kwargs['require_long'])]
-        
-        # Mixup
-        if kwargs['mixup_alpha'] != 0:
-            lam = np.random.beta(kwargs['mixup_alpha'], kwargs['mixup_alpha'])
-            index = torch.randperm(data[0].size(0))
-            data[0] = lam * data[0] + (1-lam) * data[0][index]
-            target_res = [i[index] for i in target]
-            kwargs['check'].lam = lam
-            kwargs['mixup_loss_fn'] = mixup_loss_fn
-        
-        # Move to GPU
-        if kwargs['is_cuda']:
-            kwargs['data'], kwargs['target'] = [i.cuda() for i in data], [i.cuda() for i in target]
-            if kwargs['mixup_alpha'] != 0: kwargs['target_res'] = [i.cuda() for i in target_res]
-        else:
-            kwargs['data'], kwargs['target'] = data, target
-            if kwargs['mixup_alpha'] != 0: kwargs['target_res'] = target_res
-            
-        # Callback: on_iteration_begin
-        for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_begin(**kwargs)
+    # Callback: on_iteration_begin
+    for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_begin(**kwargs)
 
-        # Training
-        if type(kwargs['model']) == GANModel:
-            condition = kwargs['model'].d_condition or kwargs['model'].g_condition
-        
-            # Discriminator
-            model = kwargs['model'].discriminator
-            model_ffn = kwargs['model'].forward_d
-            loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-            loss_ = train_minibatch_(model, model_ffn, loss_ffn, kwargs['optimizer'][0], True, condition, **kwargs)
-            
-            # Record loss
-            d_loss_history.append(loss_)
-            d_loss_avg = sum(d_loss_history)/len(d_loss_history)
-            
-            # Extra
-            for i in kwargs['loss_fn']:
-                i.extra_step(kwargs['model'])
-            
-            # Generator
-            #model = kwargs['model'].generator
-            model_ffn = kwargs['model'].forward_g
-            loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-            loss_ = train_minibatch_(model, model_ffn, loss_ffn, kwargs['optimizer'][1], True, condition, **kwargs)
-            
-            # Record loss
-            g_loss_history.append(loss_)
-            kwargs['cur_loss'] = loss_
-            g_loss_avg = sum(g_loss_history)/len(g_loss_history)
-            bar.set_postfix(d_loss="{:.4f}".format(d_loss_avg), g_loss="{:.4f}".format(g_loss_avg), refresh=False)
-            
-        else:
-            model = kwargs['model']
-            model_ffn = kwargs['model'].forward
-            loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-            loss_ = train_minibatch_(model, model_ffn, loss_ffn, kwargs['optimizer'], False, False, **kwargs)
-        
-            # Record loss
-            loss_history.append(loss_)
-            kwargs['cur_loss'] = loss_
-            loss_avg = sum(loss_history)/len(loss_history)
-            bar.set_postfix(loss="{:.4f}".format(loss_avg), refresh=False)
-        
-        # Callback: on_iteration_end
-        for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_end(**kwargs)
-        
-        # Early stop (for find_lr)
-        if kwargs['check'].cutoff: break
-    
-    # Output metrics
-    for m in kwargs['metrics']: matrix_records.add(m.output(), prefix='train')
-    
+    # Training
     if type(kwargs['model']) == GANModel:
-        return {'d_loss': sum(d_loss_history)/len(d_loss_history), 'g_loss': sum(g_loss_history)/len(g_loss_history)}, matrix_records
+        condition = kwargs['model'].d_condition or kwargs['model'].g_condition
+
+        # Discriminator
+        model = kwargs['model'].discriminator
+        model_ffn = kwargs['model'].forward_d
+        loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
+        loss_ = train_minibatch_(model, model_ffn, loss_ffn, kwargs['optimizer'][0], True, condition, **kwargs)
+
+        # Record loss
+        kwargs['d_loss_history'].append(loss_)
+        d_loss_avg = sum(kwargs['d_loss_history'])/len(kwargs['d_loss_history'])
+
+        # Extra
+        for i in kwargs['loss_fn']:
+            i.extra_step(kwargs['model'])
+
+        # Generator
+        model_ffn = kwargs['model'].forward_g
+        loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
+        loss_ = train_minibatch_(model, model_ffn, loss_ffn, kwargs['optimizer'][1], True, condition, **kwargs)
+
+        # Record loss
+        kwargs['g_loss_history'].append(loss_)
+        kwargs['cur_loss'] = loss_
+        g_loss_avg = sum(kwargs['g_loss_history'])/len(kwargs['g_loss_history'])
+        kwargs['bar'].set_postfix(d_loss="{:.4f}".format(d_loss_avg), g_loss="{:.4f}".format(g_loss_avg), refresh=False)
+
     else:
-        return {'loss': sum(loss_history)/len(loss_history)}, matrix_records
+        model = kwargs['model']
+        model_ffn = kwargs['model'].forward
+        loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
+        loss_ = train_minibatch_(model, model_ffn, loss_ffn, kwargs['optimizer'], False, False, **kwargs)
+
+        # Record loss
+        kwargs['loss_history'].append(loss_)
+        kwargs['cur_loss'] = loss_
+        loss_avg = sum(kwargs['loss_history'])/len(kwargs['loss_history'])
+        kwargs['bar'].set_postfix(loss="{:.4f}".format(loss_avg), refresh=False)
+
+    # Callback: on_iteration_end
+    for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_end(**kwargs)
+    
     
 def cal_regularization(_model, **kwargs):
     loss = 0
