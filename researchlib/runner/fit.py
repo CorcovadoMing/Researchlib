@@ -109,7 +109,7 @@ def _process_data(self, data, target, augmentor, mixup_alpha):
         
 
 @register_method
-def _fit(self, epochs, lr=1e-3, augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
+def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks):
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
         
