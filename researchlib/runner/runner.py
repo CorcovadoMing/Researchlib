@@ -31,6 +31,7 @@ class Runner:
     def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, reg_weights={}, monitor_mode='min', monitor_state='loss', fp16=False, multigpu=False):
         self.experiment_name = ''
         self.checkpoint_path = ''
+        self.epoch = 1
         self.is_cuda = is_available()
         self.train_loader = train_loader
         self.test_loader = test_loader

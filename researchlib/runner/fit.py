@@ -125,8 +125,6 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks):
         metrics = [self.default_metrics] + metrics
 
     for epoch in tqdm(range(1, epochs + 1)):
-        epoch_str = str(epoch)
-
         for callback_func in callbacks:
             callback_func.on_epoch_begin(model=self.model, 
                                         train_loader=self.train_loader, 
@@ -201,6 +199,7 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks):
             self.history_.add(loss_records, prefix='val')
             self.history_ += matrix_records
 
+        epoch_str = str(self.epoch)
         
         monitor_target = 'val_' + self.monitor_state if self.test_loader else 'train_' + self.monitor_state
         if monitor_target in self.history_.records:
@@ -236,3 +235,5 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks):
         self.model.cpu()
         del self.optimizer
         torch.cuda.empty_cache()
+        
+        self.epoch += 1

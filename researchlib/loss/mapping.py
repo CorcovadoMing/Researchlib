@@ -63,6 +63,20 @@ def loss_mapping(loss_fn):
         keep_x_shape_ = False
         keep_y_shape_ = False
         default_metrics = None
+    
+    elif loss_fn == 'huber':
+        loss_fn = HuberLoss()
+        require_long_ = False
+        keep_x_shape_ = False
+        keep_y_shape_ = False
+        default_metrics = None
+    
+    elif loss_fn == 'logcosh':
+        loss_fn = LogCoshLoss
+        require_long_ = False
+        keep_x_shape_ = False
+        keep_y_shape_ = False
+        default_metrics = None
         
     else:
         loss_fn = loss_fn
