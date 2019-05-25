@@ -5,3 +5,4 @@ from .pointer_network import *
 from .dice import *
 from .logcosh import *
 from .huber import *
+from .quantile import *
