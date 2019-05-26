@@ -1,5 +1,5 @@
 from torch.utils.data import Dataset, DataLoader
-import torch
+import torch, h5py
 
 class _HDF5Dataset(Dataset):
     def __init__(self, path, key):

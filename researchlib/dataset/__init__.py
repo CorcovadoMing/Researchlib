@@ -1,5 +1,6 @@
 # Dataset Wrapper
 from .from_numpy import FromNumpy
+from .from_hdf5 import FromHDF5
 from .from_vision_dataset import VisionDataset
 from .from_text_dataset import TextDataset
 from .dali import FromDali
