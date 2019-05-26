@@ -11,7 +11,7 @@ from ..callbacks import *
 from .train import train_fn
 from .test import test_fn
 from ..utils import _add_methods_from, _get_iteration
-from .save_load import _save_model, _load_model
+from .save_load import _save_model, _save_optimizer, _load_model, _load_optimizer
 from torch.cuda import is_available
 from torch.nn import DataParallel
 import torch.backends.cudnn as cudnn
@@ -52,6 +52,7 @@ class Runner:
         self.tester = test_fn
         
         self.default_metrics = None
+        
         
         # Assign loss function
         # 
@@ -120,6 +121,8 @@ class Runner:
         if type(model) == GANModel: self.loss_fn[0].set_model(self.model)        
         if self.multigpu: self.model = DataParallel(self.model)
     
+        if optimizer is not None: self.set_optimizer(optimizer)
+    
         cudnn.benchmark = True
     
     
@@ -151,7 +154,7 @@ class Runner:
     
     
     def load_epoch(self, epoch):
-        self.load(os.path.join(self.checkpoint_path, 'checkpoint_model_epoch_' + str(epoch) + '.h5'))
+        self.load(os.path.join(self.checkpoint_path, 'checkpoint_epoch_' + str(epoch) + '.h5'))
         
         
     def load_last(self):
@@ -159,6 +162,21 @@ class Runner:
             self.load_epoch(self.epoch)
         except:
             self.load_epoch(self.epoch - 1)
+            
+            
+    def resume_best(self):
+        self.resume(os.path.join(self.checkpoint_path, 'best.h5'))
+    
+    
+    def resume_epoch(self, epoch):
+        self.resume(os.path.join(self.checkpoint_path, 'checkpoint_epoch_' + str(epoch) + '.h5'))
+        
+        
+    def resume_last(self):
+        try:
+            self.resume_epoch(self.epoch)
+        except:
+            self.resume_epoch(self.epoch - 1)
     
     
     def report(self):
@@ -218,10 +236,16 @@ class Runner:
     
 
     def save(self, path):
+        # TODO: more efficient to save optimizer (save only the last/best?)
         _save_model(self.model, path)
+        #_save_optimizer(self.optimizer, path)
     
     def load(self, path):
         self.model = _load_model(self.model, path, self.multigpu)
+    
+    def resume(self, path):
+        self.load(path)
+        _load_optimizer(self.optimizer, path)
 
     def find_lr(self, mixup_alpha=0, plot=False, callbacks=[]):
         _save_model(self.model, 'find_lr_tmp.h5')

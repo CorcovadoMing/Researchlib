@@ -4,6 +4,7 @@ from ..callbacks import *
 from ..utils import _register_method, _get_iteration, set_lr
 from .history import History
 from ..models import GANModel
+from .save_load import _load_optimizer
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -40,7 +41,7 @@ def _set_onecycle(self, lr):
         return []
 
 @register_method
-def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[]):
+def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[], _id='none'):
     if policy == 'sc' or policy == 'superconverge':
         total_epochs = epochs
         callbacks = self._set_onecycle(lr) + callbacks
@@ -53,7 +54,7 @@ def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0,
     elif policy == 'fixed':
         set_lr(self.optimizer, lr)
         total_epochs = epochs
-    self._fit(total_epochs, lr, augmentor, mixup_alpha, metrics, callbacks)
+    self._fit(total_epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id)
 
 @register_method
 def _process_type(self, data_pack):
@@ -103,138 +104,159 @@ def _process_data(self, data, target, augmentor, mixup_alpha):
     else:
         self.lam = None
         self.mixup_loss_fn = None
-        target_res = None
-    
+        target_res = None    
     return data, target, target_res
+
 
 @register_method
 def _unload_data(self, data, target, target_res):
     del data, target, target_res
     torch.cuda.empty_cache()
 
+
 @register_method
-def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks):
-    self.set_optimizer('adam')
-    if self.is_cuda: self.model.cuda()
-
-
+def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id):
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
-        
-    if self.default_metrics:
-        metrics = [self.default_metrics] + metrics
+    
+    # Load to GPU
+    if self.is_cuda:
+        state = self.optimizer.state_dict()['state']
+        for key in state:
+            for attr in state[key]:
+                try:
+                    state[key][attr] = state[key][attr].cuda()
+                except:
+                    pass
+        self.model.cuda()
+    # End loading to GPU
+    
+    try:
+        if self.default_metrics:
+            metrics = [self.default_metrics] + metrics
 
-    for epoch in tqdm(range(1, epochs + 1)):
-        for callback_func in callbacks:
-            callback_func.on_epoch_begin(model=self.model, 
-                                        train_loader=self.train_loader, 
-                                        optimizer=self.optimizer,
-                                        epoch=epoch)
+        for epoch in tqdm(range(1, epochs + 1)):
+            for callback_func in callbacks:
+                callback_func.on_epoch_begin(model=self.model, 
+                                            train_loader=self.train_loader, 
+                                            optimizer=self.optimizer,
+                                            epoch=epoch)
 
-        loss_history = []
-        g_loss_history = []
-        d_loss_history = []
-        matrix_records = History()
-        
-        for m in metrics: m.reset()
-        bar = tqdm(self.train_loader, leave=False)
-        
-        for batch_idx, data_pack in enumerate(bar):
-            data, target = self._process_type(data_pack)
-            data, target, target_res = self._process_data(data, target, augmentor, mixup_alpha)
-            
-            self.trainer(model=self.model,
-                        data=data,
-                        target=target,
-                        target_res=target_res,
-                        optimizer=self.optimizer, 
-                        loss_fn=self.loss_fn,
-                        mixup_loss_fn=self.mixup_loss_fn,
-                        reg_fn=self.reg_fn,
-                        reg_weights=self.reg_weights,
-                        epoch=epoch, 
-                        keep_x_shape=self.keep_x_shape_,
-                        keep_y_shape=self.keep_y_shape_,
-                        mixup_alpha=mixup_alpha,
-                        callbacks=callbacks,
-                        metrics=metrics,
-                        loss_history=loss_history,
-                        g_loss_history=g_loss_history,
-                        d_loss_history=d_loss_history,
-                        matrix_records=matrix_records,
-                        bar=bar)
+            loss_history = []
+            g_loss_history = []
+            d_loss_history = []
+            matrix_records = History()
 
-        self._unload_data(data, target, target_res)
-        
-        # Output metrics
-        for m in metrics: matrix_records.add(m.output(), prefix='train')
-        if type(self.model) == GANModel:
-            loss_records = {'d_loss': sum(d_loss_history)/len(d_loss_history), 'g_loss': sum(g_loss_history)/len(g_loss_history)}
-        else:
-            loss_records = {'loss': sum(loss_history)/len(loss_history)}
+            for m in metrics: m.reset()
+            bar = tqdm(self.train_loader, leave=False)
 
-        self.history_.add(loss_records, prefix='train')
-        self.history_ += matrix_records
+            for batch_idx, data_pack in enumerate(bar):
+                data, target = self._process_type(data_pack)
+                data, target, target_res = self._process_data(data, target, augmentor, mixup_alpha)
 
+                self.trainer(model=self.model,
+                            data=data,
+                            target=target,
+                            target_res=target_res,
+                            optimizer=self.optimizer, 
+                            loss_fn=self.loss_fn,
+                            mixup_loss_fn=self.mixup_loss_fn,
+                            reg_fn=self.reg_fn,
+                            reg_weights=self.reg_weights,
+                            epoch=epoch, 
+                            keep_x_shape=self.keep_x_shape_,
+                            keep_y_shape=self.keep_y_shape_,
+                            mixup_alpha=mixup_alpha,
+                            callbacks=callbacks,
+                            metrics=metrics,
+                            loss_history=loss_history,
+                            g_loss_history=g_loss_history,
+                            d_loss_history=d_loss_history,
+                            matrix_records=matrix_records,
+                            bar=bar)
 
-        for callback_func in callbacks:
-            callback_func.on_epoch_end(model=self.model, 
-                                        train_loader=self.train_loader, 
-                                        optimizer=self.optimizer,
-                                        epoch=epoch)
+            # Output metrics
+            for m in metrics: matrix_records.add(m.output(), prefix='train')
+            if type(self.model) == GANModel:
+                loss_records = {'d_loss': sum(d_loss_history)/len(d_loss_history), 'g_loss': sum(g_loss_history)/len(g_loss_history)}
+            else:
+                loss_records = {'loss': sum(loss_history)/len(loss_history)}
 
-        if self.test_loader:
-            loss_records, matrix_records = self.tester(model=self.model, 
-                                                        test_loader=self.test_loader, 
-                                                        loss_fn=self.loss_fn, 
-                                                        is_cuda=self.is_cuda,
-                                                        epoch=epoch,
-                                                        require_long=self.require_long_,  
-                                                        keep_x_shape=self.keep_x_shape_,
-                                                        keep_y_shape=self.keep_y_shape_,
-                                                        metrics=metrics,
-                                                        callbacks=callbacks,
-                                                        inputs=self.inputs)
-
-            self.history_.add(loss_records, prefix='val')
+            self.history_.add(loss_records, prefix='train')
             self.history_ += matrix_records
 
-        epoch_str = str(self.epoch)
-        
-        monitor_target = 'val_' + self.monitor_state if self.test_loader else 'train_' + self.monitor_state
-        if monitor_target in self.history_.records:
-            critic = self.history_.records[monitor_target][-1]
-        else:
-            critic = None
 
-        # Checkpoint
-        checkpoint_model_name = os.path.join(self.checkpoint_path, 'checkpoint_model_epoch_' + str(epoch) + '.h5')
-        self.save(checkpoint_model_name)
-        if critic is not None and self.monitor_mode(critic, self.monitor) == critic:
-            self.monitor = critic
-            best_checkpoint_model_name = os.path.join(self.checkpoint_path, 'best.h5')
-            self.save(best_checkpoint_model_name)
-            epoch_str += '*'
-            self.history_.add({'saved': '*'})
-        else:
-            self.history_.add({'saved': ''})
+            for callback_func in callbacks:
+                callback_func.on_epoch_end(model=self.model, 
+                                            train_loader=self.train_loader, 
+                                            optimizer=self.optimizer,
+                                            epoch=epoch)
 
-        state = []
-        fs = '{:^14}'
-        if epoch == 1:
-            print(('{:^10}' + (fs * (len(self.history_.records.keys()) - 1))).format('Epochs', *list(self.history_.records.keys())[:-1]))
             if self.test_loader:
-                print('================================================================')
+                loss_records, matrix_records = self.tester(model=self.model, 
+                                                            test_loader=self.test_loader, 
+                                                            loss_fn=self.loss_fn, 
+                                                            is_cuda=self.is_cuda,
+                                                            epoch=epoch,
+                                                            require_long=self.require_long_,  
+                                                            keep_x_shape=self.keep_x_shape_,
+                                                            keep_y_shape=self.keep_y_shape_,
+                                                            metrics=metrics,
+                                                            callbacks=callbacks,
+                                                            inputs=self.inputs)
+
+                self.history_.add(loss_records, prefix='val')
+                self.history_ += matrix_records
+
+            epoch_str = str(self.epoch)
+
+            monitor_target = 'val_' + self.monitor_state if self.test_loader else 'train_' + self.monitor_state
+            if monitor_target in self.history_.records:
+                critic = self.history_.records[monitor_target][-1]
             else:
-                print('==============================')
-        state.append('{:^10}'.format(epoch_str))
-        for i in self.history_.records:
-            if i != 'saved': state.append('{:^14.4f}'.format(self.history_.records[i][-1]))
-        print(''.join(state))
-        
+                critic = None
+
+            # Checkpoint
+            checkpoint_model_name = os.path.join(self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(self.epoch))
+            self.save(checkpoint_model_name)
+            if critic is not None and self.monitor_mode(critic, self.monitor) == critic:
+                self.monitor = critic
+                best_checkpoint_model_name = os.path.join(self.checkpoint_path, 'best_' + _id)
+                self.save(best_checkpoint_model_name)
+                epoch_str += '*'
+                self.history_.add({'saved': '*'})
+            else:
+                self.history_.add({'saved': ''})
+
+            state = []
+            fs = '{:^14}'
+            if epoch == 1:
+                print(('{:^10}' + (fs * (len(self.history_.records.keys()) - 1))).format('Epochs', *list(self.history_.records.keys())[:-1]))
+                if self.test_loader:
+                    print('================================================================')
+                else:
+                    print('==============================')
+            state.append('{:^10}'.format(epoch_str))
+            for i in self.history_.records:
+                if i != 'saved': state.append('{:^14.4f}'.format(self.history_.records[i][-1]))
+            print(''.join(state))
+
+            self.epoch += 1
+            
+    except Exception as e:
+        print(e)
+    
+    finally:
+        # Unload to CPU
         if self.is_cuda:
+            state = self.optimizer.state_dict()['state']
+            for key in state:
+                for attr in state[key]:
+                    try:
+                        state[key][attr] = state[key][attr].cpu()
+                    except:
+                        pass
             self.model.cpu()
-            del self.optimizer
+            self._unload_data(data, target, target_res)
             torch.cuda.empty_cache()
-        
-        self.epoch += 1
+        # End unloading to CPU

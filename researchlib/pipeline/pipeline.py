@@ -19,7 +19,7 @@ class Pipe:
         if self.process == 'parallel':
             for _ in range(epochs):
                 for i, runner in enumerate(self.runners):
-                    runner.fit(1)
+                    runner.fit(1, _id= 'runner' + str(i+1))
     
     def ensemble(self, x):
         if self.process != 'parallel':
