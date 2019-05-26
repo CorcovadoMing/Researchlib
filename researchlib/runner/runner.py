@@ -128,8 +128,8 @@ class Runner:
     def set_optimizer(self, optimizer):
         def _assign_optim(model, optimizer):
             if optimizer == 'adam': return Adam(model.parameters(), betas=(0.9, 0.99))
-            elif optimizer == 'sgd': return SGD(model.parameters(), lr=1e-2, momentum=0.9, weight_decay=5e-5)
-            elif optimizer == 'rmsprop': return RMSprop(model.parameters(), weight_decay=5e-5)
+            elif optimizer == 'sgd': return SGD(model.parameters(), lr=1e-2, momentum=0.9)
+            elif optimizer == 'rmsprop': return RMSprop(model.parameters())
             else: return optimizer
         
         if type(self.model) == GANModel:
@@ -152,6 +152,13 @@ class Runner:
     
     def load_epoch(self, epoch):
         self.load(os.path.join(self.checkpoint_path, 'checkpoint_model_epoch_' + str(epoch) + '.h5'))
+        
+        
+    def load_last(self):
+        try:
+            self.load_epoch(self.epoch)
+        except:
+            self.load_epoch(self.epoch - 1)
     
     
     def report(self):

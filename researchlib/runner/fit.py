@@ -115,7 +115,7 @@ def _unload_data(self, data, target, target_res):
 @register_method
 def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks):
     self.set_optimizer('adam')
-    self.model.cuda()
+    if self.is_cuda: self.model.cuda()
 
 
     if len(self.experiment_name) == 0:
@@ -232,8 +232,9 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks):
             if i != 'saved': state.append('{:^14.4f}'.format(self.history_.records[i][-1]))
         print(''.join(state))
         
-        self.model.cpu()
-        del self.optimizer
-        torch.cuda.empty_cache()
+        if self.is_cuda:
+            self.model.cpu()
+            del self.optimizer
+            torch.cuda.empty_cache()
         
         self.epoch += 1
