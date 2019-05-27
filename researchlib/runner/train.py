@@ -69,7 +69,6 @@ def cal_regularization(_model, **kwargs):
         reg_args = zip(*regs[key])
         
         for arg in reg_args:
-            arg = [i.cpu() for i in arg]
             reg_loss = (kwargs['reg_fn'][key](*arg)) * weight
             loss += reg_loss.cuda()
     return loss

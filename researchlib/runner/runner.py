@@ -36,12 +36,12 @@ class Runner:
         self.train_loader = train_loader
         self.test_loader = test_loader
         self.inputs = 1
-        if type(self.train_loader) == tuple:
-            self.train_loader = self.train_loader[0]
-            self.inputs = self.train_loader[1]
-        if type(self.test_loader) == tuple:
-            self.test_loader = self.test_loader[0]
-            self.inputs = self.test_loader[1]
+        if type(train_loader) == tuple:
+            self.train_loader = train_loader[0]
+            self.inputs = train_loader[1]
+        if type(test_loader) == tuple:
+            self.test_loader = test_loader[0]
+            self.inputs = test_loader[1]
         self.history_ = History()
         self.cam_model = None
         self.fp16 = fp16
