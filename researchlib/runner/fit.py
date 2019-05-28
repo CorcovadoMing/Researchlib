@@ -1,5 +1,6 @@
 import os
 from tqdm.auto import tqdm
+from tqdm import tnrange
 from ..callbacks import *
 from ..utils import _register_method, _get_iteration, set_lr
 from .history import History
@@ -41,7 +42,7 @@ def _set_onecycle(self, lr):
         return []
 
 @register_method
-def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[], _id='none'):
+def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[], _id='none', self_iterative=False):
     if policy == 'sc' or policy == 'superconverge':
         total_epochs = epochs
         callbacks = self._set_onecycle(lr) + callbacks
@@ -54,7 +55,7 @@ def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0,
     elif policy == 'fixed':
         set_lr(self.optimizer, lr)
         total_epochs = epochs
-    self._fit(total_epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id)
+    self._fit(total_epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self_iterative)
 
 @register_method
 def _process_type(self, data_pack):
@@ -115,7 +116,7 @@ def _unload_data(self, data, target, target_res):
 
 
 @register_method
-def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id):
+def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self_iterative):
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
     
@@ -153,7 +154,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id):
             for batch_idx, data_pack in enumerate(bar):
                 data, target = self._process_type(data_pack)
                 data, target, target_res = self._process_data(data, target, augmentor, mixup_alpha)
-
+                
+                self.model.train()
                 self.trainer(model=self.model,
                             data=data,
                             target=target,
@@ -174,7 +176,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id):
                             d_loss_history=d_loss_history,
                             matrix_records=matrix_records,
                             bar=bar)
-
+                self.model.eval()
+                
             # Output metrics
             for m in metrics: matrix_records.add(m.output(), prefix='train')
             if type(self.model) == GANModel:
@@ -242,6 +245,15 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id):
             print(''.join(state))
 
             self.epoch += 1
+            
+            # Self-interative
+            self.model.eval()
+            for i in tnrange(len(self.train_loader.dataset.tensors[0])):
+                self.train_loader.dataset.tensors[1][i] = \
+                self.model(self.train_loader.dataset.tensors[0][i].unsqueeze(0).cuda()).detach().cpu()[0]
+                torch.cuda.empty_cache()
+                
+                
             
     except Exception as e:
         print(e)

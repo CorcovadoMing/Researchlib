@@ -1,4 +1,6 @@
-import torch
+import torch.nn.functional as F
+import math
 
 def LogCoshLoss(x, y):
-    return (torch.cosh(y - x)).log().mean()
+    diff = y - x
+    return (diff + F.softplus(-2. * diff) - math.log(2.)).mean()
