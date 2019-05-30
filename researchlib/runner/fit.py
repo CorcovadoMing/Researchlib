@@ -247,11 +247,12 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
             self.epoch += 1
             
             # Self-interative
-            self.model.eval()
-            for i in tnrange(len(self.train_loader.dataset.tensors[0])):
-                self.train_loader.dataset.tensors[1][i] = \
-                self.model(self.train_loader.dataset.tensors[0][i].unsqueeze(0).cuda()).detach().cpu()[0]
-                torch.cuda.empty_cache()
+            if self_iterative:
+                self.model.eval()
+                for i in tnrange(len(self.train_loader.dataset.tensors[0])):
+                    self.train_loader.dataset.tensors[1][i] = \
+                    self.model(self.train_loader.dataset.tensors[0][i].unsqueeze(0).cuda()).detach().cpu()[0]
+                    torch.cuda.empty_cache()
                 
                 
             
