@@ -24,11 +24,13 @@ class _UpSampling(nn.Module):
     def __init__(self, in_dim, pooling_factor, preact=False):
         super().__init__()
         self.conv = nn.Conv2d(in_dim, in_dim, 3, 1, 1)
+        self.activator = nn.LeakyReLU(0.2)
         self.preact = preact
+        self.pooling_factor = pooling_factor
         
     def forward(self, x):
         if self.preact: x = self.activator(x)
-        x = F.interpolate(x, scale_factor=pooling_factor)
+        x = F.interpolate(x, scale_factor=self.pooling_factor)
         x = self.conv(x)
         if not self.preact: x = self.activator(x)
         return x
