@@ -1,6 +1,8 @@
 from .builder import builder
 from .gan import GANModel
 from .auto_conv_net_2d import AutoConvNet2d, AutoConvTransposeNet2d
+from .stn import STN
+
 
 from .vgg import *
 from .lenet import *
@@ -15,3 +17,4 @@ from .senet import *
 from .neural_process import *
 #from .pointer_network import *
 from .lstnet import *
+
