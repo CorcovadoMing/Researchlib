@@ -9,3 +9,4 @@ from ..metrics import *
 from ..search import *
 from ..ml import *
 from ..pipeline import *
+from ..vistool import *
