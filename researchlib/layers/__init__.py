@@ -14,6 +14,7 @@ from .noisy_linear import _NoisyLinear
 from .flatten import _Flatten
 from .reshape import _Reshape
 from .condition_projection import _ConditionProjection
+from .spatial_transform import _SpatialTransform
 
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
@@ -54,6 +55,7 @@ class layer(object):
     Reshape=_Reshape
     
     ConditionProjection=_ConditionProjection
+    SpatialTransform=_SpatialTransform
 
 # Blocks
 from .block import block
