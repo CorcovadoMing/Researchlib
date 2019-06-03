@@ -27,7 +27,7 @@ class _Image:
         plt.tight_layout()
         plt.show()
         
-    def browser(self, loader):
+    def viewer(self, loader):
         self.data = loader.dataset.data
         _ = interact(self._browser_ui, index=range(min(100, len(self.data))), continuous_update=False)
         
