@@ -7,6 +7,7 @@ def AutoConvNet2d(input_dim, blocks, type='vgg', start_filter=128, max_filter=10
     if type =='residual': _op_type = block.ResBlock2d
     elif type =='resnext': _op_type = block.ResNextBlock2d
     elif type =='vgg': _op_type = block.ConvBlock2d
+    elif type =='dense': _op_type = block.DenseBlock2d
     se = True
     
     layers = []
@@ -45,6 +46,7 @@ def AutoConvTransposeNet2d(input_dim, blocks, type='vgg', start_filter=1024, min
     if type =='residual': _op_type = block.ResTransposeBlock2d
     elif type =='resnext': _op_type = block.ResNextTransposeBlock2d
     elif type =='vgg': _op_type = block.ConvTransposeBlock2d
+    elif type =='dense': _op_type = block.DenseTransposeBlock2d
     se = True
     
     layers = []

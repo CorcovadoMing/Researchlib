@@ -3,9 +3,10 @@ from .basic_components import _DownSampling, _UpSampling
 from ...models import builder
 
 class _ConvBlock2d(nn.Module):
-    def __init__(self, in_dim, out_dim, norm='batch', activator=nn.ELU, pooling=True, pooling_factor=2, preact=False, se=None):
+    def __init__(self, in_dim, out_dim, kernel_size=3, norm='batch', activator=nn.ELU, pooling=True, pooling_factor=2, preact=False, se=None):
         super().__init__()
-        self.conv = nn.Conv2d(in_dim, out_dim, 3, 1, 1)
+        padding = int((kernel_size - 1) / 2)
+        self.conv = nn.Conv2d(in_dim, out_dim, kernel_size, 1, padding)
         bn_dim = in_dim if preact else out_dim 
         if norm =='batch': self.bn = nn.BatchNorm2d(bn_dim)
         elif norm == 'instance': self.bn = nn.InstanceNorm2d(bn_dim)
@@ -28,9 +29,10 @@ class _ConvBlock2d(nn.Module):
 
 
 class _ConvTransposeBlock2d(nn.Module):
-    def __init__(self, in_dim, out_dim, norm='batch', activator=nn.ELU, pooling=True, pooling_factor=2, preact=False, se=None):
+    def __init__(self, in_dim, out_dim, kernel_size=3, norm='batch', activator=nn.ELU, pooling=True, pooling_factor=2, preact=False, se=None):
         super().__init__()
-        self.conv = nn.Conv2d(in_dim, out_dim, 3, 1, 1)
+        padding = int((kernel_size - 1) / 2)
+        self.conv = nn.Conv2d(in_dim, out_dim, kernel_size, 1, padding)
         bn_dim = in_dim if preact else out_dim 
         if norm =='batch': self.bn = nn.BatchNorm2d(bn_dim)
         elif norm == 'instance': self.bn = nn.InstanceNorm2d(bn_dim)
