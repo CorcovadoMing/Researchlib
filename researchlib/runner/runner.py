@@ -149,8 +149,8 @@ class Runner:
         os.makedirs(self.checkpoint_path, exist_ok=True)
     
     
-    def load_best(self):
-        self.load(os.path.join(self.checkpoint_path, 'best.h5'))
+    def load_best(self, _id='none'):
+        self.load(os.path.join(self.checkpoint_path, 'best_' + _id))
     
     
     def load_epoch(self, epoch, _id='none'):
