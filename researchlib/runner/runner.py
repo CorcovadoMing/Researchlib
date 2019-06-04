@@ -153,8 +153,8 @@ class Runner:
         self.load(os.path.join(self.checkpoint_path, 'best.h5'))
     
     
-    def load_epoch(self, epoch):
-        self.load(os.path.join(self.checkpoint_path, 'checkpoint_epoch_' + str(epoch) + '.h5'))
+    def load_epoch(self, epoch, _id='none'):
+        self.load(os.path.join(self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(epoch)))
         
         
     def load_last(self):
@@ -168,8 +168,8 @@ class Runner:
         self.resume(os.path.join(self.checkpoint_path, 'best.h5'))
     
     
-    def resume_epoch(self, epoch):
-        self.resume(os.path.join(self.checkpoint_path, 'checkpoint_epoch_' + str(epoch) + '.h5'))
+    def resume_epoch(self, epoch, _id='none'):
+        self.resume(os.path.join(self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(epoch)))
         
         
     def resume_last(self):
