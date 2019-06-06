@@ -48,6 +48,7 @@ def _set_onecycle(self, lr):
 
 @register_method
 def fit_iteration(self, iteration, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[], _id='none', self_iterative=False):
+    #TODO: save_model
     if policy == 'sc' or policy == 'superconverge':
         callbacks = self._set_onecycle(lr) + callbacks
     elif policy == 'cyclical':
@@ -58,6 +59,64 @@ def fit_iteration(self, iteration, lr=1e-3, policy='cyclical', augmentor=None, m
         set_lr(self.optimizer, lr)
     self._fit(1, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self_iterative, cycle=True, total=iteration)
 
+
+@register_method
+def fit_xy(self, data_pack, inputs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[], _id='none', self_iterative=False):
+    # TODO: metrics, history, testing, save_model
+    if policy == 'sc' or policy == 'superconverge':
+        callbacks = self._set_onecycle(lr) + callbacks
+    elif policy == 'cyclical':
+        callbacks = self._set_cyclical(lr) + callbacks
+    elif policy == 'cycle':
+        callbacks = self._set_sgdr(lr) + callbacks
+    elif policy == 'fixed':
+        set_lr(self.optimizer, lr)
+        
+    if len(self.experiment_name) == 0:
+        self.start_experiment('default')
+    
+    # Load to GPU
+    if self.is_cuda:
+        state = self.optimizer.state_dict()['state']
+        for key in state:
+            for attr in state[key]:
+                try:
+                    state[key][attr] = state[key][attr].cuda()
+                except:
+                    pass
+        self.model.cuda()
+    # End loading to GPU
+    
+    try:
+        self._fit_xy(data_pack,
+                    inputs,
+                    augmentor, 
+                    mixup_alpha, 
+                    callbacks, 
+                    metrics, 
+                    loss_history=[], 
+                    g_loss_history=[], 
+                    d_loss_history=[], 
+                    matrix_records=History(), 
+                    bar=None)
+    except:
+        raise
+    
+    finally:
+        # Unload to CPU
+        if self.is_cuda:
+            state = self.optimizer.state_dict()['state']
+            for key in state:
+                for attr in state[key]:
+                    try:
+                        state[key][attr] = state[key][attr].cpu()
+                    except:
+                        pass
+            self.model.cpu()
+            self._unload_data()
+            torch.cuda.empty_cache()
+        # End unloading to CPU
+    
 
 @register_method
 def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[], _id='none', self_iterative=False):
@@ -77,7 +136,7 @@ def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0,
 
 
 @register_method
-def _process_type(self, data_pack):
+def _process_type(self, data_pack, inputs):
     ''' INTERNAL_FUNCTION:
         Split the x and y in loader for training
         Move x and y to GPU if cuda is available
@@ -86,7 +145,7 @@ def _process_type(self, data_pack):
     if type(data_pack[0]) == dict: # DALI
         data, target = data_pack[0]['data'], data_pack[0]['label']
     else:
-        data, target = data_pack[0:self.inputs], data_pack[self.inputs:]
+        data, target = data_pack[0:inputs], data_pack[inputs:]
 
     if type(data) != type([]) and type(data) != type(()): data = [data]
     if type(target) != type([]) and type(target) != type(()): target = [target]
@@ -135,7 +194,8 @@ def _unload_data(self):
 
 
 @register_method
-def _fit_xy(self, augmentor, mixup_alpha, callbacks, metrics, loss_history, g_loss_history, d_loss_history, matrix_records, bar):
+def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics, loss_history, g_loss_history, d_loss_history, matrix_records, bar):
+    self.data, self.target = self._process_type(data_pack, inputs)
     self.data, self.target, self.target_res = self._process_data(self.data, self.target, augmentor, mixup_alpha)
     self.model.train()
     self.trainer(model=self.model,
@@ -210,8 +270,9 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
 
             iteration_break = total
             for batch_idx, data_pack in self._cycle(self.train_loader, cycle):
-                self.data, self.target = self._process_type(data_pack)
-                self._fit_xy(augmentor, 
+                self._fit_xy(data_pack,
+                            self.inputs,
+                            augmentor, 
                             mixup_alpha, 
                             callbacks, 
                             metrics, 

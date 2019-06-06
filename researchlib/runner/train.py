@@ -39,7 +39,7 @@ def train_fn(**kwargs):
         kwargs['g_loss_history'].append(loss_)
         kwargs['cur_loss'] = loss_
         g_loss_avg = sum(kwargs['g_loss_history'])/len(kwargs['g_loss_history'])
-        kwargs['bar'].set_postfix(d_loss="{:.4f}".format(d_loss_avg), g_loss="{:.4f}".format(g_loss_avg), refresh=False)
+        if kwargs['bar']: kwargs['bar'].set_postfix(d_loss="{:.4f}".format(d_loss_avg), g_loss="{:.4f}".format(g_loss_avg), refresh=False)
 
     else:
         model = kwargs['model']
@@ -51,7 +51,7 @@ def train_fn(**kwargs):
         kwargs['loss_history'].append(loss_)
         kwargs['cur_loss'] = loss_
         loss_avg = sum(kwargs['loss_history'])/len(kwargs['loss_history'])
-        kwargs['bar'].set_postfix(loss="{:.4f}".format(loss_avg), refresh=False)
+        if kwargs['bar']: kwargs['bar'].set_postfix(loss="{:.4f}".format(loss_avg), refresh=False)
 
     # Callback: on_iteration_end
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_end(**kwargs)
