@@ -20,7 +20,7 @@ def train_fn(**kwargs):
         model = kwargs['model'].discriminator
         model_ffn = kwargs['model'].forward_d
         loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        loss_ = train_minibatch_(model, model_ffn, loss_ffn, kwargs['optimizer'][0], True, condition, **kwargs)
+        loss_ = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], True, condition, **kwargs)
 
         # Record loss
         kwargs['d_loss_history'].append(loss_)
@@ -33,7 +33,7 @@ def train_fn(**kwargs):
         # Generator
         model_ffn = kwargs['model'].forward_g
         loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        loss_ = train_minibatch_(model, model_ffn, loss_ffn, kwargs['optimizer'][1], True, condition, **kwargs)
+        loss_ = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], True, condition, **kwargs)
 
         # Record loss
         kwargs['g_loss_history'].append(loss_)
@@ -45,7 +45,7 @@ def train_fn(**kwargs):
         model = kwargs['model']
         model_ffn = kwargs['model'].forward
         loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        loss_ = train_minibatch_(model, model_ffn, loss_ffn, kwargs['optimizer'], False, False, **kwargs)
+        loss_ = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], False, False, **kwargs)
 
         # Record loss
         kwargs['loss_history'].append(loss_)
@@ -73,7 +73,7 @@ def cal_regularization(_model, **kwargs):
             loss += reg_loss.cuda()
     return loss
 
-def train_minibatch_(_model, model_ffn, loss_ffn, optim, unsupervised, condition, **kwargs):
+def _train_minibatch(_model, model_ffn, loss_ffn, optim, unsupervised, condition, **kwargs):
     # Reset optimizer
     optim.zero_grad()
     
