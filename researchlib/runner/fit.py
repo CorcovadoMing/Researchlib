@@ -256,8 +256,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                 
                 
             
-    except Exception as e:
-        print(e)
+    except:
+        raise
     
     finally:
         # Unload to CPU
