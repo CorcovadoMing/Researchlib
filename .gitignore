@@ -11,6 +11,7 @@ dirty
 dev_data
 data
 gym-results/
+clean_dataset
 __pycached__
 
 ####################################################################
