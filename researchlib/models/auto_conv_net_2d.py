@@ -3,7 +3,21 @@ import torch.nn.functional as F
 from ..layers import *
 from .builder import builder        
 
-def AutoConvNet2d(input_dim, blocks, type='vgg', start_filter=128, max_filter=1024, pooling_factor=2, pooling_freq=1, norm='batch', activator=nn.ELU, flatten=False, preact=True, attention=False):
+def AutoConvNet2d(input_dim, 
+                    blocks, 
+                    type='vgg', 
+                    start_filter=128, 
+                    max_filter=1024, 
+                    pooling_factor=2, 
+                    pooling_freq=1, 
+                    norm='batch', 
+                    activator=nn.ELU, 
+                    flatten=False, 
+                    preact=True, 
+                    attention=False,
+                    input_multiscale=False,
+                    return_multiscale=False):
+                    
     if type =='residual': _op_type = block.ResBlock2d
     elif type =='resnext': _op_type = block.ResNextBlock2d
     elif type =='vgg': _op_type = block.ConvBlock2d
@@ -42,7 +56,21 @@ def AutoConvNet2d(input_dim, blocks, type='vgg', start_filter=128, max_filter=10
     return builder(layers)
         
     
-def AutoConvTransposeNet2d(input_dim, blocks, type='vgg', start_filter=1024, min_filter=128, pooling_factor=2, pooling_freq=1, norm='batch', activator=nn.ELU, flatten=False, preact=True, attention=False):
+def AutoConvTransposeNet2d(input_dim, 
+                            blocks, 
+                            type='vgg', 
+                            start_filter=1024, 
+                            min_filter=128, 
+                            pooling_factor=2, 
+                            pooling_freq=1, 
+                            norm='batch', 
+                            activator=nn.ELU, 
+                            flatten=False, 
+                            preact=True, 
+                            attention=False,
+                            input_multiscale=False,
+                            return_multiscale=False):
+                            
     if type =='residual': _op_type = block.ResTransposeBlock2d
     elif type =='resnext': _op_type = block.ResNextTransposeBlock2d
     elif type =='vgg': _op_type = block.ConvTransposeBlock2d

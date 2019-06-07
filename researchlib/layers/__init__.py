@@ -59,6 +59,3 @@ class layer(object):
 
 # Blocks
 from .block import block
-
-# Wrapper
-from .wrapper import *

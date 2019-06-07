@@ -10,7 +10,7 @@ from ..search import *
 from ..ml import *
 from ..pipeline import *
 from ..vistool import *
-
+from ..wrapper import *
 
 from pynvml import *
 nvmlInit()

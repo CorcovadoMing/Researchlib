@@ -6,3 +6,4 @@ from .reg import *
 from .auxiliary import *
 from .identical import *
 from .spectral_norm import *
+from .multiscale import *
