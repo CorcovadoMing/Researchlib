@@ -61,7 +61,36 @@ def fit_iteration(self, iteration, lr=1e-3, policy='cyclical', augmentor=None, m
 
 
 @register_method
-def fit_xy(self, data_pack, inputs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[], _id='none', self_iterative=False):
+def preload_gpu(self):
+    if self.is_cuda:
+        state = self.optimizer.state_dict()['state']
+        for key in state:
+            for attr in state[key]:
+                try:
+                    state[key][attr] = state[key][attr].cuda()
+                except:
+                    pass
+        self.model.cuda()
+
+
+@register_method
+def unload_gpu(self):
+    if self.is_cuda:
+        state = self.optimizer.state_dict()['state']
+        for key in state:
+            for attr in state[key]:
+                try:
+                    state[key][attr] = state[key][attr].cpu()
+                except:
+                    pass
+        self.model.cpu()
+        self._unload_data()
+        torch.cuda.empty_cache()
+
+
+
+@register_method
+def fit_xy(self, data_pack, inputs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[], _id='none', self_iterative=False, _auto_gpu=False):
     # TODO: metrics, history, testing, save_model
     if policy == 'sc' or policy == 'superconverge':
         callbacks = self._set_onecycle(lr) + callbacks
@@ -75,17 +104,8 @@ def fit_xy(self, data_pack, inputs, lr=1e-3, policy='cyclical', augmentor=None, 
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
     
-    # Load to GPU
-    if self.is_cuda:
-        state = self.optimizer.state_dict()['state']
-        for key in state:
-            for attr in state[key]:
-                try:
-                    state[key][attr] = state[key][attr].cuda()
-                except:
-                    pass
-        self.model.cuda()
-    # End loading to GPU
+    if _auto_gpu:
+        self.preload_gpu()
     
     try:
         self._fit_xy(data_pack,
@@ -101,22 +121,10 @@ def fit_xy(self, data_pack, inputs, lr=1e-3, policy='cyclical', augmentor=None, 
                     bar=None)
     except:
         raise
-    
     finally:
-        # Unload to CPU
-        if self.is_cuda:
-            state = self.optimizer.state_dict()['state']
-            for key in state:
-                for attr in state[key]:
-                    try:
-                        state[key][attr] = state[key][attr].cpu()
-                    except:
-                        pass
-            self.model.cpu()
-            self._unload_data()
-            torch.cuda.empty_cache()
-        # End unloading to CPU
-    
+        if _auto_gpu:
+            self.unload_gpu()        
+
 
 @register_method
 def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[], _id='none', self_iterative=False):
@@ -147,8 +155,10 @@ def _process_type(self, data_pack, inputs):
     else:
         data, target = data_pack[0:inputs], data_pack[inputs:]
 
-    if type(data) != type([]) and type(data) != type(()): data = [data]
-    if type(target) != type([]) and type(target) != type(()): target = [target]
+    if type(data) != list and type(data) != tuple: data = [data]
+    if type(target) != list and type(target) != tuple: target = [target]
+    
+    if type(data[0]) != torch.Tensor: data, target = [torch.from_numpy(i) for i in data], [torch.from_numpy(i) for i in target]
     
     # GPU
     if self.is_cuda: data, target = [i.cuda() for i in data], [i.cuda() for i in target]
@@ -237,17 +247,7 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
     
-    # Load to GPU
-    if self.is_cuda:
-        state = self.optimizer.state_dict()['state']
-        for key in state:
-            for attr in state[key]:
-                try:
-                    state[key][attr] = state[key][attr].cuda()
-                except:
-                    pass
-        self.model.cuda()
-    # End loading to GPU
+    self.preload_gpu()
     
     try:
         if self.default_metrics:
@@ -370,16 +370,5 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
         raise
     
     finally:
-        # Unload to CPU
-        if self.is_cuda:
-            state = self.optimizer.state_dict()['state']
-            for key in state:
-                for attr in state[key]:
-                    try:
-                        state[key][attr] = state[key][attr].cpu()
-                    except:
-                        pass
-            self.model.cpu()
-            self._unload_data()
-            torch.cuda.empty_cache()
-        # End unloading to CPU
+        self.unload_gpu()
+        
