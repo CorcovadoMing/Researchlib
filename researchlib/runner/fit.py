@@ -250,7 +250,6 @@ def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics,
                 d_loss_history=d_loss_history,
                 matrix_records=matrix_records,
                 bar=bar)
-    self.model.eval()
 
 
 @register_method
@@ -329,6 +328,7 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                                             epoch=epoch)
 
             if self.test_loader:
+                self.model.eval()
                 loss_records, matrix_records = self.tester(model=self.model, 
                                                             test_loader=self.test_loader, 
                                                             loss_fn=self.loss_fn, 

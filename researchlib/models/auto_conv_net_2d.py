@@ -3,6 +3,22 @@ import torch.nn.functional as F
 from ..layers import *
 from .builder import builder        
 
+def _get_op_type(type):
+    if type =='residual': 
+        _op_type = block.ResBlock2d
+        _op_transpose_type = block.ResTransposeBlock2d
+    elif type =='resnext':
+        _op_type = block.ResNextBlock2d
+        _op_transpose_type = block.ResNextTransposeBlock2d
+    elif type =='vgg':
+        _op_type = block.ConvBlock2d
+        _op_transpose_type = block.ConvTransposeBlock2d
+    elif type =='dense':
+        _op_type = block.DenseBlock2d
+        _op_transpose_type = block.DenseTransposeBlock2d
+    return _op_type, _op_transpose_type
+
+
 def AutoConvNet2d(input_dim, 
                     blocks, 
                     type='vgg', 
@@ -17,13 +33,10 @@ def AutoConvNet2d(input_dim,
                     preact=True, 
                     attention=False,
                     input_multiscale=False,
-                    return_multiscale=False):
+                    return_multiscale=False,
+                    se=True):
                     
-    if type =='residual': _op_type = block.ResBlock2d
-    elif type =='resnext': _op_type = block.ResNextBlock2d
-    elif type =='vgg': _op_type = block.ConvBlock2d
-    elif type =='dense': _op_type = block.DenseBlock2d
-    se = True
+    _op_type, _op_transpose_type = _get_op_type(type)
     
     layers = []
     in_dim = input_dim
@@ -40,7 +53,7 @@ def AutoConvNet2d(input_dim,
         count += 1
         if count == pooling_freq:
             if attention:
-                layers.append(block.AttentionBlock2d(block.ResNextBlock2d, block.ResNextTransposeBlock2d, in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se))
+                layers.append(block.AttentionBlock2d(_op_type, _op_transpose_type, in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se))
             else:
                 layers.append(_op_type(in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se))
             count = 0
@@ -49,7 +62,7 @@ def AutoConvNet2d(input_dim,
                 out_dim *= 2
         else:
             if attention:
-                layers.append(block.AttentionBlock2d(block.ResNextBlock2d, block.ResNextTransposeBlock2d, in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se))
+                layers.append(block.AttentionBlock2d(_op_type, _op_transpose_type, in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se))
             else:
                 layers.append(_op_type(in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se))
             in_dim = out_dim
@@ -71,13 +84,10 @@ def AutoConvTransposeNet2d(input_dim,
                             preact=True, 
                             attention=False,
                             input_multiscale=False,
-                            return_multiscale=False):
+                            return_multiscale=False,
+                            se=True):
                             
-    if type =='residual': _op_type = block.ResTransposeBlock2d
-    elif type =='resnext': _op_type = block.ResNextTransposeBlock2d
-    elif type =='vgg': _op_type = block.ConvTransposeBlock2d
-    elif type =='dense': _op_type = block.DenseTransposeBlock2d
-    se = True
+    _op_type, _op_transpose_type = _get_op_type(type)
     
     layers = []
     in_dim = input_dim
@@ -94,18 +104,18 @@ def AutoConvTransposeNet2d(input_dim,
         count += 1
         if count == pooling_freq:
             if attention:
-                layers.append(block.AttentionTransposeBlock2d(block.ResNextBlock2d, block.ResNextTransposeBlock2d, in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se))
+                layers.append(block.AttentionTransposeBlock2d(_op_type, _op_transpose_type, in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se))
             else:
-                layers.append(_op_type(in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se))
+                layers.append(_op_transpose_type(in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se))
             count = 0
             in_dim = out_dim
             if out_dim > min_filter:
                 out_dim = int(out_dim / 2)
         else:
             if attention:
-                layers.append(block.AttentionTransposeBlock2d(block.ResNextBlock2d, block.ResNextTransposeBlock2d, in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se))
+                layers.append(block.AttentionTransposeBlock2d(_op_type, _op_transpose_type, in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se))
             else:
-                layers.append(_op_type(in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se))
+                layers.append(_op_transpose_type(in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se))
             in_dim = out_dim
     if flatten: layers.append(layer.Flatten())
     return builder(layers)
