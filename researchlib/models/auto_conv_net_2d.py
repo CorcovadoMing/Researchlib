@@ -7,7 +7,8 @@ def AutoConvNet2d(input_dim,
                     blocks, 
                     type='vgg', 
                     start_filter=128, 
-                    max_filter=1024, 
+                    max_filter=1024,
+                    pooling_type='combined',
                     pooling_factor=2, 
                     pooling_freq=1, 
                     norm='batch', 
@@ -39,9 +40,9 @@ def AutoConvNet2d(input_dim,
         count += 1
         if count == pooling_freq:
             if attention:
-                layers.append(block.AttentionBlock2d(block.ResNextBlock2d, block.ResNextTransposeBlock2d, in_dim, out_dim, norm=norm, activator=activator, pooling_factor=pooling_factor, preact=preact, se=se))
+                layers.append(block.AttentionBlock2d(block.ResNextBlock2d, block.ResNextTransposeBlock2d, in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se))
             else:
-                layers.append(_op_type(in_dim, out_dim, norm=norm, activator=activator, pooling_factor=pooling_factor, preact=preact, se=se))
+                layers.append(_op_type(in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se))
             count = 0
             in_dim = out_dim
             if out_dim < max_filter:
@@ -60,7 +61,8 @@ def AutoConvTransposeNet2d(input_dim,
                             blocks, 
                             type='vgg', 
                             start_filter=1024, 
-                            min_filter=128, 
+                            min_filter=128,
+                            pooling_type='interpolate',
                             pooling_factor=2, 
                             pooling_freq=1, 
                             norm='batch', 
@@ -92,9 +94,9 @@ def AutoConvTransposeNet2d(input_dim,
         count += 1
         if count == pooling_freq:
             if attention:
-                layers.append(block.AttentionTransposeBlock2d(block.ResNextBlock2d, block.ResNextTransposeBlock2d, in_dim, out_dim, norm=norm, activator=activator, pooling_factor=pooling_factor, preact=preact, se=se))
+                layers.append(block.AttentionTransposeBlock2d(block.ResNextBlock2d, block.ResNextTransposeBlock2d, in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se))
             else:
-                layers.append(_op_type(in_dim, out_dim, norm=norm, activator=activator, pooling_factor=pooling_factor, preact=preact, se=se))
+                layers.append(_op_type(in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se))
             count = 0
             in_dim = out_dim
             if out_dim > min_filter:

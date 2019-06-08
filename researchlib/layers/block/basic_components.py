@@ -2,7 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-class _DownSampling(nn.Module):
+class _CombinedDownSampling(nn.Module):
     def __init__(self, in_dim, pooling_factor, preact=False):
         super().__init__()
         self.m = nn.MaxPool2d(pooling_factor)
@@ -20,7 +20,18 @@ class _DownSampling(nn.Module):
         if not self.preact: x = self.activator(x)
         return x
 
-class _UpSampling(nn.Module):
+
+class _MaxPoolDownSampling(nn.Module):
+    def __init__(self, in_dim, pooling_factor, preact=False):
+        super().__init__()
+        self.m = nn.MaxPool2d(pooling_factor)
+    
+    def forward(self, x):
+        return self.m(x)
+
+# -------------------------------------------------------------------------------------------
+
+class _InterpolateUpSampling(nn.Module):
     def __init__(self, in_dim, pooling_factor, preact=False):
         super().__init__()
         self.conv = nn.Conv2d(in_dim, in_dim, 3, 1, 1)
@@ -32,6 +43,18 @@ class _UpSampling(nn.Module):
         if self.preact: x = self.activator(x)
         x = F.interpolate(x, scale_factor=self.pooling_factor)
         x = self.conv(x)
+        if not self.preact: x = self.activator(x)
+        return x
+
+
+class _ConvTransposeUpSampling(nn.Module):
+    def __init__(self, in_dim, pooling_factor, preact=False):
+        super().__init__()
+        self.m = nn.ConvTranspose2d(in_dim, in_dim, pooling_factor, pooling_factor)
+        
+    def forward(self, x):
+        if self.preact: x = self.activator(x)
+        x = self.m(x)
         if not self.preact: x = self.activator(x)
         return x
         

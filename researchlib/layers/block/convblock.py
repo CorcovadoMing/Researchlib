@@ -1,9 +1,9 @@
 from torch import nn
-from .basic_components import _DownSampling, _UpSampling
+from .basic_components import _CombinedDownSampling, _MaxPoolDownSampling, _InterpolateUpSampling, _ConvTransposeUpSampling
 from ...models import builder
 
 class _ConvBlock2d(nn.Module):
-    def __init__(self, in_dim, out_dim, kernel_size=3, norm='batch', activator=nn.ELU, pooling=True, pooling_factor=2, preact=False, se=None):
+    def __init__(self, in_dim, out_dim, kernel_size=3, norm='batch', activator=nn.ELU, pooling=True, pooling_type='combined', pooling_factor=2, preact=False, se=None):
         super().__init__()
         padding = int((kernel_size - 1) / 2)
         self.conv = nn.Conv2d(in_dim, out_dim, kernel_size, 1, padding)
@@ -13,7 +13,11 @@ class _ConvBlock2d(nn.Module):
         self.activator = activator()
         self.pooling = pooling
         self.preact = preact
-        if pooling: self.pooling_f = _DownSampling(out_dim, pooling_factor, preact)
+        if pooling: 
+            if pooling_type == 'combined':
+                self.pooling_f = _CombinedDownSampling(out_dim, pooling_factor, preact)
+            elif pooling_type == 'maxpool':
+                self.pooling_f = _MaxPoolDownSampling(out_dim, pooling_factor, preact)
         
     def forward(self, x):
         if self.preact:
@@ -29,8 +33,11 @@ class _ConvBlock2d(nn.Module):
 
 
 class _ConvTransposeBlock2d(_ConvBlock2d):
-    def __init__(self, in_dim, out_dim, kernel_size=3, norm='batch', activator=nn.ELU, pooling=True, pooling_factor=2, preact=False, se=None):
-        super().__init__(in_dim, out_dim, kernel_size, norm, activator, pooling, pooling_factor, preact, se)
-        if pooling: self.pooling_f = builder([_UpSampling(out_dim, pooling_factor, preact),
-                                              nn.Conv2d(out_dim, out_dim, 3, 1, 1)])
+    def __init__(self, in_dim, out_dim, kernel_size=3, norm='batch', activator=nn.ELU, pooling=True, pooling_type='interpolate', pooling_factor=2, preact=False, se=None):
+        super().__init__(in_dim, out_dim, kernel_size, norm, activator, pooling, pooling_type, pooling_factor, preact, se)
+        if pooling: 
+            if pooling_type == 'interpolate':
+                self.pooling_f = _InterpolateUpSampling(out_dim, pooling_factor, preact)
+            elif pooling_type == 'convtranspose':
+                self.pooling_f = _ConvTransposeUpSampling(out_dim, pooling_factor, preact)
                                               

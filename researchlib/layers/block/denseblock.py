@@ -1,13 +1,13 @@
 import torch
 import torch.nn.functional as F
 from torch import nn
-from .basic_components import _DownSampling, _UpSampling
+from .basic_components import _CombinedDownSampling, _MaxPoolDownSampling, _InterpolateUpSampling, _ConvTransposeUpSampling
 from .convblock import _ConvBlock2d, _ConvTransposeBlock2d
 from ...models import builder
 
 
 class _DenseBlock2d(nn.Module):
-    def __init__(self, in_dim, out_dim, norm='batch', activator=nn.ELU, pooling=True, pooling_factor=2, preact=True, se=False):
+    def __init__(self, in_dim, out_dim, norm='batch', activator=nn.ELU, pooling=True, pooling_type='combined', pooling_factor=2, preact=True, se=False):
         super().__init__()
         k = 24
         self.branch = []
@@ -23,7 +23,11 @@ class _DenseBlock2d(nn.Module):
             inner_in += inner_out
         self.branch = nn.ModuleList(self.branch)
         self.pooling = pooling
-        if pooling: self.pooling_f = _DownSampling(out_dim, pooling_factor, preact)
+        if pooling: 
+            if pooling_type == 'combined':
+                self.pooling_f = _CombinedDownSampling(out_dim, pooling_factor, preact)
+            elif pooling_type == 'maxpool':
+                self.pooling_f = _MaxPoolDownSampling(out_dim, pooling_factor, preact)
         self.transition = nn.Conv2d(inner_in, out_dim, 1)
 #         self.se = se
 #         if se:
@@ -41,8 +45,11 @@ class _DenseBlock2d(nn.Module):
         
         
 class _DenseTransposeBlock2d(_DenseBlock2d):
-    def __init__(self, in_dim, out_dim, norm='batch', activator=nn.ELU, pooling=True, pooling_factor=2, preact=True, se=False):
-        super().__init__(in_dim, out_dim, norm, activator, pooling, pooling_factor, preact, se)
-        if pooling: self.pooling_f = builder([_UpSampling(out_dim, pooling_factor, preact),
-                                              nn.Conv2d(out_dim, out_dim, 3, 1, 1)])
+    def __init__(self, in_dim, out_dim, norm='batch', activator=nn.ELU, pooling=True, pooling_type='interpolate', pooling_factor=2, preact=True, se=False):
+        super().__init__(in_dim, out_dim, norm, activator, pooling, pooling_type, pooling_factor, preact, se)
+        if pooling: 
+            if pooling_type == 'interpolate':
+                self.pooling_f = _InterpolateUpSampling(out_dim, pooling_factor, preact)
+            elif pooling_type == 'convtranspose':
+                self.pooling_f = _ConvTransposeUpSampling(out_dim, pooling_factor, preact)
         

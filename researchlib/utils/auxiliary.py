@@ -1,9 +1,10 @@
 def get_aux_out(model):
     result = []
-    for i, j in model.named_children():
+    def _inner(m):
         try:
-            result.append(j.store)
-            j.store = []
+            result.append(m.store)
+            m.store = []
         except:
             pass
+    model.apply(_inner)
     return result

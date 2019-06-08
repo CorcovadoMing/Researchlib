@@ -4,8 +4,21 @@ from .resblock import _ResBlock2d, _ResTransposeBlock2d
 from .resnextblock import _ResNextBlock2d, _ResNextTransposeBlock2d
 from .attentionblock import _AttentionBlock2d, _AttentionTransposeBlock2d 
 from .denseblock import _DenseBlock2d, _DenseTransposeBlock2d
+from .basic_components import _CombinedDownSampling, _MaxPoolDownSampling, _InterpolateUpSampling, _ConvTransposeUpSampling
+
+
+class downsampling(object):
+    Combined=_CombinedDownSampling
+    MaxPool=_MaxPoolDownSampling
+
+
+class upsampling(object):
+    Interpolate=_InterpolateUpSampling
+    ConvTranspose=_ConvTransposeUpSampling
+    
 
 class block(object):
+    # TODO: consistent API
     OctConvBlock2d=_OctConvBlock2d
     
     ConvBlock2d=_ConvBlock2d

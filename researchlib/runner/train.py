@@ -116,7 +116,7 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, unsupervised, condition
     
     # Calculate Regularization
     loss += cal_regularization(_model, **kwargs)
-
+    
     # Backward
     with amp.scale_loss(loss, optim) as scaled_loss:
         scaled_loss.backward()
