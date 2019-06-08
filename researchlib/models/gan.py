@@ -9,7 +9,7 @@ class GANModel(nn.Module):
         self.discriminator = discriminator
         self.condition_onehot = condition_onehot
         self.latent_vector_len = latent_vector_len
-        self.distribution = torch.distributions.uniform.Uniform(torch.Tensor([-1.0]), torch.Tensor([1.0]))
+        self.distribution = torch.distributions.normal.Normal(torch.Tensor([0.0]), torch.Tensor([1.0]))
         if type(condition_vector_len) == list or type(condition_vector_len) == tuple:
             self.g_condition_vector_len, self.g_condition = self._parse_condition(condition_vector_len[0])
             self.d_condition_vector_len, self.d_condition = self._parse_condition(condition_vector_len[1])

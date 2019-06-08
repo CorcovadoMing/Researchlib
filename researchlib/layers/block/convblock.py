@@ -9,7 +9,9 @@ class _ConvBlock2d(nn.Module):
         self.conv = nn.Conv2d(in_dim, out_dim, kernel_size, 1, padding)
         bn_dim = in_dim if preact else out_dim 
         if norm =='batch': self.bn = nn.BatchNorm2d(bn_dim)
-        elif norm == 'instance': self.bn = nn.InstanceNorm2d(bn_dim)
+        elif norm == 'instance': self.bn = nn.GroupNorm(bn_dim, bn_dim)
+        elif norm == 'group': self.bn = nn.GroupNorm(int(bn_dim/4), bn_dim)
+        elif norm == 'layer': self.bn = nn.GroupNorm(1, bn_dim)
         self.activator = activator()
         self.pooling = pooling
         self.preact = preact

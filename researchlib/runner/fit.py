@@ -110,7 +110,7 @@ def unload_gpu(self):
 
 
 @register_method
-def fit_xy(self, data_pack, inputs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[], _id='none', self_iterative=False, _auto_gpu=False):
+def fit_xy(self, data_pack, inputs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[], _id='none', self_iterative=False, _auto_gpu=False, _train=True):
     # TODO: metrics, history, testing, save_model
     if policy == 'sc' or policy == 'superconverge':
         callbacks = self._set_onecycle(lr) + callbacks
@@ -138,7 +138,8 @@ def fit_xy(self, data_pack, inputs, lr=1e-3, policy='cyclical', augmentor=None, 
                     g_loss_history=[], 
                     d_loss_history=[], 
                     matrix_records=History(), 
-                    bar=None)
+                    bar=None,
+                    train=_train)
     except:
         raise
     finally:
@@ -224,11 +225,12 @@ def _unload_data(self):
 
 
 @register_method
-def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics, loss_history, g_loss_history, d_loss_history, matrix_records, bar):
+def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics, loss_history, g_loss_history, d_loss_history, matrix_records, bar, train):
     self.data, self.target = self._process_type(data_pack, inputs)
     self.data, self.target, self.target_res = self._process_data(self.data, self.target, augmentor, mixup_alpha)
     self.model.train()
-    self.trainer(model=self.model,
+    self.trainer(train=train,
+                model=self.model,
                 data=self.data,
                 target=self.target,
                 target_res=self.target_res,
@@ -300,7 +302,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                             g_loss_history, 
                             d_loss_history, 
                             matrix_records, 
-                            bar)
+                            bar,
+                            train=True)
                             
                 bar.update(1)
                 iteration_break -= 1

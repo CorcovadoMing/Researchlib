@@ -8,8 +8,10 @@ class _ResNextBlock2d(nn.Module):
     def __init__(self, in_dim, out_dim, norm='batch', activator=nn.ELU, pooling=True, pooling_type='combined', pooling_factor=2, preact=True, se=False):
         super().__init__()
         groups = min(out_dim, 32)
-        if norm =='batch': bn = nn.BatchNorm2d
-        elif norm == 'instance': bn = nn.InstanceNorm2d
+        if norm =='batch': self.bn = nn.BatchNorm2d(bn_dim)
+        elif norm == 'instance': self.bn = nn.GroupNorm(bn_dim, bn_dim)
+        elif norm == 'group': self.bn = nn.GroupNorm(int(bn_dim/4), bn_dim)
+        elif norm == 'layer': self.bn = nn.GroupNorm(1, bn_dim)
         if preact:
             self.branch = builder([
                 bn(in_dim),
