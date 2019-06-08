@@ -11,15 +11,15 @@ def init_model(self, init_distribution='xavier_normal', verbose=False):
         if type(m) == nn.ModuleList or 'researchlib.layers.block' in str(type(m)) or 'researchlib.models' in str(type(m)):
             pass
         else:
-            if verbose:
-                print('Initialize to ' + str(init_distribution) + ' :', m)
             for i in m.parameters():
-                try:
+                if i.dim() > 1:
+                    if verbose:
+                        print('Initialize to ' + str(init_distribution) + ' :', m)
                     if init_distribution == 'xavier_normal':
                         init.xavier_normal_(i)
                     elif init_distribution == 'orthogonal':
                         init.orthogonal_(i)
-                except:
-                    init.uniform_(i)
+                else:
+                    init.normal_(i)
     self.model.apply(_init)
                 

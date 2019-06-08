@@ -9,7 +9,7 @@ class _DownSampling(nn.Module):
         self.a = nn.AvgPool2d(pooling_factor)
         self.c = nn.Conv2d(in_dim, in_dim, 3, pooling_factor, 1)
         self.red = nn.Conv2d(in_dim*3, in_dim, 1)
-        self.activator = nn.LeakyReLU(0.2)
+        self.activator = nn.ELU()
         self.preact = preact
     
     def forward(self, x):
@@ -24,7 +24,7 @@ class _UpSampling(nn.Module):
     def __init__(self, in_dim, pooling_factor, preact=False):
         super().__init__()
         self.conv = nn.Conv2d(in_dim, in_dim, 3, 1, 1)
-        self.activator = nn.LeakyReLU(0.2)
+        self.activator = nn.ELU()
         self.preact = preact
         self.pooling_factor = pooling_factor
         
