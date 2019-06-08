@@ -30,14 +30,16 @@ class GANModel(nn.Module):
     def _parse_condition_data(self, condition_data, onehot, condition_vector):
         if type(condition_data) == range: condition_data = list(condition_data)
         if type(condition_data) == list or type(condition_data) == tuple: condition_data = torch.LongTensor(condition_data)
+        device = condition_data.device
         condition_data = to_one_hot(condition_data.long(), condition_vector).cuda().float() if onehot else condition_data.float()
         if condition_data.dim() < 2: condition_data = condition_data.unsqueeze(-1)
-        return condition_data
+        return condition_data.to(device)
     
     def sample(self, bs, condition_data=None, inference=True, requires_grad=False):
-        noise = self.distribution.sample(torch.Size((bs, self.latent_vector_len))).cuda().squeeze(-1)
+        noise = self.distribution.sample(torch.Size((bs, self.latent_vector_len))).squeeze(-1)
         if condition_data is not None:
             if inference: condition_data = self._parse_condition_data(condition_data, self.condition_onehot, self.g_condition_vector_len)
+            noise = noise.to(condition_data.device)
             noise = torch.cat([noise, condition_data], dim=1)
         fake = self.generator(noise)
         return fake if requires_grad else fake.detach()

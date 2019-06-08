@@ -10,4 +10,3 @@ from .auxiliary import *
 from .reg import *
 from .class_lib import _register_method, _add_methods_from
 from .get_iteration import _get_iteration
-from .is_container import _is_container

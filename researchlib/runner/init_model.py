@@ -1,32 +1,25 @@
 import torch.nn.init as init
-from ..utils import _register_method, _is_container
+from ..utils import _register_method
+from torch import nn
 
 __methods__ = []
 register_method = _register_method(__methods__)
 
 @register_method
-def init_model(self, init_distribution='xavier_normal', module_list=[], verbose=False):                
-    def _is_init_module(m, module_list):
-        if _is_container(m):
-            return False
-        if len(module_list):
-            if type(m) in module_list:
-                return True
-            else:
-                return False
-        else:
-            return True
-
+def init_model(self, init_distribution='xavier_normal', verbose=False):
     def _init(m):
-        if _is_init_module(m, module_list):
-            for p in m.parameters():
-                if p.dim() > 1:
+        if type(m) == nn.ModuleList or 'researchlib.layers.block' in str(type(m)) or 'researchlib.models' in str(type(m)):
+            pass
+        else:
+            if verbose:
+                print('Initialize to ' + str(init_distribution) + ' :', m)
+            for i in m.parameters():
+                try:
                     if init_distribution == 'xavier_normal':
-                        init.xavier_normal_(p.data)
+                        init.xavier_normal_(i)
                     elif init_distribution == 'orthogonal':
-                        init.orthogonal_(p.data)
-                    if verbose:
-                        print('Initialize to ' + str(init_distribution) + ':', m)
-                else:
-                    init.normal_(p.data)
+                        init.orthogonal_(i)
+                except:
+                    init.uniform_(i)
     self.model.apply(_init)
+                

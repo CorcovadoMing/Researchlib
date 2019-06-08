@@ -63,26 +63,46 @@ def fit_iteration(self, iteration, lr=1e-3, policy='cyclical', augmentor=None, m
 @register_method
 def preload_gpu(self):
     if self.is_cuda:
-        state = self.optimizer.state_dict()['state']
-        for key in state:
-            for attr in state[key]:
-                try:
-                    state[key][attr] = state[key][attr].cuda()
-                except:
-                    pass
+        if type(self.optimizer) == tuple or type(self.optimizer) == list:
+            for optim in self.optimizer:
+                state = optim.state_dict()['state']
+                for key in state:
+                    for attr in state[key]:
+                        try:
+                            state[key][attr] = state[key][attr].cuda()
+                        except:
+                            pass
+        else:
+            state = self.optimizer.state_dict()['state']
+            for key in state:
+                for attr in state[key]:
+                    try:
+                        state[key][attr] = state[key][attr].cuda()
+                    except:
+                        pass
         self.model.cuda()
 
 
 @register_method
 def unload_gpu(self):
     if self.is_cuda:
-        state = self.optimizer.state_dict()['state']
-        for key in state:
-            for attr in state[key]:
-                try:
-                    state[key][attr] = state[key][attr].cpu()
-                except:
-                    pass
+        if type(self.optimizer) == tuple or type(self.optimizer) == list:
+            for optim in self.optimizer:
+                state = optim.state_dict()['state']
+                for key in state:
+                    for attr in state[key]:
+                        try:
+                            state[key][attr] = state[key][attr].cuda()
+                        except:
+                            pass
+        else:
+            state = self.optimizer.state_dict()['state']
+            for key in state:
+                for attr in state[key]:
+                    try:
+                        state[key][attr] = state[key][attr].cuda()
+                    except:
+                        pass
         self.model.cpu()
         self._unload_data()
         torch.cuda.empty_cache()
