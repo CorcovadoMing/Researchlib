@@ -9,8 +9,8 @@ class _ResBlock2d(nn.Module):
     def __init__(self, in_dim, out_dim, norm='batch', activator=nn.ELU, pooling=True, pooling_type='combined', pooling_factor=2, preact=True, se=False):
         super().__init__()
         self.branch = builder([
-            _ConvBlock2d(in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact),
-            _ConvBlock2d(out_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact)
+            _ConvBlock2d(in_dim, out_dim, kernel_size=3, norm=norm, activator=activator, pooling=False, preact=preact),
+            _ConvBlock2d(out_dim, out_dim, kernel_size=3, norm=norm, activator=activator, pooling=False, preact=preact)
         ])
         self.pooling = pooling
         if pooling: 

@@ -3,10 +3,10 @@ from .basic_components import _CombinedDownSampling, _MaxPoolDownSampling, _Inte
 from ...models import builder
 
 class _ConvBlock2d(nn.Module):
-    def __init__(self, in_dim, out_dim, kernel_size=3, norm='batch', activator=nn.ELU, pooling=True, pooling_type='combined', pooling_factor=2, preact=False, se=None):
+    def __init__(self, in_dim, out_dim, kernel_size=3, norm='batch', activator=nn.ELU, pooling=True, pooling_type='combined', pooling_factor=2, preact=False, se=None, groups=1):
         super().__init__()
         padding = int((kernel_size - 1) / 2)
-        self.conv = nn.Conv2d(in_dim, out_dim, kernel_size, 1, padding)
+        self.conv = nn.Conv2d(in_dim, out_dim, kernel_size, 1, padding, groups=groups)
         bn_dim = in_dim if preact else out_dim 
         if norm =='batch': self.bn = nn.BatchNorm2d(bn_dim)
         elif norm == 'instance': self.bn = nn.GroupNorm(bn_dim, bn_dim)

@@ -2,40 +2,21 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 from .basic_components import _CombinedDownSampling, _MaxPoolDownSampling, _InterpolateUpSampling, _ConvTransposeUpSampling
+from .convblock import _ConvBlock2d, _ConvTransposeBlock2d
 from ...models import builder
 
 class _ResNextBlock2d(nn.Module):
     def __init__(self, in_dim, out_dim, norm='batch', activator=nn.ELU, pooling=True, pooling_type='combined', pooling_factor=2, preact=True, se=False):
         super().__init__()
-        groups = min(out_dim, 32)
-        if norm =='batch': self.bn = nn.BatchNorm2d(bn_dim)
-        elif norm == 'instance': self.bn = nn.GroupNorm(bn_dim, bn_dim)
-        elif norm == 'group': self.bn = nn.GroupNorm(int(bn_dim/4), bn_dim)
-        elif norm == 'layer': self.bn = nn.GroupNorm(1, bn_dim)
-        if preact:
-            self.branch = builder([
-                bn(in_dim),
-                activator(),
-                nn.Conv2d(in_dim, out_dim, 1),
-                bn(out_dim),
-                activator(),
-                nn.Conv2d(out_dim, out_dim, 3, 1, 1, groups=groups),
-                bn(out_dim),
-                activator(),
-                nn.Conv2d(out_dim, out_dim, 1),
-            ])
-        else:
-            self.branch = builder([
-                nn.Conv2d(in_dim, out_dim, 1),
-                bn(out_dim),
-                activator(),
-                nn.Conv2d(out_dim, out_dim, 3, 1, 1, groups=groups),
-                bn(out_dim),
-                activator(),
-                nn.Conv2d(out_dim, out_dim, 1),
-                bn(out_dim),
-                activator(),
-            ])
+        groups = min(out_dim, 64)
+        self.branch = builder([
+            _ConvBlock2d(in_dim, out_dim, kernel_size=1, norm=norm, activator=activator, pooling=False, preact=preact),
+            _ConvBlock2d(out_dim, out_dim, kernel_size=3, norm=norm, activator=activator, pooling=False, preact=preact, groups=groups),
+            _ConvBlock2d(out_dim, out_dim, kernel_size=1, norm=norm, activator=activator, pooling=False, preact=preact),
+            _ConvBlock2d(out_dim, out_dim, kernel_size=1, norm=norm, activator=activator, pooling=False, preact=preact),
+            _ConvBlock2d(out_dim, out_dim, kernel_size=3, norm=norm, activator=activator, pooling=False, preact=preact, groups=groups),
+            _ConvBlock2d(out_dim, out_dim, kernel_size=1, norm=norm, activator=activator, pooling=False, preact=preact),
+        ])
         self.pooling = pooling
         if pooling: 
             if pooling_type == 'combined':
