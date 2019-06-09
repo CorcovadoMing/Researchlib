@@ -9,7 +9,7 @@ __methods__ = []
 register_method = _register_method(__methods__)
 
 @register_method
-def init_model(self, init_algorithm='xavier_normal', verbose=False):
+def init_model(self, init_algorithm='default', lsuv_dummy=False, lsuv_trials=50, verbose=False):
     if init_algorithm == 'lsuv':
         init_distribution = 'orthogonal'
     else:
@@ -18,15 +18,15 @@ def init_model(self, init_algorithm='xavier_normal', verbose=False):
     hook = []
     def hook_fn(module, input, output):
         with torch.no_grad():
-            if type(output) == tuple or type(output) == list:
-                out = [i.std for i in output].sum()
-            else:
-                out = output.std()
-
-            if torch.abs(out - 1) > 0.1: 
+            for e in range(3):
+                tmp = module._forward_hooks
+                module._forward_hooks = {}
+                out = module(input[0])
+                out = out.std()
+                module._forward_hooks = tmp
                 for i in module.parameters():
-                    if i.dim() > 1 and out.log() > 1e-2:
-                        i /= out.log()
+                    if i.dim() > 1:
+                        i /= out
 
     def _init(m):
         if init_distribution == 'default':
@@ -56,7 +56,7 @@ def init_model(self, init_algorithm='xavier_normal', verbose=False):
                         elif init_distribution == 'kaiming_normal':
                             init.kaiming_normal_(i)
                     else:
-                        init.uniform_(i, -0.1, 0.1)
+                        init.normal_(i, 0, 0.1)
     
     def _lsuv(m):
         if type(m) == nn.ModuleList or \
@@ -75,12 +75,15 @@ def init_model(self, init_algorithm='xavier_normal', verbose=False):
         self.model.apply(_lsuv)
         try:
             self.preload_gpu()
-            trials = 200
-            bar = tqdm(range(trials), leave=False, initial=1)
+            bar = tqdm(range(lsuv_trials), leave=False, initial=1)
             for i, data_pack in enumerate(self.train_loader):
-                self.fit_xy(data_pack, 1, _train=False)
+                if lsuv_dummy:
+                    dummy_pack = [torch.Tensor(i.size()).uniform_().to(i.device) for i in data_pack]
+                    self.fit_xy(dummy_pack, 1, _train=False)
+                else:
+                    self.fit_xy(data_pack, 1, _train=False)
                 bar.update(1)
-                if i > trials: 
+                if i == lsuv_trials-1: 
                     bar.close()
                     break
         except:
