@@ -136,7 +136,10 @@ class Runner:
             else: return optimizer
         
         if type(self.model) == GANModel:
-            self.optimizer = [_assign_optim(self.model.discriminator, optimizer), _assign_optim(self.model.generator, optimizer)]
+            if type(optimizer) == list or type(optimizer) == tuple:
+                self.optimizer = [_assign_optim(self.model.discriminator, optimizer[1]), _assign_optim(self.model.generator, optimizer[0])]
+            else:
+                self.optimizer = [_assign_optim(self.model.discriminator, optimizer), _assign_optim(self.model.generator, optimizer)]
         else:
             self.optimizer = _assign_optim(self.model, optimizer)
         
