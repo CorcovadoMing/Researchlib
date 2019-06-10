@@ -6,7 +6,6 @@
 Dev*
 tmp
 *.pt
-model.py
 dirty
 dev_data
 data
