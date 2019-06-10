@@ -21,12 +21,3 @@ for i in range(deviceCount):
     print("Using GPU", str(i)+":", nvmlDeviceGetName(handle).decode('utf-8'))
 
 print("Driver:", nvmlSystemGetDriverVersion().decode('utf-8'))
-
-# deviceCount = nvmlDeviceGetCount()
-# for i in range(deviceCount):
-#     handle = nvmlDeviceGetHandleByIndex(i)
-#     info = nvmlDeviceGetMemoryInfo(handle)
-#     print('Total:', info.total)
-#     print('Used:', info.used)
-#     s = nvmlDeviceGetUtilizationRates(handle)
-#     print(s.gpu, s.memory)

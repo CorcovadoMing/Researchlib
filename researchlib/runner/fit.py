@@ -7,6 +7,11 @@ from .history import History
 from ..models import GANModel
 from .save_load import _load_optimizer
 from itertools import cycle
+from ipywidgets import IntProgress, Output, HBox, Label
+import hiddenlayer as hl
+import threading
+from pynvml import *
+import time
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -262,6 +267,75 @@ def _cycle(self, data, _cycle_flag=False):
 
 @register_method
 def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self_iterative, cycle, total=0):
+    def _get_gpu_monitor():
+        handle = nvmlDeviceGetHandleByIndex(0)
+        info = nvmlDeviceGetMemoryInfo(handle)
+        s = nvmlDeviceGetUtilizationRates(handle)
+        return int(100*(info.used/info.total)), s.gpu
+        
+    progress = Output()
+    label = Output()
+    progress_title = HBox([label, progress])
+    display(progress_title)
+    
+    with label:
+        label_text = Label(value="Initialization")
+        display(label_text)
+    
+    loss_live_plot = Output()
+    matrix_live_plot = Output()
+    live_plot = HBox([loss_live_plot, matrix_live_plot])
+    display(live_plot)
+
+    gpu_mem_monitor = Output()
+    gpu_utils_monitor = Output()
+    log = Output()
+    log_info = HBox([gpu_mem_monitor, gpu_utils_monitor, log])
+    display(log_info)
+    
+    history = hl.History()
+    loss_canvas = hl.Canvas()
+    matrix_canvas = hl.Canvas()
+
+
+    total_iteration = len(self.train_loader)
+    with progress:
+        progressbar = IntProgress(bar_style='info')
+        progressbar.min = 0
+        progressbar.max = total_iteration
+        display(progressbar)
+    
+    with gpu_mem_monitor:
+        gpu_mem_monitor_bar = IntProgress(orientation='vertical', bar_style='success')
+        gpu_mem_monitor_bar.description = 'M: 0%'
+        gpu_mem_monitor_bar.min = 0
+        gpu_mem_monitor_bar.max = 100
+        display(gpu_mem_monitor_bar)
+    
+    with gpu_utils_monitor:
+        gpu_utils_monitor_bar = IntProgress(orientation='vertical', bar_style='success')
+        gpu_utils_monitor_bar.description = 'U: 0%'
+        gpu_utils_monitor_bar.min = 0
+        gpu_utils_monitor_bar.max = 100
+        display(gpu_utils_monitor_bar)
+        
+    def _gpu_monitor_worker(membar, utilsbar):
+        while True:
+            global _STOP_GPU_MONITOR_
+            if _STOP_GPU_MONITOR_:
+                membar.value, utilsbar.value = 0, 0
+                membar.description, utilsbar.description = 'M', 'U'
+                break
+            m, u = _get_gpu_monitor()
+            membar.value, utilsbar.value = m, u
+            membar.description, utilsbar.description = 'M: ' + str(m) + '%', 'U: ' + str(u) + '%'
+            time.sleep(0.2)
+    
+    global _STOP_GPU_MONITOR_
+    _STOP_GPU_MONITOR_ = False
+    thread = threading.Thread(target=_gpu_monitor_worker, args=(gpu_mem_monitor_bar, gpu_utils_monitor_bar))
+    thread.start()
+
     if total == 0:
         total = len(self.train_loader)
         
@@ -274,7 +348,9 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
         if self.default_metrics:
             metrics = [self.default_metrics] + metrics
 
-        for epoch in tqdm(range(1, epochs + 1)):
+        for epoch in range(1, epochs + 1):
+            label_text.value = 'Epoch: ' + str(self.epoch)
+                
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(model=self.model, 
                                             train_loader=self.train_loader, 
@@ -287,10 +363,12 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
             matrix_records = History()
 
             for m in metrics: m.reset()
-            bar = tqdm(range(total), leave=False, initial=1)
+#             bar = tqdm(range(total), leave=False, initial=1)
+            bar = None
 
             iteration_break = total
             for batch_idx, data_pack in self._cycle(self.train_loader, cycle):
+                progressbar.value = batch_idx+1
                 self._fit_xy(data_pack,
                             self.inputs,
                             augmentor, 
@@ -303,11 +381,12 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                             matrix_records, 
                             bar,
                             train=True)
+                progressbar.description = '('+str(batch_idx+1)+'/'+str(total_iteration)+')'
                             
-                bar.update(1)
+#                 bar.update(1)
                 iteration_break -= 1
                 if iteration_break == 0:
-                    bar.close()
+#                     bar.close()
                     break
                 
             # Output metrics
@@ -319,6 +398,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
 
             self.history_.add(loss_records, prefix='train')
             self.history_ += matrix_records
+            history.log(epoch, train_acc=self.history_.records['train_acc'][-1])
+            history.log(epoch, train_loss=self.history_.records['train_loss'][-1])
 
 
             for callback_func in callbacks:
@@ -343,6 +424,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
 
                 self.history_.add(loss_records, prefix='val')
                 self.history_ += matrix_records
+                history.log(epoch, val_acc=self.history_.records['val_acc'][-1])
+                history.log(epoch, val_loss=self.history_.records['val_loss'][-1])
 
             epoch_str = str(self.epoch)
 
@@ -364,18 +447,25 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
             else:
                 self.history_.add({'saved': ''})
 
-            state = []
-            fs = '{:^14}'
-            if epoch == 1:
-                print(('{:^10}' + (fs * (len(self.history_.records.keys()) - 1))).format('Epochs', *list(self.history_.records.keys())[:-1]))
-                if self.test_loader:
-                    print('================================================================')
-                else:
-                    print('==============================')
-            state.append('{:^10}'.format(epoch_str))
-            for i in self.history_.records:
-                if i != 'saved': state.append('{:^14.4f}'.format(self.history_.records[i][-1]))
-            print(''.join(state))
+
+            with loss_live_plot:
+                loss_canvas.draw_plot([history["train_loss"], history['val_loss']])            
+            with matrix_live_plot:
+                matrix_canvas.draw_plot([history['train_acc'], history['val_acc']])            
+
+            with log:
+                state = []
+                fs = '{:^14}'
+                if epoch == 1:
+                    print(('{:^10}' + (fs * (len(self.history_.records.keys()) - 1))).format('Epochs', *list(self.history_.records.keys())[:-1]))
+                    if self.test_loader:
+                        print('================================================================')
+                    else:
+                        print('==============================')
+                state.append('{:^10}'.format(epoch_str))
+                for i in self.history_.records:
+                    if i != 'saved': state.append('{:^14.4f}'.format(self.history_.records[i][-1]))
+                print(''.join(state))
 
             self.epoch += 1
             
@@ -394,4 +484,4 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
     
     finally:
         self.unload_gpu()
-        
+        _STOP_GPU_MONITOR_ = True
