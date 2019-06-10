@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/pytorch:19.04-py3
+FROM nvcr.io/nvidia/pytorch:19.05-py3
 
 # PyTorch
 RUN pip install https://download.pytorch.org/whl/cu100/torch-1.1.0-cp36-cp36m-linux_x86_64.whl
@@ -55,3 +55,7 @@ RUN echo $MUJOCO_KEY | base64 --decode > /root/.mujoco/mjkey.txt
 RUN pip install 'gym[all]'
 COPY run.sh /
 
+# Visualization
+RUN pip install -U graphviz hiddenlayer nvidia-ml-py3
+RUN pip install -U bqplot
+RUN jupyter labextension install bqplot
