@@ -8,8 +8,10 @@ from ..models import *
 from ..callbacks import *
 
 # -------------------------------------------------------
+from .adafactor import AdaFactor
 from .train import train_fn
 from .test import test_fn
+from .export import _Export
 from ..utils import _add_methods_from, _get_iteration
 from .save_load import _save_model, _save_optimizer, _load_model, _load_optimizer
 from torch.cuda import is_available
@@ -18,6 +20,7 @@ import torch.backends.cudnn as cudnn
 from apex import amp
 import os
 import pandas as pd
+from adabound import AdaBound
 
 from . import init_model
 from . import fit
@@ -31,6 +34,7 @@ class Runner:
     def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, reg_weights={}, monitor_mode='min', monitor_state='loss', fp16=False, multigpu=False):
         self.experiment_name = ''
         self.checkpoint_path = ''
+        self.export = _Export()
         self.epoch = 1
         self.is_cuda = is_available()
         self.train_loader = train_loader
@@ -133,6 +137,9 @@ class Runner:
             if optimizer == 'adam': return Adam(model.parameters(), betas=(0.9, 0.99))
             elif optimizer == 'sgd': return SGD(model.parameters(), lr=1e-2, momentum=0.9)
             elif optimizer == 'rmsprop': return RMSprop(model.parameters())
+            elif optimizer == 'adabound': return AdaBound(model.parameters(), lr=1e-3, final_lr=0.1)
+            elif optimizer == 'adagrad': return Adagrad(model.parameters())
+            elif optimizer == 'adafactor': return AdaFactor(model.parameters(), lr=1e-3)
             else: return optimizer
         
         if type(self.model) == GANModel:

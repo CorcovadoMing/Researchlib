@@ -11,16 +11,13 @@ from ..ml import *
 from ..pipeline import *
 from ..vistool import *
 from ..wrapper import *
-
 from pynvml import *
-nvmlInit()
+import seaborn as sns
+sns.set()
 
+nvmlInit()
 deviceCount = nvmlDeviceGetCount()
 for i in range(deviceCount):
     handle = nvmlDeviceGetHandleByIndex(i)
     print("Using GPU", str(i)+":", nvmlDeviceGetName(handle).decode('utf-8'))
-
 print("Driver:", nvmlSystemGetDriverVersion().decode('utf-8'))
-
-import seaborn as sns
-sns.set()
