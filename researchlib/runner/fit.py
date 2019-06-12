@@ -349,8 +349,6 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
             metrics = [self.default_metrics] + metrics
 
         for epoch in range(1, epochs + 1):
-            label_text.value = 'Epoch: ' + str(self.epoch)
-                
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(model=self.model, 
                                             train_loader=self.train_loader, 
@@ -363,7 +361,6 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
             matrix_records = History()
 
             for m in metrics: m.reset()
-#             bar = tqdm(range(total), leave=False, initial=1)
             bar = None
 
             iteration_break = total
@@ -382,11 +379,10 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                             bar,
                             train=True)
                 progressbar.description = '('+str(batch_idx+1)+'/'+str(total_iteration)+')'
+                label_text.value = 'Epoch: ' + str(self.epoch) + ', Loss: ' + str(sum(loss_history)/len(loss_history))
                             
-#                 bar.update(1)
                 iteration_break -= 1
                 if iteration_break == 0:
-#                     bar.close()
                     break
                 
             # Output metrics
