@@ -64,3 +64,5 @@ RUN pip install -U pyro-ppl botorch gpytorch ax-platform
 
 # QC
 RUN pip install -U pennylane pennylane-forest bindsnet
+
+RUN pip install -U adabound
