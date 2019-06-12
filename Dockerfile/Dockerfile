@@ -29,8 +29,8 @@ RUN pip install -U cugraph-cuda100
 RUN pip install -U nvstrings-cuda100
 
 # Jupyter
-RUN pip install jupyterlab
-RUN pip install ipywidgets
+RUN pip install -U jupyterlab
+RUN pip install -U ipywidgets
 COPY jupyter /root/.jupyter
 RUN jupyter nbextension enable --py widgetsnbextension
 RUN curl -sL https://deb.nodesource.com/setup_11.x | bash -
@@ -56,6 +56,11 @@ RUN pip install 'gym[all]'
 COPY run.sh /
 
 # Visualization
-RUN pip install -U graphviz hiddenlayer nvidia-ml-py3
-RUN pip install -U bqplot
+RUN pip install -U graphviz hiddenlayer nvidia-ml-py3 bqplot seaborn
 RUN jupyter labextension install bqplot
+
+# Probability PyTorch
+RUN pip install -U pyro-ppl botorch gpytorch ax-platform
+
+# QC
+RUN pip install -U pennylane pennylane-forest bindsnet

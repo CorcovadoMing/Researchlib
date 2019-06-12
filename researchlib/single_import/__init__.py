@@ -21,3 +21,6 @@ for i in range(deviceCount):
     print("Using GPU", str(i)+":", nvmlDeviceGetName(handle).decode('utf-8'))
 
 print("Driver:", nvmlSystemGetDriverVersion().decode('utf-8'))
+
+import seaborn as sns
+sns.set()
