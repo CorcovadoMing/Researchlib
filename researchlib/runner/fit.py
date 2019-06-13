@@ -286,6 +286,9 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
     matrix_live_plot = Output()
     live_plot = HBox([loss_live_plot, matrix_live_plot])
     display(live_plot)
+    
+    lr_plot = Output()
+    display(lr_plot)
 
     gpu_mem_monitor = Output()
     gpu_utils_monitor = Output()
@@ -296,7 +299,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
     history = hl.History()
     loss_canvas = hl.Canvas()
     matrix_canvas = hl.Canvas()
-
+    lr_canvas = hl.Canvas()
+    lr_count = 0
 
     total_iteration = len(self.train_loader)
     with progress:
@@ -379,7 +383,10 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                             bar,
                             train=True)
                 progressbar.description = '('+str(batch_idx+1)+'/'+str(total_iteration)+')'
-                label_text.value = 'Epoch: ' + str(self.epoch) + ', Loss: ' + str(sum(loss_history)/len(loss_history))
+                label_text.value = 'Epoch: ' + str(self.epoch) + ', Loss: ' + str((sum(loss_history)/len(loss_history)).numpy())
+                
+                history.log(lr_count, lr=[i['lr'] for i in self.optimizer.param_groups][-1])
+                lr_count += 1
                             
                 iteration_break -= 1
                 if iteration_break == 0:
@@ -447,7 +454,9 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
             with loss_live_plot:
                 loss_canvas.draw_plot([history["train_loss"], history['val_loss']])            
             with matrix_live_plot:
-                matrix_canvas.draw_plot([history['train_acc'], history['val_acc']])            
+                matrix_canvas.draw_plot([history['train_acc'], history['val_acc']])
+            with lr_plot:
+                lr_canvas.draw_plot([history['lr']])
 
             with log:
                 state = []
