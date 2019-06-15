@@ -10,10 +10,12 @@ def get_down_sampling_fn(out_dim, pooling_factor, preact, pooling_type):
         pooling_f = _MaxPoolDownSampling(out_dim, pooling_factor, preact)
     elif pooling_type == 'avgpool':
         pooling_f = _AvgPoolDownSampling(out_dim, pooling_factor, preact)
-    elif pooling_type == 'stride':
-        pooling_f = _ConvStrideDownSampling(out_dim, pooling_factor, preact)
+    elif pooling_type == 'k3stride':
+        pooling_f = _Convk3StrideDownSampling(out_dim, pooling_factor, preact)
+    elif pooling_type == 'k1stride':
+        pooling_f = _Convk1StrideDownSampling(out_dim, pooling_factor, preact)
     return pooling_f
-
+    
 def get_up_sampling_fn(out_dim, pooling_factor, preact, pooling_type):
     pooling_f = None
     if pooling_type == 'interpolate':
@@ -63,10 +65,18 @@ class _AvgPoolDownSampling(nn.Module):
         return self.m(x)
 
 
-class _ConvStrideDownSampling(nn.Module):
+class _Convk3StrideDownSampling(nn.Module):
     def __init__(self, in_dim, pooling_factor, preact=False):
         super().__init__()
         self.c = nn.Conv2d(in_dim, in_dim, 3, pooling_factor, 1)
+    
+    def forward(self, x):
+        return self.c(x)
+
+class _Convk1StrideDownSampling(nn.Module):
+    def __init__(self, in_dim, pooling_factor, preact=False):
+        super().__init__()
+        self.c = nn.Conv2d(in_dim, in_dim, 1, pooling_factor)
     
     def forward(self, x):
         return self.c(x)

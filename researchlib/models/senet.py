@@ -20,6 +20,7 @@ class BasicBlock(nn.Module):
         self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(planes)
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != planes:
@@ -37,7 +38,7 @@ class BasicBlock(nn.Module):
         out = self.bn2(self.conv2(out))
 
         # Squeeze
-        w = F.avg_pool2d(out, out.size(2))
+        w = self.avg_pool(out)
         w = F.relu(self.fc1(w))
         w = torch.sigmoid(self.fc2(w))
         # Excitation
@@ -55,6 +56,7 @@ class PreActBlock(nn.Module):
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(planes)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
 
         if stride != 1 or in_planes != planes:
             self.shortcut = nn.Sequential(
@@ -72,7 +74,7 @@ class PreActBlock(nn.Module):
         out = self.conv2(F.relu(self.bn2(out)))
 
         # Squeeze
-        w = F.avg_pool2d(out, out.size(2))
+        w = self.avg_pool(out)
         w = F.relu(self.fc1(w))
         w = torch.sigmoid(self.fc2(w))
         # Excitation
@@ -94,7 +96,7 @@ class SENet(nn.Module):
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
         self.linear = nn.Linear(512, num_classes)
-        
+        self.max_pool = nn.AdaptiveMaxPool2d(1)
         self.flat = layer.Flatten()
 
     def _make_layer(self, block, planes, num_blocks, stride):
@@ -111,7 +113,7 @@ class SENet(nn.Module):
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
-        out = F.adaptive_max_pool2d(out, 1)
+        out = self.max_pool(out)
         out = self.flat(out)
         out = self.linear(out)
         return out

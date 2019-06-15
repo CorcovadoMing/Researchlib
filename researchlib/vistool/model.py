@@ -64,6 +64,8 @@ class _Model:
         transforms = [
             hl.transforms.Rename(op='ATen', to ='Norm'),
             hl.transforms.Fold("Norm > Elu > Conv", "Convblock"),
+            hl.transforms.Fold("BatchNorm > Elu > Conv", "Convblock"),
+            hl.transforms.Fold("Conv > BatchNorm > Relu", "Convblock"),
             hl.transforms.FoldDuplicates(),
         ]
         hl_graph = hl.build_graph(model, trial, transforms=transforms)

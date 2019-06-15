@@ -8,14 +8,18 @@ from ...models import builder
 class _ResBlock2d(nn.Module):
     def __init__(self, in_dim, out_dim, norm='batch', activator=nn.ELU, pooling=True, pooling_type='combined', pooling_factor=2, preact=True, se=False):
         super().__init__()
+        
+        self.pooling = pooling
+        if self.pooling: 
+            _pooling_factor = pooling_factor
+            self.shortcut_reduce = _ConvBlock2d(in_dim, out_dim, kernel_size=1, norm=norm, activator=activator, pooling=False, preact=preact, stride=_pooling_factor)
+        else:
+            _pooling_factor = 1
+            
         self.branch = builder([
-            _ConvBlock2d(in_dim, out_dim, kernel_size=3, norm=norm, activator=activator, pooling=False, preact=preact),
+            _ConvBlock2d(in_dim, out_dim, kernel_size=3, norm=norm, activator=activator, pooling=False, preact=preact, stride=_pooling_factor),
             _ConvBlock2d(out_dim, out_dim, kernel_size=3, norm=norm, activator=activator, pooling=False, preact=preact)
         ])
-        self.pooling = pooling
-        if pooling: self.pooling_f = get_down_sampling_fn(out_dim, pooling_factor, preact, pooling_type)
-        self.red = True if in_dim != out_dim else False
-        self.red_f = nn.Conv2d(in_dim, out_dim, 1)
         
         self.se = se
         if se:
@@ -33,10 +37,10 @@ class _ResBlock2d(nn.Module):
             # Excitation
             x_ = x_ * w
         
-        if self.red: x = self.red_f(x)
-        x = x + x_
-        if self.pooling: x = self.pooling_f(x)
-        return x
+        if self.pooling:
+            x = self.shortcut_reduce(x)
+            
+        return x + x_
 
 
 class _ResTransposeBlock2d(_ResBlock2d):

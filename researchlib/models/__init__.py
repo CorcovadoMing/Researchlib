@@ -1,6 +1,7 @@
 from .builder import builder
 from .gan import GANModel
 from .auto_conv_net_2d import AutoConvNet2d, AutoConvTransposeNet2d
+from .auto_unet_2d import AutoUNet2d
 
 from .vgg import *
 from .lenet import *
