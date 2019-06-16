@@ -12,12 +12,13 @@ class _ResBlock2d(nn.Module):
         self.pooling = pooling
         if self.pooling: 
             _pooling_factor = pooling_factor
-            self.shortcut_reduce = _ConvBlock2d(in_dim, out_dim, kernel_size=1, norm=norm, activator=activator, pooling=False, preact=preact, stride=_pooling_factor)
+            #self.shortcut_reduce = _ConvBlock2d(in_dim, out_dim, kernel_size=1, norm=norm, activator=activator, pooling=False, preact=preact, stride=_pooling_factor)
+            self.shortcut_reduce = get_down_sampling_fn(in_dim, out_dim, _pooling_factor, preact, 'k1stride')
         else:
             _pooling_factor = 1
             
         self.branch = builder([
-            _ConvBlock2d(in_dim, out_dim, kernel_size=3, norm=norm, activator=activator, pooling=False, preact=preact, stride=_pooling_factor),
+            get_down_sampling_fn(in_dim, out_dim, _pooling_factor, preact, 'k3stride'),
             _ConvBlock2d(out_dim, out_dim, kernel_size=3, norm=norm, activator=activator, pooling=False, preact=preact)
         ])
         

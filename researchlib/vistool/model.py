@@ -63,9 +63,11 @@ class _Model:
     def _highlevel(self, model, trial):
         transforms = [
             hl.transforms.Rename(op='ATen', to ='Norm'),
-            hl.transforms.Fold("Norm > Elu > Conv", "Convblock"),
-            hl.transforms.Fold("BatchNorm > Elu > Conv", "Convblock"),
+            hl.transforms.Fold("Norm > Elu > Conv", "PreActConvblock"),
+            hl.transforms.Fold("BatchNorm > Elu > Conv", "PreActConvblock"),
+            hl.transforms.Fold("BatchNorm > Relu > Conv", "PreActConvblock"),
             hl.transforms.Fold("Conv > BatchNorm > Relu", "Convblock"),
+            hl.transforms.Fold("Conv > BatchNorm > Elu", "Convblock"),
             hl.transforms.FoldDuplicates(),
         ]
         hl_graph = hl.build_graph(model, trial, transforms=transforms)
@@ -86,5 +88,4 @@ class _Model:
         
 #     def viewer(self, model, input_shape):
 #         _ = interact(self._browser_ui, index=range(min(100, len(self.data))), continuous_update=False)
-        
         

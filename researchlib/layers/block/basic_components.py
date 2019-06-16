@@ -2,18 +2,18 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-def get_down_sampling_fn(out_dim, pooling_factor, preact, pooling_type):
+def get_down_sampling_fn(in_dim, out_dim, pooling_factor, preact, pooling_type):
     pooling_f = None
     if pooling_type == 'combined':
-        pooling_f = _CombinedDownSampling(out_dim, pooling_factor, preact)
+        pooling_f = _CombinedDownSampling(in_dim, out_dim, pooling_factor, preact)
     elif pooling_type == 'maxpool':
-        pooling_f = _MaxPoolDownSampling(out_dim, pooling_factor, preact)
+        pooling_f = _MaxPoolDownSampling(in_dim, out_dim, pooling_factor, preact)
     elif pooling_type == 'avgpool':
-        pooling_f = _AvgPoolDownSampling(out_dim, pooling_factor, preact)
+        pooling_f = _AvgPoolDownSampling(in_dim, out_dim, pooling_factor, preact)
     elif pooling_type == 'k3stride':
-        pooling_f = _Convk3StrideDownSampling(out_dim, pooling_factor, preact)
+        pooling_f = _Convk3StrideDownSampling(in_dim, out_dim, pooling_factor, preact)
     elif pooling_type == 'k1stride':
-        pooling_f = _Convk1StrideDownSampling(out_dim, pooling_factor, preact)
+        pooling_f = _Convk1StrideDownSampling(in_dim, out_dim, pooling_factor, preact)
     return pooling_f
     
 def get_up_sampling_fn(out_dim, pooling_factor, preact, pooling_type):
@@ -28,46 +28,30 @@ def get_up_sampling_fn(out_dim, pooling_factor, preact, pooling_type):
 
 # -----------------------------------------------------------------------
 
-class _CombinedDownSampling(nn.Module):
-    def __init__(self, in_dim, pooling_factor, preact=False):
-        super().__init__()
-        self.m = nn.MaxPool2d(pooling_factor)
-        self.a = nn.AvgPool2d(pooling_factor)
-        self.c = nn.Conv2d(in_dim, in_dim, 3, pooling_factor, 1)
-        self.red = nn.Conv2d(in_dim*3, in_dim, 1)
-        self.activator = nn.ELU()
-        self.preact = preact
-    
-    def forward(self, x):
-        if self.preact: x = self.activator(x)
-        x = torch.cat([self.m(x), self.a(x), self.c(x)], dim=1)
-        x = self.activator(x)
-        x = self.red(x)
-        if not self.preact: x = self.activator(x)
-        return x
-
-
 class _MaxPoolDownSampling(nn.Module):
-    def __init__(self, in_dim, pooling_factor, preact=False):
+    def __init__(self, in_dim, out_dim, pooling_factor, preact=False):
         super().__init__()
         self.m = nn.MaxPool2d(pooling_factor)
-    
+        
     def forward(self, x):
         return self.m(x)
 
 
 class _AvgPoolDownSampling(_MaxPoolDownSampling):
-    def __init__(self, in_dim, pooling_factor, preact=False):
+    def __init__(self, in_dim, out_dim, pooling_factor, preact=False):
         super().__init__(in_dim, pooling_factor, preact)
         self.m = nn.AvgPool2d(pooling_factor)
-        
+
 
 class _Convk3StrideDownSampling(nn.Module):
-    def __init__(self, in_dim, pooling_factor, preact=False):
+    def __init__(self, in_dim, out_dim, pooling_factor, preact=False):
         super().__init__()
-        self.conv = nn.Conv2d(in_dim, in_dim, 3, pooling_factor, 1, bias=False)
+        self.conv = nn.Conv2d(in_dim, out_dim, 3, pooling_factor, 1, bias=False)
         self.preact = preact
-        self.bn = nn.BatchNorm2d(in_dim)
+        if preact:
+            self.bn = nn.BatchNorm2d(in_dim)
+        else:
+            self.bn = nn.BatchNorm2d(out_dim)
         self.activator = nn.ReLU()
         
     def forward(self, x):
@@ -81,11 +65,38 @@ class _Convk3StrideDownSampling(nn.Module):
             x = self.activator(x)
         return x
 
-class _Convk1StrideDownSampling(_Convk3StrideDownSampling):
-    def __init__(self, in_dim, pooling_factor, preact=False):
-        super().__init__(in_dim, pooling_factor, preact)
-        self.conv = nn.Conv2d(in_dim, in_dim, 1, pooling_factor, bias=False)
 
+class _Convk1StrideDownSampling(_Convk3StrideDownSampling):
+    def __init__(self, in_dim, out_dim, pooling_factor, preact=False):
+        super().__init__(in_dim, out_dim, pooling_factor, preact)
+        self.conv = nn.Conv2d(in_dim, out_dim, 1, pooling_factor, bias=False)
+
+
+class _CombinedDownSampling(nn.Module):
+    def __init__(self, in_dim, out_dim, pooling_factor, preact=False):
+        super().__init__()
+        self.m = _MaxPoolDownSampling(in_dim, in_dim, pooling_factor, preact)
+        self.a = _AvgPoolDownSampling(in_dim, in_dim, pooling_factor, preact)
+        self.c = _Convk3StrideDownSampling(in_dim, in_dim, pooling_factor, preact)
+        self.red = nn.Conv2d(in_dim*3, out_dim, 1)
+        self.activator = nn.ReLU()
+        self.preact = preact
+        if preact:
+            self.bn = nn.BatchNorm2d(in_dim*3)
+        else:
+            self.bn = nn.BatchNorm2d(out_dim)
+    
+    def forward(self, x):
+        x = torch.cat([self.m(x), self.a(x), self.c(x)], dim=1)
+        if self.preact:
+            x = self.bn(x)
+            x = self.activator(x)
+            x = self.red(x)
+        else:
+            x = self.red(x)
+            x = self.bn(x)
+            x = self.activator(x)
+        return x
 
 # -------------------------------------------------------------------------------------------
 

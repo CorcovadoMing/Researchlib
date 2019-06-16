@@ -15,7 +15,7 @@ class _ConvBlock2d(nn.Module):
         self.activator = activator()
         self.pooling = pooling
         self.preact = preact
-        if pooling: self.pooling_f = get_down_sampling_fn(out_dim, pooling_factor, preact, pooling_type)
+        if pooling: self.pooling_f = get_down_sampling_fn(out_dim, out_dim, pooling_factor, preact, pooling_type)
         
     def forward(self, x):
         if self.preact:

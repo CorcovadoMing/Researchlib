@@ -49,8 +49,8 @@ def AutoConvNet2d(input_dim,
     
     for i in range(blocks):
         count += 1
+        in_dim = out_dim
         if count == pooling_freq:
-            in_dim = out_dim
             if out_dim < max_filter:
                 out_dim *= 2
             
@@ -60,7 +60,6 @@ def AutoConvNet2d(input_dim,
                 layers.append(_op_type(in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se))
             count = 0
         else:
-            in_dim = out_dim
             if attention:
                 layers.append(block.AttentionBlock2d(_op_type, _op_transpose_type, in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se))
             else:
