@@ -230,7 +230,7 @@ def _unload_data(self):
 
 
 @register_method
-def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics, loss_history, g_loss_history, d_loss_history, matrix_records, bar, train):
+def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics, loss_history, g_loss_history, d_loss_history, norm, matrix_records, bar, train):
     self.data, self.target = self._process_type(data_pack, inputs)
     self.data, self.target, self.target_res = self._process_data(self.data, self.target, augmentor, mixup_alpha)
     self.model.train()
@@ -253,6 +253,7 @@ def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics,
                 loss_history=loss_history,
                 g_loss_history=g_loss_history,
                 d_loss_history=d_loss_history,
+                norm=norm,
                 matrix_records=matrix_records,
                 bar=bar)
 
@@ -288,7 +289,9 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
     display(live_plot)
     
     lr_plot = Output()
-    display(lr_plot)
+    norm_plot = Output()
+    lr_norm = HBox([lr_plot, norm_plot])
+    display(lr_norm)
 
     gpu_mem_monitor = Output()
     gpu_utils_monitor = Output()
@@ -301,6 +304,7 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
     matrix_canvas = hl.Canvas()
     lr_canvas = hl.Canvas()
     lr_count = 0
+    norm_canvas = hl.Canvas()
 
     total_iteration = len(self.train_loader)
     with progress:
@@ -362,6 +366,7 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
             loss_history = []
             g_loss_history = []
             d_loss_history = []
+            norm = []
             matrix_records = History()
 
             for m in metrics: m.reset()
@@ -378,7 +383,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                             metrics, 
                             loss_history, 
                             g_loss_history, 
-                            d_loss_history, 
+                            d_loss_history,
+                            norm,
                             matrix_records, 
                             bar,
                             train=True)
@@ -386,6 +392,7 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                 label_text.value = 'Epoch: ' + str(self.epoch) + ', Loss: ' + str((sum(loss_history)/len(loss_history)).numpy())
                 
                 history.log(lr_count, lr=[i['lr'] for i in self.optimizer.param_groups][-1])
+                history.log(lr_count, norm=norm[-1])
                 lr_count += 1
                             
                 iteration_break -= 1
@@ -403,8 +410,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
             self.history_ += matrix_records
             history.log(epoch, train_acc=self.history_.records['train_acc'][-1])
             history.log(epoch, train_loss=self.history_.records['train_loss'][-1])
-
-
+            
+            
             for callback_func in callbacks:
                 callback_func.on_epoch_end(model=self.model, 
                                             train_loader=self.train_loader, 
@@ -457,6 +464,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                 matrix_canvas.draw_plot([history['train_acc'], history['val_acc']])
             with lr_plot:
                 lr_canvas.draw_plot([history['lr']])
+            with norm_plot:
+                norm_canvas.draw_plot([history['norm']])
 
             with log:
                 state = []

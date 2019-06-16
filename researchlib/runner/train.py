@@ -20,10 +20,10 @@ def train_fn(train=True, **kwargs):
         model = kwargs['model'].discriminator
         model_ffn = kwargs['model'].forward_d
         loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        loss_ = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], True, condition, train, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], True, condition, train, **kwargs)
 
         # Record loss
-        kwargs['d_loss_history'].append(loss_)
+        kwargs['d_loss_history'].append(_loss)
         d_loss_avg = sum(kwargs['d_loss_history'])/len(kwargs['d_loss_history'])
 
         # Extra
@@ -33,11 +33,11 @@ def train_fn(train=True, **kwargs):
         # Generator
         model_ffn = kwargs['model'].forward_g
         loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        loss_ = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], True, condition, train, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], True, condition, train, **kwargs)
 
         # Record loss
-        kwargs['g_loss_history'].append(loss_)
-        kwargs['cur_loss'] = loss_
+        kwargs['g_loss_history'].append(_loss)
+        kwargs['cur_loss'] = _loss
         g_loss_avg = sum(kwargs['g_loss_history'])/len(kwargs['g_loss_history'])
         if kwargs['bar']: kwargs['bar'].set_postfix(d_loss="{:.4f}".format(d_loss_avg), g_loss="{:.4f}".format(g_loss_avg), refresh=False)
 
@@ -45,16 +45,17 @@ def train_fn(train=True, **kwargs):
         model = kwargs['model']
         model_ffn = kwargs['model'].forward
         loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        loss_ = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], False, False, train, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], False, False, train, **kwargs)
 
         # Record loss
-        kwargs['loss_history'].append(loss_)
-        kwargs['cur_loss'] = loss_
+        kwargs['loss_history'].append(_loss)
+        kwargs['cur_loss'] = _loss
         loss_avg = sum(kwargs['loss_history'])/len(kwargs['loss_history'])
         if kwargs['bar']: kwargs['bar'].set_postfix(loss="{:.4f}".format(loss_avg), refresh=False)
 
     # Callback: on_iteration_end
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_end(**kwargs)
+    kwargs['norm'].append(_norm)
     
     
 def cal_regularization(_model, **kwargs):
@@ -124,6 +125,13 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, unsupervised, condition
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_begin(**kwargs)
     
+    # Gradient norm
+    norm = 0
+    for i in _model.parameters():
+        norm += i.grad.data.norm(2) ** 2
+    norm = norm ** 0.5
+    norm = norm.detach().cpu()
+    
     # Update
     if train:
         optim.step()
@@ -135,4 +143,4 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, unsupervised, condition
     for m in kwargs['metrics']: m.forward([auxout[-1]] + [kwargs['target'][-1]])
     
     record = loss.detach().cpu()
-    return record
+    return record, norm
