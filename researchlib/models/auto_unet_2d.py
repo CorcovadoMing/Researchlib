@@ -21,8 +21,9 @@ def _get_op_type(type):
 
 
 def AutoUNet2d(input_dim, 
-                    blocks, 
-                    type='vgg', 
+                    blocks,
+                    down_type='residual',
+                    up_type='vgg', 
                     start_filter=128, 
                     max_filter=1024,
                     down_pooling_type='maxpool',
@@ -37,8 +38,9 @@ def AutoUNet2d(input_dim,
                     input_multiscale=False,
                     return_multiscale=False,
                     se=True):
-                    
-    _op_type, _op_transpose_type = _get_op_type(type)
+
+
+    _op_type, _op_transpose_type = _get_op_type(down_type)
     
     size_queue = []
     
@@ -84,6 +86,10 @@ def AutoUNet2d(input_dim,
         layers.append(_op_type(in_dim, in_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se))
     
     downpath = builder(layers)
+    
+    
+    # Up path
+    _op_type, _op_transpose_type = _get_op_type(up_type)
     
     layers = []
     count = 0

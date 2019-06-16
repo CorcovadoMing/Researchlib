@@ -23,23 +23,18 @@ class _ResBlock2d(nn.Module):
         
         self.se = se
         if se:
-            self.fc1 = nn.Conv2d(out_dim, out_dim//16, kernel_size=1)
-            self.fc2 = nn.Conv2d(out_dim//16, out_dim, kernel_size=1)
+            self.se_branch = builder([
+                nn.AdaptiveMaxPool2d(1),
+                nn.Conv2d(out_dim, out_dim//16, kernel_size=1),
+                nn.ReLU(),
+                nn.Conv2d(out_dim//16, out_dim, kernel_size=1),
+                nn.Sigmoid()
+            ])
         
     def forward(self, x):
         x_ = self.branch(x)
-        
-        if self.se:
-            # Squeeze
-            w = F.adaptive_avg_pool2d(x_, (1, 1))
-            w = F.relu(self.fc1(w))
-            w = torch.sigmoid(self.fc2(w))
-            # Excitation
-            x_ = x_ * w
-        
-        if self.pooling:
-            x = self.shortcut_reduce(x)
-            
+        if self.se: x_ = x_ * self.se_branch(x_)
+        if self.pooling: x = self.shortcut_reduce(x)
         return x + x_
 
 

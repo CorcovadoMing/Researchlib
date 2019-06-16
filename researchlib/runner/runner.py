@@ -136,6 +136,7 @@ class Runner:
         def _assign_optim(model, optimizer):
             if optimizer == 'adam': return Adam(model.parameters(), betas=(0.9, 0.99))
             elif optimizer == 'sgd': return SGD(model.parameters(), lr=1e-2, momentum=0.9)
+            elif optimizer == 'nesterov': return SGD(model.parameters(), lr=1e-2, momentum=0.9, nesterov=True)
             elif optimizer == 'rmsprop': return RMSprop(model.parameters())
             elif optimizer == 'adabound': return AdaBound(model.parameters(), lr=1e-3, final_lr=0.1)
             elif optimizer == 'adagrad': return Adagrad(model.parameters())

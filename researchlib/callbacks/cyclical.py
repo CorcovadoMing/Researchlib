@@ -6,7 +6,7 @@ class CyclicalLR(Callback):
     def __init__(self, step_size=1000, max_lr=1e-3):
         super().__init__()
         self.max_lr = max_lr
-        self.base_lr = max_lr / 10
+        self.base_lr = max_lr / 50
         self.step_size = step_size
         self.acc_iter = 0
         

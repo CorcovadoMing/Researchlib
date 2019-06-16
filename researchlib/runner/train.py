@@ -125,15 +125,14 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, unsupervised, condition
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_begin(**kwargs)
     
-    # Gradient norm
-    norm = 0
-    for i in _model.parameters():
-        norm += i.grad.data.norm(2) ** 2
-    norm = norm ** 0.5
-    norm = norm.detach().cpu()
-    
     # Update
+    norm = 0
     if train:
+        for i in _model.parameters():
+            norm += i.grad.data.norm(2) ** 2
+        norm = norm ** 0.5
+        norm = norm.detach().cpu()
+    
         optim.step()
         optim.zero_grad()
     
