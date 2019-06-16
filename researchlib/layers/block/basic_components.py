@@ -56,30 +56,35 @@ class _MaxPoolDownSampling(nn.Module):
         return self.m(x)
 
 
-class _AvgPoolDownSampling(nn.Module):
+class _AvgPoolDownSampling(_MaxPoolDownSampling):
     def __init__(self, in_dim, pooling_factor, preact=False):
-        super().__init__()
+        super().__init__(in_dim, pooling_factor, preact)
         self.m = nn.AvgPool2d(pooling_factor)
-    
-    def forward(self, x):
-        return self.m(x)
-
+        
 
 class _Convk3StrideDownSampling(nn.Module):
     def __init__(self, in_dim, pooling_factor, preact=False):
         super().__init__()
-        self.c = nn.Conv2d(in_dim, in_dim, 3, pooling_factor, 1)
-    
+        self.conv = nn.Conv2d(in_dim, in_dim, 3, pooling_factor, 1, bias=False)
+        self.preact = preact
+        self.bn = nn.BatchNorm2d(in_dim)
+        self.activator = nn.ReLU()
+        
     def forward(self, x):
-        return self.c(x)
+        if self.preact:
+            x = self.bn(x)
+            x = self.activator(x)
+            x = self.conv(x)
+        else:
+            x = self.conv(x)
+            x = self.bn(x)
+            x = self.activator(x)
+        return x
 
-class _Convk1StrideDownSampling(nn.Module):
+class _Convk1StrideDownSampling(_Convk3StrideDownSampling):
     def __init__(self, in_dim, pooling_factor, preact=False):
-        super().__init__()
-        self.c = nn.Conv2d(in_dim, in_dim, 1, pooling_factor)
-    
-    def forward(self, x):
-        return self.c(x)
+        super().__init__(in_dim, pooling_factor, preact)
+        self.conv = nn.Conv2d(in_dim, in_dim, 1, pooling_factor, bias=False)
 
 
 # -------------------------------------------------------------------------------------------
@@ -119,13 +124,19 @@ class _PixelShuffleUpSampling(nn.Module):
         super().__init__()
         self.m = nn.PixelShuffle(pooling_factor)
         self.red = nn.Conv2d(int(in_dim/(pooling_factor**2)), in_dim, 1)
+        self.bn = nn.BatchNorm2d(int(in_dim/(pooling_factor**2)))
         self.activator = nn.ELU()
         self.preact = preact
         
     def forward(self, x):
-        if self.preact: x = self.activator(x)
         x = self.m(x)
-        x = self.red(x)
-        if not self.preact: x = self.activator(x)
+        if self.preact: 
+            x = self.bn(x)
+            x = self.activator(x)
+            x = self.red(x)
+        else:
+            x = self.red(x)
+            x = self.bn(x)
+            x = self.activator(x)
         return x
         
