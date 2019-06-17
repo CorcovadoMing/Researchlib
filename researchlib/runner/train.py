@@ -6,7 +6,7 @@ from ..utils import *
 from apex import amp
 import torchtext
 from torch import nn
-from ..models import GANModel
+from ..models import GANModel, VAEModel
 
 def train_fn(train=True, **kwargs):
     # Callback: on_iteration_begin
@@ -20,7 +20,7 @@ def train_fn(train=True, **kwargs):
         model = kwargs['model'].discriminator
         model_ffn = kwargs['model'].forward_d
         loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], True, condition, train, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], 'unsupervise', condition, train, **kwargs)
 
         # Record loss
         kwargs['d_loss_history'].append(_loss)
@@ -33,7 +33,7 @@ def train_fn(train=True, **kwargs):
         # Generator
         model_ffn = kwargs['model'].forward_g
         loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], True, condition, train, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, **kwargs)
 
         # Record loss
         kwargs['g_loss_history'].append(_loss)
@@ -42,10 +42,14 @@ def train_fn(train=True, **kwargs):
         if kwargs['bar']: kwargs['bar'].set_postfix(d_loss="{:.4f}".format(d_loss_avg), g_loss="{:.4f}".format(g_loss_avg), refresh=False)
 
     else:
+        if type(kwargs['model']) == VAEModel:
+            learning_type = 'self_supervise'
+        else:
+            learning_type = 'supervise'
         model = kwargs['model']
         model_ffn = kwargs['model'].forward
         loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], False, False, train, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], learning_type, False, train, **kwargs)
 
         # Record loss
         kwargs['loss_history'].append(_loss)
@@ -74,7 +78,7 @@ def cal_regularization(_model, **kwargs):
             loss += reg_loss.cuda()
     return loss
 
-def _train_minibatch(_model, model_ffn, loss_ffn, optim, unsupervised, condition, train, **kwargs):
+def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, condition, train, **kwargs):
     # Reset optimizer
     if train: optim.zero_grad()
     
@@ -86,7 +90,7 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, unsupervised, condition
     
     auxout = get_aux_out(_model)
     if len(auxout) > 0:
-        unsupervised = False
+        learning_type = 'supervise'
     auxout.append(output)
     
     # Padding target (local copy, no need to remove), DIRTY TRICK DON'T MODIFIED IT!!
@@ -99,7 +103,7 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, unsupervised, condition
     # Calulate loss
     loss = 0
     auxout = [i if j else i.view(i.size(0), -1) for i, j in zip(auxout, kwargs['keep_x_shape'])]
-    if not unsupervised:
+    if learning_type == 'supervise':
         kwargs['target'] = [i if j else i.view(i.size(0), -1) for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])]
         for i in range(len(auxout)):
             if kwargs['mixup_alpha'] != 0:
@@ -108,7 +112,13 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, unsupervised, condition
                 loss += kwargs['mixup_loss_fn'](loss_ffn[i], auxout[i], kwargs['target'][i], kwargs['target_res'][i], kwargs['check'].lam)
             else:
                 loss += loss_ffn[i](auxout[i], kwargs['target'][i])
-    else:
+    elif learning_type == 'self_supervise':
+        for i in range(len(auxout)):
+            if kwargs['mixup_alpha'] != 0:
+                loss += kwargs['mixup_loss_fn'](loss_ffn[i], auxout[i], kwargs['check'].lam, *kwargs['data'])
+            else:
+                loss += loss_ffn[i](auxout[i], *kwargs['data'])
+    elif learning_type == 'unsupervise':
         for i in range(len(auxout)):
             if kwargs['mixup_alpha'] != 0:
                 loss += kwargs['mixup_loss_fn'](loss_ffn[i], auxout[i], kwargs['check'].lam)

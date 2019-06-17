@@ -409,7 +409,10 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
 
             self.history_.add(loss_records, prefix='train')
             self.history_ += matrix_records
-            history.log(epoch, train_acc=self.history_.records['train_acc'][-1])
+            try:
+                history.log(epoch, train_acc=self.history_.records['train_acc'][-1])
+            except:
+                pass
             history.log(epoch, train_loss=self.history_.records['train_loss'][-1])
             
             
