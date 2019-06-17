@@ -14,7 +14,8 @@ from .text import _AGNews
 from .augmentator import Augmentator
 from .ts_aug_soli import *
 
-#from .pointer_network import *
+# Sampler
+from .sampler import ImbalancedSampler
 
 class text(object):
     AGNews=_AGNews
