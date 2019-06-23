@@ -66,3 +66,5 @@ RUN pip install -U pyro-ppl botorch gpytorch ax-platform
 RUN pip install -U pennylane pennylane-forest bindsnet
 
 RUN pip install -U adabound
+
+RUN pip install -U deepdish boxx
