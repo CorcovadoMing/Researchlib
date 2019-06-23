@@ -5,10 +5,6 @@ from ..utils import *
 import torchtext
 
 def test_fn(**kwargs):
-    '''
-        kwargs: model, test_loader, loss_fn, is_cuda, require_long, keep_x_shape, keep_y_shape, metrics
-    '''
-    
     test_loss = 0
     matrix_records = History()
     

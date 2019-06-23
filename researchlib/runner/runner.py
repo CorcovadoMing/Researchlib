@@ -225,24 +225,29 @@ class Runner:
             
     
     def validate(self, metrics=[], callbacks=[]):
-        if self.default_metrics:
-            metrics = [self.default_metrics] + metrics
-        
-        loss_records, matrix_records = self.tester(model=self.model, 
-                                                            test_loader=self.test_loader, 
-                                                            loss_fn=self.loss_fn, 
-                                                            is_cuda=self.is_cuda,
-                                                            epoch=1,
-                                                            require_long=self.require_long_, 
-                                                            keep_x_shape=self.keep_x_shape_,
-                                                            keep_y_shape=self.keep_y_shape_,
-                                                            metrics=metrics,
-                                                            callbacks=callbacks,
-                                                            inputs=self.inputs)
-        if len(metrics) > 0: 
-            print(loss_records, list(matrix_records.records.values())[-1][-1])
-        else:
-            print(loss_records)
+        self.preload_gpu()
+        try:
+            if self.default_metrics: metrics = [self.default_metrics] + metrics
+            loss_records, matrix_records = self.tester(model=self.model, 
+                                                    test_loader=self.test_loader, 
+                                                    loss_fn=self.loss_fn, 
+                                                    is_cuda=self.is_cuda,
+                                                    epoch=1,
+                                                    require_long=self.require_long_, 
+                                                    keep_x_shape=self.keep_x_shape_,
+                                                    keep_y_shape=self.keep_y_shape_,
+                                                    metrics=metrics,
+                                                    callbacks=callbacks,
+                                                    inputs=self.inputs)
+            for k, v in loss_records.items():
+                print(str(k)+':', str(v))
+            if len(metrics) > 0: 
+                for k, v in matrix_records.records.items():
+                    print(str(k)+':', str(v[-1]))
+        except:
+            raise
+        finally:
+            self.unload_gpu(unload_data=False)
     
     
 
