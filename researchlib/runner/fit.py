@@ -187,9 +187,6 @@ def _process_type(self, data_pack, inputs):
     
     if type(data[0]) != torch.Tensor: data, target = [torch.from_numpy(i) for i in data], [torch.from_numpy(i) for i in target]
     
-    # GPU
-    if self.is_cuda: data, target = [i.cuda() for i in data], [i.cuda() for i in target]
-    
     return data, target
     
     
@@ -207,6 +204,9 @@ def _process_data(self, data, target, augmentor, mixup_alpha):
 
     # Target type refine
     target = [i.long() if j else i for i, j in zip(target, self.require_long_)]
+    
+    # GPU
+    if self.is_cuda: data, target = [i.cuda() for i in data], [i.cuda() for i in target]
 
     # Mixup
     if mixup_alpha > 0:

@@ -28,8 +28,8 @@ class Augmentator:
                 for ind in range(len(x)):
                     x[ind], y[ind] = func(x[ind], y[ind])
 
-        x = [torch.from_numpy(i).float() for i in x]
-        y = [torch.from_numpy(i).float() for i in y]
+        x = [torch.from_numpy(np.ascontiguousarray(i)).float() for i in x]
+        y = [torch.from_numpy(np.ascontiguousarray(i)).float() for i in y]
         
         return x, y
         
