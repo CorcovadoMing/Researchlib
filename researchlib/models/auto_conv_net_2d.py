@@ -34,7 +34,8 @@ def AutoConvNet2d(input_dim,
                     attention=False,
                     input_multiscale=False,
                     return_multiscale=False,
-                    se=True):
+                    se=True,
+                    sn=False):
                     
     _op_type, _op_transpose_type = _get_op_type(type)
     
@@ -45,7 +46,7 @@ def AutoConvNet2d(input_dim,
     
     if preact: 
         print(in_dim, out_dim)
-        layers.append(block.ConvBlock2d(in_dim, out_dim, pooling=False, activator=activator))
+        layers.append(block.ConvBlock2d(in_dim, out_dim, pooling=False, activator=activator, se=se, sn=sn))
     
     for i in range(blocks):
         count += 1
@@ -55,15 +56,15 @@ def AutoConvNet2d(input_dim,
                 out_dim *= 2
             
             if attention:
-                layers.append(block.AttentionBlock2d(_op_type, _op_transpose_type, in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se))
+                layers.append(block.AttentionBlock2d(_op_type, _op_transpose_type, in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se, sn=sn))
             else:
-                layers.append(_op_type(in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se))
+                layers.append(_op_type(in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se, sn=sn))
             count = 0
         else:
             if attention:
-                layers.append(block.AttentionBlock2d(_op_type, _op_transpose_type, in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se))
+                layers.append(block.AttentionBlock2d(_op_type, _op_transpose_type, in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se, sn=sn))
             else:
-                layers.append(_op_type(in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se))
+                layers.append(_op_type(in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se, sn=sn))
         print(in_dim, out_dim)
     if flatten: layers.append(layer.Flatten())
     return builder(layers)
@@ -84,7 +85,8 @@ def AutoConvTransposeNet2d(input_dim,
                             attention=False,
                             input_multiscale=False,
                             return_multiscale=False,
-                            se=True):
+                            se=True,
+                            sn=False):
                             
     _op_type, _op_transpose_type = _get_op_type(type)
     
@@ -103,18 +105,18 @@ def AutoConvTransposeNet2d(input_dim,
         count += 1
         if count == pooling_freq:
             if attention:
-                layers.append(block.AttentionTransposeBlock2d(_op_type, _op_transpose_type, in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se))
+                layers.append(block.AttentionTransposeBlock2d(_op_type, _op_transpose_type, in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se, sn=sn))
             else:
-                layers.append(_op_transpose_type(in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se))
+                layers.append(_op_transpose_type(in_dim, out_dim, norm=norm, activator=activator, pooling_type=pooling_type, pooling_factor=pooling_factor, preact=preact, se=se, sn=sn))
             count = 0
             in_dim = out_dim
             if out_dim > min_filter:
                 out_dim = int(out_dim / 2)
         else:
             if attention:
-                layers.append(block.AttentionTransposeBlock2d(_op_type, _op_transpose_type, in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se))
+                layers.append(block.AttentionTransposeBlock2d(_op_type, _op_transpose_type, in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se, sn=sn))
             else:
-                layers.append(_op_transpose_type(in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se))
+                layers.append(_op_transpose_type(in_dim, out_dim, norm=norm, activator=activator, pooling=False, preact=preact, se=se, sn=sn))
             in_dim = out_dim
     if flatten: layers.append(layer.Flatten())
     return builder(layers)

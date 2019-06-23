@@ -25,6 +25,16 @@ def get_up_sampling_fn(out_dim, pooling_factor, preact, pooling_type):
     elif pooling_type == 'pixelshuffle':
         pooling_f = _PixelShuffleUpSampling(out_dim, pooling_factor, preact)
     return pooling_f
+    
+def get_norm_fn(bn_dim, norm):
+    if norm =='batch': 
+        return nn.BatchNorm2d(bn_dim)
+    elif norm == 'instance': 
+        return nn.GroupNorm(bn_dim, bn_dim)
+    elif norm == 'group': 
+        return nn.GroupNorm(int(bn_dim/4), bn_dim)
+    elif norm == 'layer': 
+        return nn.GroupNorm(1, bn_dim)
 
 # -----------------------------------------------------------------------
 
