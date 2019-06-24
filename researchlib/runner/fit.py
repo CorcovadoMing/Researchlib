@@ -294,12 +294,21 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
     lr_norm = HBox([lr_plot, norm_plot])
     display(lr_norm)
 
+    _gan = True if type(self.model) == GANModel else False
+    
+    if _gan:
+        gan_out = Output()
+        display(gan_out)
+        gan_canvas = hl.Canvas()
+
+
     gpu_mem_monitor = Output()
     gpu_utils_monitor = Output()
     log = Output()
     log_info = HBox([gpu_mem_monitor, gpu_utils_monitor, log])
     display(log_info)
     
+    epoch_history = hl.History()
     history = hl.History()
     loss_canvas = hl.Canvas()
     matrix_canvas = hl.Canvas()
@@ -350,8 +359,6 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
         
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
-    
-    _gan = True if type(self.model) == GANModel else False
     
     self.preload_gpu()
     
@@ -434,6 +441,14 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                                             train_loader=self.train_loader, 
                                             optimizer=self.optimizer,
                                             epoch=epoch)
+
+            if _gan:
+                _gan_sample = self.model.sample(1, inference=False)
+                _gan_sample = _gan_sample.detach().cpu().numpy()[0].transpose((1, 2, 0))
+                epoch_history.log(epoch, image=_gan_sample)
+                with gan_out:
+                    gan_canvas.draw_image(epoch_history['image'])
+
 
             if self.test_loader:
                 self.model.eval()

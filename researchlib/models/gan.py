@@ -9,7 +9,6 @@ class GANModel(nn.Module):
         self.discriminator = discriminator
         self.condition_onehot = condition_onehot
         self.latent_vector_len = latent_vector_len
-        self.distribution = torch.distributions.normal.Normal(torch.Tensor([0.0]), torch.Tensor([1.0]))
         if type(condition_vector_len) == list or type(condition_vector_len) == tuple:
             self.g_condition_vector_len, self.g_condition = self._parse_condition(condition_vector_len[0])
             self.d_condition_vector_len, self.d_condition = self._parse_condition(condition_vector_len[1])
@@ -36,7 +35,7 @@ class GANModel(nn.Module):
         return condition_data.to(device)
     
     def sample(self, bs, condition_data=None, inference=True, requires_grad=False):
-        noise = self.distribution.sample(torch.Size((bs, self.latent_vector_len))).squeeze(-1)
+        noise = torch.empty((bs, self.latent_vector_len)).normal_(0, 1)
         if condition_data is not None:
             if inference: condition_data = self._parse_condition_data(condition_data, self.condition_onehot, self.g_condition_vector_len)
             noise = noise.to(condition_data.device)
