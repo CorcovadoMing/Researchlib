@@ -135,6 +135,7 @@ class Runner:
     def set_optimizer(self, optimizer):
         def _assign_optim(model, optimizer):
             if optimizer == 'adam': return Adam(model.parameters(), betas=(0.9, 0.99))
+            elif optimizer == 'adam_gan': return Adam(model.parameters(), betas=(0.5, 0.99))
             elif optimizer == 'sgd': return SGD(model.parameters(), lr=1e-2, momentum=0.9)
             elif optimizer == 'nesterov': return SGD(model.parameters(), lr=1e-2, momentum=0.9, nesterov=True)
             elif optimizer == 'rmsprop': return RMSprop(model.parameters())

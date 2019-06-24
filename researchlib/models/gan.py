@@ -41,6 +41,9 @@ class GANModel(nn.Module):
             if inference: condition_data = self._parse_condition_data(condition_data, self.condition_onehot, self.g_condition_vector_len)
             noise = noise.to(condition_data.device)
             noise = torch.cat([noise, condition_data], dim=1)
+        else:
+            if not inference:
+                noise = noise.cuda()
         fake = self.generator(noise)
         return fake if requires_grad else fake.detach()
     

@@ -351,6 +351,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
     
+    _gan = True if type(self.model) == GANModel else False
+    
     self.preload_gpu()
     
     try:
@@ -390,9 +392,15 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                             bar,
                             train=True)
                 progressbar.description = '('+str(batch_idx+1)+'/'+str(total_iteration)+')'
-                label_text.value = 'Epoch: ' + str(self.epoch) + ', Loss: ' + str((sum(loss_history)/len(loss_history)).numpy())
                 
-                history.log(lr_count, lr=[i['lr'] for i in self.optimizer.param_groups][-1])
+                if _gan:
+                    label_text.value = 'Epoch: ' + str(self.epoch) + ', G Loss: ' + str((sum(g_loss_history)/len(g_loss_history)).numpy()) + ', D Loss: ' + str((sum(d_loss_history)/len(d_loss_history)).numpy())
+                    history.log(lr_count, g_lr=[i['lr'] for i in self.optimizer[0].param_groups][-1])
+                    history.log(lr_count, d_lr=[i['lr'] for i in self.optimizer[1].param_groups][-1])
+                else:
+                    label_text.value = 'Epoch: ' + str(self.epoch) + ', Loss: ' + str((sum(loss_history)/len(loss_history)).numpy())
+                    history.log(lr_count, lr=[i['lr'] for i in self.optimizer.param_groups][-1])
+
                 history.log(lr_count, norm=norm[-1])
                 lr_count += 1
                             
@@ -402,7 +410,7 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                 
             # Output metrics
             for m in metrics: matrix_records.add(m.output(), prefix='train')
-            if type(self.model) == GANModel:
+            if _gan:
                 loss_records = {'d_loss': sum(d_loss_history)/len(d_loss_history), 'g_loss': sum(g_loss_history)/len(g_loss_history)}
             else:
                 loss_records = {'loss': sum(loss_history)/len(loss_history)}
@@ -413,7 +421,12 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                 history.log(epoch, train_acc=self.history_.records['train_acc'][-1])
             except:
                 pass
-            history.log(epoch, train_loss=self.history_.records['train_loss'][-1])
+            
+            if _gan:
+                history.log(epoch, g_train_loss=self.history_.records['train_g_loss'][-1])
+                history.log(epoch, d_train_loss=self.history_.records['train_d_loss'][-1])
+            else:
+                history.log(epoch, train_loss=self.history_.records['train_loss'][-1])
             
             
             for callback_func in callbacks:
@@ -463,11 +476,17 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
 
 
             with loss_live_plot:
-                loss_canvas.draw_plot([history["train_loss"], history['val_loss']])            
+                if _gan:
+                    loss_canvas.draw_plot([history["train_g_loss"], history['train_d_loss']])
+                else:
+                    loss_canvas.draw_plot([history["train_loss"], history['val_loss']])            
             with matrix_live_plot:
                 matrix_canvas.draw_plot([history['train_acc'], history['val_acc']])
             with lr_plot:
-                lr_canvas.draw_plot([history['lr']])
+                if _gan:
+                    lr_canvas.draw_plot([history['g_lr'], history['d_lr']])
+                else:
+                    lr_canvas.draw_plot([history['lr']])
             with norm_plot:
                 norm_canvas.draw_plot([history['norm']])
 

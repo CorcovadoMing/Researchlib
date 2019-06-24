@@ -8,7 +8,7 @@ class _ConvBlock2d(nn.Module):
         padding = int((kernel_size - 1) / 2)
         self.conv = nn.Conv2d(in_dim, out_dim, kernel_size, stride, padding, groups=groups, bias=False)
         if sn: self.conv = nn.utils.spectral_norm(self.conv)
-        bn_dim = in_dim if preact else out_dim 
+        bn_dim = in_dim if preact else out_dim
         self.bn = get_norm_fn(bn_dim, norm)
         self.activator = activator()
         self.pooling = pooling
@@ -29,6 +29,6 @@ class _ConvBlock2d(nn.Module):
 
 
 class _ConvTransposeBlock2d(_ConvBlock2d):
-    def __init__(self, in_dim, out_dim, kernel_size=3, norm='batch', activator=nn.ELU, pooling=True, pooling_type='interpolate', pooling_factor=2, preact=False, se=None, groups=1, stride=1):
-        super().__init__(in_dim, out_dim, kernel_size, norm, activator, pooling, pooling_type, pooling_factor, preact, se, groups, stride)
+    def __init__(self, in_dim, out_dim, kernel_size=3, norm='batch', activator=nn.ELU, pooling=True, pooling_type='interpolate', pooling_factor=2, preact=False, se=False, sn=False, groups=1, stride=1):
+        super().__init__(in_dim, out_dim, kernel_size, norm, activator, pooling, pooling_type, pooling_factor, preact, se, sn, groups, stride)
         if pooling: self.pooling_f = get_up_sampling_fn(out_dim, pooling_factor, preact, pooling_type)

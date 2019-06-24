@@ -21,9 +21,8 @@ def _get_op_type(type):
 
 def AutoConvNet2d(input_dim, 
                     blocks, 
-                    type='vgg', 
-                    start_filter=128, 
-                    max_filter=1024,
+                    type='vgg',
+                    filters=(128, 1024),
                     pooling_type='combined',
                     pooling_factor=2, 
                     pooling_freq=1, 
@@ -38,15 +37,15 @@ def AutoConvNet2d(input_dim,
                     sn=False):
                     
     _op_type, _op_transpose_type = _get_op_type(type)
+    start_filter, max_filter = filters
     
     layers = []
     in_dim = input_dim
     out_dim = start_filter
     count = 0
     
-    if preact: 
-        print(in_dim, out_dim)
-        layers.append(block.ConvBlock2d(in_dim, out_dim, pooling=False, activator=activator, se=se, sn=sn))
+    print(in_dim, out_dim)
+    layers.append(block.ConvBlock2d(in_dim, out_dim, pooling=False, activator=activator, se=se, sn=sn))
     
     for i in range(blocks):
         count += 1
@@ -73,8 +72,7 @@ def AutoConvNet2d(input_dim,
 def AutoConvTransposeNet2d(input_dim, 
                             blocks, 
                             type='vgg', 
-                            start_filter=1024, 
-                            min_filter=128,
+                            filters=(1024, 128),
                             pooling_type='interpolate',
                             pooling_factor=2, 
                             pooling_freq=1, 
@@ -89,16 +87,15 @@ def AutoConvTransposeNet2d(input_dim,
                             sn=False):
                             
     _op_type, _op_transpose_type = _get_op_type(type)
+    start_filter, min_filter = filters
     
     layers = []
     in_dim = input_dim
     out_dim = start_filter
     count = 0
     
-    if preact: 
-        print(in_dim, out_dim)
-        layers.append(nn.Conv2d(in_dim, out_dim, 3, 1, 1))
-        in_dim = out_dim
+#     print(in_dim, out_dim)
+#     layers.append(block.ConvBlock2d(in_dim, out_dim, pooling=False, activator=activator, se=se, sn=sn))
     
     for i in range(blocks):
         print(in_dim, out_dim)

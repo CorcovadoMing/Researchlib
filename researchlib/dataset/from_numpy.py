@@ -3,7 +3,7 @@ import torch.utils.data as utils
 
 
 def FromNumpy(data, inputs=1, batch_size=1, shuffle=True, sampler=None, batch_sampler=None, num_workers=8, pin_memory=True, drop_last=False):
-    data = [torch.from_numpy(i) for i in data]
+    data = [torch.from_numpy(i).float() for i in data]
     _dataset = utils.TensorDataset(*data)
     _shuffle = shuffle
     _sampler = None

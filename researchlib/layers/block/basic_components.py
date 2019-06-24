@@ -145,7 +145,10 @@ class _PixelShuffleUpSampling(nn.Module):
         super().__init__()
         self.m = nn.PixelShuffle(pooling_factor)
         self.red = nn.Conv2d(int(in_dim/(pooling_factor**2)), in_dim, 1)
-        self.bn = nn.BatchNorm2d(int(in_dim/(pooling_factor**2)))
+        if preact:
+            self.bn = nn.BatchNorm2d(int(in_dim/(pooling_factor**2)))
+        else:
+            self.bn = nn.BatchNorm2d(in_dim)
         self.activator = nn.ELU()
         self.preact = preact
         

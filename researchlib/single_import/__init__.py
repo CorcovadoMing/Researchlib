@@ -13,7 +13,9 @@ from ..vistool import *
 from ..wrapper import *
 from pynvml import *
 import seaborn as sns
+
 sns.set()
+sns.set_style("whitegrid", {'axes.grid' : False})
 
 nvmlInit()
 deviceCount = nvmlDeviceGetCount()
