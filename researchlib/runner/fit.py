@@ -466,7 +466,10 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
 
                 self.history_.add(loss_records, prefix='val')
                 self.history_ += matrix_records
-                history.log(epoch, val_acc=self.history_.records['val_acc'][-1])
+                try:
+                    history.log(epoch, val_acc=self.history_.records['val_acc'][-1])
+                except:
+                    pass
                 history.log(epoch, val_loss=self.history_.records['val_loss'][-1])
 
             epoch_str = str(self.epoch)
