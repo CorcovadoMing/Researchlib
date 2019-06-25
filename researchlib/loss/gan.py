@@ -28,16 +28,16 @@ def _wgan_g_loss(fake, *args):
     return -fake.mean()
 
 def _vanilla_d_loss(real, fake, *args):
-    return F.binary_cross_entropy(real, torch.ones(real.size(0), 1).cuda()-0.1) + F.binary_cross_entropy(fake, torch.zeros(fake.size(0), 1).cuda()+0.1)
+    return F.binary_cross_entropy(torch.sigmoid(real), torch.ones(real.size(0), 1).cuda()-0.1) + F.binary_cross_entropy(torch.sigmoid(fake), torch.zeros(fake.size(0), 1).cuda()+0.1)
 
 def _vanilla_g_loss(fake, *args):
-    return F.binary_cross_entropy(fake, torch.ones(fake.size(0), 1).cuda()-0.1)
+    return F.binary_cross_entropy(torch.sigmoid(fake), torch.ones(fake.size(0), 1).cuda()-0.1)
 
 def _lsgan_d_loss(real, fake, *args):
-    return F.mse_loss(real, torch.ones(real.size(0), 1).cuda()) + F.mse_loss(fake, torch.zeros(fake.size(0), 1).cuda())
+    return F.mse_loss(torch.sigmoid(real), torch.ones(real.size(0), 1).cuda()-0.1) + F.mse_loss(torch.sigmoid(fake), torch.zeros(fake.size(0), 1).cuda()+0.1)
     
 def _lsgan_g_loss(fake, *args):
-    return F.mse_loss(fake, torch.ones(fake.size(0), 1).cuda())
+    return F.mse_loss(torch.sigmoid(fake), torch.ones(fake.size(0), 1).cuda()-0.1)
 
 def _hinge_d_loss(real, fake, *args):
     return F.relu(1.0 - real).mean() + F.relu(1.0 + fake).mean()
