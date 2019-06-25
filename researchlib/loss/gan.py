@@ -21,7 +21,6 @@ def _wgan_gp_d_loss(real, fake, *args):
 def _wgan_gp_g_loss(fake, *args):
     return -fake.mean()
 
-
 def _wgan_d_loss(real, fake, *args):
     return fake.mean() - real.mean()
 
@@ -40,6 +39,11 @@ def _lsgan_d_loss(real, fake, *args):
 def _lsgan_g_loss(fake, *args):
     return F.mse_loss(fake, torch.ones(fake.size(0), 1).cuda())
 
+def _hinge_d_loss(real, fake, *args):
+    return F.relu(1.0 - real).mean() + F.relu(1.0 + fake).mean()
+    
+def _hinge_g_loss(fake, *args):
+    return -fake.mean()
 
 def _wgan_extra_step(model, *args):
     for p in model.discriminator.parameters():
@@ -58,15 +62,19 @@ class GANLoss(nn.Module):
             self.d_loss = _wgan_d_loss
             self.g_loss = _wgan_g_loss
             self.extra_step = _wgan_extra_step
-        if arch == 'wgan-gp':
+        elif arch == 'wgan-gp':
             self.d_loss = _wgan_gp_d_loss
             self.g_loss = _wgan_gp_g_loss
-        if arch == 'vanilla':
+        elif arch == 'vanilla':
             self.d_loss = _vanilla_d_loss
             self.g_loss = _vanilla_g_loss
-        if arch == 'lsgan':
+        elif arch == 'lsgan':
             self.d_loss = _lsgan_d_loss
             self.g_loss = _lsgan_g_loss
+        elif arch == 'hinge':
+            self.d_loss = _hinge_d_loss
+            self.g_loss = _hinge_g_loss
+        
         
     def set_model(self, model):
         self.model = model

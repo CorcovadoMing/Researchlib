@@ -68,7 +68,7 @@ class AutoGAN_D(torch.nn.Module):
         ### End block
         # Size = (D_h_size * mult) x 4 x 4
         main.add_module('End-Conv2d', sn(torch.nn.Conv2d(128 * mult, 1, kernel_size=4, stride=1, padding=0, bias=False)))
-        main.add_module('End-Sigmoid', torch.nn.Sigmoid())
+        # main.add_module('End-Sigmoid', torch.nn.Sigmoid())
         # Size = 1 x 1 x 1 (Is a real cat or not?)
         self.main = main
 
