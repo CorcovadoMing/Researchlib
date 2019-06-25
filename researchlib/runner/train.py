@@ -20,7 +20,7 @@ def train_fn(train=True, **kwargs):
         model = kwargs['model'].discriminator
         model_ffn = kwargs['model'].forward_d
         loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], 'unsupervise', condition, train, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], 'unsupervise', condition, train, True, **kwargs)
 
         # Record loss
         kwargs['d_loss_history'].append(_loss)
@@ -33,7 +33,7 @@ def train_fn(train=True, **kwargs):
         # Generator
         model_ffn = kwargs['model'].forward_g
         loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, **kwargs)
 
         # Record loss
         kwargs['g_loss_history'].append(_loss)
@@ -49,7 +49,7 @@ def train_fn(train=True, **kwargs):
         model = kwargs['model']
         model_ffn = kwargs['model'].forward
         loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], learning_type, False, train, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], learning_type, False, train, False, **kwargs)
 
         # Record loss
         kwargs['loss_history'].append(_loss)
@@ -78,7 +78,7 @@ def cal_regularization(_model, **kwargs):
             loss += reg_loss.cuda()
     return loss
 
-def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, condition, train, **kwargs):
+def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, condition, train, retain_graph, **kwargs):
     # Reset optimizer
     if train: optim.zero_grad()
     
@@ -130,7 +130,7 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, conditio
     
     # Backward
     with amp.scale_loss(loss, optim) as scaled_loss:
-        if train: scaled_loss.backward()
+        if train: scaled_loss.backward(retain_graph=retain_graph)
         del scaled_loss
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_begin(**kwargs)

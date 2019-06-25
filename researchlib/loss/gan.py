@@ -4,7 +4,7 @@ from torch.autograd import grad
 import torch
 
 def _wgan_gp_d_loss(real, fake, *args):
-    model = args[0]
+    model = args[1]
     alpha = torch.rand((real.size(0), 1, 1, 1)).cuda()
     x_hat = alpha * model.real_data + (1 - alpha) * model.fake_data
     x_hat.requires_grad = True
@@ -45,6 +45,18 @@ def _hinge_d_loss(real, fake, *args):
 def _hinge_g_loss(fake, *args):
     return -fake.mean()
 
+def _relative_d_loss(real, fake, *args):
+    rel = (real - fake)
+    # Cache
+    args[0].append(real)
+    return F.binary_cross_entropy_with_logits(rel, torch.ones(rel.size(0), 1).cuda())
+
+def _relative_g_loss(fake, *args):
+    # Get cache from d_loss
+    real = args[0].pop()
+    rel = (fake - real)
+    return F.binary_cross_entropy_with_logits(rel, torch.ones(rel.size(0), 1).cuda())
+    
 def _wgan_extra_step(model, *args):
     for p in model.discriminator.parameters():
         p.data.clamp_(-0.1, 0.1)
@@ -58,6 +70,7 @@ class GANLoss(nn.Module):
         super().__init__()
         self.extra_step = _noop_extra_step
         self.aux_loss = aux_loss
+        self.queue = []
         if arch == 'wgan':
             self.d_loss = _wgan_d_loss
             self.g_loss = _wgan_g_loss
@@ -74,6 +87,9 @@ class GANLoss(nn.Module):
         elif arch == 'hinge':
             self.d_loss = _hinge_d_loss
             self.g_loss = _hinge_g_loss
+        elif arch == 'relative':
+            self.d_loss = _relative_d_loss
+            self.g_loss = _relative_g_loss
         
         
     def set_model(self, model):
@@ -84,13 +100,13 @@ class GANLoss(nn.Module):
         if aux is not None:
             return self.aux_loss(real, aux) + self.aux_loss(fake, aux)
         else:
-            return self.d_loss(real, fake, self.model)
+            return self.d_loss(real, fake, self.queue, self.model)
         
     def forward_g(self, fake, aux=None):
         if aux is not None:
             return self.aux_loss(*fake, aux)
         else:
-            return self.g_loss(fake, self.model)
+            return self.g_loss(fake, self.queue, self.model)
     
     def extra_step(self):
         self.extra_step(self.model)
