@@ -71,6 +71,36 @@ def _relative_averaged_vanilla_g_loss(fake, *args):
     l2 = F.binary_cross_entropy_with_logits((fake - real.mean(0)), torch.ones(real.size(0), 1).cuda())
     return (l1+l2)/2
 
+def _relative_averaged_lsgan_d_loss(real, fake, *args):
+    l1 = torch.mean((real - fake.mean(0) - 1) ** 2)
+    l2 = torch.mean((fake - real.mean(0) + 1) ** 2)
+    # Cache
+    args[0].append(real)
+    return (l1+l2)/2
+
+def _relative_averaged_lsgan_g_loss(fake, *args):
+    # Get cache from d_loss
+    real = args[0].pop()
+    l1 = torch.mean((real - fake.mean(0) + 1) ** 2)
+    l2 = torch.mean((fake - real.mean(0) - 1) ** 2)
+    return (l1+l2)/2
+
+def _relative_averaged_hinge_d_loss(real, fake, *args):
+    l1 = F.relu(1.0 - real - fake.mean(0)).mean()
+    l2 = F.relu(1.0 + fake - real.mean(0)).mean()
+    # Cache
+    args[0].append(real)
+    return (l1+l2)/2
+
+def _relative_averaged_hinge_g_loss(fake, *args):
+    # Get cache from d_loss
+    real = args[0].pop()
+    l1 = F.relu(1.0 + (real - fake.mean(0))).mean()
+    l2 = F.relu(1.0 - (fake - real.mean(0))).mean()
+    return (l1+l2)/2
+
+
+
 
 def _wgan_extra_step(model, *args):
     for p in model.discriminator.parameters():
@@ -108,6 +138,12 @@ class GANLoss(nn.Module):
         elif arch == 'relative-averaged-vanilla':
             self.d_loss = _relative_averaged_vanilla_d_loss
             self.g_loss = _relative_averaged_vanilla_g_loss
+        elif arch == 'relative-averaged-lsgan':
+            self.d_loss = _relative_averaged_lsgan_d_loss
+            self.g_loss = _relative_averaged_lsgan_g_loss
+        elif arch == 'relative-averaged-hinge':
+            self.d_loss = _relative_averaged_hinge_d_loss
+            self.g_loss = _relative_averaged_hinge_g_loss
         
         
     def set_model(self, model):
