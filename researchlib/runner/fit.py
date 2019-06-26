@@ -404,9 +404,12 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                     label_text.value = 'Epoch: ' + str(self.epoch) + ', G Loss: ' + str((sum(g_loss_history)/len(g_loss_history)).numpy()) + ', D Loss: ' + str((sum(d_loss_history)/len(d_loss_history)).numpy())
                     history.log(lr_count, g_lr=[i['lr'] for i in self.optimizer[0].param_groups][-1])
                     history.log(lr_count, d_lr=[i['lr'] for i in self.optimizer[1].param_groups][-1])
+                    history.log(lr_count, train_g_loss=g_loss_history[-1])
+                    history.log(lr_count, train_d_loss=d_loss_history[-1])
                 else:
                     label_text.value = 'Epoch: ' + str(self.epoch) + ', Loss: ' + str((sum(loss_history)/len(loss_history)).numpy())
                     history.log(lr_count, lr=[i['lr'] for i in self.optimizer.param_groups][-1])
+                    history.log(lr_count, train_loss=loss_history[-1])
 
                 history.log(lr_count, norm=norm[-1])
                 lr_count += 1
@@ -428,13 +431,6 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                 history.log(epoch, train_acc=self.history_.records['train_acc'][-1])
             except:
                 pass
-            
-            if _gan:
-                history.log(epoch, g_train_loss=self.history_.records['train_g_loss'][-1])
-                history.log(epoch, d_train_loss=self.history_.records['train_d_loss'][-1])
-            else:
-                history.log(epoch, train_loss=self.history_.records['train_loss'][-1])
-            
             
             for callback_func in callbacks:
                 callback_func.on_epoch_end(model=self.model, 
