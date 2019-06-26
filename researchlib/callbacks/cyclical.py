@@ -9,12 +9,16 @@ class CyclicalLR(Callback):
         self.base_lr = max_lr / 50
         self.step_size = step_size
         self.acc_iter = 0
+        self.annaling = 0.98
         
     def on_iteration_begin(self, **kwargs):
         if kwargs['model'].training:
             cycle = math.floor(1 + self.acc_iter / (2 * (self.step_size + 1)))
             x = abs(self.acc_iter / (self.step_size + 1) - 2 * cycle + 1)
             cur_lr = self.base_lr + (self.max_lr - self.base_lr) * max(0, (1 - x))
+            if self.acc_iter == (2 * self.step_size) - 1:
+                self.max_lr *= self.annaling
+                self.max_lr = max(self.max_lr, self.base_lr)
             self.acc_iter = (self.acc_iter + 1) % (2 * self.step_size)
             set_lr(kwargs['optimizer'], cur_lr)
         return kwargs
