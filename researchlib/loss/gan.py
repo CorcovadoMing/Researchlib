@@ -99,6 +99,54 @@ def _relative_averaged_hinge_g_loss(fake, *args):
     l2 = F.relu(1.0 - (fake - real.mean(0))).mean()
     return (l1+l2)/2
 
+def _relative_centered_vanilla_d_loss(real, fake, *args):
+    full_mean = (fake.mean(0) + real.mean(0)) / 2
+    l1 = F.binary_cross_entropy_with_logits((real - full_mean), torch.ones(real.size(0), 1).cuda())
+    l2 = F.binary_cross_entropy_with_logits((fake - full_mean), torch.zeros(real.size(0), 1).cuda())
+    # Cache
+    args[0].append(real)
+    return (l1+l2)/2
+
+def _relative_centered_vanilla_g_loss(fake, *args):
+    # Get cache from d_loss
+    real = args[0].pop()
+    full_mean = (fake.mean(0) + real.mean(0)) / 2
+    l1 = F.binary_cross_entropy_with_logits((real - full_mean), torch.zeros(real.size(0), 1).cuda())
+    l2 = F.binary_cross_entropy_with_logits((fake - full_mean), torch.ones(real.size(0), 1).cuda())
+    return (l1+l2)/2
+
+def _relative_centered_lsgan_d_loss(real, fake, *args):
+    full_mean = (fake.mean(0) + real.mean(0)) / 2
+    l1 = torch.mean((real - full_mean - 1) ** 2)
+    l2 = torch.mean((fake - full_mean + 1) ** 2)
+    # Cache
+    args[0].append(real)
+    return (l1+l2)/2
+
+def _relative_centered_lsgan_g_loss(fake, *args):
+    # Get cache from d_loss
+    real = args[0].pop()
+    full_mean = (fake.mean(0) + real.mean(0)) / 2
+    l1 = torch.mean((real - full_mean + 1) ** 2)
+    l2 = torch.mean((fake - full_mean - 1) ** 2)
+    return (l1+l2)/2
+
+def _relative_centered_hinge_d_loss(real, fake, *args):
+    full_mean = (fake.mean(0) + real.mean(0)) / 2
+    l1 = F.relu(1.0 - real - full_mean).mean()
+    l2 = F.relu(1.0 + fake - full_mean).mean()
+    # Cache
+    args[0].append(real)
+    return (l1+l2)/2
+
+def _relative_centered_hinge_g_loss(fake, *args):
+    # Get cache from d_loss
+    real = args[0].pop()
+    full_mean = (fake.mean(0) + real.mean(0)) / 2
+    l1 = F.relu(1.0 + (real - full_mean)).mean()
+    l2 = F.relu(1.0 - (fake - full_mean)).mean()
+    return (l1+l2)/2
+
 
 
 
@@ -116,6 +164,7 @@ class GANLoss(nn.Module):
         self.extra_step = _noop_extra_step
         self.aux_loss = aux_loss
         self.queue = []
+        
         if arch == 'wgan':
             self.d_loss = _wgan_d_loss
             self.g_loss = _wgan_g_loss
@@ -123,6 +172,7 @@ class GANLoss(nn.Module):
         elif arch == 'wgan-gp':
             self.d_loss = _wgan_gp_d_loss
             self.g_loss = _wgan_gp_g_loss
+        
         elif arch == 'vanilla':
             self.d_loss = _vanilla_d_loss
             self.g_loss = _vanilla_g_loss
@@ -132,9 +182,11 @@ class GANLoss(nn.Module):
         elif arch == 'hinge':
             self.d_loss = _hinge_d_loss
             self.g_loss = _hinge_g_loss
+        
         elif arch == 'relative-vanilla':
             self.d_loss = _relative_vanilla_d_loss
             self.g_loss = _relative_vanilla_g_loss
+        
         elif arch == 'relative-averaged-vanilla':
             self.d_loss = _relative_averaged_vanilla_d_loss
             self.g_loss = _relative_averaged_vanilla_g_loss
@@ -144,6 +196,16 @@ class GANLoss(nn.Module):
         elif arch == 'relative-averaged-hinge':
             self.d_loss = _relative_averaged_hinge_d_loss
             self.g_loss = _relative_averaged_hinge_g_loss
+            
+        elif arch == 'relative-centered-vanilla':
+            self.d_loss = _relative_centered_vanilla_d_loss
+            self.g_loss = _relative_centered_vanilla_g_loss
+        elif arch == 'relative-centered-lsgan':
+            self.d_loss = _relative_centered_lsgan_d_loss
+            self.g_loss = _relative_centered_lsgan_g_loss
+        elif arch == 'relative-centered-hinge':
+            self.d_loss = _relative_centered_hinge_d_loss
+            self.g_loss = _relative_centered_hinge_g_loss
         
         
     def set_model(self, model):
