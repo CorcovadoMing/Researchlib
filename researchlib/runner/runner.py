@@ -21,6 +21,7 @@ from apex import amp
 import os
 import pandas as pd
 from adabound import AdaBound
+from .larc import LARC
 
 from . import init_model
 from . import fit
@@ -142,7 +143,7 @@ class Runner:
             elif optimizer == 'adabound': return AdaBound(model.parameters(), lr=1e-3, final_lr=0.1)
             elif optimizer == 'adagrad': return Adagrad(model.parameters())
             elif optimizer == 'adafactor': return AdaFactor(model.parameters(), lr=1e-3)
-            else: return optimizer
+            else: return LARC(optimizer)
         
         if type(self.model) == GANModel:
             if type(optimizer) == list or type(optimizer) == tuple:
