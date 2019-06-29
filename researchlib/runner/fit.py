@@ -2,7 +2,7 @@ import os
 from tqdm.auto import tqdm
 from tqdm import tnrange
 from ..callbacks import *
-from ..utils import _register_method, _get_iteration, set_lr
+from ..utils import _register_method, _get_iteration, set_lr, plot_montage
 from .history import History
 from ..models import GANModel
 from .save_load import _load_optimizer
@@ -439,9 +439,12 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                                             epoch=epoch)
 
             if _gan:
-                _gan_sample = self.model.sample(1, inference=False)
-                _gan_sample = _gan_sample.detach().cpu().numpy()[0].transpose((1, 2, 0))
-                epoch_history.log(epoch, image=_gan_sample)
+                _gan_sample = self.model.sample(4, inference=False)
+                _gan_sample = _gan_sample.detach().cpu().numpy().transpose((0, 2, 3, 1))
+                print(_gan_sample.shape)
+                _grid = plot_montage(_gan_sample, 2, 2, False)
+                print(_grid.shape)
+                epoch_history.log(epoch, image=_grid)
                 with gan_out:
                     gan_canvas.draw_image(epoch_history['image'])
 

@@ -2,7 +2,7 @@ from torchvision import datasets, transforms
 
 def _MNIST(train=True, normalize=True, custom_tf=[]):
     tf = custom_tf + [transforms.ToTensor()]
-    if normalize: tf.append(transforms.Normalize((0.1307,), (0.3081,)))
+    if normalize: tf.append(transforms.Normalize((0.5,), (0.5,)))
     return datasets.MNIST('../data', train=train, download=True, transform=transforms.Compose(tf))
 
 def _KMNIST(train=True, normalize=True, custom_tf=[]):
@@ -17,5 +17,5 @@ def _FashionMNIST(train=True, normalize=True, custom_tf=[]):
 
 def _CIFAR10(train=True, normalize=True, custom_tf=[]):
     tf = custom_tf + [transforms.ToTensor()]
-    if normalize: tf.append(transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)))
+    if normalize: tf.append(transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)))
     return datasets.CIFAR10('../data', train=train, download=True, transform=transforms.Compose(tf))

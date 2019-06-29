@@ -3,12 +3,12 @@ import torch
 from ..layers import layer
 
 class AutoGAN_G(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, img_size):
         super().__init__()
         main = torch.nn.Sequential()
 
         # We need to know how many layers we will use at the beginning
-        mult = 64 // 8
+        mult = img_size // 8
 
         ### Start block
         # Z_size random numbers
@@ -42,7 +42,7 @@ class AutoGAN_G(torch.nn.Module):
 
 # DCGAN discriminator (using somewhat the reverse of the generator)
 class AutoGAN_D(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, img_size):
         super().__init__()
         main = torch.nn.Sequential()
 
@@ -50,7 +50,7 @@ class AutoGAN_D(torch.nn.Module):
         # Size = n_colors x image_size x image_size
         main.add_module('Start-Conv2d', sn(torch.nn.Conv2d(3, 128, kernel_size=4, stride=2, padding=1, bias=False)))
         main.add_module('Start-LeakyReLU', torch.nn.LeakyReLU(0.2, inplace=True))
-        image_size_new = 64 // 2
+        image_size_new = img_size // 2
         # Size = D_h_size x image_size/2 x image_size/2
 
         ### Middle block (Done until we reach ? x 4 x 4)

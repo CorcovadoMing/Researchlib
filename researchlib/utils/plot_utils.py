@@ -11,7 +11,7 @@ def plot_utils(s, u=None):
         plt.plot(s)
     plt.show()
     
-def plot_montage(s, row, col):
+def plot_montage(s, row, col, plot=True):
     try:
         s = s.numpy()
     except:
@@ -34,11 +34,14 @@ def plot_montage(s, row, col):
             if count < len(s):
                 result[target_shape[0]*i:target_shape[0]*(i+1), target_shape[1]*j:target_shape[1]*(j+1), :] = s[count]
                 count += 1
-
-    plt.figure(figsize=(20,20))
-    if gray_scale:
-        plt.imshow(result[:, :, 0], cmap='gray')
+    
+    if plot:
+        plt.figure(figsize=(20,20))
+        if gray_scale:
+            plt.imshow(result[:, :, 0], cmap='gray')
+        else:
+            plt.imshow(result)
+        plt.axis('off')
+        plt.show()
     else:
-        plt.imshow(result)
-    plt.axis('off')
-    plt.show()
+        return result
