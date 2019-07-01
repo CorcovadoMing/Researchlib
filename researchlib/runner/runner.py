@@ -135,15 +135,15 @@ class Runner:
     # ===================================================================================================
     def set_optimizer(self, optimizer):
         def _assign_optim(model, optimizer):
-            if optimizer == 'adam': return Adam(model.parameters(), betas=(0.9, 0.99))
-            elif optimizer == 'adam_gan': return Adam(model.parameters(), betas=(0.5, 0.99))
-            elif optimizer == 'sgd': return SGD(model.parameters(), lr=1e-2, momentum=0.9)
-            elif optimizer == 'nesterov': return SGD(model.parameters(), lr=1e-2, momentum=0.9, nesterov=True)
-            elif optimizer == 'rmsprop': return RMSprop(model.parameters())
-            elif optimizer == 'adabound': return AdaBound(model.parameters(), lr=1e-3, final_lr=0.1)
-            elif optimizer == 'adagrad': return Adagrad(model.parameters())
-            elif optimizer == 'adafactor': return AdaFactor(model.parameters(), lr=1e-3)
-            else: return LARC(optimizer)
+            if optimizer == 'adam': optimizer = Adam(model.parameters(), betas=(0.9, 0.99))
+            elif optimizer == 'adam_gan': optimizer = Adam(model.parameters(), betas=(0.5, 0.99))
+            elif optimizer == 'sgd': optimizer = SGD(model.parameters(), lr=1e-2, momentum=0.9)
+            elif optimizer == 'nesterov': optimizer = SGD(model.parameters(), lr=1e-2, momentum=0.9, nesterov=True)
+            elif optimizer == 'rmsprop': optimizer = RMSprop(model.parameters())
+            elif optimizer == 'adabound': optimizer = AdaBound(model.parameters(), lr=1e-3, final_lr=0.1)
+            elif optimizer == 'adagrad': optimizer = Adagrad(model.parameters())
+            elif optimizer == 'adafactor': optimizer = AdaFactor(model.parameters(), lr=1e-3)
+            return LARC(optimizer)
         
         if type(self.model) == GANModel:
             if type(optimizer) == list or type(optimizer) == tuple:

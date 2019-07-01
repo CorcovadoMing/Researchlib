@@ -441,9 +441,7 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
             if _gan:
                 _gan_sample = self.model.sample(4, inference=False)
                 _gan_sample = _gan_sample.detach().cpu().numpy().transpose((0, 2, 3, 1))
-                print(_gan_sample.shape)
                 _grid = plot_montage(_gan_sample, 2, 2, False)
-                print(_grid.shape)
                 epoch_history.log(epoch, image=_grid)
                 with gan_out:
                     gan_canvas.draw_image(epoch_history['image'])

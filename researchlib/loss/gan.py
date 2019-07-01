@@ -86,8 +86,8 @@ def _relative_averaged_lsgan_g_loss(fake, *args):
     return (l1+l2)/2
 
 def _relative_averaged_hinge_d_loss(real, fake, *args):
-    l1 = F.relu(1.0 - real - fake.mean(0)).mean()
-    l2 = F.relu(1.0 + fake - real.mean(0)).mean()
+    l1 = F.relu(1.0 - (real - fake.mean(0))).mean()
+    l2 = F.relu(1.0 + (fake - real.mean(0))).mean()
     # Cache
     args[0].append(real)
     return (l1+l2)/2
