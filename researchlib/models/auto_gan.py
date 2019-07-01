@@ -44,8 +44,13 @@ class SelfAttention(nn.Module):
 class block_g(nn.Module):
     def __init__(self, in_dim, out_dim, scale=2):
         super().__init__()
+        self.scale = scale
         if scale == 2:
             self.conv = sn(torch.nn.ConvTranspose2d(in_dim, out_dim, kernel_size=4, stride=2, padding=1, bias=False))
+            self.shortcut = nn.Sequential(*[
+                torch.nn.Upsample(scale_factor=2, mode='nearest'),
+                sn(torch.nn.Conv2d(in_dim, out_dim, kernel_size=1, stride=1, padding=0, bias=False))
+            ])
         else:
             self.conv = sn(torch.nn.ConvTranspose2d(in_dim, out_dim, kernel_size=4, stride=1, padding=0, bias=False))
         self.bn = SelfModBatchNorm2d(out_dim)
@@ -53,11 +58,19 @@ class block_g(nn.Module):
         self.relu = nn.ReLU()
     def forward(self, input):
         x, y = input
-        x = self.conv(x)
-        x = self.bn(x, y)
-        #x = self.bn(x)
-        x = self.relu(x)
-        return (x, y)
+        if self.scale == 2:
+            s = self.shortcut(x)
+            x = self.conv(x)
+            x = self.bn(x, y)
+            #x = self.bn(x)
+            x = self.relu(x)
+            return (x+s, y)
+        else:
+            x = self.conv(x)
+            x = self.bn(x, y)
+            #x = self.bn(x)
+            x = self.relu(x)
+            return (x, y)
 
 class final_block_g(nn.Module):
     def __init__(self, in_dim, out_dim):
@@ -106,6 +119,26 @@ class AutoGAN_G(torch.nn.Module):
         output, _ = self.main((input, z))
         return output
 
+
+    
+    
+class block_d(nn.Module):
+    def __init__(self, in_dim, out_dim):
+        super().__init__()
+        self.conv = sn(torch.nn.Conv2d(in_dim, out_dim, kernel_size=4, stride=2, padding=1, bias=False))
+        self.bn = nn.BatchNorm2d(out_dim)
+        self.lrelu = nn.LeakyReLU(0.2)
+#         self.shortcut = nn.Sequential(*[
+#             nn.AvgPool2d(2),
+#             sn(nn.Conv2d(in_dim, out_dim, 1))
+#         ])
+    def forward(self, x):
+        #s = self.shortcut(x)
+        x = self.conv(x)
+        x = self.bn(x)
+        x = self.lrelu(x)
+        return x#+s
+
 # DCGAN discriminator (using somewhat the reverse of the generator)
 class AutoGAN_D(torch.nn.Module):
     def __init__(self, img_size):
@@ -124,9 +157,7 @@ class AutoGAN_D(torch.nn.Module):
         mult = 1
         i = 0
         while image_size_new > 4:
-            main.add_module('Middle-Conv2d [%d]' % i, sn(torch.nn.Conv2d(128 * mult, 128 * (2*mult), kernel_size=4, stride=2, padding=1, bias=False)))
-            main.add_module('Middle-BatchNorm2d [%d]' % i, torch.nn.BatchNorm2d(128 * (2*mult)))
-            main.add_module('Middle-LeakyReLU [%d]' % i, torch.nn.LeakyReLU(0.2, inplace=True))
+            main.add_module('Millde-block [%d]' % i, block_d(128 * mult, 128 * (2*mult)))
             # Size = (D_h_size*(2*i)) x image_size/(2*i) x image_size/(2*i)
             image_size_new = image_size_new // 2
             mult *= 2
