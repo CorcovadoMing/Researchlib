@@ -402,8 +402,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                 
                 if _gan:
                     label_text.value = 'Epoch: ' + str(self.epoch) + ', G Loss: ' + str((sum(g_loss_history)/len(g_loss_history)).numpy()) + ', D Loss: ' + str((sum(d_loss_history)/len(d_loss_history)).numpy())
-                    history.log(lr_count, g_lr=[i['lr'] for i in self.optimizer[0].param_groups][-1])
-                    history.log(lr_count, d_lr=[i['lr'] for i in self.optimizer[1].param_groups][-1])
+                    history.log(lr_count, g_lr=[i['lr'] for i in self.optimizer[1].param_groups][-1])
+                    history.log(lr_count, d_lr=[i['lr'] for i in self.optimizer[0].param_groups][-1])
                     history.log(lr_count, train_g_loss=g_loss_history[-1])
                     history.log(lr_count, train_d_loss=d_loss_history[-1])
                 else:

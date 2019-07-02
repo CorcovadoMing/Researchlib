@@ -22,10 +22,6 @@ class GANModel(nn.Module):
         if condition is not None and condition > 0: _vector, _condition = condition, True
         return _vector, _condition
     
-    def set_optim(self, optim, lr=1e-3):
-        self.optim_g = optim(self.generator.parameters(), lr=lr)
-        self.optim_d = optim(self.discriminator.parameters(), lr=lr)
-    
     def _parse_condition_data(self, condition_data, onehot, condition_vector):
         if type(condition_data) == range: condition_data = list(condition_data)
         if type(condition_data) == list or type(condition_data) == tuple: condition_data = torch.LongTensor(condition_data)

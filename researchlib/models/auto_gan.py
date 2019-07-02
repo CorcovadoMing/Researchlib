@@ -48,7 +48,7 @@ class block_g(nn.Module):
         if scale == 2:
             self.conv = sn(torch.nn.ConvTranspose2d(in_dim, out_dim, kernel_size=4, stride=2, padding=1, bias=False))
             self.shortcut = nn.Sequential(*[
-                torch.nn.Upsample(scale_factor=2, mode='nearest'),
+                torch.nn.Upsample(scale_factor=2, mode='bicubic', align_corners=True),
                 sn(torch.nn.Conv2d(in_dim, out_dim, kernel_size=1, stride=1, padding=0, bias=False))
             ])
         else:
@@ -147,11 +147,12 @@ class AutoGAN_D(torch.nn.Module):
 
         ### Start block
         # Size = n_colors x image_size x image_size
-        main.add_module('Start-Conv2d', sn(torch.nn.Conv2d(3, 128, kernel_size=3, stride=2, padding=1, bias=False)))
-        main.add_module('Start-LeakyReLU', torch.nn.LeakyReLU(0.2, inplace=True))
+        #main.add_module('Start-Conv2d', sn(torch.nn.Conv2d(3, 128, kernel_size=4, stride=2, padding=1, bias=False)))
+        #main.add_module('Start-LeakyReLU', torch.nn.LeakyReLU(0.2, inplace=True))
+        main.add_module('Start-block', block_d(3, 128))
         image_size_new = img_size // 2
         # Size = D_h_size x image_size/2 x image_size/2
-        # main.add_module('Start-SelfAttention', SelfAttention(128))
+        #main.add_module('Start-SelfAttention', SelfAttention(128))
 
         ### Middle block (Done until we reach ? x 4 x 4)
         mult = 1

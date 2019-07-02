@@ -32,9 +32,10 @@ from . import cam
 @_add_methods_from(fit)
 @_add_methods_from(cam)
 class Runner:
-    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, reg_weights={}, monitor_mode='min', monitor_state='loss', fp16=False, multigpu=False):
+    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, reg_weights={}, monitor_mode='min', monitor_state='loss', fp16=False, multigpu=False, larc=True):
         self.experiment_name = ''
         self.checkpoint_path = ''
+        self.larc = larc
         self.export = _Export()
         self.epoch = 1
         self.is_cuda = is_available()
@@ -134,7 +135,7 @@ class Runner:
     # ===================================================================================================
     # ===================================================================================================
     def set_optimizer(self, optimizer):
-        def _assign_optim(model, optimizer):
+        def _assign_optim(model, optimizer, larc):
             if optimizer == 'adam': optimizer = Adam(model.parameters(), betas=(0.9, 0.99))
             elif optimizer == 'adam_gan': optimizer = Adam(model.parameters(), betas=(0.5, 0.99))
             elif optimizer == 'sgd': optimizer = SGD(model.parameters(), lr=1e-2, momentum=0.9)
@@ -143,15 +144,18 @@ class Runner:
             elif optimizer == 'adabound': optimizer = AdaBound(model.parameters(), lr=1e-3, final_lr=0.1)
             elif optimizer == 'adagrad': optimizer = Adagrad(model.parameters())
             elif optimizer == 'adafactor': optimizer = AdaFactor(model.parameters(), lr=1e-3)
-            return LARC(optimizer)
+            if larc:
+                return LARC(optimizer)
+            else:
+                return optimizer
         
         if type(self.model) == GANModel:
             if type(optimizer) == list or type(optimizer) == tuple:
-                self.optimizer = [_assign_optim(self.model.discriminator, optimizer[1]), _assign_optim(self.model.generator, optimizer[0])]
+                self.optimizer = [_assign_optim(self.model.discriminator, optimizer[1], self.larc), _assign_optim(self.model.generator, optimizer[0], self.larc)]
             else:
-                self.optimizer = [_assign_optim(self.model.discriminator, optimizer), _assign_optim(self.model.generator, optimizer)]
+                self.optimizer = [_assign_optim(self.model.discriminator, optimizer, self.larc), _assign_optim(self.model.generator, optimizer, self.larc)]
         else:
-            self.optimizer = _assign_optim(self.model, optimizer)
+            self.optimizer = _assign_optim(self.model, optimizer, self.larc)
         
         self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level="O2", enabled=self.fp16)
     
