@@ -18,7 +18,7 @@ class _HDF5Dataset(Dataset):
     def __len__(self):
         return self.length
 
-def FromHDF5(data, key, inputs=1, batch_size=1, shuffle=True, sampler=None, batch_sampler=None, num_workers=8, pin_memory=True, drop_last=False):
+def FromHDF5(data, key, inputs=1, batch_size=1, shuffle=True, sampler=None, batch_sampler=None, num_workers=2, pin_memory=True, drop_last=False):
     _dataset_loader = DataLoader(_HDF5Dataset(data, key),
                                  batch_size=batch_size,
                                  shuffle=shuffle,

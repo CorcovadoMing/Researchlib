@@ -138,10 +138,23 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, conditio
     # Update
     norm = 0
     if train:
-        for i in _model.parameters():
-            norm += i.grad.data.norm(2) ** 2
-        norm = norm ** 0.5
-        norm = norm.detach().cpu()
+        with torch.no_grad():
+            for param in _model.parameters():
+                try:
+                    norm += param.grad.data.norm(2) ** 2
+                except:
+                    pass
+            norm = norm ** 0.5
+            norm = norm.detach().cpu()
+        
+            for param in _model.parameters():
+                # Only apply this to parameters with at least 2 axes, and not in the blacklist
+                if len(param.shape) < 2:
+                    continue
+                w = param.view(param.shape[0], -1)
+                grad = (2 * torch.mm(torch.mm(w, w.t()) 
+                        * (1. - torch.eye(w.shape[0], device=w.device)), w))
+                param.grad.data += 1e-4 * grad.view(param.shape)
     
         optim.step()
         optim.zero_grad()

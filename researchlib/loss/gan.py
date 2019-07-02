@@ -28,13 +28,13 @@ def _wgan_g_loss(fake, *args):
     return -fake.mean()
 
 def _vanilla_d_loss(real, fake, *args):
-    return F.binary_cross_entropy(torch.sigmoid(real), torch.ones(real.size(0), 1).cuda()-0.1) + F.binary_cross_entropy(torch.sigmoid(fake), torch.zeros(fake.size(0), 1).cuda())
+    return F.binary_cross_entropy(torch.sigmoid(real), torch.ones(real.size(0), 1).cuda()) + F.binary_cross_entropy(torch.sigmoid(fake), torch.zeros(fake.size(0), 1).cuda())
 
 def _vanilla_g_loss(fake, *args):
     return F.binary_cross_entropy(torch.sigmoid(fake), torch.ones(fake.size(0), 1).cuda())
 
 def _lsgan_d_loss(real, fake, *args):
-    return F.mse_loss(torch.sigmoid(real), torch.ones(real.size(0), 1).cuda()-0.1) + F.mse_loss(torch.sigmoid(fake), torch.zeros(fake.size(0), 1).cuda())
+    return F.mse_loss(torch.sigmoid(real), torch.ones(real.size(0), 1).cuda()) + F.mse_loss(torch.sigmoid(fake), torch.zeros(fake.size(0), 1).cuda())
     
 def _lsgan_g_loss(fake, *args):
     return F.mse_loss(torch.sigmoid(fake), torch.ones(fake.size(0), 1).cuda())
@@ -117,8 +117,8 @@ def _relative_centered_vanilla_g_loss(fake, *args):
 
 def _relative_centered_lsgan_d_loss(real, fake, *args):
     full_mean = (fake.mean(0) + real.mean(0)) / 2
-    l1 = torch.mean((real - full_mean - 1) ** 2)
-    l2 = torch.mean((fake - full_mean + 1) ** 2)
+    l1 = torch.mean(((real - full_mean) - 1) ** 2)
+    l2 = torch.mean(((fake - full_mean) + 1) ** 2)
     # Cache
     args[0].append(real)
     return (l1+l2)/2
@@ -127,14 +127,14 @@ def _relative_centered_lsgan_g_loss(fake, *args):
     # Get cache from d_loss
     real = args[0].pop()
     full_mean = (fake.mean(0) + real.mean(0)) / 2
-    l1 = torch.mean((real - full_mean + 1) ** 2)
-    l2 = torch.mean((fake - full_mean - 1) ** 2)
+    l1 = torch.mean(((real - full_mean) + 1) ** 2)
+    l2 = torch.mean(((fake - full_mean) - 1) ** 2)
     return (l1+l2)/2
 
 def _relative_centered_hinge_d_loss(real, fake, *args):
     full_mean = (fake.mean(0) + real.mean(0)) / 2
-    l1 = F.relu(1.0 - real - full_mean).mean()
-    l2 = F.relu(1.0 + fake - full_mean).mean()
+    l1 = F.relu(1 - (real - full_mean)).mean()
+    l2 = F.relu(1 + (fake - full_mean)).mean()
     # Cache
     args[0].append(real)
     return (l1+l2)/2
@@ -143,8 +143,8 @@ def _relative_centered_hinge_g_loss(fake, *args):
     # Get cache from d_loss
     real = args[0].pop()
     full_mean = (fake.mean(0) + real.mean(0)) / 2
-    l1 = F.relu(1.0 + (real - full_mean)).mean()
-    l2 = F.relu(1.0 - (fake - full_mean)).mean()
+    l1 = F.relu(1 + (real - full_mean)).mean()
+    l2 = F.relu(1 - (fake - full_mean)).mean()
     return (l1+l2)/2
 
 def _relative_paired_vanilla_d_loss(real, fake, *args):
@@ -169,7 +169,7 @@ def _relative_paired_lsgan_d_loss(real, fake, *args):
 def _relative_paired_lsgan_g_loss(fake, *args):
     # Get cache from d_loss
     real = args[0].pop()
-    return torch.mean((fake - real - 1) ** 2)
+    return torch.mean(((fake - real) - 1) ** 2)
 
 def _relative_paired_hinge_d_loss(real, fake, *args):
     grid_x, grid_y = torch.meshgrid([real.squeeze(), fake.squeeze()])
@@ -181,7 +181,7 @@ def _relative_paired_hinge_d_loss(real, fake, *args):
 def _relative_paired_hinge_g_loss(fake, *args):
     # Get cache from d_loss
     real = args[0].pop()
-    return F.relu(1.0 - (fake - real)).mean()
+    return F.relu(1 - (fake - real)).mean()
 
 
 def _wgan_extra_step(model, *args):
