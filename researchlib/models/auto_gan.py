@@ -17,7 +17,7 @@ class SelfModBatchNorm2d(nn.Module):
         out = self.bn(x)
         gamma = self.gamma_f2(F.relu(self.gamma_f1(y)))
         beta = self.beta_f2(F.relu(self.beta_f1(y)))
-        return gamma.view(out.size(0), -1, 1, 1) * out + beta.view(out.size(0), -1, 1, 1)
+        return (1+gamma).view(out.size(0), -1, 1, 1) * out + beta.view(out.size(0), -1, 1, 1)
 
 class SelfAttention(nn.Module):
     def __init__(self, ch):
