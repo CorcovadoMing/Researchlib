@@ -1,6 +1,7 @@
 from torch import nn
 import torch
 from ..utils import to_one_hot
+import pickle
 
 class GANModel(nn.Module):
     def __init__(self, generator, discriminator, latent_vector_len=100, condition_vector_len=False, condition_onehot=False):
@@ -30,7 +31,7 @@ class GANModel(nn.Module):
         if condition_data.dim() < 2: condition_data = condition_data.unsqueeze(-1)
         return condition_data.to(device)
     
-    def sample(self, bs, condition_data=None, inference=True, requires_grad=False):
+    def sample(self, bs, condition_data=None, inference=True, requires_grad=False, ema=False):
         noise = torch.empty((bs, self.latent_vector_len)).normal_(0, 1)
         if condition_data is not None:
             if inference: condition_data = self._parse_condition_data(condition_data, self.condition_onehot, self.g_condition_vector_len)
@@ -39,7 +40,14 @@ class GANModel(nn.Module):
         else:
             if not inference:
                 noise = noise.cuda()
-        fake = self.generator(noise)
+        if ema:
+            ema_generator = pickle.loads(pickle.dumps(self.generator))
+            named_dict = dict(self.generator.named_parameters())
+            for name, p in ema_generator.named_parameters():
+                p.data.copy_(named_dict[name].ema.data)
+            fake = ema_generator(noise)
+        else:
+            fake = self.generator(noise)
         return fake if requires_grad else fake.detach()
     
     def forward_d(self, x, condition_data=None):
@@ -55,11 +63,13 @@ class GANModel(nn.Module):
             self.fake_data = self.sample(x.size(0), inference=False)
         
         if self.d_condition:
-            fake = self.discriminator((self.fake_data, self.condition_data))
-            real = self.discriminator((self.real_data, self.condition_data))
+            fake, _ = self.discriminator((self.fake_data, self.condition_data))
+            real, real_feature = self.discriminator((self.real_data, self.condition_data))
         else:
-            fake = self.discriminator(self.fake_data)
-            real = self.discriminator(self.real_data)
+            fake, _ = self.discriminator(self.fake_data)
+            real, real_feature = self.discriminator(self.real_data)
+        
+        self.real_feature = real_feature.detach()
         return real, fake
     
     def forward_g(self, x, condition=None):
@@ -69,6 +79,9 @@ class GANModel(nn.Module):
             fake = self.sample(x.size(0), requires_grad=True, inference=False)
         
         if self.d_condition:
-            return self.discriminator((fake, self.condition_data))
+            fake, fake_feature = self.discriminator((fake, self.condition_data))
         else:
-            return self.discriminator(fake)
+            fake, fake_feature = self.discriminator(fake)
+        
+        self.fake_feature = fake_feature
+        return fake

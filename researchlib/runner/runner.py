@@ -9,7 +9,6 @@ from ..callbacks import *
 
 # -------------------------------------------------------
 from .adafactor import AdaFactor
-from .train import train_fn
 from .test import test_fn
 from .export import _Export
 from ..utils import _add_methods_from, _get_iteration
@@ -26,15 +25,18 @@ from .larc import LARC
 from . import init_model
 from . import fit
 from . import cam
-
+from . import train
 
 @_add_methods_from(init_model)
 @_add_methods_from(fit)
 @_add_methods_from(cam)
+@_add_methods_from(train)
 class Runner:
-    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, reg_weights={}, monitor_mode='min', monitor_state='loss', fp16=False, multigpu=False, larc=True):
+    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, reg_weights={}, monitor_mode='min', monitor_state='loss', fp16=False, multigpu=False, larc=True, ema=0.999, ema_start=10):
         self.experiment_name = ''
         self.checkpoint_path = ''
+        self.ema = ema
+        self.ema_start = ema_start
         self.larc = larc
         self.export = _Export()
         self.epoch = 1
@@ -54,7 +56,6 @@ class Runner:
         
         self.default_callbacks = CyclicalLR(_get_iteration(self.train_loader))
         
-        self.trainer = train_fn
         self.tester = test_fn
         
         self.default_metrics = None

@@ -234,8 +234,10 @@ def _unload_data(self):
 def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics, loss_history, g_loss_history, d_loss_history, norm, matrix_records, bar, train):
     self.data, self.target = self._process_type(data_pack, inputs)
     self.data, self.target, self.target_res = self._process_data(self.data, self.target, augmentor, mixup_alpha)
+    
     self.model.train()
-    self.trainer(train=train,
+    
+    self.train_fn(train=train,
                 model=self.model,
                 data=self.data,
                 target=self.target,
@@ -257,6 +259,8 @@ def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics,
                 norm=norm,
                 matrix_records=matrix_records,
                 bar=bar)
+                
+    self.model.eval()
 
 
 @register_method
@@ -439,7 +443,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                                             epoch=epoch)
 
             if _gan:
-                _gan_sample = self.model.sample(4, inference=False)
+                ema = True if self.ema > 0 and self.epoch > self.ema_start else False
+                _gan_sample = self.model.sample(4, inference=False, ema=ema)
                 _gan_sample = _gan_sample.detach().cpu().numpy().transpose((0, 2, 3, 1))
                 _grid = plot_montage(_gan_sample, 2, 2, False)
                 epoch_history.log(epoch, image=_grid)
@@ -448,7 +453,6 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
 
 
             if self.test_loader:
-                self.model.eval()
                 loss_records, matrix_records = self.tester(model=self.model, 
                                                             test_loader=self.test_loader, 
                                                             loss_fn=self.loss_fn, 
@@ -523,7 +527,6 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
             
             # Self-interative
             if self_iterative:
-                self.model.eval()
                 for i in tnrange(len(self.train_loader.dataset.tensors[0])):
                     self.train_loader.dataset.tensors[1][i] = \
                     self.model(self.train_loader.dataset.tensors[0][i].unsqueeze(0).cuda()).detach().cpu()[0]

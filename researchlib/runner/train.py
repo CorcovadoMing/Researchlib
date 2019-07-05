@@ -7,8 +7,14 @@ from apex import amp
 import torchtext
 from torch import nn
 from ..models import GANModel, VAEModel
+from ..utils import _register_method
+import copy
 
-def train_fn(train=True, **kwargs):
+__methods__ = []
+register_method = _register_method(__methods__)
+
+@register_method
+def train_fn(self, train=True, **kwargs):
     # Callback: on_iteration_begin
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_begin(**kwargs)
 
@@ -16,11 +22,16 @@ def train_fn(train=True, **kwargs):
     if type(kwargs['model']) == GANModel:
         condition = kwargs['model'].d_condition or kwargs['model'].g_condition
 
+        if self.ema > 0 and self.epoch > self.ema_start:
+            for p in kwargs['model'].generator.parameters():
+                if not hasattr(p, 'ema'):
+                    p.ema = p.data.clone()
+
         # Discriminator
         model = kwargs['model'].discriminator
         model_ffn = kwargs['model'].forward_d
         loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], 'unsupervise', condition, train, True, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], 'unsupervise', condition, train, True, -1, **kwargs)
 
         # Record loss
         kwargs['d_loss_history'].append(_loss)
@@ -33,7 +44,7 @@ def train_fn(train=True, **kwargs):
         # Generator
         model_ffn = kwargs['model'].forward_g
         loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, self.ema, **kwargs)
 
         # Record loss
         kwargs['g_loss_history'].append(_loss)
@@ -42,6 +53,11 @@ def train_fn(train=True, **kwargs):
         if kwargs['bar']: kwargs['bar'].set_postfix(d_loss="{:.4f}".format(d_loss_avg), g_loss="{:.4f}".format(g_loss_avg), refresh=False)
 
     else:
+        if self.ema > 0:
+            for p in kwargs['model'].parameters():
+                if not hasattr(p, 'ema'):
+                    p.ema = p.data.clone()
+                    
         if type(kwargs['model']) == VAEModel:
             learning_type = 'self_supervise'
         else:
@@ -49,7 +65,7 @@ def train_fn(train=True, **kwargs):
         model = kwargs['model']
         model_ffn = kwargs['model'].forward
         loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], learning_type, False, train, False, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], learning_type, False, train, False, self.ema, **kwargs)
 
         # Record loss
         kwargs['loss_history'].append(_loss)
@@ -61,8 +77,8 @@ def train_fn(train=True, **kwargs):
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_end(**kwargs)
     kwargs['norm'].append(_norm)
     
-    
-def cal_regularization(_model, **kwargs):
+
+def _cal_regularization(_model, **kwargs):
     loss = 0
     regs = get_reg_out(_model)
     for key in kwargs['reg_fn']:
@@ -78,7 +94,8 @@ def cal_regularization(_model, **kwargs):
             loss += reg_loss.cuda()
     return loss
 
-def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, condition, train, retain_graph, **kwargs):
+
+def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, condition, train, retain_graph, ema, **kwargs):
     # Reset optimizer
     if train: optim.zero_grad()
     
@@ -126,7 +143,7 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, conditio
                 loss += loss_ffn[i](auxout[i])
     
     # Calculate Regularization
-    loss += cal_regularization(_model, **kwargs)
+    loss += _cal_regularization(_model, **kwargs)
     
     # Backward
     with amp.scale_loss(loss, optim) as scaled_loss:
@@ -155,9 +172,15 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, conditio
                 grad = (2 * torch.mm(torch.mm(w, w.t()) 
                         * (1. - torch.eye(w.shape[0], device=w.device)), w))
                 param.grad.data += 1e-4 * grad.view(param.shape)
-    
+
         optim.step()
         optim.zero_grad()
+        
+        with torch.no_grad():
+            if ema > 0:
+                for param in _model.parameters():
+                    if hasattr(param, 'ema'):
+                        param.ema.data = (ema * param.ema.data) + ((1-ema) * param.data)
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_end(**kwargs)
     

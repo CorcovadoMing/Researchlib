@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/pytorch:19.05-py3
+FROM nvcr.io/nvidia/pytorch:19.06-py3
 
 # PyTorch
 RUN pip install https://download.pytorch.org/whl/cu100/torch-1.1.0-cp36-cp36m-linux_x86_64.whl
@@ -66,5 +66,6 @@ RUN pip install -U pyro-ppl botorch gpytorch ax-platform
 RUN pip install -U pennylane pennylane-forest bindsnet
 
 RUN pip install -U adabound
+RUN pip install -U deepdish boxx 
 
-RUN pip install -U deepdish boxx
+RUN pip install -U pydicom
