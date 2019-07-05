@@ -50,7 +50,7 @@ class GANModel(nn.Module):
             fake = self.generator(noise)
         return fake if requires_grad else fake.detach()
     
-    def forward_d(self, x, condition_data=None):
+    def forward_d(self, x, condition_data=None, ema=False):
         if condition_data is not None:
             self.condition_data = self._parse_condition_data(condition_data, self.condition_onehot, self.g_condition_vector_len)
         else:
@@ -58,9 +58,9 @@ class GANModel(nn.Module):
             
         self.real_data = x
         if self.g_condition:
-            self.fake_data = self.sample(x.size(0), condition_data=self.condition_data, inference=False)
+            self.fake_data = self.sample(x.size(0), condition_data=self.condition_data, inference=False, ema=ema)
         else:
-            self.fake_data = self.sample(x.size(0), inference=False)
+            self.fake_data = self.sample(x.size(0), inference=False, ema=ema)
         
         if self.d_condition:
             fake, _ = self.discriminator((self.fake_data, self.condition_data))
@@ -72,11 +72,11 @@ class GANModel(nn.Module):
         self.real_feature = real_feature.detach()
         return real, fake
     
-    def forward_g(self, x, condition=None):
+    def forward_g(self, x, condition=None, ema=False):
         if self.g_condition:
-            fake = self.sample(x.size(0), requires_grad=True, condition_data=self.condition_data, inference=False)
+            fake = self.sample(x.size(0), requires_grad=True, condition_data=self.condition_data, inference=False, ema=ema)
         else:
-            fake = self.sample(x.size(0), requires_grad=True, inference=False)
+            fake = self.sample(x.size(0), requires_grad=True, inference=False, ema=ema)
         
         if self.d_condition:
             fake, fake_feature = self.discriminator((fake, self.condition_data))

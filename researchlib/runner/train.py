@@ -9,6 +9,7 @@ from torch import nn
 from ..models import GANModel, VAEModel
 from ..utils import _register_method
 import copy
+import functools
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -22,6 +23,7 @@ def train_fn(self, train=True, **kwargs):
     if type(kwargs['model']) == GANModel:
         condition = kwargs['model'].d_condition or kwargs['model'].g_condition
 
+        ema = self.ema > 0 and self.epoch > self.ema_start
         if self.ema > 0 and self.epoch > self.ema_start:
             for p in kwargs['model'].generator.parameters():
                 if not hasattr(p, 'ema'):
@@ -29,7 +31,7 @@ def train_fn(self, train=True, **kwargs):
 
         # Discriminator
         model = kwargs['model'].discriminator
-        model_ffn = kwargs['model'].forward_d
+        model_ffn = functools.partial(kwargs['model'].forward_d, ema=ema)
         loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], 'unsupervise', condition, train, True, -1, **kwargs)
 
@@ -42,7 +44,7 @@ def train_fn(self, train=True, **kwargs):
             i.extra_step(kwargs['model'])
 
         # Generator
-        model_ffn = kwargs['model'].forward_g
+        model_ffn = functools.partial(kwargs['model'].forward_g, ema=ema)
         loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, self.ema, **kwargs)
 
