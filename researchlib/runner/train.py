@@ -33,7 +33,7 @@ def train_fn(self, train=True, **kwargs):
         model = kwargs['model'].discriminator
         model_ffn = functools.partial(kwargs['model'].forward_d, ema=ema)
         loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], 'unsupervise', condition, train, True, -1, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], 'unsupervise', condition, train, True, -1, False, **kwargs)
 
         # Record loss
         kwargs['d_loss_history'].append(_loss)
@@ -46,7 +46,7 @@ def train_fn(self, train=True, **kwargs):
         # Generator
         model_ffn = functools.partial(kwargs['model'].forward_g, ema=ema)
         loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, self.ema, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, self.ema, True, **kwargs)
 
         # Record loss
         kwargs['g_loss_history'].append(_loss)
@@ -67,7 +67,7 @@ def train_fn(self, train=True, **kwargs):
         model = kwargs['model']
         model_ffn = kwargs['model'].forward
         loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], learning_type, False, train, False, self.ema, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], learning_type, False, train, False, self.ema, False, **kwargs)
 
         # Record loss
         kwargs['loss_history'].append(_loss)
@@ -97,7 +97,7 @@ def _cal_regularization(_model, **kwargs):
     return loss
 
 
-def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, condition, train, retain_graph, ema, **kwargs):
+def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, condition, train, retain_graph, ema, orthogonal_reg, **kwargs):
     # Reset optimizer
     if train: optim.zero_grad()
     
@@ -166,14 +166,15 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, conditio
             norm = norm ** 0.5
             norm = norm.detach().cpu()
         
-            for param in _model.parameters():
-                # Only apply this to parameters with at least 2 axes, and not in the blacklist
-                if len(param.shape) < 2:
-                    continue
-                w = param.view(param.shape[0], -1)
-                grad = (2 * torch.mm(torch.mm(w, w.t()) 
-                        * (1. - torch.eye(w.shape[0], device=w.device)), w))
-                param.grad.data += 1e-4 * grad.view(param.shape)
+            if orthogonal_reg:
+                for param in _model.parameters():
+                    # Only apply this to parameters with at least 2 axes, and not in the blacklist
+                    if len(param.shape) < 2:
+                        continue
+                    w = param.view(param.shape[0], -1)
+                    grad = (2 * torch.mm(torch.mm(w, w.t()) 
+                            * (1. - torch.eye(w.shape[0], device=w.device)), w))
+                    param.grad.data += 1e-4 * grad.view(param.shape)
 
         optim.step()
         optim.zero_grad()
