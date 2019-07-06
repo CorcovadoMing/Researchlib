@@ -4,10 +4,10 @@ from torch import nn
 import torch.nn.functional as F
 from ..layers import layer
 
-class SelfModBatchNorm2d(nn.Module):
+class SelfModNorm2d(nn.Module):
     def __init__(self, num_features):
         super().__init__()
-        self.bn = nn.BatchNorm2d(num_features, affine=False)
+        self.bn = nn.InstanceNorm2d(num_features, affine=False)
         self.gamma_f1 = sn(nn.Linear(64, 32))
         self.gamma_f2 = sn(nn.Linear(32, num_features))
         self.beta_f1 = sn(nn.Linear(64, 32))
@@ -67,10 +67,10 @@ class block_g(nn.Module):
         self.conv3 = sn(torch.nn.Conv2d(hidden_dim, hidden_dim, 3, 1, 1, bias=False))
         self.conv4 = sn(torch.nn.Conv2d(hidden_dim, out_dim, 1, bias=False))
         
-        self.bn1 = SelfModBatchNorm2d(in_dim)
-        self.bn2 = SelfModBatchNorm2d(hidden_dim)
-        self.bn3 = SelfModBatchNorm2d(hidden_dim)
-        self.bn4 = SelfModBatchNorm2d(hidden_dim)        
+        self.bn1 = SelfModNorm2d(in_dim)
+        self.bn2 = SelfModNorm2d(hidden_dim)
+        self.bn3 = SelfModNorm2d(hidden_dim)
+        self.bn4 = SelfModNorm2d(hidden_dim)        
         
         self.act = nn.LeakyReLU(0.2)
         self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
