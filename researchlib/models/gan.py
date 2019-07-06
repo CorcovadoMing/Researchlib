@@ -1,4 +1,5 @@
 from torch import nn
+import torch.nn.functional as F
 import torch
 from ..utils import to_one_hot
 import pickle

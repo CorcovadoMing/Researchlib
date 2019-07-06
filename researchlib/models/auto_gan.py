@@ -4,10 +4,38 @@ from torch import nn
 import torch.nn.functional as F
 from ..layers import layer
 
+class MinibatchDiscrimination(nn.Module):
+    def __init__(self, in_features, out_features, intermediate_features=16):
+        super().__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.intermediate_features = intermediate_features
+
+        self.T = nn.Parameter(
+            torch.Tensor(in_features, out_features - in_features, intermediate_features)
+        )
+        nn.init.normal_(self.T)
+
+    def forward(self, x):
+        """Computes the output of the Minibatch Discrimination Layer
+
+        Args:
+            (N, infeatures)
+
+        Returns:
+            (N, outfeatures)
+        """
+        M = torch.mm(x, self.T.view(self.in_features, -1))
+        M = M.view(-1, self.out_features-self.in_features, self.intermediate_features).unsqueeze(0)
+        M_t = M.permute(1, 0, 2, 3)
+        # Broadcasting reduces the matrix subtraction to the form desired in the paper
+        out = torch.sum(torch.exp(-(torch.abs(M - M_t).sum(3))), dim=0) - 1
+        return torch.cat([x, out], 1)
+
 class SelfModNorm2d(nn.Module):
     def __init__(self, num_features):
         super().__init__()
-        self.bn = nn.InstanceNorm2d(num_features, affine=False)
+        self.bn = nn.BatchNorm2d(num_features, affine=False)
         self.gamma_f1 = sn(nn.Linear(64, 32))
         self.gamma_f2 = sn(nn.Linear(32, num_features))
         self.beta_f1 = sn(nn.Linear(64, 32))
@@ -209,7 +237,10 @@ class AutoGAN_D(torch.nn.Module):
         # Size = (D_h_size * mult) x 4 x 4
         main.add_module('End-Feature', ToFeature())
         # Size = (bs, base_hidden * mult)
-        self.out = sn(nn.Linear(base_hidden * mult, 1))
+        self.out = nn.Sequential(*[
+            MinibatchDiscrimination(base_hidden*mult, base_hidden*mult+32),
+            sn(nn.Linear(base_hidden*mult+32, 1))
+        ])
         
         self.main = main
 

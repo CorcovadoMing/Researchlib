@@ -163,20 +163,20 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, conditio
             norm = norm ** 0.5
             norm = norm.detach().cpu()
         
-            if orthogonal_reg:
-                for param in _model.parameters():
-                    # Only apply this to parameters with at least 2 axes, and not in the blacklist
-                    if len(param.shape) < 2:
-                        continue
-                    w = param.view(param.shape[0], -1)
-                    grad = (2 * torch.mm(torch.mm(w, w.t()) 
-                            * (1. - torch.eye(w.shape[0], device=w.device)), w))
-                    param.grad.data += 1e-4 * grad.view(param.shape)
-        
         if kwargs['need_step']:
             with torch.no_grad():
                 for param in _model.parameters():
                     param.grad.data /= kwargs['accum_updates']
+                
+                if orthogonal_reg:
+                    for param in _model.parameters():
+                        # Only apply this to parameters with at least 2 axes, and not in the blacklist
+                        if len(param.shape) < 2:
+                            continue
+                        w = param.view(param.shape[0], -1)
+                        grad = (2 * torch.mm(torch.mm(w, w.t()) 
+                                * (1. - torch.eye(w.shape[0], device=w.device)), w))
+                        param.grad.data += 1e-4 * grad.view(param.shape)
         
             optim.step()
             optim.zero_grad()
