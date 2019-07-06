@@ -98,9 +98,6 @@ def _cal_regularization(_model, **kwargs):
 
 
 def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, condition, train, retain_graph, ema, orthogonal_reg, **kwargs):
-    # Reset optimizer
-    if train: optim.zero_grad()
-    
     # Forward
     if condition:
         output = model_ffn(*kwargs['data'], *kwargs['target'])
@@ -175,15 +172,20 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, conditio
                     grad = (2 * torch.mm(torch.mm(w, w.t()) 
                             * (1. - torch.eye(w.shape[0], device=w.device)), w))
                     param.grad.data += 1e-4 * grad.view(param.shape)
-
-        optim.step()
-        optim.zero_grad()
         
-        with torch.no_grad():
-            if ema > 0:
+        if kwargs['need_step']:
+            with torch.no_grad():
                 for param in _model.parameters():
-                    if hasattr(param, 'ema'):
-                        param.ema.data = (ema * param.ema.data) + ((1-ema) * param.data)
+                    param.grad.data /= kwargs['accum_updates']
+        
+            optim.step()
+            optim.zero_grad()
+            
+            with torch.no_grad():
+                if ema > 0:
+                    for param in _model.parameters():
+                        if hasattr(param, 'ema'):
+                            param.ema.data = (ema * param.ema.data) + ((1-ema) * param.data)
     
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_end(**kwargs)
     

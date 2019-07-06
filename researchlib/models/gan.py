@@ -4,10 +4,11 @@ from ..utils import to_one_hot
 import pickle
 
 class GANModel(nn.Module):
-    def __init__(self, generator, discriminator, latent_vector_len=100, condition_vector_len=False, condition_onehot=False):
+    def __init__(self, generator, discriminator, latent_vector_len=100, condition_vector_len=False, condition_onehot=False, unrolled_steps=0):
         super().__init__()
         self.generator = generator
         self.discriminator = discriminator
+        self.unrolled_steps = unrolled_steps
         self.condition_onehot = condition_onehot
         self.latent_vector_len = latent_vector_len
         if type(condition_vector_len) == list or type(condition_vector_len) == tuple:
@@ -78,10 +79,19 @@ class GANModel(nn.Module):
         else:
             fake = self.sample(x.size(0), requires_grad=True, inference=False, ema=ema)
         
+#         if self.unrolled_steps > 0:
+#             backup = pickle.loads(pickle.dumps(self.discriminator))
+#             for _ in range(self.unrolled_steps):
+#                 unrolling
+        
         if self.d_condition:
             fake, fake_feature = self.discriminator((fake, self.condition_data))
         else:
             fake, fake_feature = self.discriminator(fake)
+            
+#         if self.unrolled_steps > 0:
+#             self.discriminator = pickle.loads(pickle.dumps(backup))
+
         
         self.fake_feature = fake_feature
         return fake

@@ -231,7 +231,7 @@ def _unload_data(self):
 
 
 @register_method
-def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics, loss_history, g_loss_history, d_loss_history, norm, matrix_records, bar, train):
+def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics, loss_history, g_loss_history, d_loss_history, norm, matrix_records, bar, need_step, accum_updates, train):
     self.data, self.target = self._process_type(data_pack, inputs)
     self.data, self.target, self.target_res = self._process_data(self.data, self.target, augmentor, mixup_alpha)
     
@@ -258,7 +258,9 @@ def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics,
                 d_loss_history=d_loss_history,
                 norm=norm,
                 matrix_records=matrix_records,
-                bar=bar)
+                bar=bar,
+                need_step=need_step,
+                accum_updates=accum_updates)
                 
     self.model.eval()
 
@@ -273,6 +275,9 @@ def _cycle(self, data, _cycle_flag=False):
 
 @register_method
 def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self_iterative, cycle, total=0):
+    accum_count = 0
+    need_step = False
+
     def _get_gpu_monitor():
         handle = nvmlDeviceGetHandleByIndex(0)
         info = nvmlDeviceGetMemoryInfo(handle)
@@ -388,7 +393,12 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
 
             iteration_break = total
             for batch_idx, data_pack in self._cycle(self.train_loader, cycle):
-                progressbar.value = batch_idx+1
+                accum_count += 1
+                if accum_count == self.accum_updates:
+                    accum_count = 0
+                    need_step = True
+            
+                progressbar.value = batch_idx + 1
                 self._fit_xy(data_pack,
                             self.inputs,
                             augmentor, 
@@ -401,7 +411,10 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                             norm,
                             matrix_records, 
                             bar,
+                            need_step,
+                            self.accum_updates,
                             train=True)
+                
                 progressbar.description = '('+str(batch_idx+1)+'/'+str(total_iteration)+')'
                 
                 if _gan:

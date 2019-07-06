@@ -32,9 +32,10 @@ from . import train
 @_add_methods_from(cam)
 @_add_methods_from(train)
 class Runner:
-    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, reg_weights={}, monitor_mode='min', monitor_state='loss', fp16=False, multigpu=False, larc=True, ema=0.999, ema_start=10):
+    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, reg_weights={}, monitor_mode='min', monitor_state='loss', fp16=False, multigpu=False, larc=True, ema=0.999, ema_start=10, accum_updates=1):
         self.experiment_name = ''
         self.checkpoint_path = ''
+        self.accum_updates = accum_updates
         self.ema = ema
         self.ema_start = ema_start
         self.larc = larc
@@ -138,7 +139,7 @@ class Runner:
     def set_optimizer(self, optimizer):
         def _assign_optim(model, optimizer, larc):
             if optimizer == 'adam': optimizer = Adam(model.parameters(), betas=(0.9, 0.999))
-            elif optimizer == 'adam_gan': optimizer = Adam(model.parameters(), betas=(0.0, 0.999))
+            elif optimizer == 'adam_gan': optimizer = Adam(model.parameters(), betas=(0.5, 0.999))
             elif optimizer == 'sgd': optimizer = SGD(model.parameters(), lr=1e-2, momentum=0.9)
             elif optimizer == 'nesterov': optimizer = SGD(model.parameters(), lr=1e-2, momentum=0.9, nesterov=True)
             elif optimizer == 'rmsprop': optimizer = RMSprop(model.parameters())
