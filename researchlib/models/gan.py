@@ -34,23 +34,24 @@ class GANModel(nn.Module):
         return condition_data.to(device)
     
     def sample(self, bs, condition_data=None, inference=True, requires_grad=False, ema=False):
-        noise = torch.empty((bs, self.latent_vector_len)).normal_(0, 1)
-        if condition_data is not None:
-            if inference: condition_data = self._parse_condition_data(condition_data, self.condition_onehot, self.g_condition_vector_len)
-            noise = noise.to(condition_data.device)
-            noise = torch.cat([noise, condition_data], dim=1)
-        else:
-            if not inference:
-                noise = noise.cuda()
-        if ema:
-            ema_generator = pickle.loads(pickle.dumps(self.generator))
-            named_dict = dict(self.generator.named_parameters())
-            for name, p in ema_generator.named_parameters():
-                p.data.copy_(named_dict[name].ema.data)
-            fake = ema_generator(noise)
-        else:
-            fake = self.generator(noise)
-        return fake if requires_grad else fake.detach()
+        with torch.set_grad_enabled(requires_grad):
+            noise = torch.empty((bs, self.latent_vector_len)).normal_(0, 1)
+            if condition_data is not None:
+                if inference: condition_data = self._parse_condition_data(condition_data, self.condition_onehot, self.g_condition_vector_len)
+                noise = noise.to(condition_data.device)
+                noise = torch.cat([noise, condition_data], dim=1)
+            else:
+                if not inference:
+                    noise = noise.cuda()
+            if ema:
+                ema_generator = pickle.loads(pickle.dumps(self.generator))
+                named_dict = dict(self.generator.named_parameters())
+                for name, p in ema_generator.named_parameters():
+                    p.data.copy_(named_dict[name].ema.data)
+                fake = ema_generator(noise)
+            else:
+                fake = self.generator(noise)
+        return fake
     
     def forward_d(self, x, condition_data=None, ema=False):
         if condition_data is not None:

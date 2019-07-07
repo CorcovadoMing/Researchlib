@@ -262,7 +262,7 @@ def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics,
                 need_step=need_step,
                 accum_updates=accum_updates)
                 
-    self.model.eval()
+    #self.model.eval()
 
 
 @register_method
@@ -397,6 +397,10 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                 if accum_count == self.accum_updates:
                     accum_count = 0
                     need_step = True
+                    need_step_str = '#'
+                else:
+                    #need_step = False
+                    need_step_str = ' '
             
                 progressbar.value = batch_idx + 1
                 self._fit_xy(data_pack,
@@ -415,7 +419,7 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                             self.accum_updates,
                             train=True)
                 
-                progressbar.description = '('+str(batch_idx+1)+'/'+str(total_iteration)+')'
+                progressbar.description = '('+str(batch_idx+1)+'/'+str(total_iteration)+')' + need_step_str
                 
                 if _gan:
                     label_text.value = 'Epoch: ' + str(self.epoch) + ', G Loss: ' + str((sum(g_loss_history)/len(g_loss_history)).numpy()) + ', D Loss: ' + str((sum(d_loss_history)/len(d_loss_history)).numpy())

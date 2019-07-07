@@ -14,7 +14,6 @@ class MinibatchDiscrimination(nn.Module):
         self.T = nn.Parameter(
             torch.Tensor(in_features, out_features - in_features, intermediate_features)
         )
-        nn.init.normal_(self.T)
 
     def forward(self, x):
         """Computes the output of the Minibatch Discrimination Layer
@@ -238,8 +237,8 @@ class AutoGAN_D(torch.nn.Module):
         main.add_module('End-Feature', ToFeature())
         # Size = (bs, base_hidden * mult)
         self.out = nn.Sequential(*[
-            MinibatchDiscrimination(base_hidden*mult, base_hidden*mult+32),
-            sn(nn.Linear(base_hidden*mult+32, 1))
+            #MinibatchDiscrimination(base_hidden*mult, base_hidden*mult+32),
+            sn(nn.Linear(base_hidden*mult, 1))
         ])
         
         self.main = main
