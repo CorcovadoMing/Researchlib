@@ -3,6 +3,7 @@ import torch.nn.functional as F
 import torch
 from ..utils import to_one_hot
 import pickle
+from .gan_matrics import *
 
 class GANModel(nn.Module):
     def __init__(self, generator, discriminator, latent_vector_len=100, condition_vector_len=False, condition_onehot=False, unrolled_steps=0):
@@ -52,6 +53,9 @@ class GANModel(nn.Module):
             else:
                 fake = self.generator(noise)
         return fake
+    
+    def matrics(self):
+        return inception_score(self.fake_data)
     
     def forward_d(self, x, condition_data=None, ema=False):
         if condition_data is not None:

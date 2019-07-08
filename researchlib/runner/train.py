@@ -166,7 +166,7 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, conditio
         if kwargs['need_step']:
             with torch.no_grad():
                 for param in _model.parameters():
-                    param.grad.data /= kwargs['accum_updates']
+                    param.grad.data /= float(kwargs['accum_updates'])
                 
                 if orthogonal_reg:
                     for param in _model.parameters():

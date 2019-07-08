@@ -262,7 +262,7 @@ def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics,
                 need_step=need_step,
                 accum_updates=accum_updates)
                 
-    #self.model.eval()
+#     self.model.eval()
 
 
 @register_method
@@ -386,6 +386,7 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
             g_loss_history = []
             d_loss_history = []
             norm = []
+            inception_score = []
             matrix_records = History()
 
             for m in metrics: m.reset()
@@ -438,6 +439,9 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                 iteration_break -= 1
                 if iteration_break == 0:
                     break
+                
+                is_score = self.model.matrics()
+                history.log(lr_count, inception_score=is_score)
                 
             # Output metrics
             for m in metrics: matrix_records.add(m.output(), prefix='train')
@@ -517,7 +521,10 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                 else:
                     loss_canvas.draw_plot([history["train_loss"], history['val_loss']])            
             with matrix_live_plot:
-                matrix_canvas.draw_plot([history['train_acc'], history['val_acc']])
+                if _gan:
+                    matrix_canvas.draw_plot([history['inception_score']])
+                else:
+                    matrix_canvas.draw_plot([history['train_acc'], history['val_acc']])
             with lr_plot:
                 if _gan:
                     lr_canvas.draw_plot([history['g_lr'], history['d_lr']])

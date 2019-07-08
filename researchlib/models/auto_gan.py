@@ -237,7 +237,7 @@ class AutoGAN_D(torch.nn.Module):
         main.add_module('End-Feature', ToFeature())
         # Size = (bs, base_hidden * mult)
         self.out = nn.Sequential(*[
-            #MinibatchDiscrimination(base_hidden*mult, base_hidden*mult+32),
+#             MinibatchDiscrimination(base_hidden*mult, base_hidden*mult+32),
             sn(nn.Linear(base_hidden*mult, 1))
         ])
         
