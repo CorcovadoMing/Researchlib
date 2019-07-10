@@ -97,9 +97,13 @@ class block_g(nn.Module):
         self.bn1 = SelfModNorm2d(in_dim)
         self.bn2 = SelfModNorm2d(hidden_dim)
         self.bn3 = SelfModNorm2d(hidden_dim)
-        self.bn4 = SelfModNorm2d(hidden_dim)        
+        self.bn4 = SelfModNorm2d(hidden_dim)
+#         self.bn1 = nn.BatchNorm2d(in_dim)
+#         self.bn2 = nn.BatchNorm2d(hidden_dim)
+#         self.bn3 = nn.BatchNorm2d(hidden_dim)
+#         self.bn4 = nn.BatchNorm2d(hidden_dim)        
         
-        self.act = nn.LeakyReLU(0.2)
+        self.act = nn.LeakyReLU(0.5)
         self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
         
     def forward(self, input):
@@ -107,6 +111,8 @@ class block_g(nn.Module):
         
         h = self.conv1(self.act(self.bn1(x, y[:, self.id*64:(self.id+1)*64])))
         h = self.act(self.bn2(h, y[:, self.id*64:(self.id+1)*64]))
+#         h = self.conv1(self.act(self.bn1(x)))
+#         h = self.act(self.bn2(h))
         
         if self.in_dim != self.out_dim:
             # Drop channels
@@ -118,7 +124,49 @@ class block_g(nn.Module):
         h = self.conv2(h)
         h = self.conv3(self.act(self.bn3(h, y[:, self.id*64:(self.id+1)*64])))
         h = self.conv4(self.act(self.bn4(h, y[:, self.id*64:(self.id+1)*64])))
+#         h = self.conv3(self.act(self.bn3(h)))
+#         h = self.conv4(self.act(self.bn4(h)))
         return (h+x, y)
+        
+        
+class sblock_g(nn.Module):
+    def __init__(self, in_dim, out_dim, id=0):
+        super().__init__()
+        self.id = id
+        self.conv1 = sn(torch.nn.Conv2d(in_dim, out_dim, kernel_size=3, stride=1, padding=1, bias=False))
+        self.conv2 = sn(torch.nn.Conv2d(out_dim, out_dim, kernel_size=3, stride=1, padding=1, bias=False))
+        self.conv_sc = sn(torch.nn.Conv2d(in_dim, out_dim, kernel_size=1, stride=1, padding=0, bias=False))
+        self.bn1 = SelfModNorm2d(in_dim)
+        self.bn2 = SelfModNorm2d(out_dim)
+        self.relu = nn.ReLU(inplace=True)
+        self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
+        
+    def forward(self, input):
+        x, y = input
+        y_split = y[:, 64*(self.id):64*(self.id+1)]
+        h = self.relu(self.bn1(x, y_split))
+        h = self.upsample(h)
+        x = self.upsample(x)
+        x = self.conv_sc(x)
+        h = self.conv1(h)
+        h = self.relu(self.bn2(h, y_split))
+        h = self.conv2(h)
+        return (x+h, y)
+        
+
+class cblock_g(nn.Module):
+    def __init__(self, in_dim, out_dim, id=0):
+        super().__init__()
+        self.id = id
+        self.conv1 = sn(torch.nn.ConvTranspose2d(in_dim, out_dim, 4, 2, 1, bias=False))
+        self.bn1 = nn.BatchNorm2d(in_dim)
+        self.act = nn.LeakyReLU(0.2)
+        
+    def forward(self, input):
+        x, y = input
+        x = self.conv1(self.act(self.bn1(x)))
+        return (x, y)
+
 
 class ToRGB(nn.Module):
     def __init__(self):
@@ -129,16 +177,25 @@ class ToRGB(nn.Module):
         return (self.f(x), y)
 
 class AutoGAN_G(torch.nn.Module):
-    def __init__(self, img_size, base_hidden=16):
+    def __init__(self, img_size, base_hidden=16, block='DCGAN'):
         super().__init__()
+        
+        if block == 'DCGAN':
+            _block = cblock_g
+        elif block == 'BIGGAN-Deep':
+            _block = block_g
+        elif block == 'BIGGAN':
+            _block = sblock_g
+        
         main = torch.nn.Sequential()
 
         # We need to know how many layers we will use at the beginning
+        kt = img_size // 8
         mult = img_size // 8
         
         i = 0
         while mult > 1:
-            main.add_module('Middle-block [%d]' % i, block_g(base_hidden*mult, base_hidden*(mult//2), id=i))
+            main.add_module('Middle-block [%d]' % i, _block(base_hidden*mult, base_hidden*(mult//2), id=i))
             # Size = (G_h_size * (mult/(2*i))) x 8 x 8
             mult = mult // 2
             i += 1
@@ -148,13 +205,13 @@ class AutoGAN_G(torch.nn.Module):
         ### End block
         # Size = G_h_size x image_size/2 x image_size/2
         main.add_module('End-Att', SelfAttention(base_hidden))
-        main.add_module('End-block', block_g(base_hidden, 3, id=i))
+        main.add_module('End-block', _block(base_hidden, 3, id=i))
         main.add_module('End-Out', ToRGB())
         # Size = n_colors x image_size x image_size
         self.main = main
         self.reshape = nn.Sequential(*[
-            sn(nn.Linear(64, 16*base_hidden*4*4)),
-            layer.Reshape((-1, 16*base_hidden, 4, 4))
+            sn(nn.Linear(64, kt*base_hidden*4*4)),
+            layer.Reshape((-1, kt*base_hidden, 4, 4))
         ])
 
     def forward(self, z):
@@ -162,8 +219,6 @@ class AutoGAN_G(torch.nn.Module):
         output, _ = self.main((input, z[:, 64:]))
         return output
 
-
-    
     
 class block_d(nn.Module):
     def __init__(self, in_dim, out_dim, id=0):
@@ -179,7 +234,7 @@ class block_d(nn.Module):
         self.conv3 = sn(torch.nn.Conv2d(hidden_dim, hidden_dim, 3, 1, 1))
         self.conv4 = sn(torch.nn.Conv2d(hidden_dim, out_dim, 1))
         
-        self.act = nn.LeakyReLU(0.2)
+        self.act = nn.LeakyReLU(0.5)
         self.downsample = nn.AvgPool2d(2)
                 
         self.conv_sc = sn(torch.nn.Conv2d(in_dim, out_dim - in_dim, 1))
@@ -196,6 +251,45 @@ class block_d(nn.Module):
         x = torch.cat([x, self.conv_sc(x)], 1)
         return h+x
 
+
+class cblock_d(nn.Module):
+    def __init__(self, in_dim, out_dim, id=0):
+        super().__init__()
+        self.id = id
+        self.conv1 = sn(torch.nn.Conv2d(in_dim, out_dim, 4, 2, 1))
+        self.bn = nn.BatchNorm2d(in_dim)
+        self.act = nn.LeakyReLU(0.2)
+        
+    def forward(self, x):
+        h = self.conv1(self.act(self.bn(x)))
+        return h
+        
+        
+        
+class sblock_d(nn.Module):
+    def __init__(self, in_dim, out_dim, id=0):
+        super().__init__()
+        self.id = id
+        self.conv1 = sn(torch.nn.Conv2d(in_dim, out_dim, kernel_size=3, stride=1, padding=1, bias=False))
+        self.conv2 = sn(torch.nn.Conv2d(out_dim, out_dim, kernel_size=3, stride=1, padding=1, bias=False))
+        self.bn1 = nn.BatchNorm2d(in_dim)
+        self.bn2 = nn.BatchNorm2d(out_dim)
+        self.lrelu = nn.LeakyReLU(0.2, inplace=True)
+        self.downsample = nn.AvgPool2d(2)
+        
+        self.shortcut = nn.Sequential(*[
+            sn(torch.nn.Conv2d(in_dim, out_dim, kernel_size=1, stride=1, padding=0, bias=False)),
+            nn.AvgPool2d(2)
+        ])
+        
+    def forward(self, x):
+        h = self.conv1(self.lrelu(self.bn1(x)))
+        h = self.conv2(self.lrelu(self.bn2(h)))
+        h = self.downsample(h)
+        return h + self.shortcut(x)
+        
+
+
 class ToFeature(nn.Module):
     def __init__(self):
         super().__init__()
@@ -206,20 +300,24 @@ class ToFeature(nn.Module):
 
 # DCGAN discriminator (using somewhat the reverse of the generator)
 class AutoGAN_D(torch.nn.Module):
-    def __init__(self, img_size, base_hidden=16, pack=2):
+    def __init__(self, img_size, base_hidden=16, pack=2, block='DCGAN'):
         super().__init__()
         self.pack = pack
+        
+        if block == 'DCGAN':
+            _block = cblock_d
+        elif block == 'BIGGAN-Deep':
+            _block = block_d
+        elif block == 'BIGGAN':
+            _block = sblock_d
         
         main = torch.nn.Sequential()
         ### Start block
         # Size = n_colors x image_size x image_size
-        #main.add_module('Start-Conv2d', sn(torch.nn.Conv2d(3, 128, kernel_size=4, stride=2, padding=1, bias=False)))
-        #main.add_module('Start-LeakyReLU', torch.nn.LeakyReLU(0.2, inplace=True))
         main.add_module('Start-block', sn(nn.Conv2d(3 * pack, base_hidden, 3, 1, 1)))
         image_size_new = img_size
         # Size = D_h_size x image_size/2 x image_size/2
-        #main.add_module('Start-SelfAttention', SelfAttention(128))
-
+        
         ### Middle block (Done until we reach ? x 4 x 4)
         mult = 1
         i = 1
@@ -227,7 +325,7 @@ class AutoGAN_D(torch.nn.Module):
             if image_size_new == 64:
                 print('Attention!')
                 main.add_module('Start-Attention', SelfAttention(base_hidden * mult))
-            main.add_module('Millde-block [%d]' % i, block_d(base_hidden * mult, base_hidden * (2*mult), id=i))
+            main.add_module('Millde-block [%d]' % i, _block(base_hidden * mult, base_hidden * (2*mult), id=i))
             # Size = (D_h_size*(2*i)) x image_size/(2*i) x image_size/(2*i)
             image_size_new = image_size_new // 2
             mult *= 2
@@ -237,7 +335,7 @@ class AutoGAN_D(torch.nn.Module):
         main.add_module('End-Feature', ToFeature())
         # Size = (bs, base_hidden * mult)
         self.out = nn.Sequential(*[
-#             MinibatchDiscrimination(base_hidden*mult, base_hidden*mult+32),
+            #MinibatchDiscrimination(base_hidden*mult, base_hidden*mult+128),
             sn(nn.Linear(base_hidden*mult, 1))
         ])
         
@@ -249,5 +347,84 @@ class AutoGAN_D(torch.nn.Module):
         feature = self.main(input)
         output = self.out(feature)
         # Convert from 1 x 1 x 1 to 1 so that we can compare to given label (cat or not?)
-        return output.view(-1, 1), feature
+        return output.view(-1, 1)
         
+        
+        
+        
+        
+# =========================================================================
+
+class DCGAN_G(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        main = torch.nn.Sequential()
+
+        # We need to know how many layers we will use at the beginning
+        mult = 64 // 8
+
+        ### Start block
+        # Z_size random numbers
+        main.add_module('Start-ConvTranspose2d', sn(torch.nn.ConvTranspose2d(100, 128 * mult, kernel_size=4, stride=1, padding=0, bias=False)))
+        main.add_module('Start-BatchNorm2d', torch.nn.BatchNorm2d(128 * mult))
+        main.add_module('Start-ReLU', torch.nn.ReLU())
+        # Size = (G_h_size * mult) x 4 x 4
+
+        ### Middle block (Done until we reach ? x image_size/2 x image_size/2)
+        i = 1
+        while mult > 1:
+            main.add_module('Middle-ConvTranspose2d [%d]' % i, sn(torch.nn.ConvTranspose2d(128 * mult, 128 * (mult//2), kernel_size=4, stride=2, padding=1, bias=False)))
+            main.add_module('Middle-BatchNorm2d [%d]' % i, torch.nn.BatchNorm2d(128 * (mult//2)))
+            main.add_module('Middle-ReLU [%d]' % i, torch.nn.ReLU())
+            # Size = (G_h_size * (mult/(2*i))) x 8 x 8
+            mult = mult // 2
+            i += 1
+
+        ### End block
+        # Size = G_h_size x image_size/2 x image_size/2
+        main.add_module('End-ConvTranspose2d', sn(torch.nn.ConvTranspose2d(128, 3, kernel_size=4, stride=2, padding=1, bias=False)))
+        main.add_module('End-TanH', torch.nn.Tanh())
+        # Size = n_colors x image_size x image_size
+        self.main = main
+        self.reshape = layer.Reshape((-1, 100, 1, 1))
+
+    def forward(self, input):
+        input = self.reshape(input)
+        output = self.main(input)
+        return output
+
+# DCGAN discriminator (using somewhat the reverse of the generator)
+class DCGAN_D(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        main = torch.nn.Sequential()
+
+        ### Start block
+        # Size = n_colors x image_size x image_size
+        main.add_module('Start-Conv2d', sn(torch.nn.Conv2d(3, 128, kernel_size=4, stride=2, padding=1, bias=False)))
+        main.add_module('Start-LeakyReLU', torch.nn.LeakyReLU(0.2, inplace=True))
+        image_size_new = 64 // 2
+        # Size = D_h_size x image_size/2 x image_size/2
+
+        ### Middle block (Done until we reach ? x 4 x 4)
+        mult = 1
+        i = 0
+        while image_size_new > 4:
+            main.add_module('Middle-Conv2d [%d]' % i, sn(torch.nn.Conv2d(128 * mult, 128 * (2*mult), kernel_size=4, stride=2, padding=1, bias=False)))
+            main.add_module('Middle-BatchNorm2d [%d]' % i, torch.nn.BatchNorm2d(128 * (2*mult)))
+            main.add_module('Middle-LeakyReLU [%d]' % i, torch.nn.LeakyReLU(0.2, inplace=True))
+            # Size = (D_h_size*(2*i)) x image_size/(2*i) x image_size/(2*i)
+            image_size_new = image_size_new // 2
+            mult *= 2
+            i += 1
+
+        ### End block
+        # Size = (D_h_size * mult) x 4 x 4
+        main.add_module('End-Conv2d', sn(torch.nn.Conv2d(128 * mult, 1, kernel_size=4, stride=1, padding=0, bias=False)))
+        # Size = 1 x 1 x 1 (Is a real cat or not?)
+        self.main = main
+
+    def forward(self, input):
+        output = self.main(input)
+        # Convert from 1 x 1 x 1 to 1 so that we can compare to given label (cat or not?)
+        return output.view(-1, 1)

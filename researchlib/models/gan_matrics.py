@@ -40,12 +40,11 @@ def inception_score(imgs, cuda=True, batch_size=32, resize=True, splits=1):
         dataloader = torch.utils.data.DataLoader(imgs, batch_size=batch_size)
 
         # Load inception model
-        up = nn.Upsample(size=(299, 299), mode='bilinear').type(dtype)
         def get_pred(x):
             if resize:
-                x = up(x)
+                x = F.interpolate(x, size=(299, 299), mode='bilinear', align_corners=True)
             x = inception_model(x)
-            return F.softmax(x).data.cpu().numpy()
+            return F.softmax(x, dim=-1).data.cpu().numpy()
 
         # Get predictions
         preds = np.zeros((N, 1000))

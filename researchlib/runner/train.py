@@ -23,17 +23,17 @@ def train_fn(self, train=True, **kwargs):
     if type(kwargs['model']) == GANModel:
         condition = kwargs['model'].d_condition or kwargs['model'].g_condition
 
-        ema = self.ema > 0 and self.epoch > self.ema_start
-        if self.ema > 0 and self.epoch > self.ema_start:
-            for p in kwargs['model'].generator.parameters():
-                if not hasattr(p, 'ema'):
-                    p.ema = p.data.clone()
+#         ema = self.ema > 0 and self.epoch > self.ema_start
+#         if self.ema > 0 and self.epoch > self.ema_start:
+#             for p in kwargs['model'].generator.parameters():
+#                 if not hasattr(p, 'ema'):
+#                     p.ema = p.data.clone()
 
         # Discriminator
         model = kwargs['model'].discriminator
-        model_ffn = functools.partial(kwargs['model'].forward_d, ema=ema)
+        model_ffn = kwargs['model'].forward_d
         loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], 'unsupervise', condition, train, True, -1, False, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], 'unsupervise', condition, train, True, False, **kwargs)
 
         # Record loss
         kwargs['d_loss_history'].append(_loss)
@@ -44,9 +44,9 @@ def train_fn(self, train=True, **kwargs):
             i.extra_step(kwargs['model'])
 
         # Generator
-        model_ffn = functools.partial(kwargs['model'].forward_g, ema=ema)
+        model_ffn = kwargs['model'].forward_g
         loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, self.ema, True, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, True, **kwargs)
 
         # Record loss
         kwargs['g_loss_history'].append(_loss)
@@ -55,10 +55,10 @@ def train_fn(self, train=True, **kwargs):
         if kwargs['bar']: kwargs['bar'].set_postfix(d_loss="{:.4f}".format(d_loss_avg), g_loss="{:.4f}".format(g_loss_avg), refresh=False)
 
     else:
-        if self.ema > 0:
-            for p in kwargs['model'].parameters():
-                if not hasattr(p, 'ema'):
-                    p.ema = p.data.clone()
+#         if self.ema > 0:
+#             for p in kwargs['model'].parameters():
+#                 if not hasattr(p, 'ema'):
+#                     p.ema = p.data.clone()
                     
         if type(kwargs['model']) == VAEModel:
             learning_type = 'self_supervise'
@@ -67,7 +67,7 @@ def train_fn(self, train=True, **kwargs):
         model = kwargs['model']
         model_ffn = kwargs['model'].forward
         loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], learning_type, False, train, False, self.ema, False, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], learning_type, False, train, False, **kwargs)
 
         # Record loss
         kwargs['loss_history'].append(_loss)
@@ -97,7 +97,9 @@ def _cal_regularization(_model, **kwargs):
     return loss
 
 
-def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, condition, train, retain_graph, ema, orthogonal_reg, **kwargs):
+def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, condition, train, retain_graph, orthogonal_reg, **kwargs):
+    if train: optim.zero_grad()
+    
     # Forward
     if condition:
         output = model_ffn(*kwargs['data'], *kwargs['target'])
@@ -154,39 +156,33 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, conditio
     # Update
     norm = 0
     if train:
-        with torch.no_grad():
+        if orthogonal_reg:
             for param in _model.parameters():
-                try:
-                    norm += param.grad.data.norm(2) ** 2
-                except:
-                    pass
-            norm = norm ** 0.5
-            norm = norm.detach().cpu()
-        
-        if kwargs['need_step']:
-            with torch.no_grad():
-                for param in _model.parameters():
-                    param.grad.data /= float(kwargs['accum_updates'])
-                
-                if orthogonal_reg:
-                    for param in _model.parameters():
-                        # Only apply this to parameters with at least 2 axes, and not in the blacklist
-                        if len(param.shape) < 2:
-                            continue
-                        w = param.view(param.shape[0], -1)
-                        grad = (2 * torch.mm(torch.mm(w, w.t()) 
-                                * (1. - torch.eye(w.shape[0], device=w.device)), w))
-                        param.grad.data += 1e-4 * grad.view(param.shape)
-        
-            optim.step()
-            optim.zero_grad()
-            
-            with torch.no_grad():
-                if ema > 0:
-                    for param in _model.parameters():
-                        if hasattr(param, 'ema'):
-                            param.ema.data = (ema * param.ema.data) + ((1-ema) * param.data)
+                # Only apply this to parameters with at least 2 axes, and not in the blacklist
+                if len(param.shape) < 2:
+                    continue
+                w = param.view(param.shape[0], -1)
+                grad = (2 * torch.mm(torch.mm(w, w.t()) 
+                        * (1. - torch.eye(w.shape[0], device=w.device)), w))
+                param.grad.data += 1e-4 * grad.view(param.shape)
     
+        for param in _model.parameters():
+            try:
+                norm += param.grad.data.norm(2) ** 2
+            except:
+                pass
+        norm = norm ** 0.5
+        norm = norm.detach().cpu()
+
+        optim.step()
+        optim.zero_grad()
+
+#             with torch.no_grad():
+#                 if ema > 0:
+#                     for param in _model.parameters():
+#                         if hasattr(param, 'ema'):
+#                             param.ema.data = (ema * param.ema.data) + ((1-ema) * param.data)
+
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_end(**kwargs)
     
     # Apply metrics

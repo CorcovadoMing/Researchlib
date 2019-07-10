@@ -55,8 +55,6 @@ def init_model(self, init_algorithm='default', lsuv_dummy=False, lsuv_trials=50,
                             init.kaiming_uniform_(i)
                         elif init_distribution == 'kaiming_normal':
                             init.kaiming_normal_(i)
-                    else:
-                        init.normal_(i, 0, 0.1)
     
     def _lsuv(m):
         if type(m) == nn.ModuleList or \

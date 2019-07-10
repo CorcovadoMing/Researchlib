@@ -193,9 +193,8 @@ def _noop_extra_step(model, *args):
 
 
 class GANLoss(nn.Module):
-    def __init__(self, arch='wgan', aux_loss=None, feature_match=True):
+    def __init__(self, arch='vanilla', aux_loss=None):
         super().__init__()
-        self.feature_match = feature_match
         self.extra_step = _noop_extra_step
         self.aux_loss = aux_loss
         self.queue = []
@@ -267,10 +266,7 @@ class GANLoss(nn.Module):
         if aux is not None:
             return self.aux_loss(*fake, aux)
         else:
-            loss_extra = 0
-            if self.feature_match:
-                loss_extra += F.mse_loss(self.model.real_feature, self.model.fake_feature)
-            return self.g_loss(fake, self.queue, self.model) + loss_extra
+            return self.g_loss(fake, self.queue, self.model)
     
     def extra_step(self):
         self.extra_step(self.model)

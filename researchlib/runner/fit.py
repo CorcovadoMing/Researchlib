@@ -231,7 +231,7 @@ def _unload_data(self):
 
 
 @register_method
-def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics, loss_history, g_loss_history, d_loss_history, norm, matrix_records, bar, need_step, accum_updates, train):
+def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics, loss_history, g_loss_history, d_loss_history, norm, matrix_records, bar, train):
     self.data, self.target = self._process_type(data_pack, inputs)
     self.data, self.target, self.target_res = self._process_data(self.data, self.target, augmentor, mixup_alpha)
     
@@ -258,11 +258,9 @@ def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics,
                 d_loss_history=d_loss_history,
                 norm=norm,
                 matrix_records=matrix_records,
-                bar=bar,
-                need_step=need_step,
-                accum_updates=accum_updates)
+                bar=bar)
                 
-#     self.model.eval()
+    self.model.eval()
 
 
 @register_method
@@ -275,9 +273,6 @@ def _cycle(self, data, _cycle_flag=False):
 
 @register_method
 def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self_iterative, cycle, total=0):
-    accum_count = 0
-    need_step = False
-
     def _get_gpu_monitor():
         handle = nvmlDeviceGetHandleByIndex(0)
         info = nvmlDeviceGetMemoryInfo(handle)
@@ -394,15 +389,6 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
 
             iteration_break = total
             for batch_idx, data_pack in self._cycle(self.train_loader, cycle):
-                accum_count += 1
-                if accum_count == self.accum_updates:
-                    accum_count = 0
-                    need_step = True
-                    need_step_str = '#'
-                else:
-                    #need_step = False
-                    need_step_str = ' '
-            
                 progressbar.value = batch_idx + 1
                 self._fit_xy(data_pack,
                             self.inputs,
@@ -416,14 +402,14 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                             norm,
                             matrix_records, 
                             bar,
-                            need_step,
-                            self.accum_updates,
                             train=True)
                 
-                progressbar.description = '('+str(batch_idx+1)+'/'+str(total_iteration)+')' + need_step_str
+                progressbar.description = '('+str(batch_idx+1)+'/'+str(total_iteration)+')'
                 
                 if _gan:
-                    label_text.value = 'Epoch: ' + str(self.epoch) + ', G Loss: ' + str((sum(g_loss_history)/len(g_loss_history)).numpy()) + ', D Loss: ' + str((sum(d_loss_history)/len(d_loss_history)).numpy())
+                    g_loss_desc = sum(g_loss_history)/len(g_loss_history)
+                    d_loss_desc = sum(d_loss_history)/len(d_loss_history)
+                    label_text.value = f'Epoch: {self.epoch}, G Loss: {g_loss_desc:.4f}, D Loss: {d_loss_desc:.4f}'
                     history.log(lr_count, g_lr=[i['lr'] for i in self.optimizer[1].param_groups][-1])
                     history.log(lr_count, d_lr=[i['lr'] for i in self.optimizer[0].param_groups][-1])
                     history.log(lr_count, train_g_loss=g_loss_history[-1])
@@ -440,7 +426,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                 if iteration_break == 0:
                     break
                 
-                is_score = self.model.matrics()
+                #is_score = self.model.matrics()
+                is_score = 0
                 history.log(lr_count, inception_score=is_score)
                 
             # Output metrics
@@ -464,8 +451,7 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                                             epoch=epoch)
 
             if _gan:
-                ema = True if self.ema > 0 and self.epoch > self.ema_start else False
-                _gan_sample = self.model.sample(4, inference=False, ema=ema)
+                _gan_sample = self.model.sample(4, inference=False)
                 _gan_sample = _gan_sample.detach().cpu().numpy().transpose((0, 2, 3, 1))
                 _grid = plot_montage(_gan_sample, 2, 2, False)
                 epoch_history.log(epoch, image=_grid)
