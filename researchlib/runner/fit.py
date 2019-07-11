@@ -276,6 +276,12 @@ def _cycle(self, data, _cycle_flag=False):
 
 @register_method
 def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self_iterative, cycle, total=0):
+    if type(self.optimizer) == list:
+        for i in self.optimizer:
+            i.zero_grad()
+    else:
+        self.optimizer.zero_grad()
+
     def _get_gpu_monitor():
         handle = nvmlDeviceGetHandleByIndex(0)
         info = nvmlDeviceGetMemoryInfo(handle)
@@ -392,6 +398,13 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
 
             iteration_break = total
             for batch_idx, data_pack in self._cycle(self.train_loader, cycle):
+                self._accum_current += 1
+                if self._accum_current == self._accum_gradient:
+                    self._accum_current = 0
+                    self._accum_step = True
+                else:
+                    self._accum_step = False
+            
                 progressbar.value = batch_idx + 1
                 self._fit_xy(data_pack,
                             self.inputs,

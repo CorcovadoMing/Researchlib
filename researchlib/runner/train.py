@@ -14,6 +14,23 @@ import functools
 __methods__ = []
 register_method = _register_method(__methods__)
 
+def _backup_grad(model):
+    for param in model.parameters():
+        try:
+            param.backup_grad = param.grad.data.clone()
+        except:
+            if param.requires_grad:
+                param.backup_grad = param.data.clone()
+                param.backup_grad.zero_()
+
+def _restore_grad(model):
+    for param in model.parameters():
+        try:
+            param.grad = param.backup_grad.data.clone()
+        except:
+            pass
+
+
 @register_method
 def train_fn(self, train=True, **kwargs):
     # Callback: on_iteration_begin
@@ -30,11 +47,13 @@ def train_fn(self, train=True, **kwargs):
 #                     p.ema = p.data.clone()
 
         # Discriminator
+        _backup_grad(kwargs['model'].generator)
         model = kwargs['model'].discriminator
         model_ffn = kwargs['model'].forward_d
         loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], 'unsupervise', condition, train, True, False, **kwargs)
-
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], 'unsupervise', condition, train, True, False, self._accum_step, self._accum_gradient, **kwargs)
+        _restore_grad(kwargs['model'].generator)
+        
         # Record loss
         kwargs['d_loss_history'].append(_loss)
         d_loss_avg = sum(kwargs['d_loss_history'])/len(kwargs['d_loss_history'])
@@ -44,10 +63,12 @@ def train_fn(self, train=True, **kwargs):
             i.extra_step(kwargs['model'])
 
         # Generator
+        _backup_grad(kwargs['model'].discriminator)
         model = kwargs['model'].generator
         model_ffn = kwargs['model'].forward_g
         loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, True, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, True, self._accum_step, self._accum_gradient, **kwargs)
+        _restore_grad(kwargs['model'].discriminator)
 
         # Record loss
         kwargs['g_loss_history'].append(_loss)
@@ -68,7 +89,7 @@ def train_fn(self, train=True, **kwargs):
         model = kwargs['model']
         model_ffn = kwargs['model'].forward
         loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], learning_type, False, train, False, False, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], learning_type, False, train, False, False, self._accum_step, self._accum_gradient, **kwargs)
 
         # Record loss
         kwargs['loss_history'].append(_loss)
@@ -98,9 +119,7 @@ def _cal_regularization(_model, **kwargs):
     return loss
 
 
-def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, condition, train, retain_graph, orthogonal_reg, **kwargs):
-    if train: optim.zero_grad()
-    
+def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, condition, train, retain_graph, orthogonal_reg, step, accum_count, **kwargs):
     # Forward
     if condition:
         output = model_ffn(*kwargs['data'], *kwargs['target'])
@@ -156,8 +175,14 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, conditio
     
     # Update
     norm = 0
-    if train:
+    if train and step:
         with torch.no_grad():
+            for name, param in _model.named_parameters():
+                try:
+                    param.grad.data /= float(accum_count)
+                except:
+                    print(name)
+                
             if orthogonal_reg:
                 for param in _model.parameters():
                     # Only apply this to parameters with at least 2 axes, and not in the blacklist
