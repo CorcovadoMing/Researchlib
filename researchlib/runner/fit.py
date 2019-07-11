@@ -154,7 +154,7 @@ def fit_xy(self, data_pack, inputs, lr=1e-3, policy='cyclical', augmentor=None, 
 
 
 @register_method
-def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[], _id='none', self_iterative=False):
+def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[], _id='none', self_iterative=False, accum_gradient=1):
     if policy == 'sc' or policy == 'superconverge':
         total_epochs = epochs
         callbacks = self._set_onecycle(lr) + callbacks
@@ -167,6 +167,9 @@ def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0,
     elif policy == 'fixed':
         set_lr(self.optimizer, lr)
         total_epochs = epochs
+    self._accum_gradient = accum_gradient
+    self._accum_step = False
+    self._accum_current = 0
     self._fit(total_epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self_iterative, cycle=False)
 
 
