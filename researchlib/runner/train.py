@@ -44,6 +44,7 @@ def train_fn(self, train=True, **kwargs):
             i.extra_step(kwargs['model'])
 
         # Generator
+        model = kwargs['model'].generator
         model_ffn = kwargs['model'].forward_g
         loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, True, **kwargs)
@@ -67,7 +68,7 @@ def train_fn(self, train=True, **kwargs):
         model = kwargs['model']
         model_ffn = kwargs['model'].forward
         loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], learning_type, False, train, False, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], learning_type, False, train, False, False, **kwargs)
 
         # Record loss
         kwargs['loss_history'].append(_loss)
@@ -156,23 +157,24 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, conditio
     # Update
     norm = 0
     if train:
-        if orthogonal_reg:
+        with torch.no_grad():
+            if orthogonal_reg:
+                for param in _model.parameters():
+                    # Only apply this to parameters with at least 2 axes, and not in the blacklist
+                    if len(param.shape) < 2:
+                        continue
+                    w = param.view(param.shape[0], -1)
+                    grad = (2 * torch.mm(torch.mm(w, w.t()) 
+                            * (1. - torch.eye(w.shape[0], device=w.device)), w))
+                    param.grad.data += 1e-4 * grad.view(param.shape)
+
             for param in _model.parameters():
-                # Only apply this to parameters with at least 2 axes, and not in the blacklist
-                if len(param.shape) < 2:
-                    continue
-                w = param.view(param.shape[0], -1)
-                grad = (2 * torch.mm(torch.mm(w, w.t()) 
-                        * (1. - torch.eye(w.shape[0], device=w.device)), w))
-                param.grad.data += 1e-4 * grad.view(param.shape)
-    
-        for param in _model.parameters():
-            try:
-                norm += param.grad.data.norm(2) ** 2
-            except:
-                pass
-        norm = norm ** 0.5
-        norm = norm.detach().cpu()
+                try:
+                    norm += param.grad.data.norm(2) ** 2
+                except:
+                    pass
+            norm = norm ** 0.5
+            norm = norm.detach().cpu()
 
         optim.step()
         optim.zero_grad()
