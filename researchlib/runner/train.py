@@ -10,6 +10,7 @@ from ..models import GANModel, VAEModel
 from ..utils import _register_method
 import copy
 import functools
+import math
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -65,7 +66,7 @@ def train_fn(self, train=True, **kwargs):
         # Generator
         _backup_grad(kwargs['model'].discriminator)
         model = kwargs['model'].generator
-        model_ffn = kwargs['model'].forward_g
+        model_ffn = functools.partial(kwargs['model'].forward_g, re_discriminate=self._accum_step)
         loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, True, self._accum_step, self._accum_gradient, **kwargs)
         _restore_grad(kwargs['model'].discriminator)
@@ -171,18 +172,16 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, conditio
         if train: scaled_loss.backward(retain_graph=retain_graph)
         del scaled_loss
     
+    
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_begin(**kwargs)
     
     # Update
     norm = 0
     if train and step:
         with torch.no_grad():
-            for name, param in _model.named_parameters():
-                try:
-                    param.grad.data /= float(accum_count)
-                except:
-                    print(name)
-                
+            for param in _model.parameters():
+                param.grad.data /= accum_count
+
             if orthogonal_reg:
                 for param in _model.parameters():
                     # Only apply this to parameters with at least 2 axes, and not in the blacklist

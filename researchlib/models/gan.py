@@ -40,7 +40,11 @@ class GANModel(nn.Module):
         else:
             if not inference:
                 noise = noise.cuda()
-        fake = self.generator(noise)
+        if inference:
+            with torch.no_grad():
+                fake = self.generator(noise)
+        else:
+            fake = self.generator(noise)
         return fake if requires_grad else fake.detach()
     
     def forward_d(self, x, condition_data=None):
@@ -63,9 +67,10 @@ class GANModel(nn.Module):
             self.real = self.discriminator(self.real_data)
         return self.real, self.fake
     
-    def forward_g(self, x, condition=None):
-#         if self.d_condition:
-#             return self.discriminator((self.fake_data, self.condition_data))
-#         else:
-#             return self.discriminator(self.fake_data)
+    def forward_g(self, x, condition=None, re_discriminate=False):
+        if re_discriminate:
+            if self.d_condition:
+                self.fake = self.discriminator((self.fake_data, self.condition_data))
+            else:
+                self.fake = self.discriminator(self.fake_data)
         return self.fake

@@ -69,3 +69,8 @@ RUN pip install -U adabound
 RUN pip install -U deepdish boxx 
 
 RUN pip install -U pydicom
+
+# Julia
+COPY julia-1.1.1 /opt/julia
+RUN ln -s /opt/julia/bin/julia /bin
+RUN julia -e 'using Pkg; Pkg.add("IJulia")'

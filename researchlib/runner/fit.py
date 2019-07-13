@@ -154,7 +154,7 @@ def fit_xy(self, data_pack, inputs, lr=1e-3, policy='cyclical', augmentor=None, 
 
 
 @register_method
-def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[], _id='none', self_iterative=False, accum_gradient=1):
+def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0, metrics=[], callbacks=[], _id='none', self_iterative=False, accum_gradient=1, accum_freq=100):
     if policy == 'sc' or policy == 'superconverge':
         total_epochs = epochs
         callbacks = self._set_onecycle(lr) + callbacks
@@ -167,7 +167,10 @@ def fit(self, epochs, lr=1e-3, policy='cyclical', augmentor=None, mixup_alpha=0,
     elif policy == 'fixed':
         set_lr(self.optimizer, lr)
         total_epochs = epochs
-    self._accum_gradient = accum_gradient
+        
+    self._accum_gradient = 1
+    self._accum_freq = accum_freq
+    self._accum_target_gradient = accum_gradient
     self._accum_step = False
     self._accum_current = 0
     self._fit(total_epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self_iterative, cycle=False)
@@ -263,7 +266,7 @@ def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks, metrics,
                 matrix_records=matrix_records,
                 bar=bar)
                 
-    self.model.eval()
+#     self.model.eval()
 
 
 @register_method
@@ -380,6 +383,9 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
             metrics = [self.default_metrics] + metrics
 
         for epoch in range(1, epochs + 1):
+            if epoch % self._accum_freq == 0:
+                self._accum_gradient = min(self._accum_target_gradient, self._accum_gradient*2)
+            
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(model=self.model, 
                                             train_loader=self.train_loader, 
@@ -399,6 +405,7 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
             iteration_break = total
             for batch_idx, data_pack in self._cycle(self.train_loader, cycle):
                 self._accum_current += 1
+                desc_current = self._accum_current
                 if self._accum_current == self._accum_gradient:
                     self._accum_current = 0
                     self._accum_step = True
@@ -420,12 +427,10 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                             bar,
                             train=True)
                 
-                progressbar.description = '('+str(batch_idx+1)+'/'+str(total_iteration)+')'
-                
                 if _gan:
                     g_loss_desc = sum(g_loss_history)/len(g_loss_history)
                     d_loss_desc = sum(d_loss_history)/len(d_loss_history)
-                    label_text.value = f'Epoch: {self.epoch}, G Loss: {g_loss_desc:.4f}, D Loss: {d_loss_desc:.4f}'
+                    label_text.value = f'Epoch: {self.epoch}, G Loss: {g_loss_desc:.4f}, D Loss: {d_loss_desc:.4f}, Iter: ({batch_idx+1}/{total_iteration}:{desc_current}/{self._accum_gradient})'
                     history.log(lr_count, g_lr=[i['lr'] for i in self.optimizer[1].param_groups][-1])
                     history.log(lr_count, d_lr=[i['lr'] for i in self.optimizer[0].param_groups][-1])
                     history.log(lr_count, train_g_loss=g_loss_history[-1])
