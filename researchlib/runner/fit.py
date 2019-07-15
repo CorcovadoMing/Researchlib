@@ -290,6 +290,9 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
         info = nvmlDeviceGetMemoryInfo(handle)
         s = nvmlDeviceGetUtilizationRates(handle)
         return int(100*(info.used/info.total)), s.gpu
+    
+    def _list_avg(l):
+        return sum(l)/len(l)
         
     progress = Output()
     label = Output()
@@ -329,7 +332,6 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
     loss_canvas = hl.Canvas()
     matrix_canvas = hl.Canvas()
     lr_canvas = hl.Canvas()
-    lr_count = 0
     norm_canvas = hl.Canvas()
 
     total_iteration = len(self.train_loader)
@@ -428,20 +430,12 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                             train=True)
                 
                 if _gan:
-                    g_loss_desc = sum(g_loss_history)/len(g_loss_history)
-                    d_loss_desc = sum(d_loss_history)/len(d_loss_history)
+                    g_loss_desc = _list_avg(g_loss_history)
+                    d_loss_desc = _list_avg(d_loss_history)
                     label_text.value = f'Epoch: {self.epoch}, G Loss: {g_loss_desc:.4f}, D Loss: {d_loss_desc:.4f}, Iter: ({batch_idx+1}/{total_iteration}:{desc_current}/{self._accum_gradient})'
-                    history.log(lr_count, g_lr=[i['lr'] for i in self.optimizer[1].param_groups][-1])
-                    history.log(lr_count, d_lr=[i['lr'] for i in self.optimizer[0].param_groups][-1])
-                    history.log(lr_count, train_g_loss=g_loss_history[-1])
-                    history.log(lr_count, train_d_loss=d_loss_history[-1])
                 else:
                     label_text.value = 'Epoch: ' + str(self.epoch) + ', Loss: ' + str((sum(loss_history)/len(loss_history)).numpy())
-                    history.log(lr_count, lr=[i['lr'] for i in self.optimizer.param_groups][-1])
-                    history.log(lr_count, train_loss=loss_history[-1])
 
-                history.log(lr_count, norm=norm[-1])
-                lr_count += 1
                             
                 iteration_break -= 1
                 if iteration_break == 0:
@@ -449,7 +443,17 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                 
                 #is_score = self.model.matrics()
                 is_score = 0
-                history.log(lr_count, inception_score=is_score)
+            
+            history.log(epoch, inception_score=is_score) # TODO
+            history.log(epoch, norm=_list_avg(norm))
+            if _gan:
+                history.log(epoch, g_lr=[i['lr'] for i in self.optimizer[1].param_groups][-1])
+                history.log(epoch, d_lr=[i['lr'] for i in self.optimizer[0].param_groups][-1])
+                history.log(epoch, train_g_loss=_list_avg(g_loss_history))
+                history.log(epoch, train_d_loss=_list_avg(d_loss_history))
+            else:
+                history.log(epoch, lr=[i['lr'] for i in self.optimizer.param_groups][-1])
+                history.log(epoch, train_loss=_list_avg(loss_history))
                 
             # Output metrics
             for m in metrics: matrix_records.add(m.output(), prefix='train')
@@ -472,7 +476,7 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                                             epoch=epoch)
 
             if _gan:
-                _gan_sample = self.model.sample(4, inference=False)
+                _gan_sample = self.model.sample(4, inference=True, gpu=True)
                 _gan_sample = _gan_sample.detach().cpu().numpy().transpose((0, 2, 3, 1))
                 _grid = plot_montage(_gan_sample, 2, 2, False)
                 epoch_history.log(epoch, image=_grid)

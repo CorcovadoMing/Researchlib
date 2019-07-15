@@ -30,16 +30,15 @@ class GANModel(nn.Module):
         if condition_data.dim() < 2: condition_data = condition_data.unsqueeze(-1)
         return condition_data.to(device)
     
-    def sample(self, bs, condition_data=None, inference=True, requires_grad=False, given_noise=None):
+    def sample(self, bs, condition_data=None, inference=True, requires_grad=False, given_noise=None, gpu=False):
         if given_noise is None:
             noise = torch.empty((bs, self.latent_vector_len)).normal_(0, 1)
         if condition_data is not None:
             if inference: condition_data = self._parse_condition_data(condition_data, self.condition_onehot, self.g_condition_vector_len)
             noise = noise.to(condition_data.device)
             noise = torch.cat([noise, condition_data], dim=1)
-        else:
-            if not inference:
-                noise = noise.cuda()
+        if gpu:
+            noise = noise.cuda()
         if inference:
             with torch.no_grad():
                 fake = self.generator(noise)
@@ -55,9 +54,9 @@ class GANModel(nn.Module):
             
         self.real_data = x
         if self.g_condition:
-            self.fake_data = self.sample(x.size(0), condition_data=self.condition_data, inference=False, requires_grad=True)
+            self.fake_data = self.sample(x.size(0), condition_data=self.condition_data, inference=False, requires_grad=True, gpu=True)
         else:
-            self.fake_data = self.sample(x.size(0), inference=False, requires_grad=True)
+            self.fake_data = self.sample(x.size(0), inference=False, requires_grad=True, gpu=True)
         
         if self.d_condition:
             self.fake = self.discriminator((self.fake_data, self.condition_data))
