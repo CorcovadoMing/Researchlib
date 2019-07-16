@@ -1,6 +1,7 @@
 from torch import nn
 import torch
 from ..utils import to_one_hot
+import pickle
 
 class GANModel(nn.Module):
     def __init__(self, generator, discriminator, latent_vector_len=100, condition_vector_len=False, condition_onehot=False):
@@ -30,9 +31,20 @@ class GANModel(nn.Module):
         if condition_data.dim() < 2: condition_data = condition_data.unsqueeze(-1)
         return condition_data.to(device)
     
-    def sample(self, bs, condition_data=None, inference=True, requires_grad=False, given_noise=None, gpu=False):
+    def sample(self, bs, condition_data=None, inference=True, requires_grad=False, given_noise=None, gpu=False, ema=False):
+        if ema:
+            ema_generator = pickle.loads(pickle.dumps(self.generator))
+            named_dict = dict(self.generator.named_parameters())
+            for name, p in ema_generator.named_parameters():
+                p.data.copy_(named_dict[name].ema.data)
+            _generator = ema_generator
+        else:
+            _generator = self.generator
+    
         if given_noise is None:
             noise = torch.empty((bs, self.latent_vector_len)).normal_(0, 1)
+        else:
+            pass # TODO
         if condition_data is not None:
             if inference: condition_data = self._parse_condition_data(condition_data, self.condition_onehot, self.g_condition_vector_len)
             noise = noise.to(condition_data.device)
@@ -41,9 +53,9 @@ class GANModel(nn.Module):
             noise = noise.cuda()
         if inference:
             with torch.no_grad():
-                fake = self.generator(noise)
+                fake = _generator(noise)
         else:
-            fake = self.generator(noise)
+            fake = _generator(noise)
         return fake if requires_grad else fake.detach()
     
     def forward_d(self, x, condition_data=None):
@@ -53,6 +65,7 @@ class GANModel(nn.Module):
             self.condition_data = None
             
         self.real_data = x
+        self.real_data.requires_grad = True
         if self.g_condition:
             self.fake_data = self.sample(x.size(0), condition_data=self.condition_data, inference=False, requires_grad=True, gpu=True)
         else:

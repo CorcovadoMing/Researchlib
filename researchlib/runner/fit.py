@@ -476,7 +476,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                                             epoch=epoch)
 
             if _gan:
-                _gan_sample = self.model.sample(4, inference=True, gpu=True)
+                ema = self.ema > 0 and self.epoch > self.ema_start
+                _gan_sample = self.model.sample(4, inference=True, gpu=True, ema=ema)
                 _gan_sample = _gan_sample.detach().cpu().numpy().transpose((0, 2, 3, 1))
                 _grid = plot_montage(_gan_sample, 2, 2, False)
                 epoch_history.log(epoch, image=_grid)

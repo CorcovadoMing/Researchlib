@@ -32,9 +32,11 @@ from . import train
 @_add_methods_from(cam)
 @_add_methods_from(train)
 class Runner:
-    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, reg_weights={}, monitor_mode='min', monitor_state='loss', fp16=False, multigpu=False, larc=False):
+    def __init__(self, model=None, train_loader=None, test_loader=None, optimizer=None, loss_fn=None, reg_fn={}, reg_weights={}, monitor_mode='min', monitor_state='loss', fp16=False, multigpu=False, larc=False, ema=-1, ema_start=100):
         self.experiment_name = ''
         self.checkpoint_path = ''
+        self.ema = ema
+        self.ema_start = ema_start
         self.larc = larc
         self.export = _Export()
         self.epoch = 1

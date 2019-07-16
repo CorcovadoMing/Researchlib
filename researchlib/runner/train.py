@@ -34,6 +34,7 @@ def _restore_grad(model):
 
 @register_method
 def train_fn(self, train=True, **kwargs):
+    ema = self.ema > 0 and self.epoch > self.ema_start
     # Callback: on_iteration_begin
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_iteration_begin(**kwargs)
 
@@ -41,18 +42,17 @@ def train_fn(self, train=True, **kwargs):
     if type(kwargs['model']) == GANModel:
         condition = kwargs['model'].d_condition or kwargs['model'].g_condition
 
-#         ema = self.ema > 0 and self.epoch > self.ema_start
-#         if self.ema > 0 and self.epoch > self.ema_start:
-#             for p in kwargs['model'].generator.parameters():
-#                 if not hasattr(p, 'ema'):
-#                     p.ema = p.data.clone()
+        if ema:
+            for p in kwargs['model'].generator.parameters():
+                if not hasattr(p, 'ema'):
+                    p.ema = p.data.clone()
 
         # Discriminator
         _backup_grad(kwargs['model'].generator)
         model = kwargs['model'].discriminator
         model_ffn = kwargs['model'].forward_d
         loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], 'unsupervise', condition, train, True, False, self._accum_step, self._accum_gradient, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], 'unsupervise', condition, train, True, False, self._accum_step, self._accum_gradient, self.ema, **kwargs)
         _restore_grad(kwargs['model'].generator)
         
         # Record loss
@@ -68,7 +68,7 @@ def train_fn(self, train=True, **kwargs):
         model = kwargs['model'].generator
         model_ffn = functools.partial(kwargs['model'].forward_g, re_discriminate=self._accum_step)
         loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, True, self._accum_step, self._accum_gradient, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, True, self._accum_step, self._accum_gradient, self.ema, **kwargs)
         _restore_grad(kwargs['model'].discriminator)
 
         # Record loss
@@ -78,10 +78,10 @@ def train_fn(self, train=True, **kwargs):
         if kwargs['bar']: kwargs['bar'].set_postfix(d_loss="{:.4f}".format(d_loss_avg), g_loss="{:.4f}".format(g_loss_avg), refresh=False)
 
     else:
-#         if self.ema > 0:
-#             for p in kwargs['model'].parameters():
-#                 if not hasattr(p, 'ema'):
-#                     p.ema = p.data.clone()
+        if ema:
+            for p in kwargs['model'].parameters():
+                if not hasattr(p, 'ema'):
+                    p.ema = p.data.clone()
                     
         if type(kwargs['model']) == VAEModel:
             learning_type = 'self_supervise'
@@ -90,7 +90,7 @@ def train_fn(self, train=True, **kwargs):
         model = kwargs['model']
         model_ffn = kwargs['model'].forward
         loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], learning_type, False, train, False, False, self._accum_step, self._accum_gradient, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'], learning_type, False, train, False, False, self._accum_step, self._accum_gradient, self.ema, **kwargs)
 
         # Record loss
         kwargs['loss_history'].append(_loss)
@@ -120,7 +120,7 @@ def _cal_regularization(_model, **kwargs):
     return loss
 
 
-def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, condition, train, retain_graph, orthogonal_reg, step, accum_count, **kwargs):
+def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, condition, train, retain_graph, orthogonal_reg, step, accum_count, ema, **kwargs):
     # Forward
     if condition:
         output = model_ffn(*kwargs['data'], *kwargs['target'])
@@ -203,11 +203,11 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, conditio
         optim.step()
         optim.zero_grad()
 
-#             with torch.no_grad():
-#                 if ema > 0:
-#                     for param in _model.parameters():
-#                         if hasattr(param, 'ema'):
-#                             param.ema.data = (ema * param.ema.data) + ((1-ema) * param.data)
+        with torch.no_grad():
+            if ema > 0:
+                for param in _model.parameters():
+                    if hasattr(param, 'ema'):
+                        param.ema.data = (ema * param.ema.data) + ((1-ema) * param.data)
 
     for callback_func in kwargs['callbacks']: kwargs = callback_func.on_update_end(**kwargs)
     

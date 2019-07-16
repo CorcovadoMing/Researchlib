@@ -4,6 +4,8 @@
 *.npy
 *.onnx
 *.pkl
+*.png
+*.jpg
 Dev*
 tmp
 *.pt

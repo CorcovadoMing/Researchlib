@@ -44,6 +44,29 @@ def _vanilla_d_loss(real, fake, *args):
 #            _loss_op(fake - real.mean(0), torch.zeros_like(fake))) / 2
     return F.binary_cross_entropy(torch.sigmoid(real), torch.ones_like(real).cuda()) + F.binary_cross_entropy(torch.sigmoid(fake), torch.zeros_like(fake).cuda())
 
+def _wgan_r1_g_loss(fake, *args):
+    return -fake.mean()
+    
+def _wgan_r1_d_loss(real, fake, *args):
+    model = args[1]
+    l1 = fake.mean() - real.mean()
+    penalty = grad(outputs=real.sum(), inputs=model.real_data, create_graph=True)[0]
+    penalty = (penalty.view(penalty.size(0), -1).norm(2, dim=1) ** 2).mean()
+    penalty = 10 / 2 * penalty
+    return l1 + penalty
+
+
+def _r1_g_loss(fake, *args):
+    return F.softplus(-fake).mean()
+    
+def _r1_d_loss(real, fake, *args):
+    model = args[1]
+    l1 = F.softplus(-real).mean() + F.softplus(fake).mean()
+    penalty = grad(outputs=real.sum(), inputs=model.real_data, create_graph=True)[0]
+    penalty = (penalty.view(penalty.size(0), -1).norm(2, dim=1) ** 2).mean()
+    penalty = 10 / 2 * penalty
+    return l1 + penalty
+
 def _vanilla_g_loss(fake, *args):
     return F.binary_cross_entropy(torch.sigmoid(fake), torch.ones_like(fake).cuda())
 
@@ -224,6 +247,12 @@ class GANLoss(nn.Module):
         elif arch == 'vanilla':
             self.d_loss = _vanilla_d_loss
             self.g_loss = _vanilla_g_loss
+        elif arch == 'r1':
+            self.d_loss = _r1_d_loss
+            self.g_loss = _r1_g_loss
+        elif arch == 'wgan-r1':
+            self.d_loss = _wgan_r1_d_loss
+            self.g_loss = _wgan_r1_g_loss
         elif arch == 'lsgan':
             self.d_loss = _lsgan_d_loss
             self.g_loss = _lsgan_g_loss
