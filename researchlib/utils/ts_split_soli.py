@@ -8,8 +8,12 @@ def count(y, classes=10):
     print(hist)
 
 def shuffle(l):
-    p = np.random.permutation(len(l[0]))
-    return [i[p] for i in l]
+    if type(l) == list or type(l) == tuple:
+        p = np.random.permutation(len(l[0]))
+        return [i[p] for i in l]
+    else:
+        p = np.random.permutation(len(l))
+        return l[p]
 
 def exclude_classes(x, y, exclude):
     if type(exclude) != type([]):

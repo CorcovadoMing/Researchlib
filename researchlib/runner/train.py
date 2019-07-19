@@ -133,7 +133,8 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, conditio
     auxout.append(output)
     
     # Padding target (local copy, no need to remove), DIRTY TRICK DON'T MODIFIED IT!!
-    while len(kwargs['target']) != len(auxout):
+    # This hack just apply on GAN
+    while type(_model) == GANModel and len(kwargs['target']) != len(auxout):
         kwargs['target'] = kwargs['target'] + [None]
         kwargs['keep_y_shape'] = kwargs['keep_y_shape'] + [True]
         kwargs['keep_x_shape'] = kwargs['keep_x_shape'] + [True]
@@ -143,7 +144,11 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type, conditio
     loss = 0
     auxout = [i if j else i.view(i.size(0), -1) for i, j in zip(auxout, kwargs['keep_x_shape'])]
     if learning_type == 'supervise':
+        while len(kwargs['target']) != len(kwargs['keep_y_shape']):
+            kwargs['keep_y_shape'].append(kwargs['keep_y_shape'][-1])
         kwargs['target'] = [i if j else i.view(i.size(0), -1) for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])]
+        if len(kwargs['target']) > len(auxout):
+            kwargs['target'] = [kwargs['target']]
         for i in range(len(auxout)):
             if kwargs['mixup_alpha'] != 0:
                 if not kwargs['keep_y_shape'][i]:

@@ -192,7 +192,6 @@ def _process_type(self, data_pack, inputs):
     if type(target) != list and type(target) != tuple: target = [target]
     
     if type(data[0]) != torch.Tensor: data, target = [torch.from_numpy(i) for i in data], [torch.from_numpy(i) for i in target]
-    
     return data, target
     
     
@@ -209,6 +208,8 @@ def _process_data(self, data, target, augmentor, mixup_alpha):
     if augmentor: data, target = augmentor.on(data, target)
 
     # Target type refine
+    while len(target) != len(self.require_long_):
+        self.require_long_.append(self.require_long_[-1])
     target = [i.long() if j else i for i, j in zip(target, self.require_long_)]
     
     # GPU

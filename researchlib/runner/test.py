@@ -42,6 +42,9 @@ def test_fn(**kwargs):
             
             auxout = [i if j else i.view(i.size(0), -1) for i, j in zip(auxout, kwargs['keep_x_shape'])]
             kwargs['target'] = [i if j else i.view(i.size(0), -1) for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])]
+            
+            if len(kwargs['target']) > len(auxout):
+                kwargs['target'] = [kwargs['target']]
     
             for i in range(len(auxout)):
                 test_loss += kwargs['loss_fn'][i](auxout[i], kwargs['target'][i]).item()
