@@ -8,6 +8,7 @@ from torch.autograd import Function
 from torch.nn import init
 from math import sqrt
 import random
+import numpy as np
 
 class EqualLR:
     def __init__(self, name):
@@ -285,8 +286,13 @@ class StyledConvBlock(nn.Module):
         initial=False,
         upsample=False,
         fused=False,
+        id=0
     ):
         super().__init__()
+        
+        self.id = id
+        if self.id == 0:
+            initial = True
 
         if initial:
             self.conv1 = ConstantInput(in_channel)
@@ -325,17 +331,23 @@ class StyledConvBlock(nn.Module):
         self.lrelu2 = nn.LeakyReLU(0.2)
 
     def forward(self, x):
-        input, style = x
+        input, style, cross_point = x
+        if cross_point == -1:
+            _style = style
+        elif self.id < cross_point:
+            _style = style[:int(style.size(0)/2)]
+        elif self.id >= cross_point:
+            _style = style[int(style.size(0)/2):]
         out = self.conv1(input)
         out = self.noise1(out)
         out = self.lrelu1(out)
-        out = self.adain1(out, style)
+        out = self.adain1(out, _style)
 
         out = self.conv2(out)
         out = self.noise2(out)
         out = self.lrelu2(out)
-        out = self.adain2(out, style)
-        return (out, style)
+        out = self.adain2(out, _style)
+        return (out, style, cross_point)
 
 
 class Generator(nn.Module):
@@ -344,6 +356,8 @@ class Generator(nn.Module):
         
         if mixing_regularization:
             self.multi_sample = 2
+        else:
+            self.multi_sample = 1
         
         self.truncate = truncate
         
@@ -366,27 +380,56 @@ class Generator(nn.Module):
             nn.LeakyReLU(0.2)
         ])
         
-        self.main = nn.Sequential(*[
-            StyledConvBlock(512, 512, 3, 1, initial=True),  # 4
-            StyledConvBlock(512, 512, 3, 1, upsample=True),  # 8
-            StyledConvBlock(512, 256, 3, 1, upsample=True),  # 16
-            StyledConvBlock(256, 256, 3, 1, upsample=True),  # 32
-            StyledConvBlock(256, 128, 3, 1, upsample=True),  # 64
-            StyledConvBlock(128, 64, 3, 1, upsample=True, fused=True)  # 128
-        ])
+        blocks = []
+        resolution = 4 # constant
+        in_dim, out_dim = 512, 512
+        for i in range(6): # 2^(8-2) = 128
+            if i > 0:
+                resolution *= 2
+            in_dim = out_dim
+            if i != 0 and i % 2 == 0:
+                out_dim /= 2
+            if resolution == 128:
+                out_dim /= 2
+                fused = True
+            else:
+                fused = False
+            print(in_dim, out_dim, resolution)
+            blocks.append(StyledConvBlock(int(in_dim), int(out_dim), 3, 1, upsample=True, fused=fused, id=i))
+        
+        self.mixing_max_range = 6+1
+        
+#         self.main = nn.Sequential(*[
+#             StyledConvBlock(512, 512, 3, 1, initial=True, style=1),  # 4
+#             StyledConvBlock(512, 512, 3, 1, upsample=True, style=1),  # 8
+#             StyledConvBlock(512, 256, 3, 1, upsample=True, style=1),  # 16
+#             StyledConvBlock(256, 256, 3, 1, upsample=True, style=2),  # 32
+#             StyledConvBlock(256, 128, 3, 1, upsample=True, style=2),  # 64
+#             StyledConvBlock(128, 64, 3, 1, upsample=True, fused=True, style=2)  # 128
+#         ])
+        self.main = nn.Sequential(*blocks)
         
         self.out = EqualConv2d(64, 3, 1)
         self.tanh = nn.Tanh()
 
-    def forward(self, input):
-        input = self.projection(input)
-        print(input.shape)
-        w_bar = torch.mean(input, dim=-1).unsqueeze(-1)
-        print(w_bar.shape)
-        input = w_bar + self.truncate * (w_bar - input)
+    def _truncat_trick(self, w, truncate):
+        w_bar = torch.mean(w, dim=-1).unsqueeze(-1)
+        return w_bar + truncate * (w_bar - w)
         
-        input, _ = self.main((input, input))
-        return self.tanh(self.out(input))
+    def forward(self, input):
+        if self.multi_sample > 1:
+            w1, w2 = input[:int(input.size(0)/self.multi_sample)], input[int(input.size(0)/self.multi_sample):]
+            w1, w2 = self.projection(w1), self.projection(w2)
+            w1 = self._truncat_trick(w1, self.truncate)
+            w2 = self._truncat_trick(w2, self.truncate)
+            out = torch.cat([w1, w2], dim=0)
+            cross_point = np.random.randint(0, self.mixing_max_range)
+            out, _, _ = self.main((w1, out, cross_point))
+        else:
+            out = self.projection(input)
+            out = self._truncat_trick(out, self.truncate)
+            out, _, _ = self.main((out, out, -1))
+        return self.tanh(self.out(out))
         
 
 # ============================================================================
