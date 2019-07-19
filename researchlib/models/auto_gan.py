@@ -339,9 +339,19 @@ class StyledConvBlock(nn.Module):
 
 
 class Generator(nn.Module):
-    def __init__(self):
+    def __init__(self, mixing_regularization=False, truncate=1):
         super().__init__()
+        
+        if mixing_regularization:
+            self.multi_sample = 2
+        
+        self.truncate = truncate
+        
         self.projection = nn.Sequential(*[
+            EqualLinear(512, 512),
+            nn.LeakyReLU(0.2),
+            EqualLinear(512, 512),
+            nn.LeakyReLU(0.2),
             EqualLinear(512, 512),
             nn.LeakyReLU(0.2),
             EqualLinear(512, 512),
@@ -370,6 +380,11 @@ class Generator(nn.Module):
 
     def forward(self, input):
         input = self.projection(input)
+        print(input.shape)
+        w_bar = torch.mean(input, dim=-1).unsqueeze(-1)
+        print(w_bar.shape)
+        input = w_bar + self.truncate * (w_bar - input)
+        
         input, _ = self.main((input, input))
         return self.tanh(self.out(input))
         

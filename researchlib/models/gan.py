@@ -7,6 +7,10 @@ class GANModel(nn.Module):
     def __init__(self, generator, discriminator, latent_vector_len=100, condition_vector_len=False, condition_onehot=False):
         super().__init__()
         self.generator = generator
+        try:
+            self.multi_sample = self.generator.multi_sample
+        except:
+            self.multi_sample = 1
         self.discriminator = discriminator
         self.condition_onehot = condition_onehot
         self.latent_vector_len = latent_vector_len
@@ -32,6 +36,10 @@ class GANModel(nn.Module):
         return condition_data.to(device)
     
     def sample(self, bs, condition_data=None, inference=True, requires_grad=False, given_noise=None, gpu=False, ema=False):
+        # Multiplier to batch size, for mixed-regularization, .., etc.,
+        bs = bs * self.multi_sample
+        
+        # Exponential moving average
         if ema:
             ema_generator = pickle.loads(pickle.dumps(self.generator))
             named_dict = dict(self.generator.named_parameters())
@@ -41,21 +49,28 @@ class GANModel(nn.Module):
         else:
             _generator = self.generator
     
+        # User-defined latent vector
         if given_noise is None:
             noise = torch.empty((bs, self.latent_vector_len)).normal_(0, 1)
         else:
             pass # TODO
+            
+        # Is conditional or unconditional
         if condition_data is not None:
             if inference: condition_data = self._parse_condition_data(condition_data, self.condition_onehot, self.g_condition_vector_len)
             noise = noise.to(condition_data.device)
             noise = torch.cat([noise, condition_data], dim=1)
+        
         if gpu:
             noise = noise.cuda()
+        
+        # If in inference, no gradient accumulation to generator
         if inference:
             with torch.no_grad():
                 fake = _generator(noise)
         else:
             fake = _generator(noise)
+        
         return fake if requires_grad else fake.detach()
     
     def forward_d(self, x, condition_data=None):
