@@ -412,7 +412,7 @@ class Generator(nn.Module):
             print(in_dim, out_dim, resolution)
             blocks.append(StyledConvBlock(int(in_dim), int(out_dim), 3, 1, upsample=True, fused=fused, id=i))
         
-        self.mixing_max_range = 6+1
+        self.mixing_max_range = 6
         
 #         self.main = nn.Sequential(*[
 #             StyledConvBlock(512, 512, 3, 1, initial=True, style=1),  # 4
@@ -436,7 +436,7 @@ class Generator(nn.Module):
             out = torch.cat([w1, w2], dim=0)
             # Mixing regularization ratio
             if np.random.rand() < self.mixing_ratio:
-                cross_point = np.random.randint(0, self.mixing_max_range)
+                cross_point = np.random.randint(1, self.mixing_max_range)
             else:
                 cross_point = 0
             out, _, _ = self.main((w1, out, cross_point))
