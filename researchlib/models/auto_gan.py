@@ -252,27 +252,38 @@ class ConvBlock(nn.Module):
 
 
 class Discriminator(nn.Module):
-    def __init__(self, fused=True):
+    def __init__(self, fused=True, pack=1):
         super().__init__()
-
+        self.pack = pack
+        
         self.conv = nn.Sequential(
             *[
-                EqualConv2d(6, 32, 1),
+                EqualConv2d(3, 32, 1),
                 ConvBlock(32, 64, 3, 1, downsample=True, fused=fused),  # 128
                 ConvBlock(64, 128, 3, 1, downsample=True, fused=fused),  # 64
                 ConvBlock(128, 256, 3, 1, downsample=True),  # 32
                 ConvBlock(256, 256, 3, 1, downsample=True),  # 16
                 ConvBlock(256, 512, 3, 1, downsample=True),  # 8
-                ConvBlock(512, 512, 3, 1, 4, 0),
-                layer.Reshape((-1, 512))
             ]
         )
-        self.linear = EqualLinear(512, 1)
+        
+        self.linear = nn.Sequential(
+            *[
+                ConvBlock(513, 512, 3, 1, 4, 0),
+                layer.Reshape((-1, 512)),
+                EqualLinear(512, 1)
+            ]
+        )
+        
         
     def forward(self, input):
         bs, ch, w, h = input.shape
-        input = input.reshape(bs//2, ch*2, w, h)
+        input = input.reshape(bs//self.pack, ch*self.pack, w, h)
         out = self.conv(input)
+        out_std = torch.sqrt(out.var(0, unbiased=False) + 1e-8)
+        mean_std = out_std.mean()
+        mean_std = mean_std.expand(out.size(0), 1, 4, 4)
+        out = torch.cat([out, mean_std], dim=1)
         return self.linear(out)
         
 class StyledConvBlock(nn.Module):
@@ -349,9 +360,12 @@ class StyledConvBlock(nn.Module):
         out = self.adain2(out, _style)
         return (out, style, cross_point)
 
+def _truncate_trick(w, truncate_psi):
+    w_bar = torch.mean(w, dim=-1).unsqueeze(-1)
+    return w_bar + truncate_psi * (w_bar - w)
 
 class Generator(nn.Module):
-    def __init__(self, mixing_regularization=False, truncate=1):
+    def __init__(self, mixing_regularization=False, truncate_psi=1):
         super().__init__()
         
         if mixing_regularization:
@@ -359,7 +373,7 @@ class Generator(nn.Module):
         else:
             self.multi_sample = 1
         
-        self.truncate = truncate
+        self.truncate_psi = truncate_psi
         
         self.projection = nn.Sequential(*[
             EqualLinear(512, 512),
@@ -411,23 +425,19 @@ class Generator(nn.Module):
         
         self.out = EqualConv2d(64, 3, 1)
         self.tanh = nn.Tanh()
-
-    def _truncat_trick(self, w, truncate):
-        w_bar = torch.mean(w, dim=-1).unsqueeze(-1)
-        return w_bar + truncate * (w_bar - w)
         
     def forward(self, input):
         if self.multi_sample > 1:
             w1, w2 = input[:int(input.size(0)/self.multi_sample)], input[int(input.size(0)/self.multi_sample):]
             w1, w2 = self.projection(w1), self.projection(w2)
-            w1 = self._truncat_trick(w1, self.truncate)
-            w2 = self._truncat_trick(w2, self.truncate)
+            w1 = _truncate_trick(w1, self.truncate_psi)
+            w2 = _truncate_trick(w2, self.truncate_psi)
             out = torch.cat([w1, w2], dim=0)
             cross_point = np.random.randint(0, self.mixing_max_range)
             out, _, _ = self.main((w1, out, cross_point))
         else:
             out = self.projection(input)
-            out = self._truncat_trick(out, self.truncate)
+            out = _truncate_trick(out, self.truncate_psi)
             out, _, _ = self.main((out, out, -1))
         return self.tanh(self.out(out))
         

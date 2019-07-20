@@ -386,8 +386,9 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
             metrics = [self.default_metrics] + metrics
 
         for epoch in range(1, epochs + 1):
-            if epoch % self._accum_freq == 0:
-                self._accum_gradient = min(self._accum_target_gradient, self._accum_gradient*2)
+#             if epoch % self._accum_freq == 0:
+#                 self._accum_gradient = min(self._accum_target_gradient, self._accum_gradient*2)
+            self._accum_gradient = self._accum_target_gradient
             
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(model=self.model, 

@@ -68,7 +68,7 @@ def train_fn(self, train=True, **kwargs):
         model = kwargs['model'].generator
         model_ffn = functools.partial(kwargs['model'].forward_g, re_discriminate=self._accum_step)
         loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, True, self._accum_step, self._accum_gradient, self.ema, **kwargs)
+        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, False, self._accum_step, self._accum_gradient, self.ema, **kwargs)
         _restore_grad(kwargs['model'].discriminator)
 
         # Record loss
