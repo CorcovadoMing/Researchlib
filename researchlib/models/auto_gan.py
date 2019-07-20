@@ -365,10 +365,11 @@ def _truncate_trick(w, truncate_psi):
     return w_bar + truncate_psi * (w_bar - w)
 
 class Generator(nn.Module):
-    def __init__(self, mixing_regularization=False, truncate_psi=1):
+    def __init__(self, mixing_ratio=0, truncate_psi=1):
         super().__init__()
         
-        if mixing_regularization:
+        self.mixing_ratio = mixing_ratio
+        if mixing_ratio > 0:
             self.multi_sample = 2
         else:
             self.multi_sample = 1
@@ -433,7 +434,11 @@ class Generator(nn.Module):
             w1 = _truncate_trick(w1, self.truncate_psi)
             w2 = _truncate_trick(w2, self.truncate_psi)
             out = torch.cat([w1, w2], dim=0)
-            cross_point = np.random.randint(0, self.mixing_max_range)
+            # Mixing regularization ratio
+            if np.random.rand() < self.mixing_ratio:
+                cross_point = np.random.randint(0, self.mixing_max_range)
+            else:
+                cross_point = 0
             out, _, _ = self.main((w1, out, cross_point))
         else:
             out = self.projection(input)
