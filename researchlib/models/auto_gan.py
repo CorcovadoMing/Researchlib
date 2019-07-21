@@ -284,7 +284,14 @@ class Discriminator(nn.Module):
         
         
     def forward(self, input):
+        # Make sure the batch size is grouped by pack
         bs, ch, w, h = input.shape
+        while bs < self.pack:
+            input = torch.cat([input, input], dim=0)
+            bs, ch, w, h = input.shape
+        input = input[:int((input.size(0)//self.pack)*self.pack)]
+        bs, ch, w, h = input.shape
+        
         input = input.reshape(bs//self.pack, ch*self.pack, w, h)
         out = self.conv(input)
         if self.minibatch_std > 0:
