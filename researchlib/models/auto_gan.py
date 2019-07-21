@@ -252,13 +252,20 @@ class ConvBlock(nn.Module):
 
 
 class Discriminator(nn.Module):
-    def __init__(self, fused=True, pack=1):
+    def __init__(self, fused=True, variety='none'):
         super().__init__()
-        self.pack = pack
+        
+        self.pack = 1
+        self.minibatch_std = 0
+        if variety == 'std':
+            self.minibatch_std = 1
+        elif variety == 'pack':
+            self.pack = 2
+        
         
         self.conv = nn.Sequential(
             *[
-                EqualConv2d(3, 32, 1),
+                EqualConv2d(3*self.pack, 32, 1),
                 ConvBlock(32, 64, 3, 1, downsample=True, fused=fused),  # 128
                 ConvBlock(64, 128, 3, 1, downsample=True, fused=fused),  # 64
                 ConvBlock(128, 256, 3, 1, downsample=True),  # 32
@@ -269,7 +276,7 @@ class Discriminator(nn.Module):
         
         self.linear = nn.Sequential(
             *[
-                ConvBlock(513, 512, 3, 1, 4, 0),
+                ConvBlock(512+self.minibatch_std, 512, 3, 1, 4, 0),
                 layer.Reshape((-1, 512)),
                 EqualLinear(512, 1)
             ]
@@ -280,10 +287,11 @@ class Discriminator(nn.Module):
         bs, ch, w, h = input.shape
         input = input.reshape(bs//self.pack, ch*self.pack, w, h)
         out = self.conv(input)
-        out_std = torch.sqrt(out.var(0, unbiased=False) + 1e-8)
-        mean_std = out_std.mean()
-        mean_std = mean_std.expand(out.size(0), 1, 4, 4)
-        out = torch.cat([out, mean_std], dim=1)
+        if self.minibatch_std > 0:
+            out_std = torch.sqrt(out.var(0, unbiased=False) + 1e-8)
+            mean_std = out_std.mean()
+            mean_std = mean_std.expand(out.size(0), 1, 4, 4)
+            out = torch.cat([out, mean_std], dim=1)
         return self.linear(out)
         
 class StyledConvBlock(nn.Module):
