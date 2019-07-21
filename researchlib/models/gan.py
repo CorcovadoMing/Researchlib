@@ -83,8 +83,10 @@ class GANModel(nn.Module):
         self.real_data.requires_grad = True
         if self.g_condition:
             self.fake_data = self.sample(x.size(0), condition_data=self.condition_data, inference=False, requires_grad=True, gpu=True)
+            self.fake_data_metrics = self.sample(x.size(0), condition_data=self.condition_data, inference=True, gpu=True, ema=self.ema)
         else:
             self.fake_data = self.sample(x.size(0), inference=False, requires_grad=True, gpu=True)
+            self.fake_data_metrics = self.sample(x.size(0), inference=True, gpu=True, ema=self.ema)
         
         if self.d_condition:
             self.fake = self.discriminator((self.fake_data, self.condition_data))

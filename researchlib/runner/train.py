@@ -40,6 +40,9 @@ def train_fn(self, train=True, **kwargs):
 
     # Training
     if type(kwargs['model']) == GANModel:
+        # For metrics
+        self.model.ema = ema
+        
         condition = kwargs['model'].d_condition or kwargs['model'].g_condition
 
         if ema:
@@ -53,7 +56,7 @@ def train_fn(self, train=True, **kwargs):
         model_ffn = kwargs['model'].forward_d
         loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][0], 'unsupervise', condition, train, True, False, self._accum_step, self._accum_gradient, self.ema, **kwargs)
-        for m in kwargs['metrics']: m.forward_d([self.model.fake_data, self.model.real_data])
+        for m in kwargs['metrics']: m.forward_d([self.model.fake_data_metrics, self.model.real_data])
         _restore_grad(kwargs['model'].generator)
         
         # Record loss
@@ -70,7 +73,7 @@ def train_fn(self, train=True, **kwargs):
         model_ffn = functools.partial(kwargs['model'].forward_g, re_discriminate=self._accum_step)
         loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in kwargs['loss_fn']]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn, kwargs['optimizer'][1], 'unsupervise', condition, train, False, False, self._accum_step, self._accum_gradient, self.ema, **kwargs)
-        for m in kwargs['metrics']: m.forward_g([self.model.fake_data, self.model.real_data])
+        for m in kwargs['metrics']: m.forward_g([self.model.fake_data_metrics, self.model.real_data])
         _restore_grad(kwargs['model'].discriminator)
 
         # Record loss
