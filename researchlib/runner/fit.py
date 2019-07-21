@@ -437,16 +437,11 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                     label_text.value = f'Epoch: {self.epoch}, G Loss: {g_loss_desc:.4f}, D Loss: {d_loss_desc:.4f}, Iter: ({batch_idx+1}/{total_iteration}:{desc_current}/{self._accum_gradient})'
                 else:
                     label_text.value = 'Epoch: ' + str(self.epoch) + ', Loss: ' + str((sum(loss_history)/len(loss_history)).numpy())
-
-                            
+            
                 iteration_break -= 1
                 if iteration_break == 0:
                     break
-                
-                #is_score = self.model.matrics()
-                is_score = 0
-            
-            history.log(epoch, inception_score=is_score) # TODO
+                        
             history.log(epoch, norm=_list_avg(norm))
             if _gan:
                 history.log(epoch, g_lr=[i['lr'] for i in self.optimizer[1].param_groups][-1])
@@ -470,6 +465,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                 history.log(epoch, train_acc=self.history_.records['train_acc'][-1])
             except:
                 pass
+            if _gan:
+                history.log(epoch, inception_score=self.history_.records['train_inception_score'][-1])
             
             for callback_func in callbacks:
                 callback_func.on_epoch_end(model=self.model, 

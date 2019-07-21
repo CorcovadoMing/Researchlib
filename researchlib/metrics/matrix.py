@@ -6,6 +6,12 @@ class Matrix:
     
     def forward(self, loss_input):
         pass
+        
+    def forward_g(self, loss_input):
+        pass
+    
+    def forward_d(self, loss_input):
+        pass
     
     def output(self):
         pass

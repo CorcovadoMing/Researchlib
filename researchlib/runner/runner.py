@@ -125,7 +125,10 @@ class Runner:
         # Model
         self.model = model
         self.multigpu = multigpu
-        if type(model) == GANModel: self.loss_fn[0].set_model(self.model)        
+        if type(model) == GANModel: 
+            self.loss_fn[0].set_model(self.model)
+            self.default_metrics = InceptionScore()
+        
         if self.multigpu: self.model = DataParallel(self.model)
     
         if optimizer is not None: self.set_optimizer(optimizer)
