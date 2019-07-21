@@ -321,7 +321,6 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
         display(gan_out)
         gan_canvas = hl.Canvas()
 
-
     gpu_mem_monitor = Output()
     gpu_utils_monitor = Output()
     log = Output()
@@ -382,8 +381,8 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
     self.preload_gpu()
     
     try:
-        if self.default_metrics:
-            metrics = [self.default_metrics] + metrics
+        if len(self.default_metrics):
+            metrics = self.default_metrics + metrics
 
         for epoch in range(1, epochs + 1):
 #             if epoch % self._accum_freq == 0:
@@ -461,12 +460,15 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
 
             self.history_.add(loss_records, prefix='train')
             self.history_ += matrix_records
+            
             try:
                 history.log(epoch, train_acc=self.history_.records['train_acc'][-1])
             except:
                 pass
+            
             if _gan:
                 history.log(epoch, inception_score=self.history_.records['train_inception_score'][-1])
+                history.log(epoch, fid=self.history_.records['train_fid'][-1])
             
             for callback_func in callbacks:
                 callback_func.on_epoch_end(model=self.model, 
@@ -533,7 +535,7 @@ def _fit(self, epochs, lr, augmentor, mixup_alpha, metrics, callbacks, _id, self
                     loss_canvas.draw_plot([history["train_loss"], history['val_loss']])            
             with matrix_live_plot:
                 if _gan:
-                    matrix_canvas.draw_plot([history['inception_score']])
+                    matrix_canvas.draw_plot([history['inception_score'], history['fid']])
                 else:
                     matrix_canvas.draw_plot([history['train_acc'], history['val_acc']])
             with lr_plot:

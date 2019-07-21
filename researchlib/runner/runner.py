@@ -58,9 +58,6 @@ class Runner:
         
         self.tester = test_fn
         
-        self.default_metrics = None
-        
-        
         # Assign loss function
         # 
         # self.loss_fn
@@ -72,7 +69,7 @@ class Runner:
         self.require_long_ = []
         self.keep_x_shape_ = []
         self.keep_y_shape_ = []
-        self.default_metrics = None
+        self.default_metrics = []
         # --------------------------------------------------------------------------------------------------------------------------------
         def _process_loss_fn(loss_fn):
             if type(loss_fn) == type({}):
@@ -83,17 +80,19 @@ class Runner:
         
         if type(loss_fn) == type([]):
             for lf in loss_fn:
-                _loss_fn, require_long_, keep_x_shape_, keep_y_shape_, self.default_metrics = _process_loss_fn(lf)
+                _loss_fn, require_long_, keep_x_shape_, keep_y_shape_, _default_metrics = _process_loss_fn(lf)
                 self.loss_fn.append(_loss_fn)
                 self.require_long_ += require_long_
                 self.keep_x_shape_ += keep_x_shape_
                 self.keep_y_shape_ += keep_y_shape_
+                self.default_metrics.append(_default_metrics)
         else:
-            _loss_fn, require_long_, keep_x_shape_, keep_y_shape_, self.default_metrics = _process_loss_fn(loss_fn)
+            _loss_fn, require_long_, keep_x_shape_, keep_y_shape_, _default_metrics = _process_loss_fn(loss_fn)
             self.loss_fn.append(_loss_fn)
             self.require_long_ += require_long_
             self.keep_x_shape_ += keep_x_shape_
             self.keep_y_shape_ += keep_y_shape_
+            self.default_metrics.append(_default_metrics)
         # --------------------------------------------------------------------------------------------------------------------------------
         
         
@@ -127,7 +126,7 @@ class Runner:
         self.multigpu = multigpu
         if type(model) == GANModel: 
             self.loss_fn[0].set_model(self.model)
-            self.default_metrics = InceptionScore()
+            self.default_metrics = [InceptionScore(), FID()]
         
         if self.multigpu: self.model = DataParallel(self.model)
     
@@ -237,7 +236,7 @@ class Runner:
     def validate(self, metrics=[], callbacks=[]):
         self.preload_gpu()
         try:
-            if self.default_metrics: metrics = [self.default_metrics] + metrics
+            if len(self.default_metrics): metrics = self.default_metrics + metrics
             loss_records, matrix_records = self.tester(model=self.model, 
                                                     test_loader=self.test_loader, 
                                                     loss_fn=self.loss_fn, 
