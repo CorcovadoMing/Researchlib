@@ -18,9 +18,10 @@ class GymEnv(Env):
         self.cache = None
         return self.env.reset()
     
-    def render(self):
+    def render(self, title=None):
         if self.cache is None:
             self.cache = plt.imshow(self.env.render(mode='rgb_array'))
+        plt.title(str(title))
         self.cache.set_data(self.env.render(mode='rgb_array'))
         display.display(plt.gcf())
         display.clear_output(wait=True)
