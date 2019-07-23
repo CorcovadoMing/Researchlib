@@ -380,9 +380,10 @@ def _truncate_trick(w, truncate_psi):
     return w_bar + truncate_psi * (w_bar - w)
 
 class Generator(nn.Module):
-    def __init__(self, mixing_ratio=0, truncate_psi=1):
+    def __init__(self, mixing_ratio=0, truncate_psi=1, mapping_layers=8):
         super().__init__()
         
+        self.mapping_layers = mapping_layers
         self.mixing_ratio = mixing_ratio
         if mixing_ratio > 0:
             self.multi_sample = 2
@@ -391,24 +392,11 @@ class Generator(nn.Module):
         
         self.truncate_psi = truncate_psi
         
+        self.latent_norm = PixelNorm()
         self.projection = nn.Sequential(*[
             EqualLinear(512, 512),
             nn.LeakyReLU(0.2),
-            EqualLinear(512, 512),
-            nn.LeakyReLU(0.2),
-            EqualLinear(512, 512),
-            nn.LeakyReLU(0.2),
-            EqualLinear(512, 512),
-            nn.LeakyReLU(0.2),
-            EqualLinear(512, 512),
-            nn.LeakyReLU(0.2),
-            EqualLinear(512, 512),
-            nn.LeakyReLU(0.2),
-            EqualLinear(512, 512),
-            nn.LeakyReLU(0.2),
-            EqualLinear(512, 512),
-            nn.LeakyReLU(0.2)
-        ])
+        ]*self.mapping_layers)
         
         blocks = []
         resolution = 4 # constant
@@ -445,6 +433,7 @@ class Generator(nn.Module):
     def forward(self, input):
         if self.multi_sample > 1:
             w1, w2 = input[:int(input.size(0)/self.multi_sample)], input[int(input.size(0)/self.multi_sample):]
+            w1, w2 = self.latent_norm(w1), self.latent_norm(w2)
             w1, w2 = self.projection(w1), self.projection(w2)
             w1 = _truncate_trick(w1, self.truncate_psi)
             w2 = _truncate_trick(w2, self.truncate_psi)
@@ -456,7 +445,8 @@ class Generator(nn.Module):
                 cross_point = 0
             out, _, _ = self.main((w1, out, cross_point))
         else:
-            out = self.projection(input)
+            out = self.latent_norm(input)
+            out = self.projection(out)
             out = _truncate_trick(out, self.truncate_psi)
             out, _, _ = self.main((out, out, -1))
         return self.tanh(self.out(out))
