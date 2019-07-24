@@ -10,6 +10,7 @@ from ..search import *
 from ..ml import *
 from ..pipeline import *
 from ..vistool import *
+from ..datatool import *
 from ..wrapper import *
 from pynvml import *
 import seaborn as sns
