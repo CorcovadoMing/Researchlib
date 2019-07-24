@@ -9,7 +9,7 @@ from ..callbacks import *
 
 # -------------------------------------------------------
 from .adafactor import AdaFactor
-from .test import test_fn
+from .validate import validate_fn
 from .export import _Export
 from ..utils import _add_methods_from, _get_iteration
 from .save_load import _save_model, _save_optimizer, _load_model, _load_optimizer
@@ -56,7 +56,7 @@ class Runner:
         
         self.default_callbacks = CyclicalLR(_get_iteration(self.train_loader))
         
-        self.tester = test_fn
+        self.tester = validate_fn
         
         # Assign loss function
         # 

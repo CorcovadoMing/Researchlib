@@ -4,7 +4,7 @@ from .history import *
 from ..utils import *
 import torchtext
 
-def test_fn(**kwargs):
+def validate_fn(**kwargs):
     kwargs['model'].eval()
     test_loss = 0
     matrix_records = History()
