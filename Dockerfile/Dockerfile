@@ -74,3 +74,6 @@ RUN pip install -U pydicom
 COPY julia-1.1.1 /opt/julia
 RUN ln -s /opt/julia/bin/julia /bin
 RUN julia -e 'using Pkg; Pkg.add("IJulia")'
+
+# Tests
+RUN pip install -U yapf pylint pytest
