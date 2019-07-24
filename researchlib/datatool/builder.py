@@ -5,15 +5,22 @@ import re
 from imageio import imread
 import pandas as pd
 
+
 class _Builder:
     def __init__(self):
         pass
-    
+
     def build(self, name: str, path: str, parse_format: str) -> None:
         os.makedirs(name, exist_ok=True)
 
-        glob_pattern = os.path.join(path, parse_format.replace('{label}', '*').replace('{data}', '*'))
-        match_pattern = os.path.join(path, parse_format.replace('{label}', '(.+)').replace('{data}', '(.+)')).replace('*', '.+')
+        glob_pattern = os.path.join(
+            path,
+            parse_format.replace('{label}', '*').replace('{data}', '*'))
+        match_pattern = os.path.join(
+            path,
+            parse_format.replace('{label}',
+                                 '(.+)').replace('{data}',
+                                                 '(.+)')).replace('*', '.+')
 
         data_position = parse_format.find('{data}')
         label_position = parse_format.find('{label}')
