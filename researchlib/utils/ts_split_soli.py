@@ -1,11 +1,13 @@
 import numpy as np
 
+
 def count(y, classes=10):
-    hist = [0 for _ in range(classes+1)]
+    hist = [0 for _ in range(classes + 1)]
     for i in y:
         for j in set(i.reshape(100)):
             hist[int(j)] += 1
     print(hist)
+
 
 def shuffle(l):
     if type(l) == list or type(l) == tuple:
@@ -14,6 +16,7 @@ def shuffle(l):
     else:
         p = np.random.permutation(len(l))
         return l[p]
+
 
 def exclude_classes(x, y, exclude):
     if type(exclude) != type([]):
@@ -54,8 +57,8 @@ def constraint_samples(x, y, num, c):
         new_x.append(x[i])
         new_y.append(y[i])
     return new_x, new_y
-        
-    
+
+
 def split_class(x, y, target_class):
     org_x, org_y, tag_x, tag_y = [], [], [], []
     for i in range(len(x)):
@@ -66,6 +69,7 @@ def split_class(x, y, target_class):
             org_x.append(x[i])
             org_y.append(y[i])
     return org_x, org_y, tag_x, tag_y
+
 
 def same_sampling(x, y, num):
     new_x, new_y = [], []
@@ -83,7 +87,7 @@ def same_sampling(x, y, num):
             new_y.append(y[i])
     return new_x, new_y
 
+
 def over_sampling(x, y, num):
-    ratio = int(num/len(x))
-    return x*ratio, y*ratio
-            
+    ratio = int(num / len(x))
+    return x * ratio, y * ratio

@@ -1,6 +1,6 @@
-from .builder import _Builder
+from .parser import _Parser
 
 
 class _Datatool:
     def __init__(self):
-        self.builder = _Builder()
+        self.parser = _Parser()

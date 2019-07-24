@@ -28,11 +28,19 @@ class QRNNLayer_(nn.Module):
         - output (seq_len, batch, hidden_size): tensor containing the output of the QRNN for each timestep.
         - h_n (batch, hidden_size): tensor containing the hidden state for t=seq_len
     """
-
-    def __init__(self, input_size, hidden_size=None, save_prev_x=False, zoneout=0, window=1, output_gate=True, use_cuda=True):
+    def __init__(self,
+                 input_size,
+                 hidden_size=None,
+                 save_prev_x=False,
+                 zoneout=0,
+                 window=1,
+                 output_gate=True,
+                 use_cuda=True):
         super().__init__()
 
-        assert window in [1, 2], "This QRNN implementation currently only handles convolutional window of size 1 or size 2"
+        assert window in [
+            1, 2
+        ], "This QRNN implementation currently only handles convolutional window of size 1 or size 2"
         self.window = window
         self.input_size = input_size
         self.hidden_size = hidden_size if hidden_size else input_size
@@ -43,7 +51,9 @@ class QRNNLayer_(nn.Module):
         self.use_cuda = use_cuda
 
         # One large matmul with concat is faster than N small matmuls and no concat
-        self.linear = nn.Linear(self.window * self.input_size, 3 * self.hidden_size if self.output_gate else 2 * self.hidden_size)
+        self.linear = nn.Linear(
+            self.window * self.input_size,
+            3 * self.hidden_size if self.output_gate else 2 * self.hidden_size)
 
     def reset(self):
         # If you are saving the previous value of x, you should call this when starting with a new state
@@ -58,7 +68,8 @@ class QRNNLayer_(nn.Module):
         elif self.window == 2:
             # Construct the x_{t-1} tensor with optional x_{-1}, otherwise a zeroed out value for x_{-1}
             Xm1 = []
-            Xm1.append(self.prevX if self.prevX is not None else X[:1, :, :] * 0)
+            Xm1.append(self.prevX if self.prevX is not None else X[:1, :, :] *
+                       0)
             # Note: in case of len(X) == 1, X[:-1, :, :] results in slicing of empty tensor == bad
             if len(X) > 1:
                 Xm1.append(X[:-1, :, :])
@@ -83,7 +94,9 @@ class QRNNLayer_(nn.Module):
         # If an element of F is zero, that means the corresponding neuron keeps the old value
         if self.zoneout:
             if self.training:
-                mask = Variable(F.data.new(*F.size()).bernoulli_(1 - self.zoneout), requires_grad=False)
+                mask = Variable(F.data.new(*F.size()).bernoulli_(1 -
+                                                                 self.zoneout),
+                                requires_grad=False)
                 F = F * mask
             else:
                 F *= 1 - self.zoneout
@@ -133,17 +146,27 @@ class QRNN(torch.nn.Module):
         - output (seq_len, batch, hidden_size): tensor containing the output of the QRNN for each timestep.
         - h_n (layers, batch, hidden_size): tensor containing the hidden state for t=seq_len
     """
-
-    def __init__(self, input_size, hidden_size,
-                 num_layers=1, bias=True, batch_first=False,
-                 dropout=0, bidirectional=False, layers=None, **kwargs):
+    def __init__(self,
+                 input_size,
+                 hidden_size,
+                 num_layers=1,
+                 bias=True,
+                 batch_first=False,
+                 dropout=0,
+                 bidirectional=False,
+                 layers=None,
+                 **kwargs):
         assert bidirectional == False, 'Bidirectional QRNN is not yet supported'
         assert batch_first == False, 'Batch first mode is not yet supported'
         assert bias == True, 'Removing underlying bias is not yet supported'
 
         super().__init__()
 
-        self.layers = torch.nn.ModuleList(layers if layers else [QRNNLayer_(input_size if l == 0 else hidden_size, hidden_size, **kwargs) for l in range(num_layers)])
+        self.layers = torch.nn.ModuleList(layers if layers else [
+            QRNNLayer_(input_size if l ==
+                       0 else hidden_size, hidden_size, **kwargs)
+            for l in range(num_layers)
+        ])
 
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -165,9 +188,14 @@ class QRNN(torch.nn.Module):
             next_hidden.append(hn)
 
             if self.dropout != 0 and i < len(self.layers) - 1:
-                input = torch.nn.functional.dropout(input, p=self.dropout, training=self.training, inplace=False)
+                input = torch.nn.functional.dropout(input,
+                                                    p=self.dropout,
+                                                    training=self.training,
+                                                    inplace=False)
 
-        next_hidden = torch.cat(next_hidden, 0).view(self.num_layers, *next_hidden[0].size()[-2:])
+        next_hidden = torch.cat(next_hidden,
+                                0).view(self.num_layers,
+                                        *next_hidden[0].size()[-2:])
 
         return input, next_hidden
 
@@ -198,10 +226,14 @@ if __name__ == '__main__':
     Z, _ = qrnn(X)
 
     diff = (Y - Z).sum().data[0]
-    print('Total difference between QRNN(use_cuda=True) and QRNN(use_cuda=False) results:', diff)
+    print(
+        'Total difference between QRNN(use_cuda=True) and QRNN(use_cuda=False) results:',
+        diff)
     assert diff < 1e-5, 'CUDA and non-CUDA QRNN layers return different results'
 
     from torch.autograd import gradcheck
-    inputs = [X,]
+    inputs = [
+        X,
+    ]
     test = gradcheck(QRNNLayer(hidden_size, hidden_size).cuda(), inputs)
     print(test)

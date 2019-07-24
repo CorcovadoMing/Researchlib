@@ -9,6 +9,7 @@ def _merge_dict(x, y):
             result[i] = y[i]
     return result
 
+
 def get_reg_out(model_):
     result = {}
     for i, j in model_.named_children():

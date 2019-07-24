@@ -2,6 +2,7 @@ from scipy.stats import spearmanr
 from .matrix import *
 import numpy as np
 
+
 class Correlation(Matrix):
     def __init__(self, difference=True, categorical=False):
         super().__init__()
@@ -9,7 +10,7 @@ class Correlation(Matrix):
         self.true = None
         self.categorical = categorical
         self.difference = difference
-        
+
     def forward(self, loss_input):
         if len(loss_input) == 5:
             # mixup (INCOMPLETE!!)
@@ -32,11 +33,11 @@ class Correlation(Matrix):
                 self.true = y_true
             else:
                 self.true = np.concatenate((self.true, y_true))
-                
+
     def output(self):
         correlation = spearmanr(self.pred, self.true)[0]
         return {'correlation': correlation}
-    
+
     def reset(self):
         self.pred = None
         self.true = None

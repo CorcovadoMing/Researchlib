@@ -1,5 +1,6 @@
 from torch import nn
 
+
 class Reg(nn.Module):
     def __init__(self, f, group, get='weight'):
         super().__init__()
@@ -8,7 +9,7 @@ class Reg(nn.Module):
         self.reg_store = []
         self.reg_group = group
         self.hook = f.register_forward_hook(self.hook_fn)
-    
+
     def hook_fn(self, module, input, output):
         if module.training:
             if self.get == 'weight':

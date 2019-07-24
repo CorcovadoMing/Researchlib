@@ -17,11 +17,13 @@ from .ts_aug_soli import *
 # Sampler
 from .sampler import ImbalancedSampler
 
+
 class text(object):
-    AGNews=_AGNews
-    
+    AGNews = _AGNews
+
+
 class vision(object):
-    MNIST=_MNIST
-    KMNIST=_KMNIST
-    FashionMNIST=_FashionMNIST
-    CIFAR10=_CIFAR10
+    MNIST = _MNIST
+    KMNIST = _KMNIST
+    FashionMNIST = _FashionMNIST
+    CIFAR10 = _CIFAR10

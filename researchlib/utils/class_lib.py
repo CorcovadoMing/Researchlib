@@ -4,10 +4,13 @@ def _add_methods_from(*modules):
             for method in getattr(module, "__methods__"):
                 setattr(Class, method.__name__, method)
         return Class
+
     return decorator
+
 
 def _register_method(methods):
     def register_method(method):
         methods.append(method)
-        return method # Unchanged
+        return method  # Unchanged
+
     return register_method

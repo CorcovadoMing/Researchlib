@@ -3,6 +3,7 @@ calculation of pairwise distance, and return condensed result, i.e. we omit the 
 '''
 import torch
 
+
 def pairwise_distance(data1, data2=None):
     r'''
     using broadcast mechanism to calculate pairwise ecludian distance of data
@@ -11,7 +12,7 @@ def pairwise_distance(data1, data2=None):
     then a simple elementwise operation of A and B will handle the pairwise operation of points represented by data
     '''
     if data2 is None:
-        data2 = data1 
+        data2 = data1
 
     data1, data2 = data1.cuda(), data2.cuda()
 
@@ -21,16 +22,19 @@ def pairwise_distance(data1, data2=None):
     #1*N*M
     B = data2.unsqueeze(dim=0)
 
-    dis = (A-B)**2.0
+    dis = (A - B)**2.0
     #return N*N matrix for pairwise distance
     dis = dis.sum(dim=-1).squeeze()
     return dis
 
-def group_pairwise(X, groups, device=0, fun=lambda r,c: pairwise_distance(r, c)):
+
+def group_pairwise(X,
+                   groups,
+                   device=0,
+                   fun=lambda r, c: pairwise_distance(r, c)):
     group_dict = {}
     for group_index_r, group_r in enumerate(groups):
         for group_index_c, group_c in enumerate(groups):
             R, C = X[group_r], X[group_c]
             group_dict[(group_index_r, group_index_c)] = fun(R, C)
     return group_dict
-

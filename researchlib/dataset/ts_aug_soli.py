@@ -6,6 +6,7 @@ import numpy as np
 # Augmentation for Soli Radar (bs, ts, 2, 32, 32)
 #-------------------------------------
 
+
 def shift(x_, y_, s_min=-10, s_max=10):
     '''
         Horizontal Shift (Doppler Range Shift)
@@ -19,9 +20,10 @@ def shift(x_, y_, s_min=-10, s_max=10):
             x[:, :, :, :-ratio, :] = x[:, :, :, ratio:, :]
             x[:, :, :, -ratio:, :] = 0
         else:
-            x[:, :, :, -ratio:, :] = x[:, :, :, :ratio, :] 
+            x[:, :, :, -ratio:, :] = x[:, :, :, :ratio, :]
             x[:, :, :, :-ratio, :] = 0
         return x, y_
+
 
 def noise(x_, y_, n_min=1, n_max=15, p=0.25):
     '''
@@ -32,7 +34,8 @@ def noise(x_, y_, n_min=1, n_max=15, p=0.25):
     m = np.random.random(x.shape)
     m = m < p
     n = n * m
-    return x+n, y_
+    return x + n, y_
+
 
 def gain(x_, y_, s_min=0.75, s_max=1.25):
     '''
@@ -40,7 +43,8 @@ def gain(x_, y_, s_min=0.75, s_max=1.25):
     '''
     x = copy.deepcopy(x_)
     ratio = np.random.uniform(s_min, s_max, 1)[0]
-    return x*ratio, y_
+    return x * ratio, y_
+
 
 def dropf(x_, y_, p=0.25):
     '''
@@ -50,7 +54,8 @@ def dropf(x_, y_, p=0.25):
     n = np.random.random(x.shape[1])
     m = n < p
     x[:, m, :, :, :] = 0
-    return x, y_ # y need to be manipulated?
+    return x, y_  # y need to be manipulated?
+
 
 def ssvi(x_, y_, s_min=2, s_max=4):
     '''
@@ -61,12 +66,13 @@ def ssvi(x_, y_, s_min=2, s_max=4):
     m = list(range(0, x.shape[1], s))
     return np.delete(x, m, 1), y_
 
+
 def ssvd(x_, y_, s_min=1, s_max=2):
     '''
         Sample Speed Variants (Decrease)
     '''
     s = np.random.randint(s_min, s_max, 1)[0]
-    d = int(x_.shape[1]/s)
+    d = int(x_.shape[1] / s)
     x_sh = list(x_.shape)
     x_sh[1] += d
     x = np.zeros(x_sh)
@@ -75,9 +81,9 @@ def ssvd(x_, y_, s_min=1, s_max=2):
     for i in range(x_.shape[1]):
         if i in m:
             if i == 0:
-                x[:, i+counter] = x_[:, i]
+                x[:, i + counter] = x_[:, i]
             else:
-                x[:, i+counter] = (x[:, i+counter-1]+x_[:, i])/2.
+                x[:, i + counter] = (x[:, i + counter - 1] + x_[:, i]) / 2.
             counter += 1
-        x[:, i+counter] = x_[:, i]
+        x[:, i + counter] = x_[:, i]
     return x, y_

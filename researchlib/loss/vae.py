@@ -2,11 +2,12 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
+
 class VAELoss(nn.Module):
     def __init__(self, arch='vanilla'):
         super().__init__()
         self.arch = arch
-    
+
     def forward(self, out, original):
         reconstruction, mu, logvar = out
         recons_loss = F.mse_loss(reconstruction, original)

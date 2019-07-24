@@ -19,43 +19,45 @@ from .spatial_transform import _SpatialTransform
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
 
+
 class layer(object):
     # Recurrent
-    LSTM=_LSTM
-    QRNN=_QRNN
-    
-    # Activator
-    Swish=_Swish
-    GeLU=_GeLU
-    
-    # DropBlock
-    DropBlock2d=_DropBlock2d
-    DropBlock3d=_DropBlock3d
-    
-    # Capsule Network
-    CapsuleMasked=_CapsuleMasked
-    RoutingCapsules=_RoutingCapsules
-    PrimaryCapsules=_PrimaryCapsules
-    
-    # Binary Network
-    BinarizeLinear=_BinarizeLinear 
-    BinarizeConv2d=_BinarizeConv2d
-    
-    # Variants Convolution
-    OctConv2d=_OctConv2d
-    
-    # Others
-    Norm=_Norm
-    AdaptiveConcatPool1d=_AdaptiveConcatPool1d
-    AdaptiveConcatPool2d=_AdaptiveConcatPool2d
-    PositionEncoding=_PositionEncoding
-    NoisyLinear=_NoisyLinear
+    LSTM = _LSTM
+    QRNN = _QRNN
 
-    Flatten=_Flatten
-    Reshape=_Reshape
-    
-    ConditionProjection=_ConditionProjection
-    SpatialTransform=_SpatialTransform
+    # Activator
+    Swish = _Swish
+    GeLU = _GeLU
+
+    # DropBlock
+    DropBlock2d = _DropBlock2d
+    DropBlock3d = _DropBlock3d
+
+    # Capsule Network
+    CapsuleMasked = _CapsuleMasked
+    RoutingCapsules = _RoutingCapsules
+    PrimaryCapsules = _PrimaryCapsules
+
+    # Binary Network
+    BinarizeLinear = _BinarizeLinear
+    BinarizeConv2d = _BinarizeConv2d
+
+    # Variants Convolution
+    OctConv2d = _OctConv2d
+
+    # Others
+    Norm = _Norm
+    AdaptiveConcatPool1d = _AdaptiveConcatPool1d
+    AdaptiveConcatPool2d = _AdaptiveConcatPool2d
+    PositionEncoding = _PositionEncoding
+    NoisyLinear = _NoisyLinear
+
+    Flatten = _Flatten
+    Reshape = _Reshape
+
+    ConditionProjection = _ConditionProjection
+    SpatialTransform = _SpatialTransform
+
 
 # Blocks
 from .block import block

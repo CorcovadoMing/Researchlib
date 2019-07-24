@@ -2,18 +2,19 @@ import numpy as np
 import random
 import torch
 
+
 class Augmentator:
     def __init__(self):
         self.someof = []
         self.someof_p = 0.5
         self.oneof = []
         self.oneof_p = 0.5
-    
+
     def on(self, x, y):
         x = [i.numpy() for i in x]
         y = [i.numpy() for i in y]
-        
-        # Apply on Probability        
+
+        # Apply on Probability
         if len(self.someof):
             p_list = np.random.uniform(0, 1, len(self.someof))
             for i, func in enumerate(self.someof):
@@ -30,7 +31,5 @@ class Augmentator:
 
         x = [torch.from_numpy(np.ascontiguousarray(i)).float() for i in x]
         y = [torch.from_numpy(np.ascontiguousarray(i)).float() for i in y]
-        
+
         return x, y
-        
-            

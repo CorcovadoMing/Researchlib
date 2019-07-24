@@ -3,6 +3,7 @@ import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+
 def get_context_idx(N):
     # generate the indeces of the N context points in a flattened image
     idx = random.sample(range(0, 784), N)
@@ -13,7 +14,9 @@ def get_context_idx(N):
 def generate_grid(h, w):
     rows = torch.linspace(0, 1, h, device=device)
     cols = torch.linspace(0, 1, w, device=device)
-    grid = torch.stack([cols.repeat(h, 1).t().contiguous().view(-1), rows.repeat(w)], dim=1)
+    grid = torch.stack(
+        [cols.repeat(h, 1).t().contiguous().view(-1),
+         rows.repeat(w)], dim=1)
     grid = grid.unsqueeze(0)
     return grid
 

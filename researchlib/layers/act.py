@@ -1,8 +1,15 @@
 import torch
 from torch import nn
 
+
 class ACTCell(nn.Module):
-    def __init__(self, base_cell, in_dim, hidden_dim, out_dim, max_ponder=100, epison=0.01):
+    def __init__(self,
+                 base_cell,
+                 in_dim,
+                 hidden_dim,
+                 out_dim,
+                 max_ponder=100,
+                 epison=0.01):
         super().__init__()
         self.in_dim = in_dim + 1
         self.out_dim = out_dim
@@ -12,12 +19,12 @@ class ACTCell(nn.Module):
         self.out_linear = nn.Linear(self.hidden_dim, self.out_dim)
         self.max_ponder = max_ponder
         self.epison = epison
-    
+
     def forward(self, x, hx, cx):
         # Initialize
         batch_size = x.size(0)
         ponder_count = 0
-        
+
         gx_acc = torch.zeros(batch_size, 1).cuda()
         halt_after = gx_acc > (1 - self.epison)
         aggregate_hx = torch.zeros(batch_size, self.hidden_dim).cuda()
@@ -29,7 +36,8 @@ class ACTCell(nn.Module):
             if ponder_count == 1:
                 binary_flag = 1 - binary_flag
 
-            hx, cx = self.base_cell(torch.cat((x, binary_flag), dim=1), (hx, cx))
+            hx, cx = self.base_cell(torch.cat((x, binary_flag), dim=1),
+                                    (hx, cx))
 
             # Gates
             gx = torch.sigmoid(self.ponder_linear(hx))
@@ -47,7 +55,6 @@ class ACTCell(nn.Module):
 
         return aggregate_hx, aggregate_cx, aggregate_out, ponder_count
 
-    
 
 class ACT(nn.Module):
     def __init__(self, in_dim, hidden_dim, out_dim):

@@ -2,6 +2,7 @@ from ..utils import *
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class MarginLoss(nn.Module):
     def __init__(self, size_average=True, loss_lambda=0.5):
         '''
@@ -20,7 +21,8 @@ class MarginLoss(nn.Module):
 
     def forward(self, inputs, labels):
         labels = to_one_hot(labels, 10).cuda()
-        L_k = labels * F.relu(self.m_plus - inputs)**2 + self.loss_lambda * (1 - labels) * F.relu(inputs - self.m_minus)**2
+        L_k = labels * F.relu(self.m_plus - inputs)**2 + self.loss_lambda * (
+            1 - labels) * F.relu(inputs - self.m_minus)**2
         L_k = L_k.sum(dim=1)
 
         if self.size_average:

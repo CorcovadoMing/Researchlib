@@ -2,14 +2,22 @@ import torch.nn as nn
 import math
 from ..layers import *
 
+
 def conv(ni, nf, ks=3, stride=1):
-    return nn.Conv2d(ni, nf, kernel_size=ks, stride=stride, padding=ks//2, bias=False)
+    return nn.Conv2d(ni,
+                     nf,
+                     kernel_size=ks,
+                     stride=stride,
+                     padding=ks // 2,
+                     bias=False)
+
 
 def bn1(planes):
     m = nn.BatchNorm1d(planes)
     m.weight.data.fill_(1)
     m.bias.data.zero_()
     return m
+
 
 def bn(planes, init_zero=False):
     m = nn.BatchNorm2d(planes)
@@ -57,7 +65,7 @@ class BottleneckFinal(nn.Module):
         self.bn1 = bn(planes)
         self.conv2 = conv(planes, planes, stride=stride)
         self.bn2 = bn(planes)
-        self.conv3 = conv(planes, planes*4, ks=1)
+        self.conv3 = conv(planes, planes * 4, ks=1)
         self.bn3 = bn(planes * 4)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -81,6 +89,7 @@ class BottleneckFinal(nn.Module):
 
         return out
 
+
 class BottleneckZero(nn.Module):
     expansion = 4
 
@@ -90,7 +99,7 @@ class BottleneckZero(nn.Module):
         self.bn1 = bn(planes)
         self.conv2 = conv(planes, planes, stride=stride)
         self.bn2 = bn(planes)
-        self.conv3 = conv(planes, planes*4, ks=1)
+        self.conv3 = conv(planes, planes * 4, ks=1)
         self.bn3 = bn(planes * 4, init_zero=True)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -116,6 +125,7 @@ class BottleneckZero(nn.Module):
 
         return out
 
+
 class Bottleneck(nn.Module):
     expansion = 4
 
@@ -125,7 +135,7 @@ class Bottleneck(nn.Module):
         self.bn1 = bn(planes)
         self.conv2 = conv(planes, planes, stride=stride)
         self.bn2 = bn(planes)
-        self.conv3 = conv(planes, planes*4, ks=1)
+        self.conv3 = conv(planes, planes * 4, ks=1)
         self.bn3 = bn(planes * 4)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
@@ -157,20 +167,38 @@ class ResNet(nn.Module):
         super().__init__()
         self.inplanes = 64
 
-        features = [conv(3, 64, ks=7, stride=2)
-            , bn(64) , nn.ReLU(inplace=True) , nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-            , self._make_layer(block, int(64*k), layers[0])
-            , self._make_layer(block, int(128*k), layers[1], stride=2)
-            , self._make_layer(block, int(256*k), layers[2], stride=2)
-            , self._make_layer(block, int(512*k), layers[3], stride=2)]
-        out_sz = int(512*k) * block.expansion
+        features = [
+            conv(3, 64, ks=7, stride=2),
+            bn(64),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            self._make_layer(block, int(64 * k), layers[0]),
+            self._make_layer(block, int(128 * k), layers[1], stride=2),
+            self._make_layer(block, int(256 * k), layers[2], stride=2),
+            self._make_layer(block, int(512 * k), layers[3], stride=2)
+        ]
+        out_sz = int(512 * k) * block.expansion
 
         if vgg_head:
-            features += [nn.AdaptiveAvgPool2d(3), Flatten()
-                , nn.Linear(out_sz*3*3, 4096), nn.ReLU(inplace=True), bn1(4096), nn.Dropout(0.25)
-                , nn.Linear(4096,   4096), nn.ReLU(inplace=True), bn1(4096), nn.Dropout(0.25)
-                , nn.Linear(4096, num_classes)]
-        else: features += [nn.AdaptiveAvgPool2d(1), Flatten(), nn.Linear(out_sz, num_classes)]
+            features += [
+                nn.AdaptiveAvgPool2d(3),
+                Flatten(),
+                nn.Linear(out_sz * 3 * 3, 4096),
+                nn.ReLU(inplace=True),
+                bn1(4096),
+                nn.Dropout(0.25),
+                nn.Linear(4096, 4096),
+                nn.ReLU(inplace=True),
+                bn1(4096),
+                nn.Dropout(0.25),
+                nn.Linear(4096, num_classes)
+            ]
+        else:
+            features += [
+                nn.AdaptiveAvgPool2d(1),
+                Flatten(),
+                nn.Linear(out_sz, num_classes)
+            ]
 
         self.features = nn.Sequential(*features)
 
@@ -183,26 +211,48 @@ class ResNet(nn.Module):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                conv(self.inplanes, planes*block.expansion, ks=1, stride=stride),
+                conv(self.inplanes,
+                     planes * block.expansion,
+                     ks=1,
+                     stride=stride),
                 bn(planes * block.expansion),
             )
 
         layers = []
         layers.append(block(self.inplanes, planes, stride, downsample))
         self.inplanes = planes * block.expansion
-        for i in range(1, blocks): layers.append(block(self.inplanes, planes))
+        for i in range(1, blocks):
+            layers.append(block(self.inplanes, planes))
         return nn.Sequential(*layers)
 
-    def forward(self, x): return self.features(x)
+    def forward(self, x):
+        return self.features(x)
 
 
-def bnf_resnet50 (): return ResNet(BottleneckFinal, [3, 4, 6, 3])
-def bnz_resnet50 (): return ResNet(BottleneckZero, [3, 4, 6, 3])
-def w5_resnet50 (): return ResNet(Bottleneck, [2, 3, 3, 2], k=1.5)
-def w25_resnet50(): return ResNet(Bottleneck, [3, 4, 4, 3], k=1.25)
-def w125_resnet50(): return ResNet(Bottleneck, [3, 4, 6, 3], k=1.125)
-def vgg_resnet34(): return ResNet(BasicBlock, [3, 4, 6, 3], vgg_head=True)
+def bnf_resnet50():
+    return ResNet(BottleneckFinal, [3, 4, 6, 3])
+
+
+def bnz_resnet50():
+    return ResNet(BottleneckZero, [3, 4, 6, 3])
+
+
+def w5_resnet50():
+    return ResNet(Bottleneck, [2, 3, 3, 2], k=1.5)
+
+
+def w25_resnet50():
+    return ResNet(Bottleneck, [3, 4, 4, 3], k=1.25)
+
+
+def w125_resnet50():
+    return ResNet(Bottleneck, [3, 4, 6, 3], k=1.125)
+
+
+def vgg_resnet34():
+    return ResNet(BasicBlock, [3, 4, 6, 3], vgg_head=True)
+
+
 def vgg_resnet50():
     model = ResNet(Bottleneck, [3, 4, 6, 3], vgg_head=True)
     return model
-

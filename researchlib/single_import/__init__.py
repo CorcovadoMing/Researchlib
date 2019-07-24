@@ -17,15 +17,14 @@ import seaborn as sns
 import subprocess
 
 sns.set()
-sns.set_style("whitegrid", {'axes.grid' : False})
+sns.set_style("whitegrid", {'axes.grid': False})
 
 nvmlInit()
 deviceCount = nvmlDeviceGetCount()
 for i in range(deviceCount):
     handle = nvmlDeviceGetHandleByIndex(i)
-    print("Using GPU", str(i)+":", nvmlDeviceGetName(handle).decode('utf-8'))
+    print("Using GPU", str(i) + ":", nvmlDeviceGetName(handle).decode('utf-8'))
 print("Driver:", nvmlSystemGetDriverVersion().decode('utf-8'))
-
 
 # out = subprocess.check_output("git branch -vv", shell=True)
 # print(out.decode('utf-8').strip())

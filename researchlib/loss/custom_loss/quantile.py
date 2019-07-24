@@ -1,6 +1,7 @@
 from torch import nn
 import torch
 
+
 class QuantileLoss(nn.Module):
     '''
         Quantile Loss gives different weighting on higher/lower prediction by gamma.
@@ -11,14 +12,8 @@ class QuantileLoss(nn.Module):
     def __init__(self, gamma=0.5):
         super().__init__()
         self.gamma = gamma
-        
+
     def forward(self, x, y):
         mae = torch.abs(y - x)
-        loss = torch.where(
-            x > y, 
-            (1 - self.gamma) * mae,
-            self.gamma * mae
-            )
+        loss = torch.where(x > y, (1 - self.gamma) * mae, self.gamma * mae)
         return loss.mean()
-        
-        

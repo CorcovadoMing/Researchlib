@@ -6,7 +6,7 @@ from imageio import imread
 import pandas as pd
 
 
-class _Builder:
+class _Parser:
     def __init__(self):
         pass
 

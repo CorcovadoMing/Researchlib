@@ -3,6 +3,7 @@ import torch.nn.functional as F
 from torch import nn
 from ..utils import *
 
+
 class NeuralProcess(nn.Module):
     def __init__(self):
         super().__init__()
@@ -21,7 +22,7 @@ class NeuralProcess(nn.Module):
         self.g_3 = nn.Linear(400, 400)
         self.g_4 = nn.Linear(400, 400)
         self.g_5 = nn.Linear(400, 1)
-        
+
         self.x_grid = generate_grid(28, 28)
 
     def h(self, x_y):
@@ -62,8 +63,9 @@ class NeuralProcess(nn.Module):
 
     def forward(self, x_context, y_context, y_all=None):
         x_all = self.x_grid.expand(x_context.size(0), -1, -1)
-        
-        z_context = self.xy_to_z_params(x_context, y_context)  # (mu, logvar) of z
+
+        z_context = self.xy_to_z_params(x_context,
+                                        y_context)  # (mu, logvar) of z
         if self.training:  # loss function will try to keep z_context close to z_all
             z_all = self.xy_to_z_params(x_all, y_all)
         else:  # at test time we don't have the image so we use only the context

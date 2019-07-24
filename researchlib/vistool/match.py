@@ -1,10 +1,11 @@
 import cv2
 import matplotlib.pyplot as plt
 
+
 class _Match:
     def __init__(self):
         pass
-    
+
     def distance(self, img1, img2, plot=False):
         orb = cv2.ORB_create(edgeThreshold=10)
 
@@ -20,14 +21,20 @@ class _Match:
         # Match descriptors.
         matches = bf.match(des1, des2)
         # Sort them in the order of their distance.
-        matches = sorted(matches, key = lambda x:x.distance)
+        matches = sorted(matches, key=lambda x: x.distance)
         matches = matches[:5]
         dsum = 0
         for i in matches:
             dsum += i.distance
 
         if plot:
-            img3 = cv2.drawMatches(img1,kp1,img2,kp2,matches,None,flags=2)
-            plt.imshow(img3),plt.show()
+            img3 = cv2.drawMatches(img1,
+                                   kp1,
+                                   img2,
+                                   kp2,
+                                   matches,
+                                   None,
+                                   flags=2)
+            plt.imshow(img3), plt.show()
 
         return dsum

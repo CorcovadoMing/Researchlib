@@ -1,9 +1,14 @@
 from .torchqrnn import *
 from torch import nn
-import torch 
+import torch
+
 
 class _QRNN(nn.Module):
-    def __init__(self, in_dim, out_dim, return_sequences=False, bidirection=False):
+    def __init__(self,
+                 in_dim,
+                 out_dim,
+                 return_sequences=False,
+                 bidirection=False):
         super().__init__()
         self.in_dim = in_dim
         self.out_dim = out_dim
@@ -14,7 +19,7 @@ class _QRNN(nn.Module):
             self.f = QRNN(in_dim, out_dim, dropout=0.4)
         self.bidirection = bidirection
         self.rs = return_sequences
-    
+
     def forward(self, x):
         # bs, ts, feature -> ts, bs, feature
         x = x.transpose(0, 1)
@@ -26,7 +31,7 @@ class _QRNN(nn.Module):
         else:
             x, _ = self.f(x)
         x = x.transpose(0, 1)
-        
+
         if self.rs:
             return x
         else:

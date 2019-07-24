@@ -3,6 +3,7 @@ from torch import nn
 import math
 import torch.nn.functional as F
 
+
 class _NoisyLinear(nn.Module):
     def __init__(self, in_features, out_features):
         super().__init__()
@@ -10,7 +11,7 @@ class _NoisyLinear(nn.Module):
         self.out_features = out_features
 
         self.weight = nn.Parameter(torch.Tensor(out_features, in_features))
-        self.sigma_w  = nn.Parameter(torch.Tensor(out_features, in_features))
+        self.sigma_w = nn.Parameter(torch.Tensor(out_features, in_features))
         self.bias = nn.Parameter(torch.Tensor(out_features))
         self.sigma_b = nn.Parameter(torch.Tensor(out_features))
         self.reset_parameters()
@@ -26,8 +27,10 @@ class _NoisyLinear(nn.Module):
 
     def forward(self, x):
         if self.training:
-            rand_in = self._f(torch.randn(1, self.in_features, device=self.weight.device))
-            rand_out = self._f(torch.randn(self.out_features, 1, device=self.weight.device))
+            rand_in = self._f(
+                torch.randn(1, self.in_features, device=self.weight.device))
+            rand_out = self._f(
+                torch.randn(self.out_features, 1, device=self.weight.device))
             epsilon_w = torch.matmul(rand_out, rand_in)
             epsilon_b = rand_out.squeeze()
 

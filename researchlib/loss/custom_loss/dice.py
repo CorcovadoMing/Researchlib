@@ -1,12 +1,13 @@
 from torch import nn
 
+
 class DiceLoss(nn.Module):
     def __init__(self, smooth=1, target_class=1, need_exp=False):
         super().__init__()
         self.smooth = smooth
         self.target_class = target_class
         self.need_exp = need_exp
-    
+
     def forward(self, x, y):
         x = x[:, self.target_class, :, :]
         if self.need_exp:
@@ -15,8 +16,10 @@ class DiceLoss(nn.Module):
         y = (y == self.target_class)
         y = y.view(x.size(0), -1).float()
         intersection = (x * y).sum(1)
-        ratio = 2*(intersection + self.smooth) / (y.sum(1) + x.sum(1) + self.smooth)
-        return 1-ratio.mean()
+        ratio = 2 * (intersection + self.smooth) / (y.sum(1) + x.sum(1) +
+                                                    self.smooth)
+        return 1 - ratio.mean()
+
 
 class FlattenDiceLoss(nn.Module):
     def __init__(self, smooth=1, target_class=1, need_exp=False):
@@ -24,7 +27,7 @@ class FlattenDiceLoss(nn.Module):
         self.smooth = smooth
         self.target_class = target_class
         self.need_exp = need_exp
-    
+
     def forward(self, x, y):
         x = x[:, self.target_class]
         if self.need_exp:
@@ -33,5 +36,6 @@ class FlattenDiceLoss(nn.Module):
         y = (y == self.target_class)
         y = y.view(-1).float()
         intersection = (x * y).sum()
-        ratio = 2*(intersection + self.smooth) / (y.sum() + x.sum() + self.smooth)
-        return 1-ratio.mean()
+        ratio = 2 * (intersection + self.smooth) / (y.sum() + x.sum() +
+                                                    self.smooth)
+        return 1 - ratio.mean()

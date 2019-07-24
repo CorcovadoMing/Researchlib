@@ -22,6 +22,7 @@ def pairwise(data):
     dkl2 = ((xk - xl)**2.0).sum(2).squeeze()
     return dkl2
 
+
 class VTSNE(nn.Module):
     def __init__(self, n_points, n_topics):
         super().__init__()
@@ -47,7 +48,8 @@ class VTSNE(nn.Module):
 
     def sample_logits(self, i=None):
         if i is None:
-            return self.reparametrize(self.logits_mu.weight, self.logits_lv.weight)
+            return self.reparametrize(self.logits_mu.weight,
+                                      self.logits_lv.weight)
         else:
             return self.reparametrize(self.logits_mu(i), self.logits_lv(i))
 
@@ -72,6 +74,7 @@ class VTSNE(nn.Module):
     def __call__(self, *args):
         return self.forward(*args)
 
+
 def preprocess(x, perplexity=30, metric='euclidean'):
     """ Compute pairiwse probabilities for MNIST pixels.
     """
@@ -81,6 +84,7 @@ def preprocess(x, perplexity=30, metric='euclidean'):
     # Convert to n x n prob array
     pij = squareform(pij)
     return pij
+
 
 def plot(model, y=None):
     # Visualize the results
@@ -100,12 +104,14 @@ def plot(model, y=None):
     plt.axis('off')
     plt.show()
 
+
 def chunks(n, *args):
     """Yield successive n-sized chunks from l."""
-    endpoints = list(range(0, args[0].size(0)-n, n))
+    endpoints = list(range(0, args[0].size(0) - n, n))
     random.shuffle(endpoints)
     for start in endpoints:
-        yield [a[start: start+n] for a in args]
+        yield [a[start:start + n] for a in args]
+
 
 class Wrapper():
     def __init__(self, model, cuda=True):
@@ -132,7 +138,7 @@ class Wrapper():
 
 class TSNE:
     def __init__(self, x):
-        pij2d= preprocess(x)
+        pij2d = preprocess(x)
         i, j = np.indices(pij2d.shape)
         i = i.ravel()
         j = j.ravel()
@@ -142,11 +148,12 @@ class TSNE:
         i, j, pij = i[idx], j[idx], pij[idx]
         self.model = VTSNE(x.shape[0], 2)
         self.wrap = Wrapper(self.model)
-        pij, i, j = torch.from_numpy(pij).cuda(), torch.from_numpy(i).cuda(), torch.from_numpy(j).cuda()
+        pij, i, j = torch.from_numpy(pij).cuda(), torch.from_numpy(
+            i).cuda(), torch.from_numpy(j).cuda()
         self.data = (pij, i, j)
-        
+
     def fit(self, batch_size=1024, lr=5e-2, epochs=50):
         self.wrap.fit(batch_size, lr, epochs, *self.data)
-    
+
     def plot(self):
         plot(self.model)

@@ -1,4 +1,5 @@
 import torch
 
+
 def Sphere(x):
-    return (x ** 2).sum()
+    return (x**2).sum()
