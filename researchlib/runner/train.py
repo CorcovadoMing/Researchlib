@@ -42,33 +42,33 @@ def train_fn(self, train=True, **kwargs):
         kwargs = callback_func.on_iteration_begin(**kwargs)
 
     # Training
-    if type(kwargs['model']) == GANModel:
+    if type(self.model) == GANModel:
         # For metrics
         self.model.ema = ema
 
-        condition = kwargs['model'].d_condition or kwargs['model'].g_condition
+        condition = self.model.d_condition or self.model.g_condition
 
         if ema:
-            for p in kwargs['model'].generator.parameters():
+            for p in self.model.generator.parameters():
                 if not hasattr(p, 'ema'):
                     p.ema = p.data.clone()
 
         # Discriminator
-        _backup_grad(kwargs['model'].generator)
-        model = kwargs['model'].discriminator
-        model_ffn = kwargs['model'].forward_d
+        _backup_grad(self.model.generator)
+        model = self.model.discriminator
+        model_ffn = self.model.forward_d
         loss_ffn = [
             i.forward_d if isinstance(i, nn.Module) else i
-            for i in kwargs['loss_fn']
+            for i in self.loss_fn
         ]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
-                                        kwargs['optimizer'][0], 'unsupervise',
+                                        self.optimizer[0], 'unsupervise',
                                         condition, train, True, False,
                                         self._accum_step, self._accum_gradient,
                                         self.ema, **kwargs)
         for m in kwargs['metrics']:
             m.forward_d([self.model.fake_data_metrics, self.model.real_data])
-        _restore_grad(kwargs['model'].generator)
+        _restore_grad(self.model.generator)
 
         # Record loss
         kwargs['d_loss_history'].append(_loss)
@@ -76,26 +76,26 @@ def train_fn(self, train=True, **kwargs):
             kwargs['d_loss_history'])
 
         # Extra
-        for i in kwargs['loss_fn']:
-            i.extra_step(kwargs['model'])
+        for i in self.loss_fn:
+            i.extra_step(self.model)
 
         # Generator
-        _backup_grad(kwargs['model'].discriminator)
-        model = kwargs['model'].generator
-        model_ffn = functools.partial(kwargs['model'].forward_g,
+        _backup_grad(self.model.discriminator)
+        model = self.model.generator
+        model_ffn = functools.partial(self.model.forward_g,
                                       re_discriminate=self._accum_step)
         loss_ffn = [
             i.forward_g if isinstance(i, nn.Module) else i
-            for i in kwargs['loss_fn']
+            for i in self.loss_fn
         ]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
-                                        kwargs['optimizer'][1], 'unsupervise',
+                                        self.optimizer[1], 'unsupervise',
                                         condition, train, False, False,
                                         self._accum_step, self._accum_gradient,
                                         self.ema, **kwargs)
         for m in kwargs['metrics']:
             m.forward_g([self.model.fake_data_metrics, self.model.real_data])
-        _restore_grad(kwargs['model'].discriminator)
+        _restore_grad(self.model.discriminator)
 
         # Record loss
         kwargs['g_loss_history'].append(_loss)
@@ -109,22 +109,22 @@ def train_fn(self, train=True, **kwargs):
 
     else:
         if ema:
-            for p in kwargs['model'].parameters():
+            for p in self.model.parameters():
                 if not hasattr(p, 'ema'):
                     p.ema = p.data.clone()
 
-        if type(kwargs['model']) == VAEModel:
+        if type(self.model) == VAEModel:
             learning_type = 'self_supervise'
         else:
             learning_type = 'supervise'
-        model = kwargs['model']
-        model_ffn = kwargs['model'].forward
+        model = self.model
+        model_ffn = self.model.forward
         loss_ffn = [
             i.forward if isinstance(i, nn.Module) else i
-            for i in kwargs['loss_fn']
+            for i in self.loss_fn
         ]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
-                                        kwargs['optimizer'], learning_type,
+                                        self.optimizer, learning_type,
                                         False, train, False, False,
                                         self._accum_step, self._accum_gradient,
                                         self.ema, **kwargs)
