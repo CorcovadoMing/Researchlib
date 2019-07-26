@@ -4,13 +4,14 @@ import glob
 import re
 from imageio import imread
 import pandas as pd
+from tqdm.auto import tqdm
 
 
 class _Parser:
     def __init__(self):
         pass
 
-    def build(self, name: str, path: str, parse_format: str) -> None:
+    def build(self, name: str, path: str, parse_format: str, label_mapping: str = None, sep: str = None) -> None:
         os.makedirs(name, exist_ok=True)
 
         glob_pattern = os.path.join(
@@ -42,14 +43,25 @@ class _Parser:
         found = glob.glob(glob_pattern)
 
         print(f'Found {len(found)} data')
+        
+        
+        # Deal with label mapping
+        if label_mapping is not None:
+            mapping_df = pd.read_csv('dev_data/imagenet/ILSVRC/Data/CLS-LOC/train/label_mapping.txt', sep=sep, header=None)
+            mapping_dict = {i: j for i, j in zip(mapping_df[0].values, mapping_df[1].values)}
+        
 
         data_path = []
         label = []
-        for i in found:
+        for i in tqdm(found):
             m = re.match(match_pattern, i)
             data_path.append(m.group(data_idx))
-            label.append(m.group(label_idx))
-
+            label_raw = m.group(label_idx)
+            try:
+                label.append(mapping_dict[label_raw])
+            except:
+                label.append(label_raw)
+        
         df = pd.DataFrame(list(zip(data_path, label)))
         df.columns = ['Data Path', 'Labels']
         df.to_csv(os.path.join(name, 'parse_result.csv'), index=False)

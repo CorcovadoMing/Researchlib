@@ -15,6 +15,7 @@ data
 gym-results/
 clean_dataset
 flower
+imagenet
 __pycached__
 
 ####################################################################
