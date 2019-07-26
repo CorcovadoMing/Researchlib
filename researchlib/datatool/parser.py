@@ -47,7 +47,7 @@ class _Parser:
         
         # Deal with label mapping
         if label_mapping is not None:
-            mapping_df = pd.read_csv('dev_data/imagenet/ILSVRC/Data/CLS-LOC/train/label_mapping.txt', sep=sep, header=None)
+            mapping_df = pd.read_csv(os.path.join(path, label_mapping), sep=sep, header=None)
             mapping_dict = {i: j for i, j in zip(mapping_df[0].values, mapping_df[1].values)}
         
 
