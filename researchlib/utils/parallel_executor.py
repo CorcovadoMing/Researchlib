@@ -1,6 +1,7 @@
 import torch.multiprocessing as mp
 from IPython import display
 import os
+import time
 
 
 class ParallelExecutor:
@@ -16,10 +17,12 @@ class ParallelExecutor:
     
     def _worker(self, *args):
         while True:
-            if not self.job.empty():
-                desc = self.job.get()
+            try:
+                desc = self.job.get(False)
                 product = self.task(desc, *args)
                 self.reporter.put(product)
+            except:
+                pass
         
     def put(self, job):
         self.job.put(job)
@@ -45,7 +48,12 @@ class ParallelExecutor:
     def stop(self, *args):
         for i in self.worker_pool:
             i.terminate()
+        check = [1]
+        while sum(check) != 0:
+            time.sleep(1)
+            check = [i.is_alive() for i in self.worker_pool]
         self.worker_pool = []
+        
     
     def wait(self):
         result = []

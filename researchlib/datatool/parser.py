@@ -93,8 +93,8 @@ class _Parser:
 
             # Initialization
             root = zarr.open(os.path.join(name, 'db.zarr'), mode='w')
-            data_zarr = root.zeros('data', shape=(1, *shape), chunks=(1, *shape), dtype='f')
-            label_zarr = root.zeros('label', shape=(1,), chunks=(1,), dtype='i')
+            data_zarr = root.zeros('data', shape=(1, *shape), chunks=(1, *shape), dtype='f', compressor=None)
+            label_zarr = root.zeros('label', shape=(1,), chunks=(1,), dtype='i', compressor=None)
 
             # resize the storage in the first place
             data_zarr.resize(total_length, *shape)
