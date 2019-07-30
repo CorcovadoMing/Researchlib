@@ -677,7 +677,8 @@ def _fit(self,
             # Self-interative
             if self_iterative:
                 with torch.no_grad():
-                    for i in tnrange(len(self.train_loader.dataset.tensors[0])):
+                    for i in tnrange(len(
+                            self.train_loader.dataset.tensors[0])):
                         self.train_loader.dataset.tensors[1][i] = \
                         self.model(self.train_loader.dataset.tensors[0][i].unsqueeze(0).cuda()).detach().cpu()[0]
                         torch.cuda.empty_cache()

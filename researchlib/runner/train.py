@@ -120,14 +120,13 @@ def train_fn(self, train=True, **kwargs):
         model = self.model
         model_ffn = self.model.forward
         loss_ffn = [
-            i.forward if isinstance(i, nn.Module) else i
-            for i in self.loss_fn
+            i.forward if isinstance(i, nn.Module) else i for i in self.loss_fn
         ]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
-                                        self.optimizer, learning_type,
-                                        False, train, False, False,
-                                        self._accum_step, self._accum_gradient,
-                                        self.ema, **kwargs)
+                                        self.optimizer, learning_type, False,
+                                        train, False, False, self._accum_step,
+                                        self._accum_gradient, self.ema,
+                                        **kwargs)
 
         # Record loss
         kwargs['loss_history'].append(_loss)
