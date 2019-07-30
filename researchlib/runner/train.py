@@ -240,7 +240,10 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type,
     if train and step:
         with torch.no_grad():
             for param in _model.parameters():
-                param.grad.data /= accum_count
+                try:
+                    param.grad.data /= accum_count
+                except:
+                    pass
 
             if orthogonal_reg:
                 for param in _model.parameters():
@@ -276,7 +279,8 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type,
 
     # Apply metrics
     for m in kwargs['metrics']:
-        m.forward([auxout[-1]] + [kwargs['target'][-1]])
+        if m is not None:
+            m.forward([auxout[-1]] + [kwargs['target'][-1]])
 
     record = loss.detach().cpu()
     return record, norm

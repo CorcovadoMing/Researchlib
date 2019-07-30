@@ -472,7 +472,8 @@ def _fit(self,
             matrix_records = History()
 
             for m in metrics:
-                m.reset()
+                if m is not None:
+                    m.reset()
             bar = None
 
             iteration_break = total
@@ -531,7 +532,8 @@ def _fit(self,
 
             # Output metrics
             for m in metrics:
-                matrix_records.add(m.output(), prefix='train')
+                if m is not None:
+                    matrix_records.add(m.output(), prefix='train')
             if _gan:
                 loss_records = {
                     'd_loss': sum(d_loss_history) / len(d_loss_history),
@@ -670,10 +672,11 @@ def _fit(self,
 
             # Self-interative
             if self_iterative:
-                for i in tnrange(len(self.train_loader.dataset.tensors[0])):
-                    self.train_loader.dataset.tensors[1][i] = \
-                    self.model(self.train_loader.dataset.tensors[0][i].unsqueeze(0).cuda()).detach().cpu()[0]
-                    torch.cuda.empty_cache()
+                with torch.no_grad():
+                    for i in tnrange(len(self.train_loader.dataset.tensors[0])):
+                        self.train_loader.dataset.tensors[1][i] = \
+                        self.model(self.train_loader.dataset.tensors[0][i].unsqueeze(0).cuda()).detach().cpu()[0]
+                        torch.cuda.empty_cache()
     except:
         raise
 
