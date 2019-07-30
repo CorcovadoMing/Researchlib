@@ -472,8 +472,10 @@ def _fit(self,
             matrix_records = History()
 
             for m in metrics:
-                if m is not None:
+                try:
                     m.reset()
+                except:
+                    pass
             bar = None
 
             iteration_break = total
@@ -532,8 +534,10 @@ def _fit(self,
 
             # Output metrics
             for m in metrics:
-                if m is not None:
+                try:
                     matrix_records.add(m.output(), prefix='train')
+                except:
+                    pass
             if _gan:
                 loss_records = {
                     'd_loss': sum(d_loss_history) / len(d_loss_history),

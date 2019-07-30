@@ -279,8 +279,10 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type,
 
     # Apply metrics
     for m in kwargs['metrics']:
-        if m is not None:
+        try:
             m.forward([auxout[-1]] + [kwargs['target'][-1]])
+        except:
+            pass
 
     record = loss.detach().cpu()
     return record, norm
