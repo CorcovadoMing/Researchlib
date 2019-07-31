@@ -12,7 +12,10 @@ def validate_fn(**kwargs):
 
     # Reset metrics
     for m in kwargs['metrics']:
-        m.reset()
+        try:
+            m.reset()
+        except:
+            pass
 
     with torch.no_grad():
         for batch_idx, data_pack in enumerate(kwargs['test_loader']):
@@ -67,7 +70,10 @@ def validate_fn(**kwargs):
                                                   kwargs['target'][i]).item()
 
             for m in kwargs['metrics']:
-                m.forward([auxout[-1]] + [kwargs['target'][-1]])
+                try:
+                    m.forward([auxout[-1]] + [kwargs['target'][-1]])
+                except:
+                    pass
 
             for callback_func in kwargs['callbacks']:
                 kwargs = callback_func.on_iteration_end(**kwargs)
@@ -79,6 +85,9 @@ def validate_fn(**kwargs):
 
     # Output metrics
     for m in kwargs['metrics']:
-        matrix_records.add(m.output(), prefix='val')
+        try:
+            matrix_records.add(m.output(), prefix='val')
+        except:
+            pass
 
     return {'loss': test_loss}, matrix_records

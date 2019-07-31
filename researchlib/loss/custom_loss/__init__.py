@@ -6,3 +6,4 @@ from .dice import *
 from .logcosh import *
 from .huber import *
 from .quantile import *
+from .ssim_msssim import *
