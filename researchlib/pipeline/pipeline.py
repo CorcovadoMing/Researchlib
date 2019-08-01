@@ -2,9 +2,9 @@ import torch
 
 
 class Pipe:
-    def __init__(self, runners, process):
+    def __init__(self, runners, process_type: str = 'chain'):
         self.runners = runners
-        self.process = process
+        self.process_type = process_type
 
     @classmethod
     def Parallel(cls, runners):

@@ -7,7 +7,7 @@ import time
 class ParallelExecutor:
     def __init__(self,
                  task,
-                 max_job: int = 10,
+                 max_job: int = 100,
                  num_workers: int = os.cpu_count()):
         assert max_job > 0, 'max_job should be > 0'
         self.max_job = int(max_job)
