@@ -1,7 +1,7 @@
 from ..template import template
 
 
-class Debugger(template.TorchPreprocessing):
+class PreprocessingDebugger(template.TorchPreprocessing):
     def __init__(self):
         super().__init__()
         

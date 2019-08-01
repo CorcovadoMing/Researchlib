@@ -10,6 +10,7 @@ from ..callbacks import *
 # -------------------------------------------------------
 from .adafactor import AdaFactor
 from .validate import validate_fn
+from .preprocessing import PreprocessingDebugger
 from .export import _Export
 from ..utils import _add_methods_from, _get_iteration
 from .save_load import _save_model, _save_optimizer, _load_model, _load_optimizer
@@ -310,16 +311,21 @@ class Runner:
         self.load(path)
         _load_optimizer(self.optimizer, path)
 
-    def preprocessing(self, preprocessing_list):
+    def preprocessing(self, preprocessing_list, debug=False):
         self.preprocessing_list = preprocessing_list
+        if debug:
+            self.preprocessing_list.append(PreprocessingDebugger())
         return self
     
-    def postprocessing(self, postprocessing_list):
+    def postprocessing(self, postprocessing_list, debug=False):
         self.postprocessing_list = postprocessing_list
         return self
     
-    def augmentation(self, augmentation_list):
+    def augmentation(self, augmentation_list, debug=False):
         self.augmentation_list = augmentation_list
+        if debug:
+            for i in self.augmentation_list:
+                i._debug_flag = True
         return self
 
     def find_lr(self, mixup_alpha=0, plot=False, callbacks=[]):

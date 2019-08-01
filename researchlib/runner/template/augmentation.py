@@ -4,14 +4,20 @@ import matplotlib.pyplot as plt
 
 class NumpyAugmentation(object):
     def __init__(self):
-        pass
+        self.prob = None
+        self.mag = None
+        self._debug_flag = False
     
     def _forward(self, x, y, prob, mag):
-        self.prob = prob
-        self.mag = mag
-        if random.random() < prob:
+        self.prob = self.prob or prob
+        self.mag = self.mag or mag
+        
+        if self._debug_flag:
+            print('Probability:', self.prob, 'Magnitude:', self.mag)
+        
+        if random.random() < self.prob:
             x, y = [i.numpy().copy() for i in x], [i.numpy().copy() for i in y]
-            x, y = self.forward_batch(x, y, mag)
+            x, y = self.forward_batch(x, y, self.mag)
             try:
                 x, y = [torch.from_numpy(i) for i in x], [torch.from_numpy(i) for i in y]
             except:
@@ -36,15 +42,21 @@ class NumpyAugmentation(object):
         
 class TorchAugmentation(object):
     def __init__(self):
-        pass
+        self.prob = None
+        self.mag = None
+        self._debug_flag = False
     
     def _forward(self, x, y, prob, mag):
-        self.prob = prob
-        self.mag = mag
-        if random.random() < prob:
+        self.prob = self.prob or prob
+        self.mag = self.mag or mag
+        
+        if self._debug_flag:
+            print('Probability:', self.prob, 'Magnitude:', self.mag)
+        
+        if random.random() < self.prob:
             x = [i.clone() for i in x]
             y = [i.clone() for i in y]
-            x, y = self.forward_batch(x, y, mag)
+            x, y = self.forward_batch(x, y, self.mag)
         return x, y
     
     def forward_batch(self, x, y, mag):

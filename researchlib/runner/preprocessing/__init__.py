@@ -1,2 +1,2 @@
-from .debugger import Debugger
+from .debugger import PreprocessingDebugger
 from .scaler import Scaler
