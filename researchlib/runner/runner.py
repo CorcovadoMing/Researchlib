@@ -75,6 +75,7 @@ class Runner:
 
         self.preprocessing_list = []
         self.postprocessing_list = []
+        self.augmentation_list = []
 
         # Assign loss function
         #
@@ -315,6 +316,10 @@ class Runner:
     
     def postprocessing(self, postprocessing_list):
         self.postprocessing_list = postprocessing_list
+        return self
+    
+    def augmentation(self, augmentation_list):
+        self.augmentation_list = augmentation_list
         return self
 
     def find_lr(self, mixup_alpha=0, plot=False, callbacks=[]):
