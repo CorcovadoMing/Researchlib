@@ -253,6 +253,11 @@ def _process_data(self, data, target, augmentor, mixup_alpha):
     def mixup_loss_fn(loss_fn, x, y, y_res, lam):
         return lam * loss_fn(x, y) + (1 - lam) * loss_fn(x, y_res)
 
+    # Preprocessing (experimental)
+    for preprocessing_fn in self.preprocessing_list:
+        data, target = preprocessing_fn._forward(data, target)
+
+
     # On the fly augmentation
     if augmentor: data, target = augmentor.on(data, target)
 

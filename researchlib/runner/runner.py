@@ -72,6 +72,8 @@ class Runner:
         self.default_callbacks = CyclicalLR(_get_iteration(self.train_loader))
 
         self.tester = validate_fn
+        self.preprocessing_list = []
+        self.postprocessing_list = []
 
         # Assign loss function
         #
@@ -305,6 +307,14 @@ class Runner:
     def resume(self, path):
         self.load(path)
         _load_optimizer(self.optimizer, path)
+
+    def preprocessing(self, preprocessing_list):
+        self.preprocessing_list = preprocessing_list
+        return self
+    
+    def postprocessing(self, postprocessing_list):
+        self.postprocessing_list = postprocessing_list
+        return self
 
     def find_lr(self, mixup_alpha=0, plot=False, callbacks=[]):
         _save_model(self.model, 'find_lr_tmp.h5')
