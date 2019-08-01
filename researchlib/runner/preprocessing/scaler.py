@@ -1,4 +1,4 @@
-from .template import template
+from ..template import template
 
 
 class Scaler(template.TorchPreprocessing):
@@ -20,13 +20,9 @@ class Scaler(template.TorchPreprocessing):
         
         return var
     
-    def forward(self, x, y):
-        for inputs in range(len(x)):
-            for batch in range(len(x[inputs])):
-                x[inputs][batch] = self._scale_fn(x[inputs][batch])
+    def forward_single(self, x, y):
+        x = [self._scale_fn(i) for i in x]
         if self.include_y:
-            for inputs in range(len(y)):
-                for batch in range(len(y[inputs])):
-                    y[inputs][batch] = self._scale_fn(y[inputs][batch])
+            y = [self._scale_fn(i) for i in y]
         return x, y
             

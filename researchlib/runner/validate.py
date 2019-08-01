@@ -3,9 +3,13 @@ import torch.nn.functional as F
 from .history import *
 from ..utils import *
 import torchtext
+from ..utils import _register_method
 
+__methods__ = []
+register_method = _register_method(__methods__)
 
-def validate_fn(**kwargs):
+@register_method
+def validate_fn(self, **kwargs):
     kwargs['model'].eval()
     test_loss = 0
     matrix_records = History()
@@ -32,6 +36,10 @@ def validate_fn(**kwargs):
             if type(data) != type([]) and type(data) != type(()): data = [data]
             if type(target) != type([]) and type(target) != type(()):
                 target = [target]
+                
+            # Preprocessing (experimental)
+            for preprocessing_fn in self.preprocessing_list:
+                data, target = preprocessing_fn._forward(data, target)
 
             target = [
                 i.long() if j else i

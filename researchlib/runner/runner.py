@@ -26,12 +26,14 @@ from . import init_model
 from . import fit
 from . import cam
 from . import train
+from . import validate
 
 
 @_add_methods_from(init_model)
 @_add_methods_from(fit)
 @_add_methods_from(cam)
 @_add_methods_from(train)
+@_add_methods_from(validate)
 class Runner:
     def __init__(self,
                  model=None,
@@ -71,7 +73,6 @@ class Runner:
 
         self.default_callbacks = CyclicalLR(_get_iteration(self.train_loader))
 
-        self.tester = validate_fn
         self.preprocessing_list = []
         self.postprocessing_list = []
 
@@ -274,7 +275,7 @@ class Runner:
         try:
             if len(self.default_metrics):
                 metrics = self.default_metrics + metrics
-            loss_records, matrix_records = self.tester(
+            loss_records, matrix_records = self.validate_fn(
                 model=self.model,
                 test_loader=self.test_loader,
                 loss_fn=self.loss_fn,

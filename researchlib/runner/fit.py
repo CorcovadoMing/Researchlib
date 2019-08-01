@@ -586,7 +586,7 @@ def _fit(self,
                     gan_canvas.draw_image(epoch_history['image'])
 
             if self.test_loader:
-                loss_records, matrix_records = self.tester(
+                loss_records, matrix_records = self.validate_fn(
                     model=self.model,
                     test_loader=self.test_loader,
                     loss_fn=self.loss_fn,

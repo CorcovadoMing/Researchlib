@@ -10,10 +10,6 @@ from .environment import GymEnv
 from .vision import _MNIST, _FashionMNIST, _KMNIST, _CIFAR10
 from .text import _AGNews
 
-# Augmentation
-from .augmentator import Augmentator
-from .ts_aug_soli import *
-
 # Sampler
 from .sampler import ImbalancedSampler
 
