@@ -14,4 +14,4 @@
     cd researchlib
     ./start 0 latest
 ```
-4. Open the browser to the port `8899` and the password `0000` to dive into the Jupyter environment. That it!
+4. Open the browser to the port `8899` and the password `0000` to dive into the Jupyter environment. That's it!
