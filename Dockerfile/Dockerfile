@@ -78,3 +78,6 @@ RUN julia -e 'using Pkg; Pkg.add("IJulia")'
 # Tests
 RUN pip install -U yapf pylint pytest
 RUN pip install -U zarr
+
+# Augmentation and preprocessing
+RUN pip install -U albumentations
