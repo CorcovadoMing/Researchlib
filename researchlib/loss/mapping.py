@@ -31,7 +31,8 @@ def loss_mapping(loss_fn):
         require_long_ = False
         keep_x_shape_ = False
         keep_y_shape_ = True
-        default_metrics = BCEAcc()
+        #default_metrics = BCEAcc()
+        default_metrics = AUROC()
 
     elif loss_fn == 'crossentropy':
         loss_fn = nn.CrossEntropyLoss()
