@@ -233,7 +233,10 @@ class _Interpreter:
         # Find last convolution
         model.apply(_register_conv2d)
         output = model(img[None, :, :, :])
-        loss = -output[0, label].log()
+        if type(model.nnlist[-1]) == nn.Sigmoid:
+            loss = F.binary_cross_entropy(output, label)
+        else:
+            loss = -output[0, label].log()
         loss.backward()
 
         target_forward = hook_forward_buffer[-1]
@@ -242,8 +245,7 @@ class _Interpreter:
                 shape = i.shape
             except:
                 continue
-
-            if target_forward.shape == shape:
+            if target_forward.shape[:2] == shape[:2]:
                 target_gradient = i
 
         target_gradient = F.adaptive_avg_pool2d(target_gradient, 1).squeeze()
