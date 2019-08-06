@@ -37,6 +37,7 @@ def _restore_grad(model):
 @register_method
 def train_fn(self, train=True, **kwargs):
     ema = self.ema > 0 and self.epoch > self.ema_start
+    swa = self.swa and self.epoch > 5
     # Callback: on_iteration_begin
     for callback_func in kwargs['callbacks']:
         kwargs = callback_func.on_iteration_begin(**kwargs)
@@ -65,7 +66,7 @@ def train_fn(self, train=True, **kwargs):
                                         self.optimizer[0], 'unsupervise',
                                         condition, train, True, False,
                                         self._accum_step, self._accum_gradient,
-                                        self.ema, **kwargs)
+                                        self.ema, swa, **kwargs)
         for m in kwargs['metrics']:
             m.forward_d([self.model.fake_data_metrics, self.model.real_data])
         _restore_grad(self.model.generator)
@@ -92,7 +93,7 @@ def train_fn(self, train=True, **kwargs):
                                         self.optimizer[1], 'unsupervise',
                                         condition, train, False, False,
                                         self._accum_step, self._accum_gradient,
-                                        self.ema, **kwargs)
+                                        self.ema, swa, **kwargs)
         for m in kwargs['metrics']:
             m.forward_g([self.model.fake_data_metrics, self.model.real_data])
         _restore_grad(self.model.discriminator)
@@ -125,7 +126,7 @@ def train_fn(self, train=True, **kwargs):
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
                                         self.optimizer, learning_type, False,
                                         train, False, False, self._accum_step,
-                                        self._accum_gradient, self.ema,
+                                        self._accum_gradient, self.ema, swa,
                                         **kwargs)
 
         # Record loss
@@ -161,7 +162,7 @@ def _cal_regularization(_model, **kwargs):
 
 def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type,
                      condition, train, retain_graph, orthogonal_reg, step,
-                     accum_count, ema, **kwargs):
+                     accum_count, ema, swa, **kwargs):
     # Forward
     if condition:
         output = model_ffn(*kwargs['data'], *kwargs['target'])
@@ -264,7 +265,7 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type,
             norm = norm.detach().cpu()
 
         optim.step()
-        optim.update_swa()
+        if swa: optim.update_swa()
         optim.zero_grad()
 
         with torch.no_grad():
