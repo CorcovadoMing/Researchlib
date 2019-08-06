@@ -24,15 +24,3 @@ class Contrast(template.TorchAugmentation):
         if self.include_y:
             y = [ self._aug_fn(i, mag) for i in y]
         return x, y
-    
-    
-    
-    class Contrast(object):
-    def __init__(self, var):
-        self.var = var
-
-    def __call__(self, img):
-        gs = Grayscale()(img)
-        gs.fill_(gs.mean())
-        alpha = random.uniform(0, self.var)
-        return img.lerp(gs, alpha)
