@@ -602,6 +602,16 @@ def _fit(self,
                 with gan_out:
                     gan_canvas.draw_image(epoch_history['image'])
 
+                    
+                    
+            # SWA
+            if self.swa and self.epoch >= self.swa_start and self.epoch % 2 == 0:
+                if type(self.optimizer) == list:
+                    for i in self.optimizer:
+                        i.update_swa()
+                else:
+                    self.optimizer.update_swa()
+                    
             if self.test_loader:
                 loss_records, matrix_records = self.validate_fn(
                     model=self.model,
