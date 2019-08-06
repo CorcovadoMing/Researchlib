@@ -11,3 +11,5 @@ from .reg import *
 from .class_lib import _register_method, _add_methods_from
 from .get_iteration import _get_iteration
 from .parallel_executor import ParallelExecutor
+
+from .mapping import mapping

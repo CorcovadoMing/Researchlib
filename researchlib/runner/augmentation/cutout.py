@@ -1,4 +1,5 @@
 from ..template import template
+from ...utils import mapping
 import numpy as np
 import torch
 
@@ -27,7 +28,9 @@ class Cutout(template.TorchAugmentation):
         return img
     
     def forward_single(self, x, y, mag):
-        x = [ self._aug_fn(i, 16) for i in x]
+        max_length = x[0].size(1) // 2
+        length = mapping(mag, [0, 1], [0, max_length], to_int=True)
+        x = [ self._aug_fn(i, length) for i in x]
         if self.include_y:
-            y = [ self._aug_fn(i, 16) for i in y]
+            y = [ self._aug_fn(i, length) for i in y]
         return x, y

@@ -12,6 +12,7 @@ import hiddenlayer as hl
 import threading
 from pynvml import *
 import time
+import random
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -259,7 +260,7 @@ def _process_data(self, data, target, augmentor, mixup_alpha):
 
     # On the fly augmentation
     for augmentation_fn in self.augmentation_list:
-        data, target = augmentation_fn._forward(data, target, 0.5, 0.5)
+        data, target = augmentation_fn._forward(data, target, 0.5, random.random())
 
     # Target type refine
     while len(target) != len(self.require_long_):
