@@ -81,3 +81,4 @@ RUN pip install -U zarr
 
 # Augmentation and preprocessing
 RUN pip install -U albumentations
+RUN pip install git+https://github.com/pytorch/contrib.git

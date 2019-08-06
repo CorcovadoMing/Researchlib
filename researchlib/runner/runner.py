@@ -18,6 +18,7 @@ from torch.cuda import is_available
 from torch.nn import DataParallel
 import torch.backends.cudnn as cudnn
 from apex import amp
+import torchcontrib
 import os
 import pandas as pd
 from adabound import AdaBound
@@ -50,11 +51,13 @@ class Runner:
                  multigpu=False,
                  larc=False,
                  ema=-1,
-                 ema_start=100):
+                 ema_start=100,
+                 swa=True):
         self.experiment_name = ''
         self.checkpoint_path = ''
         self.ema = ema
         self.ema_start = ema_start
+        self.swa = swa
         self.larc = larc
         self.export = _Export()
         self.epoch = 1
@@ -159,7 +162,7 @@ class Runner:
     # ===================================================================================================
     # ===================================================================================================
     def set_optimizer(self, optimizer):
-        def _assign_optim(model, optimizer, larc):
+        def _assign_optim(model, optimizer, larc, swa):
             if optimizer == 'adam':
                 optimizer = Adam(model.parameters(), betas=(0.9, 0.999))
             elif optimizer == 'adam_gan':
@@ -180,26 +183,27 @@ class Runner:
             elif optimizer == 'adafactor':
                 optimizer = AdaFactor(model.parameters(), lr=1e-3)
             if larc:
-                return LARC(optimizer)
-            else:
-                return optimizer
+                optimizer = LARC(optimizer)
+            if swa:
+                optimizer = torchcontrib.optim.SWA(optimizer, swa_start=10, swa_freq=5, swa_lr=0.05)
+            return optimizer
 
         if type(self.model) == GANModel:
             if type(optimizer) == list or type(optimizer) == tuple:
                 self.optimizer = [
                     _assign_optim(self.model.discriminator, optimizer[1],
-                                  self.larc),
+                                  self.larc, self.swa),
                     _assign_optim(self.model.generator, optimizer[0],
-                                  self.larc)
+                                  self.larc, self.swa)
                 ]
             else:
                 self.optimizer = [
                     _assign_optim(self.model.discriminator, optimizer,
-                                  self.larc),
-                    _assign_optim(self.model.generator, optimizer, self.larc)
+                                  self.larc, self.swa),
+                    _assign_optim(self.model.generator, optimizer, self.larc, self.swa)
                 ]
         else:
-            self.optimizer = _assign_optim(self.model, optimizer, self.larc)
+            self.optimizer = _assign_optim(self.model, optimizer, self.larc, self.swa)
 
         self.model, self.optimizer = amp.initialize(self.model,
                                                     self.optimizer,

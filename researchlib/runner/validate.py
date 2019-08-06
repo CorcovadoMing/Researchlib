@@ -10,6 +10,12 @@ register_method = _register_method(__methods__)
 
 @register_method
 def validate_fn(self, **kwargs):
+    if type(self.optimizer) == list:
+        for i in self.optimizer:
+            i.swap_swa_sgd()
+    else:
+        self.optimizer.swap_swa_sgd()
+        
     kwargs['model'].eval()
     test_loss = 0
     matrix_records = History()
@@ -98,4 +104,10 @@ def validate_fn(self, **kwargs):
         except:
             pass
 
+    if type(self.optimizer) == list:
+        for i in self.optimizer:
+            i.swap_swa_sgd()
+    else:
+        self.optimizer.swap_swa_sgd()
+        
     return {'loss': test_loss}, matrix_records

@@ -89,7 +89,11 @@ def preload_gpu(self):
     if self.is_cuda:
         if type(self.optimizer) == tuple or type(self.optimizer) == list:
             for optim in self.optimizer:
-                state = optim.state_dict()['state']
+                try:
+                    state = self.optimizer.state_dict()['state']
+                except:
+                    state = self.optimizer.state_dict()['opt_state']
+                    
                 for key in state:
                     for attr in state[key]:
                         try:
@@ -97,7 +101,11 @@ def preload_gpu(self):
                         except:
                             pass
         else:
-            state = self.optimizer.state_dict()['state']
+            try:
+                state = self.optimizer.state_dict()['state']
+            except:
+                state = self.optimizer.state_dict()['opt_state']
+            
             for key in state:
                 for attr in state[key]:
                     try:
@@ -112,7 +120,11 @@ def unload_gpu(self, unload_data=True):
     if self.is_cuda:
         if type(self.optimizer) == tuple or type(self.optimizer) == list:
             for optim in self.optimizer:
-                state = optim.state_dict()['state']
+                try:
+                    state = self.optimizer.state_dict()['state']
+                except:
+                    state = self.optimizer.state_dict()['opt_state']
+                    
                 for key in state:
                     for attr in state[key]:
                         try:
@@ -120,7 +132,11 @@ def unload_gpu(self, unload_data=True):
                         except:
                             pass
         else:
-            state = self.optimizer.state_dict()['state']
+            try:
+                state = self.optimizer.state_dict()['state']
+            except:
+                state = self.optimizer.state_dict()['opt_state']
+                
             for key in state:
                 for attr in state[key]:
                     try:
