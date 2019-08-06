@@ -343,7 +343,7 @@ def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks,
                   bar=bar)
 
 
-#     self.model.eval()
+    self.model.eval()
 
 
 @register_method

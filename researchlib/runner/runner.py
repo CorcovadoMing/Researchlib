@@ -52,7 +52,7 @@ class Runner:
                  larc=False,
                  ema=-1,
                  ema_start=100,
-                 swa=True):
+                 swa=False):
         self.experiment_name = ''
         self.checkpoint_path = ''
         self.ema = ema
@@ -185,7 +185,7 @@ class Runner:
             if larc:
                 optimizer = LARC(optimizer)
             if swa:
-                optimizer = torchcontrib.optim.SWA(optimizer, swa_start=10, swa_freq=5, swa_lr=0.05)
+                optimizer = torchcontrib.optim.SWA(optimizer)
             return optimizer
 
         if type(self.model) == GANModel:

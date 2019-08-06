@@ -264,6 +264,7 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type,
             norm = norm.detach().cpu()
 
         optim.step()
+        optim.update_swa()
         optim.zero_grad()
 
         with torch.no_grad():
