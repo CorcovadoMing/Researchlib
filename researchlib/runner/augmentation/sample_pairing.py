@@ -11,7 +11,8 @@ class SamplePairing(template.TorchAugmentation):
     
     def _aug_fn(self, img, mag):
         index = torch.randperm(img.size(0))
-        return mag * img + (1 - mag) * img[index]
+        ratio = mag / 2
+        return (1 - ratio) * img + ratio * img[index]
         
     
     def forward_batch(self, x, y, mag):
