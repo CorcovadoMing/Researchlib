@@ -260,14 +260,21 @@ class _Interpreter:
         if plot:
             plot_img = img - img.min()
             plot_img /= plot_img.max()
+            plot_img = plot_img.detach().numpy().transpose(1,2,0)
             _, arr = plt.subplots(1, 3)
-            arr[0].imshow(plot_img.detach().numpy().transpose(1,2,0))
+            if plot_img.shape[-1] == 1:
+                arr[0].imshow(plot_img[:, :, 0], cmap='gray')
+            else:
+                arr[0].imshow(plot_img)
             arr[0].set_title('Input')
             arr[0].axis('off')
             arr[1].imshow(cam, cmap='gray')
             arr[1].set_title('Grad-CAM')
             arr[1].axis('off')
-            arr[2].imshow(plot_img.detach().numpy().transpose(1,2,0))
+            if plot_img.shape[-1] == 1:
+                arr[2].imshow(plot_img[:, :, 0], cmap='gray')
+            else:
+                arr[2].imshow(plot_img)
             arr[2].imshow(cam, cmap='hot', alpha=0.3)
             arr[2].set_title('Grad-CAM on input')
             arr[2].axis('off')
