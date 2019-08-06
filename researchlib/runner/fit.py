@@ -276,7 +276,8 @@ def _process_data(self, data, target, augmentor, mixup_alpha):
 
     # On the fly augmentation
     for augmentation_fn in self.augmentation_list:
-        data, target = augmentation_fn._forward(data, target, 0.5, random.random())
+        mag = random.random()
+        data, target = augmentation_fn._forward(data, target, 0.5, mag)
 
     # Target type refine
     while len(target) != len(self.require_long_):

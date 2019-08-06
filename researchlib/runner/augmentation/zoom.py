@@ -24,12 +24,12 @@ class Zoom(template.NumpyAugmentation):
         else:
             padding_h = (new_img.shape[1] - img.shape[1]) // 2
             padding_w = (new_img.shape[2] - img.shape[2]) // 2
-            new_img[:, padding_h:padding_h + new_img.shape[1], padding_w:padding_w + new_img.shape[2]] = img
+            new_img[:, padding_h:padding_h + img.shape[1], padding_w:padding_w + img.shape[2]] = img
         
         return new_img
     
     def forward_single(self, x, y, mag):
-        zoom_factor = mapping(mag, [0, 1], [0.5, 2], to_int=True)
+        zoom_factor = mapping(mag, [0, 1], [0.5, 2], to_int=False)
         x = [ self._aug_fn(i, zoom_factor) for i in x]
         if self.include_y:
             y = [ self._aug_fn(i, zoom_factor) for i in y]

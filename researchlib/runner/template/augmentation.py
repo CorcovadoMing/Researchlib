@@ -9,15 +9,15 @@ class NumpyAugmentation(object):
         self._debug_flag = False
     
     def _forward(self, x, y, prob, mag):
-        self.prob = self.prob or prob
-        self.mag = self.mag or mag
+        self.cur_prob = self.prob or prob
+        self.cur_mag = self.mag or mag
         
         if self._debug_flag:
-            print('Probability:', self.prob, 'Magnitude:', self.mag)
+            print('Probability:', self.cur_prob, 'Magnitude:', self.cur_mag)
         
-        if random.random() < self.prob:
+        if random.random() < prob:
             x, y = [i.numpy().copy() for i in x], [i.numpy().copy() for i in y]
-            x, y = self.forward_batch(x, y, self.mag)
+            x, y = self.forward_batch(x, y, mag)
             try:
                 x, y = [torch.from_numpy(i) for i in x], [torch.from_numpy(i) for i in y]
             except:
@@ -47,16 +47,16 @@ class TorchAugmentation(object):
         self._debug_flag = False
     
     def _forward(self, x, y, prob, mag):
-        self.prob = self.prob or prob
-        self.mag = self.mag or mag
+        self.cur_prob = self.prob or prob
+        self.cur_mag = self.mag or mag
         
         if self._debug_flag:
-            print('Probability:', self.prob, 'Magnitude:', self.mag)
+            print('Probability:', self.cur_prob, 'Magnitude:', self.cur_mag)
         
-        if random.random() < self.prob:
+        if random.random() < prob:
             x = [i.clone() for i in x]
             y = [i.clone() for i in y]
-            x, y = self.forward_batch(x, y, self.mag)
+            x, y = self.forward_batch(x, y, mag)
         return x, y
     
     def forward_batch(self, x, y, mag):
