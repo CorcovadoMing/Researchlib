@@ -3,6 +3,8 @@ from ...utils import mapping
 from .grayscale import _grayscale
 import numpy as np
 import torch
+import random
+
 
 class Saturation(template.TorchAugmentation):
     def __init__(self, prob=None, mag=None, include_y=False):

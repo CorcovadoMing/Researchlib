@@ -2,6 +2,7 @@ from ..template import template
 from ...utils import mapping
 import numpy as np
 import torch
+import random
 
 
 class Brightness(template.TorchAugmentation):
