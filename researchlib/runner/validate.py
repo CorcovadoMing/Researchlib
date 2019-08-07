@@ -14,10 +14,10 @@ def validate_fn(self, **kwargs):
         if type(self.optimizer) == list:
             for i in self.optimizer:
                 i.swap_swa_sgd()
-                i.bn_update(kwargs['test_loader'], self.model, device='cuda')
+                i.bn_update(self.train_loader, self.model, device='cuda')
         else:
             self.optimizer.swap_swa_sgd()
-            self.optimizer.bn_update(kwargs['test_loader'], self.model, device='cuda')
+            self.optimizer.bn_update(self.train_loader, self.model, device='cuda')
         
     kwargs['model'].eval()
     test_loss = 0
