@@ -26,14 +26,15 @@ from .larc import LARC
 
 from . import init_model
 from . import fit
-from . import cam
 from . import train
 from . import validate
+from . import gpu_resource_management
+from . import set_lr_schedule
 
-
+@_add_methods_from(gpu_resource_management)
+@_add_methods_from(set_lr_schedule)
 @_add_methods_from(init_model)
 @_add_methods_from(fit)
-@_add_methods_from(cam)
 @_add_methods_from(train)
 @_add_methods_from(validate)
 class Runner:
@@ -74,7 +75,6 @@ class Runner:
             self.test_loader = test_loader[0]
             self.inputs = test_loader[1]
         self.history_ = History()
-        self.cam_model = None
         self.fp16 = fp16
 
         self.default_callbacks = CyclicalLR(_get_iteration(self.train_loader))

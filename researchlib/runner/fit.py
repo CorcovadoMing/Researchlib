@@ -1,55 +1,19 @@
 import os
-from tqdm.auto import tqdm
 from tqdm import tnrange
-from ..callbacks import *
 from ..utils import _register_method, _get_iteration, set_lr, plot_montage
 from .history import History
 from ..models import GANModel
-from .save_load import _load_optimizer
 from itertools import cycle
 from ipywidgets import IntProgress, Output, HBox, Label
 import hiddenlayer as hl
 import threading
+import torch
 from pynvml import *
 import time
 import random
 
 __methods__ = []
 register_method = _register_method(__methods__)
-
-
-@register_method
-def _set_cyclical(self, lr):
-    if self.default_callbacks:
-        self.default_callbacks = CyclicalLR(_get_iteration(self.train_loader))
-        self.default_callbacks.max_lr = lr
-        self.default_callbacks.acc_iter = 0
-        return [self.default_callbacks]
-    else:
-        return []
-
-
-@register_method
-def _set_sgdr(self, lr):
-    if self.default_callbacks:
-        self.default_callbacks = SGDR(_get_iteration(self.train_loader))
-        self.default_callbacks.max_lr = lr
-        self.default_callbacks.acc_iter = 0
-        self.default_callbacks.length = 1
-        return [self.default_callbacks]
-    else:
-        return []
-
-
-@register_method
-def _set_onecycle(self, lr):
-    if self.default_callbacks:
-        self.default_callbacks = OneCycle(_get_iteration(self.train_loader))
-        self.default_callbacks.max_lr = lr
-        self.default_callbacks.acc_iter = 0
-        return [self.default_callbacks]
-    else:
-        return []
 
 
 @register_method
@@ -63,15 +27,7 @@ def fit_iteration(self,
                   callbacks=[],
                   _id='none',
                   self_iterative=False):
-    #TODO: save_model
-    if policy == 'sc' or policy == 'superconverge':
-        callbacks = self._set_onecycle(lr) + callbacks
-    elif policy == 'cyclical':
-        callbacks = self._set_cyclical(lr) + callbacks
-    elif policy == 'cycle':
-        callbacks = self._set_sgdr(lr) + callbacks
-    elif policy == 'fixed':
-        set_lr(self.optimizer, lr)
+    _ = self._set_policy(policy, lr, callbacks)
     self._fit(1,
               lr,
               augmentor,
@@ -84,68 +40,7 @@ def fit_iteration(self,
               total=iteration)
 
 
-@register_method
-def preload_gpu(self):
-    if self.is_cuda:
-        if type(self.optimizer) == tuple or type(self.optimizer) == list:
-            for optim in self.optimizer:
-                try:
-                    state = self.optimizer.state_dict()['state']
-                except:
-                    state = self.optimizer.state_dict()['opt_state']
-                    
-                for key in state:
-                    for attr in state[key]:
-                        try:
-                            state[key][attr] = state[key][attr].cuda()
-                        except:
-                            pass
-        else:
-            try:
-                state = self.optimizer.state_dict()['state']
-            except:
-                state = self.optimizer.state_dict()['opt_state']
-            
-            for key in state:
-                for attr in state[key]:
-                    try:
-                        state[key][attr] = state[key][attr].cuda()
-                    except:
-                        pass
-        self.model.cuda()
 
-
-@register_method
-def unload_gpu(self, unload_data=True):
-    if self.is_cuda:
-        if type(self.optimizer) == tuple or type(self.optimizer) == list:
-            for optim in self.optimizer:
-                try:
-                    state = self.optimizer.state_dict()['state']
-                except:
-                    state = self.optimizer.state_dict()['opt_state']
-                    
-                for key in state:
-                    for attr in state[key]:
-                        try:
-                            state[key][attr] = state[key][attr].cuda()
-                        except:
-                            pass
-        else:
-            try:
-                state = self.optimizer.state_dict()['state']
-            except:
-                state = self.optimizer.state_dict()['opt_state']
-                
-            for key in state:
-                for attr in state[key]:
-                    try:
-                        state[key][attr] = state[key][attr].cuda()
-                    except:
-                        pass
-        self.model.cpu()
-        if unload_data: self._unload_data()
-        torch.cuda.empty_cache()
 
 
 @register_method
@@ -162,16 +57,8 @@ def fit_xy(self,
            self_iterative=False,
            _auto_gpu=False,
            _train=True):
-    # TODO: metrics, history, testing, save_model
-    if policy == 'sc' or policy == 'superconverge':
-        callbacks = self._set_onecycle(lr) + callbacks
-    elif policy == 'cyclical':
-        callbacks = self._set_cyclical(lr) + callbacks
-    elif policy == 'cycle':
-        callbacks = self._set_sgdr(lr) + callbacks
-    elif policy == 'fixed':
-        set_lr(self.optimizer, lr)
-
+    
+    _ = self._set_policy(policy, lr, callbacks)
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
 
@@ -212,18 +99,8 @@ def fit(self,
         self_iterative=False,
         accum_gradient=1,
         accum_freq=100):
-    if policy == 'sc' or policy == 'superconverge':
-        total_epochs = epochs
-        callbacks = self._set_onecycle(lr) + callbacks
-    elif policy == 'cyclical':
-        total_epochs = epochs
-        callbacks = self._set_cyclical(lr) + callbacks
-    elif policy == 'cycle':
-        total_epochs = int(epochs * (1 + epochs) / 2)
-        callbacks = self._set_sgdr(lr) + callbacks
-    elif policy == 'fixed':
-        set_lr(self.optimizer, lr)
-        total_epochs = epochs
+    
+    total_epochs = self._set_policy(policy, lr, callbacks, epochs)
 
     self._accum_gradient = 1
     self._accum_freq = accum_freq
@@ -305,12 +182,6 @@ def _process_data(self, data, target, augmentor, mixup_alpha):
 
 
 @register_method
-def _unload_data(self):
-    del self.data, self.target, self.target_res
-    torch.cuda.empty_cache()
-
-
-@register_method
 def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks,
             metrics, loss_history, g_loss_history, d_loss_history, norm,
             matrix_records, bar, train):
@@ -354,7 +225,7 @@ def _cycle(self, data, _cycle_flag=False):
     else:
         return enumerate(data)
 
-
+        
 @register_method
 def _fit(self,
          epochs,
@@ -367,6 +238,7 @@ def _fit(self,
          self_iterative,
          cycle,
          total=0):
+    
     if type(self.optimizer) == list:
         for i in self.optimizer:
             i.zero_grad()
