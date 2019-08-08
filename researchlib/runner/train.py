@@ -266,11 +266,7 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type,
         kwargs = callback_func.on_update_end(**kwargs)
 
     # Apply metrics
-    for m in kwargs['metrics']:
-        try:
-            m.forward([auxout[-1]] + [kwargs['target'][-1]])
-        except:
-            pass
+    for m in kwargs['metrics']: m.forward([auxout[-1]] + [kwargs['target'][-1]])
 
     record = loss.detach().cpu()
     return record, norm

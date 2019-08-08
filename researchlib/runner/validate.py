@@ -24,11 +24,7 @@ def validate_fn(self, **kwargs):
     matrix_records = History()
 
     # Reset metrics
-    for m in kwargs['metrics']:
-        try:
-            m.reset()
-        except:
-            pass
+    for m in kwargs['metrics']: m.reset()
 
     with torch.no_grad():
         for batch_idx, data_pack in enumerate(kwargs['test_loader']):
@@ -75,11 +71,7 @@ def validate_fn(self, **kwargs):
                 test_loss += kwargs['loss_fn'][i](auxout[i],
                                                   kwargs['target'][i]).item()
 
-            for m in kwargs['metrics']:
-                try:
-                    m.forward([auxout[-1]] + [kwargs['target'][-1]])
-                except:
-                    pass
+            for m in kwargs['metrics']: m.forward([auxout[-1]] + [kwargs['target'][-1]])
 
             for callback_func in kwargs['callbacks']:
                 kwargs = callback_func.on_iteration_end(**kwargs)
@@ -90,11 +82,7 @@ def validate_fn(self, **kwargs):
         kwargs = callback_func.on_validation_end(**kwargs)
 
     # Output metrics
-    for m in kwargs['metrics']:
-        try:
-            matrix_records.add(m.output(), prefix='val')
-        except:
-            pass
+    for m in kwargs['metrics']: matrix_records.add(m.output(), prefix='val')
 
     if self.swa and self.epoch >= self.swa_start:
         if type(self.optimizer) == list:

@@ -259,11 +259,7 @@ def _fit(self,
             inception_score = []
             matrix_records = History()
 
-            for m in metrics:
-                try:
-                    m.reset()
-                except:
-                    pass
+            for m in metrics: m.reset()
 
             iteration_break = total
             for batch_idx, data_pack in _cycle(self.train_loader, cycle):
@@ -308,11 +304,7 @@ def _fit(self,
                 liveplot.record(epoch, 'train_loss', _list_avg(loss_history))
 
             # Output metrics
-            for m in metrics:
-                try:
-                    matrix_records.add(m.output(), prefix='train')
-                except:
-                    pass
+            for m in metrics: matrix_records.add(m.output(), prefix='train')
                 
             if liveplot._gan:
                 loss_records = {'d_loss': _list_avg(d_loss_history), 'g_loss': _list_avg(g_loss_history)}
