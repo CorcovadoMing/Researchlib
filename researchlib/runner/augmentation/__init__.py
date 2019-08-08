@@ -7,3 +7,5 @@ from .contrast import Contrast
 from .zoom import Zoom
 from .sample_pairing import SamplePairing
 from .autocontrast import AutoContrast
+from .invert import Invert
+from .equalize import Equalize
