@@ -4,16 +4,20 @@ import torchcontrib
 import torch
 import numpy as np
 from torch.optim import *
+import torch.nn.functional as F
+import imageio
 
 class ReinforcementRunner:
-    def __init__(self, env, net):
+    def __init__(self, env, net, estimator):
         self.env = env
         self.net = net.cuda()
+        self.estimator = estimator.cuda()
+        self.estimator_optimizer = Adam(estimator.parameters(), 1e-3)
         self.state_pool = []
         self.action_pool = []
         self.reward_pool = []
         self.log_policy_pool = []
-        self.optimizer = torchcontrib.optim.SWA(Adam(net.parameters(), 1e-2))
+        self.optimizer = torchcontrib.optim.SWA(Adam(net.parameters(), 1e-3))
         self.optimizer.swap_swa_sgd()
     
     def _forward(self, prev_state=None, collect=True):
@@ -36,17 +40,28 @@ class ReinforcementRunner:
         for i in reversed(range(len(self.reward_pool)-1)):
             if self.reward_pool[i] != 0:
                 self.reward_pool[i] += gamma * self.reward_pool[i+1]
-        self.reward_pool = np.array(self.reward_pool)
-        self.reward_pool = (self.reward_pool - self.reward_pool.mean()) / self.reward_pool.std()
+        self.reward_pool = torch.Tensor(self.reward_pool)
+        self.reward_pool = (self.reward_pool - self.reward_pool.mean()) / (self.reward_pool.std() + 1e-7)
+        
+        baseline = self.estimator(torch.Tensor(self.state_pool).float().cuda()).cpu().squeeze()
+        rewards = self.reward_pool - baseline
+        rewards = rewards.detach()
+        
         self.optimizer.zero_grad()
         loss = 0
-        for lb, reward in zip(self.log_policy_pool, self.reward_pool):
+        for lb, reward in zip(self.log_policy_pool, rewards):
             loss += -lb * reward
+        loss /= len(rewards)
         loss.backward()
         self.optimizer.step()
         if swa_update:
             self.optimizer.update_swa()
         self.optimizer.swap_swa_sgd()
+        
+        self.estimator_optimizer.zero_grad()
+        loss = F.mse_loss(baseline, self.reward_pool)
+        loss.backward()
+        self.estimator_optimizer.step()
     
     def optimize(self, num_episode=500, batch_size=5):
         for episode in range(1, num_episode):
@@ -60,7 +75,7 @@ class ReinforcementRunner:
 
             if episode % batch_size == 0:
                 swa_update = False #TODO
-                print(len(self.reward_pool)/batch_size)
+                print(sum(self.reward_pool)/batch_size)
                 self._train(swa_update)
                 self.state_pool = []
                 self.action_pool = []
@@ -75,3 +90,14 @@ class ReinforcementRunner:
             self.env.render(str(iteration)+' '+str(action)+' '+str(reward))
             if done:
                 break
+    
+    def make_gif(self, name, duration):
+        self.net.eval()
+        state = None
+        buffer = []
+        for iteration in count(1):
+            state, reward, _, action, done = self._forward(state, collect=False)
+            buffer.append(self.env.render(None, return_cache=True))
+            if done:
+                break
+        imageio.mimsave(name+'.gif', buffer, duration=duration)
