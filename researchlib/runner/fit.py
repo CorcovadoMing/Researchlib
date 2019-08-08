@@ -190,7 +190,6 @@ def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks,
         self.data, self.target, augmentor, mixup_alpha)
 
     self.model.train()
-
     self.train_fn(train=train,
                   model=self.model,
                   data=self.data,
@@ -213,18 +212,39 @@ def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks,
                   norm=norm,
                   matrix_records=matrix_records,
                   bar=bar)
-
-
     self.model.eval()
 
-
-@register_method
-def _cycle(self, data, _cycle_flag=False):
+#==================================================================================
+    
+def _cycle(data, _cycle_flag=False):
     if _cycle_flag:
         return cycle(enumerate(data))
     else:
         return enumerate(data)
 
+def _get_gpu_monitor():
+    handle = nvmlDeviceGetHandleByIndex(0)
+    info = nvmlDeviceGetMemoryInfo(handle)
+    s = nvmlDeviceGetUtilizationRates(handle)
+    return int(100 * (info.used / info.total)), s.gpu
+
+def _gpu_monitor_worker(membar, utilsbar):
+    while True:
+        global _STOP_GPU_MONITOR_
+        if _STOP_GPU_MONITOR_:
+            membar.value, utilsbar.value = 0, 0
+            membar.description, utilsbar.description = 'M', 'U'
+            break
+        m, u = _get_gpu_monitor()
+        membar.value, utilsbar.value = m, u
+        membar.description, utilsbar.description = 'M: ' + str(
+            m) + '%', 'U: ' + str(u) + '%'
+        time.sleep(0.2)
+        
+def _list_avg(l):
+    return sum(l) / len(l) 
+
+#================================================================================== 
         
 @register_method
 def _fit(self,
@@ -245,14 +265,6 @@ def _fit(self,
     else:
         self.optimizer.zero_grad()
 
-    def _get_gpu_monitor():
-        handle = nvmlDeviceGetHandleByIndex(0)
-        info = nvmlDeviceGetMemoryInfo(handle)
-        s = nvmlDeviceGetUtilizationRates(handle)
-        return int(100 * (info.used / info.total)), s.gpu
-
-    def _list_avg(l):
-        return sum(l) / len(l)
 
     progress = Output()
     label = Output()
@@ -316,18 +328,6 @@ def _fit(self,
         gpu_utils_monitor_bar.max = 100
         display(gpu_utils_monitor_bar)
 
-    def _gpu_monitor_worker(membar, utilsbar):
-        while True:
-            global _STOP_GPU_MONITOR_
-            if _STOP_GPU_MONITOR_:
-                membar.value, utilsbar.value = 0, 0
-                membar.description, utilsbar.description = 'M', 'U'
-                break
-            m, u = _get_gpu_monitor()
-            membar.value, utilsbar.value = m, u
-            membar.description, utilsbar.description = 'M: ' + str(
-                m) + '%', 'U: ' + str(u) + '%'
-            time.sleep(0.2)
 
     global _STOP_GPU_MONITOR_
     _STOP_GPU_MONITOR_ = False
@@ -374,7 +374,7 @@ def _fit(self,
             bar = None
 
             iteration_break = total
-            for batch_idx, data_pack in self._cycle(self.train_loader, cycle):
+            for batch_idx, data_pack in _cycle(self.train_loader, cycle):
                 self._accum_current += 1
                 desc_current = self._accum_current
                 if self._accum_current == self._accum_gradient:
@@ -596,26 +596,3 @@ def _fit(self,
         self.augmentation_list = []
         self.unload_gpu()
         _STOP_GPU_MONITOR_ = True
-
-
-@register_method
-def predict(self, x, y=[], augmentor=None):
-    with torch.no_grad():
-        self.preload_gpu()
-        try:
-            guess = self.model(x.cuda())
-            if augmentor:
-                aug_list = augmentor.someof + augmentor.oneof
-                for aug_fn in aug_list:
-                    _x, _ = aug_fn(x.numpy(), y)
-                    _x = torch.from_numpy(np.ascontiguousarray(_x))
-                    guess = self.model(_x.cuda())
-                    del _x
-                guess /= len(aug_list)
-            guess = guess.cpu()
-        except:
-            raise
-        finally:
-            del x, y
-            self.unload_gpu(unload_data=False)
-    return guess

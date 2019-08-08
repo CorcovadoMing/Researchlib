@@ -30,6 +30,7 @@ from . import train
 from . import validate
 from . import gpu_resource_management
 from . import set_lr_schedule
+from . import predict
 
 @_add_methods_from(gpu_resource_management)
 @_add_methods_from(set_lr_schedule)
@@ -37,6 +38,7 @@ from . import set_lr_schedule
 @_add_methods_from(fit)
 @_add_methods_from(train)
 @_add_methods_from(validate)
+@_add_methods_from(predict)
 class Runner:
     def __init__(self,
                  model=None,
