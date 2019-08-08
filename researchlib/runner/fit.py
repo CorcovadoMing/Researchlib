@@ -27,7 +27,7 @@ def fit_iteration(self,
                   callbacks=[],
                   _id='none',
                   self_iterative=False):
-    _ = self._set_policy(policy, lr, callbacks)
+    _, callbacks = self._set_policy(policy, lr, callbacks)
     self._fit(1,
               lr,
               augmentor,
@@ -58,7 +58,7 @@ def fit_xy(self,
            _auto_gpu=False,
            _train=True):
     
-    _ = self._set_policy(policy, lr, callbacks)
+    _, callbacks = self._set_policy(policy, lr, callbacks)
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
 
@@ -100,7 +100,7 @@ def fit(self,
         accum_gradient=1,
         accum_freq=100):
     
-    total_epochs = self._set_policy(policy, lr, callbacks, epochs)
+    total_epochs, callbacks = self._set_policy(policy, lr, callbacks, epochs)
 
     self._accum_gradient = 1
     self._accum_freq = accum_freq
@@ -120,30 +120,23 @@ def fit(self,
 
 @register_method
 def _process_type(self, data_pack, inputs):
-    ''' INTERNAL_FUNCTION:
-        Split the x and y in loader for training
-        Move x and y to GPU if cuda is available
-    '''
-
-    if type(data_pack[0]) == dict:  # DALI
+    # DALI
+    if type(data_pack[0]) == dict:
         data, target = data_pack[0]['data'], data_pack[0]['label']
     else:
-        data, target = data_pack[0:inputs], data_pack[inputs:]
+        data, target = data_pack[:inputs], data_pack[inputs:]
 
-    if type(data) != list and type(data) != tuple: data = [data]
-    if type(target) != list and type(target) != tuple: target = [target]
-
+    if type(data) != list and type(data) != tuple: 
+        data = [data]
+    if type(target) != list and type(target) != tuple: 
+        target = [target]
     if type(data[0]) != torch.Tensor:
-        data, target = [torch.from_numpy(i)
-                        for i in data], [torch.from_numpy(i) for i in target]
+        data, target = [torch.from_numpy(i) for i in data], [torch.from_numpy(i) for i in target]
     return data, target
 
 
 @register_method
 def _process_data(self, data, target, augmentor, mixup_alpha):
-    ''' INTERNAL_FUNCTION:
-        Augmentation and Mixup
-    '''
     def mixup_loss_fn(loss_fn, x, y, y_res, lam):
         return lam * loss_fn(x, y) + (1 - lam) * loss_fn(x, y_res)
 
@@ -153,10 +146,9 @@ def _process_data(self, data, target, augmentor, mixup_alpha):
 
     # On the fly augmentation
     for augmentation_fn in self.augmentation_list:
-        mag = random.random()
-        data, target = augmentation_fn._forward(data, target, 0.5, mag)
+        data, target = augmentation_fn._forward(data, target, 0.5, random.random())
 
-    # Target type refine
+    # Target type refine (should be remove after refined loss function)
     while len(target) != len(self.require_long_):
         self.require_long_.append(self.require_long_[-1])
     target = [i.long() if j else i for i, j in zip(target, self.require_long_)]
@@ -245,7 +237,125 @@ def _list_avg(l):
     return sum(l) / len(l) 
 
 #================================================================================== 
+
+class Liveplot:
+    def __init__(self, model, total_iteration):
+        self._gan = True if type(model) == GANModel else False
+        self.history = hl.History()
         
+        # Label + Pregress
+        self.progress = Output()
+        self.progress_label = Output()
+        display(HBox([self.progress_label, self.progress]))
+        with self.progress:
+            self.progress_bar = IntProgress(bar_style='info')
+            self.progress_bar.min = 0
+            self.progress_bar.max = total_iteration
+            display(self.progress_bar)
+        with self.progress_label:
+            self.progress_label_text = Label(value="Initialization")
+            display(self.progress_label_text)
+        
+        # 4 chartplots
+        self.loss_plot = Output()
+        self.matrix_plot = Output()
+        display(HBox([self.loss_plot, self.matrix_plot]))
+        self.lr_plot = Output()
+        self.norm_plot = Output()
+        display(HBox([self.lr_plot, self.norm_plot]))
+        
+        # GAN visualization
+        if self._gan:
+            self.gan_gallary = Output()
+            display(self.gan_gallary)
+            self.gan_canvas = hl.Canvas()
+        
+        # Memory and Log
+        self.gpu_mem_monitor = Output()
+        self.gpu_utils_monitor = Output()
+        self.text_log = Output()
+        display(HBox([self.gpu_mem_monitor, self.gpu_utils_monitor, self.text_log]))
+        
+        with self.gpu_mem_monitor:
+            self.gpu_mem_monitor_bar = IntProgress(orientation='vertical', bar_style='success')
+            self.gpu_mem_monitor_bar.description = 'M: 0%'
+            self.gpu_mem_monitor_bar.min = 0
+            self.gpu_mem_monitor_bar.max = 100
+            display(self.gpu_mem_monitor_bar)
+            
+        with self.gpu_utils_monitor:
+            self.gpu_utils_monitor_bar = IntProgress(orientation='vertical', bar_style='success')
+            self.gpu_utils_monitor_bar.description = 'U: 0%'
+            self.gpu_utils_monitor_bar.min = 0
+            self.gpu_utils_monitor_bar.max = 100
+            display(self.gpu_utils_monitor_bar)
+        
+        # Canvas
+        self.loss_canvas = hl.Canvas()
+        self.matrix_canvas = hl.Canvas()
+        self.lr_canvas = hl.Canvas()
+        self.norm_canvas = hl.Canvas()
+        
+        # Start monitor thread
+        global _STOP_GPU_MONITOR_
+        _STOP_GPU_MONITOR_ = False
+        self.thread = threading.Thread(target=_gpu_monitor_worker,
+                                      args=(self.gpu_mem_monitor_bar, self.gpu_utils_monitor_bar))
+        self.thread.start()
+    
+    
+    def update_progressbar(self, value):
+        self.progress_bar.value = value
+    
+    
+    def update_loss_desc(self, epoch, g_loss_history, d_loss_history, loss_history):
+        if self._gan:
+            self.progress_label_text.value = f'Epoch: {epoch}, G Loss: {_list_avg(g_loss_history):.4f}, D Loss: {_list_avg(d_loss_history):.4f}'
+                                 #Iter: ({batch_idx+1}/{total_iteration}:{desc_current}/{self._accum_gradient})'
+        else:
+            self.progress_label_text.value = f'Epoch: {epoch}, Loss: {_list_avg(loss_history):.4f}'
+
+    
+    def plot(self, epoch, history_, epoch_str):
+        if self._gan:
+            with self.gan_gallary:
+                self.gan_canvas.draw_image(self.history['image'])
+            
+        with self.loss_plot:
+            if self._gan:
+                self.loss_canvas.draw_plot([self.history["train_g_loss"], self.history['train_d_loss']])
+            else:
+                self.loss_canvas.draw_plot([self.history["train_loss"], self.history['val_loss']])
+        with self.matrix_plot:
+            if self._gan:
+                self.matrix_canvas.draw_plot([self.history['inception_score'], self.history['fid']])
+            else:
+                self.matrix_canvas.draw_plot([self.history['train_acc'], self.history['val_acc']])
+        with self.lr_plot:
+            if self._gan:
+                self.lr_canvas.draw_plot([self.history['g_lr'], self.history['d_lr']])
+            else:
+                self.lr_canvas.draw_plot([self.history['lr']])
+        with self.norm_plot:
+            self.norm_canvas.draw_plot([self.history['norm']])
+
+        with self.text_log:
+            state = []
+            fs = '{:^14}'
+            if epoch == 1:
+                print(('{:^10}' +
+                       (fs *
+                        (len(history_.records.keys()) - 1))).format(
+                            'Epochs',
+                            *list(history_.records.keys())[:-1]))
+                print('================================================================')
+            state.append('{:^10}'.format(epoch_str))
+            for i in history_.records:
+                if i != 'saved':
+                    state.append('{:^14.4f}'.format(history_.records[i][-1]))
+            print(''.join(state))
+            
+            
 @register_method
 def _fit(self,
          epochs,
@@ -259,82 +369,15 @@ def _fit(self,
          cycle,
          total=0):
     
+    _gan = True if type(self.model) == GANModel else False
+    
     if type(self.optimizer) == list:
         for i in self.optimizer:
             i.zero_grad()
     else:
         self.optimizer.zero_grad()
 
-
-    progress = Output()
-    label = Output()
-    progress_title = HBox([label, progress])
-    display(progress_title)
-
-    with label:
-        label_text = Label(value="Initialization")
-        display(label_text)
-
-    loss_live_plot = Output()
-    matrix_live_plot = Output()
-    live_plot = HBox([loss_live_plot, matrix_live_plot])
-    display(live_plot)
-
-    lr_plot = Output()
-    norm_plot = Output()
-    lr_norm = HBox([lr_plot, norm_plot])
-    display(lr_norm)
-
-    _gan = True if type(self.model) == GANModel else False
-
-    if _gan:
-        gan_out = Output()
-        display(gan_out)
-        gan_canvas = hl.Canvas()
-
-    gpu_mem_monitor = Output()
-    gpu_utils_monitor = Output()
-    log = Output()
-    log_info = HBox([gpu_mem_monitor, gpu_utils_monitor, log])
-    display(log_info)
-
-    epoch_history = hl.History()
-    history = hl.History()
-    loss_canvas = hl.Canvas()
-    matrix_canvas = hl.Canvas()
-    lr_canvas = hl.Canvas()
-    norm_canvas = hl.Canvas()
-
-    total_iteration = len(self.train_loader)
-    with progress:
-        progressbar = IntProgress(bar_style='info')
-        progressbar.min = 0
-        progressbar.max = total_iteration
-        display(progressbar)
-
-    with gpu_mem_monitor:
-        gpu_mem_monitor_bar = IntProgress(orientation='vertical',
-                                          bar_style='success')
-        gpu_mem_monitor_bar.description = 'M: 0%'
-        gpu_mem_monitor_bar.min = 0
-        gpu_mem_monitor_bar.max = 100
-        display(gpu_mem_monitor_bar)
-
-    with gpu_utils_monitor:
-        gpu_utils_monitor_bar = IntProgress(orientation='vertical',
-                                            bar_style='success')
-        gpu_utils_monitor_bar.description = 'U: 0%'
-        gpu_utils_monitor_bar.min = 0
-        gpu_utils_monitor_bar.max = 100
-        display(gpu_utils_monitor_bar)
-
-
-    global _STOP_GPU_MONITOR_
-    _STOP_GPU_MONITOR_ = False
-    thread = threading.Thread(target=_gpu_monitor_worker,
-                              args=(gpu_mem_monitor_bar,
-                                    gpu_utils_monitor_bar))
-    thread.start()
+    liveplot = Liveplot(self.model, len(self.train_loader))
 
     if total == 0:
         total = len(self.train_loader)
@@ -371,7 +414,6 @@ def _fit(self,
                     m.reset()
                 except:
                     pass
-            bar = None
 
             iteration_break = total
             for batch_idx, data_pack in _cycle(self.train_loader, cycle):
@@ -383,7 +425,8 @@ def _fit(self,
                 else:
                     self._accum_step = False
 
-                progressbar.value = batch_idx + 1
+                liveplot.update_progressbar(batch_idx+1)
+                
                 self._fit_xy(data_pack,
                              self.inputs,
                              augmentor,
@@ -395,37 +438,24 @@ def _fit(self,
                              d_loss_history,
                              norm,
                              matrix_records,
-                             bar,
+                             None,
                              train=True)
 
-                if _gan:
-                    g_loss_desc = _list_avg(g_loss_history)
-                    d_loss_desc = _list_avg(d_loss_history)
-                    label_text.value = f'Epoch: {self.epoch}, G Loss: {g_loss_desc:.4f}, D Loss: {d_loss_desc:.4f}, Iter: ({batch_idx+1}/{total_iteration}:{desc_current}/{self._accum_gradient})'
-                else:
-                    label_text.value = 'Epoch: ' + str(
-                        self.epoch) + ', Loss: ' + str(
-                            (sum(loss_history) / len(loss_history)).numpy())
-
+                liveplot.update_loss_desc(self.epoch, g_loss_history, d_loss_history, loss_history)
+    
                 iteration_break -= 1
                 if iteration_break == 0:
                     break
 
-            history.log(epoch, norm=_list_avg(norm))
+            liveplot.history.log(epoch, norm=_list_avg(norm))
             if _gan:
-                history.log(
-                    epoch,
-                    g_lr=[i['lr'] for i in self.optimizer[1].param_groups][-1])
-                history.log(
-                    epoch,
-                    d_lr=[i['lr'] for i in self.optimizer[0].param_groups][-1])
-                history.log(epoch, train_g_loss=_list_avg(g_loss_history))
-                history.log(epoch, train_d_loss=_list_avg(d_loss_history))
+                liveplot.history.log(epoch, g_lr=[i['lr'] for i in self.optimizer[1].param_groups][-1])
+                liveplot.history.log(epoch, d_lr=[i['lr'] for i in self.optimizer[0].param_groups][-1])
+                liveplot.history.log(epoch, train_g_loss=_list_avg(g_loss_history))
+                liveplot.history.log(epoch, train_d_loss=_list_avg(d_loss_history))
             else:
-                history.log(epoch,
-                            lr=[i['lr']
-                                for i in self.optimizer.param_groups][-1])
-                history.log(epoch, train_loss=_list_avg(loss_history))
+                liveplot.history.log(epoch, lr=[i['lr'] for i in self.optimizer.param_groups][-1])
+                liveplot.history.log(epoch, train_loss=_list_avg(loss_history))
 
             # Output metrics
             for m in metrics:
@@ -433,28 +463,23 @@ def _fit(self,
                     matrix_records.add(m.output(), prefix='train')
                 except:
                     pass
+                
             if _gan:
-                loss_records = {
-                    'd_loss': sum(d_loss_history) / len(d_loss_history),
-                    'g_loss': sum(g_loss_history) / len(g_loss_history)
-                }
+                loss_records = {'d_loss': _list_avg(d_loss_history), 'g_loss': _list_avg(g_loss_history)}
             else:
-                loss_records = {'loss': sum(loss_history) / len(loss_history)}
+                loss_records = {'loss': _list_avg(loss_history)}
 
             self.history_.add(loss_records, prefix='train')
             self.history_ += matrix_records
 
             try:
-                history.log(epoch,
-                            train_acc=self.history_.records['train_acc'][-1])
+                liveplot.history.log(epoch, train_acc=self.history_.records['train_acc'][-1])
             except:
                 pass
 
             if _gan:
-                history.log(epoch,
-                            inception_score=self.history_.
-                            records['train_inception_score'][-1])
-                history.log(epoch, fid=self.history_.records['train_fid'][-1])
+                liveplot.history.log(epoch, inception_score=self.history_.records['train_inception_score'][-1])
+                liveplot.history.log(epoch, fid=self.history_.records['train_fid'][-1])
 
             for callback_func in callbacks:
                 callback_func.on_epoch_end(model=self.model,
@@ -471,9 +496,9 @@ def _fit(self,
                 _gan_sample = _gan_sample.detach().cpu().numpy().transpose(
                     (0, 2, 3, 1))
                 _grid = plot_montage(_gan_sample, 2, 2, False)
-                epoch_history.log(epoch, image=_grid)
-                with gan_out:
-                    gan_canvas.draw_image(epoch_history['image'])
+                liveplot.history.log(epoch, image=_grid)
+                #with gan_out:
+                #    gan_canvas.draw_image(liveplot.history['image'])
 
                     
                     
@@ -502,11 +527,11 @@ def _fit(self,
                 self.history_.add(loss_records, prefix='val')
                 self.history_ += matrix_records
                 try:
-                    history.log(epoch,
+                    liveplot.history.log(epoch,
                                 val_acc=self.history_.records['val_acc'][-1])
                 except:
                     pass
-                history.log(epoch,
+                liveplot.history.log(epoch,
                             val_loss=self.history_.records['val_loss'][-1])
 
             epoch_str = str(self.epoch)
@@ -533,50 +558,7 @@ def _fit(self,
             else:
                 self.history_.add({'saved': ''})
 
-            with loss_live_plot:
-                if _gan:
-                    loss_canvas.draw_plot(
-                        [history["train_g_loss"], history['train_d_loss']])
-                else:
-                    loss_canvas.draw_plot(
-                        [history["train_loss"], history['val_loss']])
-            with matrix_live_plot:
-                if _gan:
-                    matrix_canvas.draw_plot(
-                        [history['inception_score'], history['fid']])
-                else:
-                    matrix_canvas.draw_plot(
-                        [history['train_acc'], history['val_acc']])
-            with lr_plot:
-                if _gan:
-                    lr_canvas.draw_plot([history['g_lr'], history['d_lr']])
-                else:
-                    lr_canvas.draw_plot([history['lr']])
-            with norm_plot:
-                norm_canvas.draw_plot([history['norm']])
-
-            with log:
-                state = []
-                fs = '{:^14}'
-                if epoch == 1:
-                    print(('{:^10}' +
-                           (fs *
-                            (len(self.history_.records.keys()) - 1))).format(
-                                'Epochs',
-                                *list(self.history_.records.keys())[:-1]))
-                    if self.test_loader:
-                        print(
-                            '================================================================'
-                        )
-                    else:
-                        print('==============================')
-                state.append('{:^10}'.format(epoch_str))
-                for i in self.history_.records:
-                    if i != 'saved':
-                        state.append('{:^14.4f}'.format(
-                            self.history_.records[i][-1]))
-                print(''.join(state))
-
+            liveplot.plot(self.epoch, self.history_, epoch_str)
             self.epoch += 1
 
             # Self-interative

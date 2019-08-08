@@ -19,7 +19,7 @@ def _set_policy(self, policy, lr, callbacks=[], epochs=1):
     elif policy == 'fixed':
         set_lr(self.optimizer, lr)
         total_epochs = epochs
-    return total_epochs
+    return total_epochs, callbacks
 
 @register_method
 def _set_cyclical(self, lr):
