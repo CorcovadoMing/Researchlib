@@ -4,7 +4,7 @@ from .pil_helper import _PILHelper
 from PIL import Image, ImageOps, ImageEnhance
 
 
-class Invert(template.NumpyAugmentation):
+class Equalize(template.NumpyAugmentation):
     def __init__(self, prob=None, mag=None, include_y=False):
         super().__init__()
         self.include_y = include_y
@@ -14,7 +14,7 @@ class Invert(template.NumpyAugmentation):
     
     def _aug_fn(self, img, mag):
         img = self.helper.to_pil(img.transpose(1,2,0))
-        img = ImageOps.invert(img)
+        img = ImageOps.equalize(img)
         img = self.helper.to_numpy(img).transpose(2,0,1)
         return img
     
