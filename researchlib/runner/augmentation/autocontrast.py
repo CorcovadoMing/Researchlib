@@ -1,6 +1,8 @@
 from ..template import template
 from ...utils import mapping
 from .pil_helper import _PILHelper
+from PIL import Image, ImageOps, ImageEnhance
+
 
 class AutoContrast(template.NumpyAugmentation):
     def __init__(self, prob=None, mag=None, include_y=False):
@@ -11,10 +13,12 @@ class AutoContrast(template.NumpyAugmentation):
         self.helper = _PILHelper()
     
     def _aug_fn(self, img, mag):
-        img = self.helper.to_pil(img)
+        img = self.helper.to_pil(img.transpose(1,2,0))
         cutoff = int(mag * 49)
         img = ImageOps.autocontrast(img, cutoff=cutoff)
-        return self.helper.to_numpy(img)
+        img = self.helper.to_numpy(img).transpose(2,0,1)
+        print(img.shape)
+        return img
     
     def forward_single(self, x, y, mag):
         x = [ self._aug_fn(i, mag) for i in x]
