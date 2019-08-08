@@ -497,10 +497,6 @@ def _fit(self,
                     (0, 2, 3, 1))
                 _grid = plot_montage(_gan_sample, 2, 2, False)
                 liveplot.history.log(epoch, image=_grid)
-                #with gan_out:
-                #    gan_canvas.draw_image(liveplot.history['image'])
-
-                    
                     
             # SWA
             if self.swa and self.epoch >= self.swa_start and self.epoch % 2 == 0:
