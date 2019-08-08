@@ -1,9 +1,11 @@
 from ..models import GANModel
 from ipywidgets import IntProgress, Output, HBox, Label
+from IPython import display as _display
 import hiddenlayer as hl
 import threading
 from pynvml import *
 import time
+from texttable import Texttable
 
 def _get_gpu_monitor():
     handle = nvmlDeviceGetHandleByIndex(0)
@@ -31,6 +33,7 @@ class Liveplot:
     def __init__(self, model, total_iteration):
         self._gan = True if type(model) == GANModel else False
         self.history = hl.History()
+        self.text_table = Texttable()
         
         # Label + Pregress
         self.progress = Output()
@@ -136,17 +139,8 @@ class Liveplot:
             self.norm_canvas.draw_plot([self.history['norm']])
 
         with self.text_log:
-            state = []
-            fs = '{:^14}'
             if epoch == 1:
-                print(('{:^10}' +
-                       (fs *
-                        (len(history_.records.keys()) - 1))).format(
-                            'Epochs',
-                            *list(history_.records.keys())[:-1]))
-                print('================================================================')
-            state.append('{:^10}'.format(epoch_str))
-            for i in history_.records:
-                if i != 'saved':
-                    state.append('{:^14.4f}'.format(history_.records[i][-1]))
-            print(''.join(state))
+                self.text_table.add_row(['Epochs'] + list(history_.records.keys())[:-1])
+            self.text_table.add_row([epoch_str] + [format(i[-1], '.4f') for i in list(history_.records.values())[:-1]])
+            _display.clear_output(wait=True)
+            print(self.text_table.draw())

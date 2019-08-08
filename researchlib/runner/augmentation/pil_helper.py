@@ -11,7 +11,7 @@ class _PILHelper:
         self.min = img.min()
         img -= img.min()
         self.max = img.max()
-        img /= img.max()
+        img /= (img.max() + 1e-7)
         return Image.fromarray(np.uint8(img * 255))
     
     def to_numpy(self, img):

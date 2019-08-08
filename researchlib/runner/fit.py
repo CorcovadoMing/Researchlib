@@ -141,7 +141,7 @@ def _process_data(self, data, target, augmentor, mixup_alpha):
 
     # On the fly augmentation
     for augmentation_fn in self.augmentation_list:
-        data, target = augmentation_fn._forward(data, target, 0.5, random.random())
+        data, target = augmentation_fn._forward(data, target, random.random(), random.random())
 
     # GPU
     if self.is_cuda:
