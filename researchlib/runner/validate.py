@@ -50,11 +50,6 @@ def validate_fn(self, **kwargs):
             for preprocessing_fn in self.preprocessing_list:
                 data, target = preprocessing_fn._forward(data, target)
 
-            target = [
-                i.long() if j else i
-                for i, j in zip(target, kwargs['require_long'])
-            ]
-
             if kwargs['is_cuda']:
                 data, target = [i.cuda()
                                 for i in data], [i.cuda() for i in target]
@@ -70,14 +65,8 @@ def validate_fn(self, **kwargs):
             auxout.append(output)
             kwargs['auxout'] = auxout
 
-            auxout = [
-                i if j else i.view(i.size(0), -1)
-                for i, j in zip(auxout, kwargs['keep_x_shape'])
-            ]
-            kwargs['target'] = [
-                i if j else i.view(i.size(0), -1)
-                for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])
-            ]
+            auxout = [i.view(i.size(0), -1) for i in auxout]
+            kwargs['target'] = [i.view(i.size(0), -1) for i in kwargs['target']]
 
             if len(kwargs['target']) > len(auxout):
                 kwargs['target'] = [kwargs['target']]

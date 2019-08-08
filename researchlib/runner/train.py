@@ -177,30 +177,19 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type,
     # This hack just apply on GAN
     while type(_model) == GANModel and len(kwargs['target']) != len(auxout):
         kwargs['target'] = kwargs['target'] + [None]
-        kwargs['keep_y_shape'] = kwargs['keep_y_shape'] + [True]
-        kwargs['keep_x_shape'] = kwargs['keep_x_shape'] + [True]
         loss_ffn.append(loss_ffn[-1])
 
     # Calulate loss
     loss = 0
-    auxout = [
-        i if j else i.view(i.size(0), -1)
-        for i, j in zip(auxout, kwargs['keep_x_shape'])
-    ]
+    auxout = [i.view(i.size(0), -1) for i in auxout]
     if learning_type == 'supervise':
-        while len(kwargs['target']) != len(kwargs['keep_y_shape']):
-            kwargs['keep_y_shape'].append(kwargs['keep_y_shape'][-1])
-        kwargs['target'] = [
-            i if j else i.view(i.size(0), -1)
-            for i, j in zip(kwargs['target'], kwargs['keep_y_shape'])
-        ]
+        kwargs['target'] = [i.view(i.size(0), -1) for i in kwargs['target']]
+        if kwargs['mixup_alpha'] != 0:
+            kwargs['target_res'] = [i.view(i.size(0), -1) for i in kwargs['target_res']]
         if len(kwargs['target']) > len(auxout):
             kwargs['target'] = [kwargs['target']]
         for i in range(len(auxout)):
             if kwargs['mixup_alpha'] != 0:
-                if not kwargs['keep_y_shape'][i]:
-                    kwargs['target_res'][i] = kwargs['target_res'][i].view(
-                        kwargs['target_res'][i].size(0), -1)
                 loss += kwargs['mixup_loss_fn'](loss_ffn[i], auxout[i],
                                                 kwargs['target'][i],
                                                 kwargs['target_res'][i],

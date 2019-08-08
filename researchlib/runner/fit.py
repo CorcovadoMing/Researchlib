@@ -143,11 +143,6 @@ def _process_data(self, data, target, augmentor, mixup_alpha):
     for augmentation_fn in self.augmentation_list:
         data, target = augmentation_fn._forward(data, target, 0.5, random.random())
 
-    # Target type refine (should be remove after refined loss function)
-    while len(target) != len(self.require_long_):
-        self.require_long_.append(self.require_long_[-1])
-    target = [i.long() if j else i for i, j in zip(target, self.require_long_)]
-
     # GPU
     if self.is_cuda:
         data, target = [i.cuda() for i in data], [i.cuda() for i in target]
@@ -188,8 +183,6 @@ def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks,
                   reg_fn=self.reg_fn,
                   reg_weights=self.reg_weights,
                   epoch=self.epoch,
-                  keep_x_shape=self.keep_x_shape_,
-                  keep_y_shape=self.keep_y_shape_,
                   mixup_alpha=mixup_alpha,
                   callbacks=callbacks,
                   metrics=metrics,
@@ -370,9 +363,6 @@ def _fit(self,
                     loss_fn=self.loss_fn,
                     is_cuda=self.is_cuda,
                     epoch=self.epoch,
-                    require_long=self.require_long_,
-                    keep_x_shape=self.keep_x_shape_,
-                    keep_y_shape=self.keep_y_shape_,
                     metrics=metrics,
                     callbacks=callbacks,
                     inputs=self.inputs)
