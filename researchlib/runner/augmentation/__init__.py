@@ -9,3 +9,4 @@ from .sample_pairing import SamplePairing
 from .autocontrast import AutoContrast
 from .invert import Invert
 from .equalize import Equalize
+from .solarize import Solarize
