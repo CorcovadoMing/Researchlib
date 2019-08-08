@@ -1,16 +1,11 @@
 import os
 from tqdm import tnrange
-from ..utils import _register_method, _get_iteration, set_lr, plot_montage
+from ..utils import _register_method, plot_montage
 from .history import History
-from ..models import GANModel
 from itertools import cycle
-from ipywidgets import IntProgress, Output, HBox, Label
-import hiddenlayer as hl
-import threading
 import torch
-from pynvml import *
-import time
 import random
+from .liveplot import Liveplot
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -213,147 +208,11 @@ def _cycle(data, _cycle_flag=False):
         return cycle(enumerate(data))
     else:
         return enumerate(data)
-
-def _get_gpu_monitor():
-    handle = nvmlDeviceGetHandleByIndex(0)
-    info = nvmlDeviceGetMemoryInfo(handle)
-    s = nvmlDeviceGetUtilizationRates(handle)
-    return int(100 * (info.used / info.total)), s.gpu
-
-def _gpu_monitor_worker(membar, utilsbar):
-    while True:
-        global _STOP_GPU_MONITOR_
-        if _STOP_GPU_MONITOR_:
-            membar.value, utilsbar.value = 0, 0
-            membar.description, utilsbar.description = 'M', 'U'
-            break
-        m, u = _get_gpu_monitor()
-        membar.value, utilsbar.value = m, u
-        membar.description, utilsbar.description = 'M: ' + str(
-            m) + '%', 'U: ' + str(u) + '%'
-        time.sleep(0.2)
         
 def _list_avg(l):
     return sum(l) / len(l) 
 
 #================================================================================== 
-
-class Liveplot:
-    def __init__(self, model, total_iteration):
-        self._gan = True if type(model) == GANModel else False
-        self.history = hl.History()
-        
-        # Label + Pregress
-        self.progress = Output()
-        self.progress_label = Output()
-        display(HBox([self.progress_label, self.progress]))
-        with self.progress:
-            self.progress_bar = IntProgress(bar_style='info')
-            self.progress_bar.min = 0
-            self.progress_bar.max = total_iteration
-            display(self.progress_bar)
-        with self.progress_label:
-            self.progress_label_text = Label(value="Initialization")
-            display(self.progress_label_text)
-        
-        # 4 chartplots
-        self.loss_plot = Output()
-        self.matrix_plot = Output()
-        display(HBox([self.loss_plot, self.matrix_plot]))
-        self.lr_plot = Output()
-        self.norm_plot = Output()
-        display(HBox([self.lr_plot, self.norm_plot]))
-        
-        # GAN visualization
-        if self._gan:
-            self.gan_gallary = Output()
-            display(self.gan_gallary)
-            self.gan_canvas = hl.Canvas()
-        
-        # Memory and Log
-        self.gpu_mem_monitor = Output()
-        self.gpu_utils_monitor = Output()
-        self.text_log = Output()
-        display(HBox([self.gpu_mem_monitor, self.gpu_utils_monitor, self.text_log]))
-        
-        with self.gpu_mem_monitor:
-            self.gpu_mem_monitor_bar = IntProgress(orientation='vertical', bar_style='success')
-            self.gpu_mem_monitor_bar.description = 'M: 0%'
-            self.gpu_mem_monitor_bar.min = 0
-            self.gpu_mem_monitor_bar.max = 100
-            display(self.gpu_mem_monitor_bar)
-            
-        with self.gpu_utils_monitor:
-            self.gpu_utils_monitor_bar = IntProgress(orientation='vertical', bar_style='success')
-            self.gpu_utils_monitor_bar.description = 'U: 0%'
-            self.gpu_utils_monitor_bar.min = 0
-            self.gpu_utils_monitor_bar.max = 100
-            display(self.gpu_utils_monitor_bar)
-        
-        # Canvas
-        self.loss_canvas = hl.Canvas()
-        self.matrix_canvas = hl.Canvas()
-        self.lr_canvas = hl.Canvas()
-        self.norm_canvas = hl.Canvas()
-        
-        # Start monitor thread
-        global _STOP_GPU_MONITOR_
-        _STOP_GPU_MONITOR_ = False
-        self.thread = threading.Thread(target=_gpu_monitor_worker,
-                                      args=(self.gpu_mem_monitor_bar, self.gpu_utils_monitor_bar))
-        self.thread.start()
-    
-    
-    def update_progressbar(self, value):
-        self.progress_bar.value = value
-    
-    
-    def update_loss_desc(self, epoch, g_loss_history, d_loss_history, loss_history):
-        if self._gan:
-            self.progress_label_text.value = f'Epoch: {epoch}, G Loss: {_list_avg(g_loss_history):.4f}, D Loss: {_list_avg(d_loss_history):.4f}'
-                                 #Iter: ({batch_idx+1}/{total_iteration}:{desc_current}/{self._accum_gradient})'
-        else:
-            self.progress_label_text.value = f'Epoch: {epoch}, Loss: {_list_avg(loss_history):.4f}'
-
-    
-    def plot(self, epoch, history_, epoch_str):
-        if self._gan:
-            with self.gan_gallary:
-                self.gan_canvas.draw_image(self.history['image'])
-            
-        with self.loss_plot:
-            if self._gan:
-                self.loss_canvas.draw_plot([self.history["train_g_loss"], self.history['train_d_loss']])
-            else:
-                self.loss_canvas.draw_plot([self.history["train_loss"], self.history['val_loss']])
-        with self.matrix_plot:
-            if self._gan:
-                self.matrix_canvas.draw_plot([self.history['inception_score'], self.history['fid']])
-            else:
-                self.matrix_canvas.draw_plot([self.history['train_acc'], self.history['val_acc']])
-        with self.lr_plot:
-            if self._gan:
-                self.lr_canvas.draw_plot([self.history['g_lr'], self.history['d_lr']])
-            else:
-                self.lr_canvas.draw_plot([self.history['lr']])
-        with self.norm_plot:
-            self.norm_canvas.draw_plot([self.history['norm']])
-
-        with self.text_log:
-            state = []
-            fs = '{:^14}'
-            if epoch == 1:
-                print(('{:^10}' +
-                       (fs *
-                        (len(history_.records.keys()) - 1))).format(
-                            'Epochs',
-                            *list(history_.records.keys())[:-1]))
-                print('================================================================')
-            state.append('{:^10}'.format(epoch_str))
-            for i in history_.records:
-                if i != 'saved':
-                    state.append('{:^14.4f}'.format(history_.records[i][-1]))
-            print(''.join(state))
             
             
 @register_method
@@ -368,8 +227,6 @@ def _fit(self,
          self_iterative,
          cycle,
          total=0):
-    
-    _gan = True if type(self.model) == GANModel else False
     
     if type(self.optimizer) == list:
         for i in self.optimizer:
@@ -447,15 +304,15 @@ def _fit(self,
                 if iteration_break == 0:
                     break
 
-            liveplot.history.log(epoch, norm=_list_avg(norm))
-            if _gan:
-                liveplot.history.log(epoch, g_lr=[i['lr'] for i in self.optimizer[1].param_groups][-1])
-                liveplot.history.log(epoch, d_lr=[i['lr'] for i in self.optimizer[0].param_groups][-1])
-                liveplot.history.log(epoch, train_g_loss=_list_avg(g_loss_history))
-                liveplot.history.log(epoch, train_d_loss=_list_avg(d_loss_history))
+            liveplot.record(epoch, 'norm', _list_avg(norm))
+            if liveplot._gan:
+                liveplot.record(epoch, 'g_lr', [i['lr'] for i in self.optimizer[1].param_groups][-1])
+                liveplot.record(epoch, 'd_lr', [i['lr'] for i in self.optimizer[0].param_groups][-1])
+                liveplot.record(epoch, 'train_g_loss', _list_avg(g_loss_history))
+                liveplot.record(epoch, 'train_d_loss', _list_avg(d_loss_history))
             else:
-                liveplot.history.log(epoch, lr=[i['lr'] for i in self.optimizer.param_groups][-1])
-                liveplot.history.log(epoch, train_loss=_list_avg(loss_history))
+                liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer.param_groups][-1])
+                liveplot.record(epoch, 'train_loss', _list_avg(loss_history))
 
             # Output metrics
             for m in metrics:
@@ -464,7 +321,7 @@ def _fit(self,
                 except:
                     pass
                 
-            if _gan:
+            if liveplot._gan:
                 loss_records = {'d_loss': _list_avg(d_loss_history), 'g_loss': _list_avg(g_loss_history)}
             else:
                 loss_records = {'loss': _list_avg(loss_history)}
@@ -473,13 +330,13 @@ def _fit(self,
             self.history_ += matrix_records
 
             try:
-                liveplot.history.log(epoch, train_acc=self.history_.records['train_acc'][-1])
+                liveplot.record(epoch, 'train_acc', self.history_.records['train_acc'][-1])
             except:
                 pass
 
-            if _gan:
-                liveplot.history.log(epoch, inception_score=self.history_.records['train_inception_score'][-1])
-                liveplot.history.log(epoch, fid=self.history_.records['train_fid'][-1])
+            if liveplot._gan:
+                liveplot.record(epoch, 'inception_score', self.history_.records['train_inception_score'][-1])
+                liveplot.record(epoch, 'fid', self.history_.records['train_fid'][-1])
 
             for callback_func in callbacks:
                 callback_func.on_epoch_end(model=self.model,
@@ -487,7 +344,7 @@ def _fit(self,
                                            optimizer=self.optimizer,
                                            epoch=epoch)
 
-            if _gan:
+            if liveplot._gan:
                 ema = self.ema > 0 and self.epoch > self.ema_start
                 _gan_sample = self.model.sample(4,
                                                 inference=True,
@@ -496,7 +353,7 @@ def _fit(self,
                 _gan_sample = _gan_sample.detach().cpu().numpy().transpose(
                     (0, 2, 3, 1))
                 _grid = plot_montage(_gan_sample, 2, 2, False)
-                liveplot.history.log(epoch, image=_grid)
+                liveplot.record(epoch, 'image', _grid)
                     
             # SWA
             if self.swa and self.epoch >= self.swa_start and self.epoch % 2 == 0:
@@ -523,12 +380,10 @@ def _fit(self,
                 self.history_.add(loss_records, prefix='val')
                 self.history_ += matrix_records
                 try:
-                    liveplot.history.log(epoch,
-                                val_acc=self.history_.records['val_acc'][-1])
+                    liveplot.record(epoch, 'val_acc', self.history_.records['val_acc'][-1])
                 except:
                     pass
-                liveplot.history.log(epoch,
-                            val_loss=self.history_.records['val_loss'][-1])
+                liveplot.record(epoch, 'val_loss', self.history_.records['val_loss'][-1])
 
             epoch_str = str(self.epoch)
 
