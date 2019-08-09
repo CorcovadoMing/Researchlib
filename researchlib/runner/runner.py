@@ -29,11 +29,9 @@ from . import fit
 from . import train
 from . import validate
 from . import gpu_resource_management
-from . import set_lr_schedule
 from . import predict
 
 @_add_methods_from(gpu_resource_management)
-@_add_methods_from(set_lr_schedule)
 @_add_methods_from(init_model)
 @_add_methods_from(fit)
 @_add_methods_from(train)
@@ -59,6 +57,7 @@ class Runner:
                  swa_start=20):
         self.experiment_name = ''
         self.checkpoint_path = ''
+        self.scheduler = None
         self.ema = ema
         self.ema_start = ema_start
         self.swa = swa
@@ -160,7 +159,7 @@ class Runner:
             elif optimizer == 'adam_gan':
                 optimizer = Adam(model.parameters(), betas=(0., 0.999))
             elif optimizer == 'sgd':
-                optimizer = SGD(model.parameters(), lr=1e-2, momentum=0.9)
+                optimizer = SGD(model.parameters(), lr=1e-1, momentum=0.9)
             elif optimizer == 'nesterov':
                 optimizer = SGD(model.parameters(),
                                 lr=1e-2,

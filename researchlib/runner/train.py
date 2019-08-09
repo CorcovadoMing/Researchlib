@@ -62,7 +62,7 @@ def train_fn(self, train=True, **kwargs):
             for i in self.loss_fn
         ]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
-                                        self.optimizer[0], 'unsupervise',
+                                        self.optimizer[0], self.scheduler, 'unsupervise',
                                         condition, train, True, False,
                                         self._accum_step, self._accum_gradient,
                                         self.ema, **kwargs)
@@ -89,7 +89,7 @@ def train_fn(self, train=True, **kwargs):
             for i in self.loss_fn
         ]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
-                                        self.optimizer[1], 'unsupervise',
+                                        self.optimizer[1], self.scheduler, 'unsupervise',
                                         condition, train, False, False,
                                         self._accum_step, self._accum_gradient,
                                         self.ema, **kwargs)
@@ -123,7 +123,7 @@ def train_fn(self, train=True, **kwargs):
             i.forward if isinstance(i, nn.Module) else i for i in self.loss_fn
         ]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
-                                        self.optimizer, learning_type, False,
+                                        self.optimizer, self.scheduler, learning_type, False,
                                         train, False, False, self._accum_step,
                                         self._accum_gradient, self.ema,
                                         **kwargs)
@@ -159,7 +159,7 @@ def _cal_regularization(_model, **kwargs):
     return loss
 
 
-def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type,
+def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler, learning_type,
                      condition, train, retain_graph, orthogonal_reg, step,
                      accum_count, ema, **kwargs):
     # Forward
@@ -253,6 +253,8 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, learning_type,
             norm = norm.detach().cpu()
 
         optim.step()
+        if scheduler is not None:
+            scheduler.step()
         optim.zero_grad()
 
         with torch.no_grad():

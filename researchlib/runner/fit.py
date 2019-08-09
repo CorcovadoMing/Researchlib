@@ -14,7 +14,7 @@ register_method = _register_method(__methods__)
 @register_method
 def fit_iteration(self,
                   iteration,
-                  lr=1e-3,
+                  lr=1e-1,
                   policy='cyclical',
                   augmentor=None,
                   mixup_alpha=0,
@@ -22,7 +22,7 @@ def fit_iteration(self,
                   callbacks=[],
                   _id='none',
                   self_iterative=False):
-    _, callbacks = self._set_policy(policy, lr, callbacks)
+    self.set_policy(policy, lr)
     self._fit(1,
               lr,
               augmentor,
@@ -42,7 +42,7 @@ def fit_iteration(self,
 def fit_xy(self,
            data_pack,
            inputs,
-           lr=1e-3,
+           lr=1e-1,
            policy='cyclical',
            augmentor=None,
            mixup_alpha=0,
@@ -53,7 +53,8 @@ def fit_xy(self,
            _auto_gpu=False,
            _train=True):
     
-    _, callbacks = self._set_policy(policy, lr, callbacks)
+    self.set_policy(policy, lr)
+    
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
 
@@ -82,9 +83,22 @@ def fit_xy(self,
 
 
 @register_method
+def set_policy(self, policy, lr):
+    if policy == 'cyclical':
+        self.scheduler = torch.optim.lr_scheduler.CyclicLR(self.optimizer, 
+                                                           base_lr=lr/50., 
+                                                           max_lr=lr, 
+                                                           step_size_up=len(self.train_loader), 
+                                                           step_size_down=len(self.train_loader))
+    elif policy == 'cosine':
+        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, len(self.train_loader))
+    
+    
+            
+@register_method
 def fit(self,
         epochs,
-        lr=1e-3,
+        lr=1e-1,
         policy='cyclical',
         augmentor=None,
         mixup_alpha=0,
@@ -95,14 +109,14 @@ def fit(self,
         accum_gradient=1,
         accum_freq=100):
     
-    total_epochs, callbacks = self._set_policy(policy, lr, callbacks, epochs)
-
+    self.set_policy(policy, lr)
+    
     self._accum_gradient = 1
     self._accum_freq = accum_freq
     self._accum_target_gradient = accum_gradient
     self._accum_step = False
     self._accum_current = 0
-    self._fit(total_epochs,
+    self._fit(epochs,
               lr,
               augmentor,
               mixup_alpha,
