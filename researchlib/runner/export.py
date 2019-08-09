@@ -1,5 +1,6 @@
 import torch
 import onnxruntime
+import os
 
 class _Export:
     def __init__(self, runner):
@@ -13,14 +14,17 @@ class _Export:
             @shape: input size, e.g., (3, 32, 32) for Cifar10
         '''
         dummy_input = torch.randn(1, *shape)
-        self.shape_check = dummy_input.shape
         torch.onnx.export(self.runner.model.cpu().eval(), dummy_input.cpu(), name+'.onnx')
     
     
-    def optimized(self, name):
+    def optimized(self, name, max_batch_size=1024):
         '''
             Cache the optimized TensorRT model for best performance
+            
+            According to `https://github.com/microsoft/onnxruntime/blob/1c5b15c2b89432f03877c8845f2d854387543aea/onnxruntime/core/providers/tensorrt/tensorrt_execution_provider.cc#L332` the TensorRT max_batch_size is set by environment variable `ORT_TENSORRT_MAX_BATCH_SIZE`, so we need to set it during optimized stage
         '''
+        
+        os.environ['ORT_TENSORRT_MAX_BATCH_SIZE'] = str(max_batch_size)
         self.session = onnxruntime.InferenceSession(name+'.onnx')
         self.input_name = self.session.get_inputs()[0].name
     
@@ -30,5 +34,4 @@ class _Export:
             Inference using the optimzied model
             The data should feed in numpy array
         '''
-        assert data.shape == self.shape_check, 'Current the TensorRT inference only support batch_size 1 in onnxruntime'
         return self.session.run(None, {self.input_name: data})
