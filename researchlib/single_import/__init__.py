@@ -26,5 +26,15 @@ for i in range(deviceCount):
     print("Using GPU", str(i) + ":", nvmlDeviceGetName(handle).decode('utf-8'))
 print("Driver:", nvmlSystemGetDriverVersion().decode('utf-8'))
 
+current_version = '19.08'
+print()
+print('Researchlib version', current_version)
+print('Image version:', os.environ['_RESEARCHLIB_IMAGE_TAG'])
+if os.environ['_RESEARCHLIB_IMAGE_TAG'] != current_version:
+    print('Researchlib is with different version to the image you are using')
+    print(', consider to update the library or the image depend situation.')
+else:
+    print('Current version is up-to-date!')
+
 # out = subprocess.check_output("git branch -vv", shell=True)
 # print(out.decode('utf-8').strip())
