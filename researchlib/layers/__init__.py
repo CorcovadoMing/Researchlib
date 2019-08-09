@@ -15,6 +15,7 @@ from .flatten import _Flatten
 from .reshape import _Reshape
 from .condition_projection import _ConditionProjection
 from .spatial_transform import _SpatialTransform
+from .permute import _Permute
 
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
@@ -54,6 +55,7 @@ class layer(object):
 
     Flatten = _Flatten
     Reshape = _Reshape
+    Permute = _Permute
 
     ConditionProjection = _ConditionProjection
     SpatialTransform = _SpatialTransform

@@ -1,7 +1,7 @@
 from torch import nn
 
 
-class Identical(nn.Module):
+class _Identical(nn.Module):
     def __init__(self):
         super().__init__()
 

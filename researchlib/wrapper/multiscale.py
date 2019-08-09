@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 
-class MultiscaleOutput(nn.Module):
+class _MultiscaleOutput(nn.Module):
     def __init__(self, f):
         super().__init__()
         self.f = f
@@ -11,7 +11,7 @@ class MultiscaleOutput(nn.Module):
         return self.f(x)
 
 
-class MultiscaleInput(nn.Module):
+class _MultiscaleInput(nn.Module):
     def __init__(self, f, type='concat'):
         super().__init__()
         self.f = f
