@@ -17,7 +17,7 @@ from .save_load import _save_model, _save_optimizer, _load_model, _load_optimize
 from torch.cuda import is_available
 from torch.nn import DataParallel
 import torch.backends.cudnn as cudnn
-from apex import amp
+# from apex import amp
 import torchcontrib
 import os
 import pandas as pd
@@ -196,10 +196,10 @@ class Runner:
         else:
             self.optimizer = _assign_optim(self.model, optimizer, self.larc, self.swa)
 
-        self.model, self.optimizer = amp.initialize(self.model,
-                                                    self.optimizer,
-                                                    opt_level="O2",
-                                                    enabled=self.fp16)
+#         self.model, self.optimizer = amp.initialize(self.model,
+#                                                     self.optimizer,
+#                                                     opt_level="O2",
+#                                                     enabled=self.fp16)
 
     def start_experiment(self, name):
         self.experiment_name = name

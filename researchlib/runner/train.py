@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from torch.nn.utils import *
 from ..utils import *
-from apex import amp
+# from apex import amp
 import torchtext
 from torch import nn
 from ..models import GANModel, VAEModel
@@ -216,9 +216,9 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler, learning_typ
     loss += _cal_regularization(_model, **kwargs)
 
     # Backward
-    with amp.scale_loss(loss, optim) as scaled_loss:
-        if train: scaled_loss.backward(retain_graph=retain_graph)
-        del scaled_loss
+#     with amp.scale_loss(loss, optim) as scaled_loss:
+#         if train: scaled_loss.backward(retain_graph=retain_graph)
+    if train: loss.backward(retain_graph=retain_graph)
 
     for callback_func in kwargs['callbacks']:
         kwargs = callback_func.on_update_begin(**kwargs)
