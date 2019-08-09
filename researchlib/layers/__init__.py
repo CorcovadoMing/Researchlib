@@ -11,7 +11,6 @@ from .norm import _Norm
 from .adaptive_concat_pool import _AdaptiveConcatPool1d, _AdaptiveConcatPool2d
 from .position_encoding import _PositionEncoding
 from .noisy_linear import _NoisyLinear
-from .flatten import _Flatten
 from .reshape import _Reshape
 from .condition_projection import _ConditionProjection
 from .spatial_transform import _SpatialTransform
@@ -53,7 +52,6 @@ class layer(object):
     PositionEncoding = _PositionEncoding
     NoisyLinear = _NoisyLinear
 
-    Flatten = _Flatten
     Reshape = _Reshape
     Permute = _Permute
 
