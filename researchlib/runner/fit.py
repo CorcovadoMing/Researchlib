@@ -86,7 +86,6 @@ def fit_xy(self,
 def set_policy(self, policy, lr):
     if policy == 'cyclical':
         self.scheduler = torch.optim.lr_scheduler.CyclicLR(self.optimizer,
-                                                           cycle_momentum=False,
                                                            base_lr=lr/50., 
                                                            max_lr=lr, 
                                                            step_size_up=len(self.train_loader), 
