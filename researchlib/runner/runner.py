@@ -8,7 +8,7 @@ from ..models import *
 from ..callbacks import *
 
 # -------------------------------------------------------
-from .adafactor import AdaFactor
+from .adafactor import Adafactor
 from .validate import validate_fn
 from .preprocessing import PreprocessingDebugger
 from .export import _Export
@@ -78,7 +78,7 @@ class Runner:
         self.history_ = History()
         self.fp16 = fp16
 
-        self.default_callbacks = CyclicalLR(_get_iteration(self.train_loader))
+        self.default_callbacks = []
 
         self.preprocessing_list = []
         self.postprocessing_list = []
@@ -172,7 +172,7 @@ class Runner:
             elif optimizer == 'adagrad':
                 optimizer = Adagrad(model.parameters())
             elif optimizer == 'adafactor':
-                optimizer = AdaFactor(model.parameters(), lr=1e-3)
+                optimizer = Adafactor(model.parameters(), lr=1e-3)
             if larc:
                 optimizer = LARC(optimizer)
             if swa:
