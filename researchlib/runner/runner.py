@@ -63,7 +63,7 @@ class Runner:
         self.swa = swa
         self.swa_start = swa_start
         self.larc = larc
-        self.export = _Export()
+        self.export = _Export(self)
         self.epoch = 1
         self.is_cuda = is_available()
         self.train_loader = train_loader
