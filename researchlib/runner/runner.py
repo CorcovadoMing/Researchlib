@@ -55,6 +55,7 @@ class Runner:
                  ema_start=100,
                  swa=False,
                  swa_start=20):
+        
         self.experiment_name = ''
         self.checkpoint_path = ''
         self.scheduler = None

@@ -141,11 +141,10 @@ class GANModel(nn.Module):
             self.real = self.discriminator(self.real_data)
         return self.real, self.fake
 
-    def forward_g(self, x, condition=None, re_discriminate=False):
-        if re_discriminate:
-            if self.d_condition:
-                self.fake = self.discriminator(
-                    (self.fake_data, self.condition_data))
-            else:
-                self.fake = self.discriminator(self.fake_data)
+    def forward_g(self, x, condition=None):
+        if self.d_condition:
+            self.fake = self.discriminator(
+                (self.fake_data, self.condition_data))
+        else:
+            self.fake = self.discriminator(self.fake_data)
         return self.fake

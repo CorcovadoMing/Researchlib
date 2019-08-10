@@ -105,17 +105,9 @@ def fit(self,
         metrics=[],
         callbacks=[],
         _id='none',
-        self_iterative=False,
-        accum_gradient=1,
-        accum_freq=100):
+        self_iterative=False):
     
     self.set_policy(policy, lr)
-    
-    self._accum_gradient = 1
-    self._accum_freq = accum_freq
-    self._accum_target_gradient = accum_gradient
-    self._accum_step = False
-    self._accum_current = 0
     self._fit(epochs,
               lr,
               mixup_alpha,
@@ -230,8 +222,6 @@ def _fit(self,
             test_prefetcher = BackgroundGenerator(self._iteration_pipeline(self.test_loader, inference=True), max_prefetch=3)
         
         for epoch in range(1, epochs + 1):
-            self._accum_gradient = self._accum_target_gradient
-
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(model=self.model,
                                              train_loader=self.train_loader,
@@ -250,18 +240,9 @@ def _fit(self,
             iteration_break = total
             
             for batch_idx, (x, y) in enumerate(train_prefetcher):
-                self._accum_current += 1
-                desc_current = self._accum_current
-                if self._accum_current == self._accum_gradient:
-                    self._accum_current = 0
-                    self._accum_step = True
-                else:
-                    self._accum_step = False
-
                 liveplot.update_progressbar(batch_idx+1)
-                
-                # GPU
                 if self.is_cuda: x, y = [i.cuda() for i in x], [i.cuda() for i in y]
+                    
                 self.model.train()
                 self.train_fn(train=True,
                               model=self.model,

@@ -64,7 +64,6 @@ def train_fn(self, train=True, **kwargs):
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
                                         self.optimizer[0], self.scheduler, 'unsupervise',
                                         condition, train, True, False,
-                                        self._accum_step, self._accum_gradient,
                                         self.ema, **kwargs)
         for m in kwargs['metrics']:
             m.forward_d([self.model.fake_data_metrics, self.model.real_data])
@@ -82,8 +81,7 @@ def train_fn(self, train=True, **kwargs):
         # Generator
         _backup_grad(self.model.discriminator)
         model = self.model.generator
-        model_ffn = functools.partial(self.model.forward_g,
-                                      re_discriminate=self._accum_step)
+        model_ffn = functools.partial(self.model.forward_g)
         loss_ffn = [
             i.forward_g if isinstance(i, nn.Module) else i
             for i in self.loss_fn
@@ -91,7 +89,6 @@ def train_fn(self, train=True, **kwargs):
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
                                         self.optimizer[1], self.scheduler, 'unsupervise',
                                         condition, train, False, False,
-                                        self._accum_step, self._accum_gradient,
                                         self.ema, **kwargs)
         for m in kwargs['metrics']:
             m.forward_g([self.model.fake_data_metrics, self.model.real_data])
@@ -124,9 +121,7 @@ def train_fn(self, train=True, **kwargs):
         ]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
                                         self.optimizer, self.scheduler, learning_type, False,
-                                        train, False, False, self._accum_step,
-                                        self._accum_gradient, self.ema,
-                                        **kwargs)
+                                        train, False, False, self.ema, **kwargs)
 
         # Record loss
         kwargs['loss_history'].append(_loss)
@@ -160,8 +155,7 @@ def _cal_regularization(_model, **kwargs):
 
 
 def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler, learning_type,
-                     condition, train, retain_graph, orthogonal_reg, step,
-                     accum_count, ema, **kwargs):
+                     condition, train, retain_graph, orthogonal_reg, ema, **kwargs):
     # Forward
     if condition:
         output = model_ffn(*kwargs['data'], *kwargs['target'])
@@ -225,14 +219,8 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler, learning_typ
 
     # Update
     norm = 0
-    if train and step:
+    if train:
         with torch.no_grad():
-            for param in _model.parameters():
-                try:
-                    param.grad.data /= accum_count
-                except:
-                    pass
-
             if orthogonal_reg:
                 for param in _model.parameters():
                     # Only apply this to parameters with at least 2 axes, and not in the blacklist

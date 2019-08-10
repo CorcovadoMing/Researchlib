@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from .history import *
-from ..utils import *
+from ..utils import _register_method, get_aux_out
 
 __methods__ = []
 register_method = _register_method(__methods__)
