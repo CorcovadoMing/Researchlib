@@ -6,6 +6,7 @@ from itertools import cycle
 import torch
 import random
 from .liveplot import Liveplot
+from .prefetch import *
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -100,7 +101,6 @@ def fit(self,
         epochs,
         lr=1e-1,
         policy='cyclical',
-        augmentor=None,
         mixup_alpha=0,
         metrics=[],
         callbacks=[],
@@ -118,7 +118,6 @@ def fit(self,
     self._accum_current = 0
     self._fit(epochs,
               lr,
-              augmentor,
               mixup_alpha,
               metrics,
               callbacks,
@@ -145,7 +144,7 @@ def _process_type(self, data_pack, inputs):
 
 
 @register_method
-def _process_data(self, data, target, augmentor, mixup_alpha):
+def _process_data(self, data, target, mixup_alpha, inference):
     def mixup_loss_fn(loss_fn, x, y, y_res, lam):
         return lam * loss_fn(x, y) + (1 - lam) * loss_fn(x, y_res)
 
@@ -154,12 +153,9 @@ def _process_data(self, data, target, augmentor, mixup_alpha):
         data, target = preprocessing_fn._forward(data, target)
 
     # On the fly augmentation
-    for augmentation_fn in self.augmentation_list:
-        data, target = augmentation_fn._forward(data, target, random.random(), random.random())
-
-    # GPU
-    if self.is_cuda:
-        data, target = [i.cuda() for i in data], [i.cuda() for i in target]
+    if not inference:
+        for augmentation_fn in self.augmentation_list:
+            data, target = augmentation_fn._forward(data, target, random.random(), random.random())
 
     # Mixup
     if mixup_alpha > 0:
@@ -176,37 +172,12 @@ def _process_data(self, data, target, augmentor, mixup_alpha):
         target_res = None
     return data, target, target_res
 
-
 @register_method
-def _fit_xy(self, data_pack, inputs, augmentor, mixup_alpha, callbacks,
-            metrics, loss_history, g_loss_history, d_loss_history, norm,
-            matrix_records, bar, train):
-    self.data, self.target = self._process_type(data_pack, inputs)
-    self.data, self.target, self.target_res = self._process_data(
-        self.data, self.target, augmentor, mixup_alpha)
-
-    self.model.train()
-    self.train_fn(train=train,
-                  model=self.model,
-                  data=self.data,
-                  target=self.target,
-                  target_res=self.target_res,
-                  optimizer=self.optimizer,
-                  loss_fn=self.loss_fn,
-                  mixup_loss_fn=self.mixup_loss_fn,
-                  reg_fn=self.reg_fn,
-                  reg_weights=self.reg_weights,
-                  epoch=self.epoch,
-                  mixup_alpha=mixup_alpha,
-                  callbacks=callbacks,
-                  metrics=metrics,
-                  loss_history=loss_history,
-                  g_loss_history=g_loss_history,
-                  d_loss_history=d_loss_history,
-                  norm=norm,
-                  matrix_records=matrix_records,
-                  bar=bar)
-    self.model.eval()
+def _iteration_pipeline(self, loader, inference=False):
+    for batch_idx, data_pack in _cycle(loader, True):
+        x, y = self._process_type(data_pack, self.inputs)
+        x, y, self.target_res = self._process_data(x, y, 0, inference)
+        yield x, y 
 
 #==================================================================================
     
@@ -220,13 +191,11 @@ def _list_avg(l):
     return sum(l) / len(l) 
 
 #================================================================================== 
-            
-            
+    
 @register_method
 def _fit(self,
          epochs,
          lr,
-         augmentor,
          mixup_alpha,
          metrics,
          callbacks,
@@ -255,9 +224,12 @@ def _fit(self,
         if len(self.default_metrics):
             metrics = self.default_metrics + metrics
 
+            
+        train_prefetcher = BackgroundGenerator(self._iteration_pipeline(self.train_loader), max_prefetch=3)
+        if self.test_loader:
+            test_prefetcher = BackgroundGenerator(self._iteration_pipeline(self.test_loader, inference=True), max_prefetch=3)
+        
         for epoch in range(1, epochs + 1):
-            #             if epoch % self._accum_freq == 0:
-            #                 self._accum_gradient = min(self._accum_target_gradient, self._accum_gradient*2)
             self._accum_gradient = self._accum_target_gradient
 
             for callback_func in callbacks:
@@ -276,7 +248,8 @@ def _fit(self,
             for m in metrics: m.reset()
 
             iteration_break = total
-            for batch_idx, data_pack in _cycle(self.train_loader, cycle):
+            
+            for batch_idx, (x, y) in enumerate(train_prefetcher):
                 self._accum_current += 1
                 desc_current = self._accum_current
                 if self._accum_current == self._accum_gradient:
@@ -287,19 +260,30 @@ def _fit(self,
 
                 liveplot.update_progressbar(batch_idx+1)
                 
-                self._fit_xy(data_pack,
-                             self.inputs,
-                             augmentor,
-                             mixup_alpha,
-                             callbacks,
-                             metrics,
-                             loss_history,
-                             g_loss_history,
-                             d_loss_history,
-                             norm,
-                             matrix_records,
-                             None,
-                             train=True)
+                # GPU
+                if self.is_cuda: x, y = [i.cuda() for i in x], [i.cuda() for i in y]
+                self.model.train()
+                self.train_fn(train=True,
+                              model=self.model,
+                              data=x,
+                              target=y,
+                              target_res=None,
+                              optimizer=self.optimizer,
+                              loss_fn=self.loss_fn,
+                              mixup_loss_fn=None,
+                              reg_fn=self.reg_fn,
+                              reg_weights=self.reg_weights,
+                              epoch=self.epoch,
+                              mixup_alpha=mixup_alpha,
+                              callbacks=callbacks,
+                              metrics=metrics,
+                              loss_history=loss_history,
+                              g_loss_history=g_loss_history,
+                              d_loss_history=d_loss_history,
+                              norm=norm,
+                              matrix_records=matrix_records,
+                              bar=None)
+                self.model.eval()
 
                 liveplot.update_loss_desc(self.epoch, g_loss_history, d_loss_history, loss_history)
     
@@ -364,6 +348,7 @@ def _fit(self,
                     
             if self.test_loader:
                 loss_records, matrix_records = self.validate_fn(
+                    test_prefetcher=test_prefetcher,
                     model=self.model,
                     test_loader=self.test_loader,
                     loss_fn=self.loss_fn,

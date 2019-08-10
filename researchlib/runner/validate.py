@@ -10,6 +10,8 @@ register_method = _register_method(__methods__)
 
 @register_method
 def validate_fn(self, **kwargs):
+    kwargs['model'].eval()
+    
     if self.swa and self.epoch >= self.swa_start:
         if type(self.optimizer) == list:
             for i in self.optimizer:
@@ -18,39 +20,38 @@ def validate_fn(self, **kwargs):
         else:
             self.optimizer.swap_swa_sgd()
             self.optimizer.bn_update(self.train_loader, self.model, device='cuda')
-        
-    kwargs['model'].eval()
+    
     test_loss = 0
     matrix_records = History()
 
     # Reset metrics
     for m in kwargs['metrics']: m.reset()
 
+    total = len(self.test_loader)
     with torch.no_grad():
-        for batch_idx, data_pack in enumerate(kwargs['test_loader']):
-            if type(kwargs['test_loader']
-                    ) == torchtext.data.iterator.BucketIterator:
-                data, target = data_pack.text, data_pack.label
-            elif type(data_pack[0]) == type({}):
-                data, target = data_pack[0]['data'], data_pack[0]['label']
-            else:
-                data, target = data_pack[0], data_pack[1:]
+        for batch_idx, (x, y) in enumerate(kwargs['test_prefetcher']):
+#             if type(kwargs['test_loader']
+#                     ) == torchtext.data.iterator.BucketIterator:
+#                 data, target = data_pack.text, data_pack.label
+#             elif type(data_pack[0]) == type({}):
+#                 data, target = data_pack[0]['data'], data_pack[0]['label']
+#             else:
+#                 data, target = data_pack[0], data_pack[1:]
 
             kwargs['batch_idx'] = batch_idx
 
-            if type(data) != type([]) and type(data) != type(()): data = [data]
-            if type(target) != type([]) and type(target) != type(()):
-                target = [target]
+#             if type(data) != type([]) and type(data) != type(()): data = [data]
+#             if type(target) != type([]) and type(target) != type(()):
+#                 target = [target]
                 
-            # Preprocessing (experimental)
-            for preprocessing_fn in self.preprocessing_list:
-                data, target = preprocessing_fn._forward(data, target)
+#             # Preprocessing (experimental)
+#             for preprocessing_fn in self.preprocessing_list:
+#                 data, target = preprocessing_fn._forward(data, target)
 
             if kwargs['is_cuda']:
-                data, target = [i.cuda()
-                                for i in data], [i.cuda() for i in target]
+                x, y = [i.cuda() for i in x], [i.cuda() for i in y]
 
-            kwargs['data'], kwargs['target'] = data, target
+            kwargs['data'], kwargs['target'] = x, y
 
             for callback_func in kwargs['callbacks']:
                 kwargs = callback_func.on_iteration_begin(**kwargs)
@@ -75,6 +76,9 @@ def validate_fn(self, **kwargs):
 
             for callback_func in kwargs['callbacks']:
                 kwargs = callback_func.on_iteration_end(**kwargs)
+            
+            if batch_idx >= total:
+                break
 
     test_loss /= (kwargs['batch_idx'] + 1)
 
