@@ -3,6 +3,7 @@ from .model import _Model
 from .match import _Match
 from .interpreter import _Interpreter
 
+
 class _Vistool:
     def __init__(self):
         self.image = _Image()

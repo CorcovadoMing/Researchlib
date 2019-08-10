@@ -9,13 +9,14 @@ from .unsqueeze import _Unsqueeze
 from .regularize import _Regularize
 from .time_distributed import _TimeDistributed
 
+
 class wrapper(object):
-    EqualizeLr=_EqualizeLr
-    Auxiliary=_Auxiliary
-    Identical=_Identical
-    Unsqueeze=_Unsqueeze
-    Squeeze=_Squeeze
-    Regularize=_Regularize
-    TimeDistributed=_TimeDistributed
-    MultiscaleOutput=_MultiscaleOutput
-    MultiscaleInput=_MultiscaleInput
+    EqualizeLr = _EqualizeLr
+    Auxiliary = _Auxiliary
+    Identical = _Identical
+    Unsqueeze = _Unsqueeze
+    Squeeze = _Squeeze
+    Regularize = _Regularize
+    TimeDistributed = _TimeDistributed
+    MultiscaleOutput = _MultiscaleOutput
+    MultiscaleInput = _MultiscaleInput

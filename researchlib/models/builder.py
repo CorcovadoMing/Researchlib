@@ -5,6 +5,7 @@ from ..wrapper import _MultiscaleOutput, _MultiscaleInput
 class builder(nn.Module):
     # Static builder queue
     queue = []
+
     def __init__(self, nnlist):
         super().__init__()
         self.nnlist = nn.ModuleList(nnlist)

@@ -1,5 +1,6 @@
 from torch import nn
 
+
 class _Auxiliary(nn.Module):
     def __init__(self, f):
         super().__init__()

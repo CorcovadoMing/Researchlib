@@ -2,6 +2,7 @@ from .matrix import *
 from ..utils import *
 import torch
 
+
 class BCEAcc(Matrix):
     def __init__(self):
         super().__init__()
@@ -19,7 +20,8 @@ class BCEAcc(Matrix):
                 lam * predicted.eq(y_true).sum().float() +
                 (1 - lam) * predicted.eq(y_true_res).sum().float())
         else:
-            y_pred, y_true = loss_input[0].detach(), loss_input[1].detach().squeeze()
+            y_pred, y_true = loss_input[0].detach(), loss_input[1].detach(
+            ).squeeze()
             predicted = (y_pred > 0.5).float()
             self.total += y_true.size(0)
             self.correct += predicted.eq(y_true).sum().float()

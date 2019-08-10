@@ -2,6 +2,7 @@ from .matrix import *
 from ..utils import *
 import torch
 
+
 class Acc(Matrix):
     def __init__(self):
         super().__init__()
@@ -18,7 +19,8 @@ class Acc(Matrix):
                 lam * predicted.eq(y_true.long()).sum().float() +
                 (1 - lam) * predicted.eq(y_true_res.long()).sum().float())
         else:
-            y_pred, y_true = loss_input[0].detach(), loss_input[1].detach().squeeze()
+            y_pred, y_true = loss_input[0].detach(), loss_input[1].detach(
+            ).squeeze()
             _, predicted = torch.max(y_pred, 1)
             self.correct += predicted.eq(y_true.long()).sum().float()
         self.total += predicted.view(-1).size(0)
@@ -30,5 +32,3 @@ class Acc(Matrix):
     def reset(self):
         self.total = 0
         self.correct = 0
-
-

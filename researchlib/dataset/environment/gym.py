@@ -11,7 +11,8 @@ class GymEnv(Env):
         self.env = gym.make(name)
         self.cache = None
         self.reset()
-        print('Env', name, 'is with', self.env.observation_space, 'observed space')
+        print('Env', name, 'is with', self.env.observation_space,
+              'observed space')
         print('Env', name, 'is with', self.env.action_space, 'action space')
 
     def step(self, action):

@@ -6,9 +6,10 @@ import torch
 from .margin import *
 
 
-def nl_loss(x, y): 
+def nl_loss(x, y):
     y = y.squeeze().long()
     return -x[range(y.shape[0]), y].log().mean()
+
 
 def nll_loss(x, y):
     y = y.squeeze().long()
@@ -20,7 +21,7 @@ def loss_mapping(loss_fn):
     if loss_fn == 'nll':
         loss_fn = nll_loss
         default_metrics = [Acc()]
-    
+
     elif loss_fn == 'nl':
         loss_fn = nl_loss
         default_metrics = [Acc()]

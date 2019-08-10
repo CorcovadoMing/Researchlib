@@ -9,8 +9,8 @@ register_method = _register_method(__methods__)
 def _unload_data(self):
     del self.data, self.target, self.target_res
     torch.cuda.empty_cache()
-    
-    
+
+
 @register_method
 def preload_gpu(self):
     if self.is_cuda:
@@ -20,7 +20,7 @@ def preload_gpu(self):
                     state = self.optimizer.state_dict()['state']
                 except:
                     state = self.optimizer.state_dict()['opt_state']
-                    
+
                 for key in state:
                     for attr in state[key]:
                         try:
@@ -32,7 +32,7 @@ def preload_gpu(self):
                 state = self.optimizer.state_dict()['state']
             except:
                 state = self.optimizer.state_dict()['opt_state']
-            
+
             for key in state:
                 for attr in state[key]:
                     try:
@@ -51,7 +51,7 @@ def unload_gpu(self, unload_data=True):
                     state = self.optimizer.state_dict()['state']
                 except:
                     state = self.optimizer.state_dict()['opt_state']
-                    
+
                 for key in state:
                     for attr in state[key]:
                         try:
@@ -63,7 +63,7 @@ def unload_gpu(self, unload_data=True):
                 state = self.optimizer.state_dict()['state']
             except:
                 state = self.optimizer.state_dict()['opt_state']
-                
+
             for key in state:
                 for attr in state[key]:
                     try:

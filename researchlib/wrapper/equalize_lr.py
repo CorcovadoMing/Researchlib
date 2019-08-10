@@ -1,5 +1,6 @@
 from torch import nn
 
+
 class _EqualizeLrHelper:
     def __init__(self, name):
         self.name = name
@@ -14,7 +15,8 @@ class _EqualizeLrHelper:
         fn = EqualLR(name)
         weight = getattr(module, name)
         del module._parameters[name]
-        module.register_parameter(name + '_equallr_orig', nn.Parameter(weight.data))
+        module.register_parameter(name + '_equallr_orig',
+                                  nn.Parameter(weight.data))
         module.register_forward_pre_hook(fn)
         return fn
 

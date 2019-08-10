@@ -11,15 +11,15 @@ class Equalize(template.NumpyAugmentation):
         self.prob = prob
         self.mag = mag
         self.helper = _PILHelper()
-    
+
     def _aug_fn(self, img, mag):
-        img = self.helper.to_pil(img.transpose(1,2,0))
+        img = self.helper.to_pil(img.transpose(1, 2, 0))
         img = ImageOps.equalize(img)
-        img = self.helper.to_numpy(img).transpose(2,0,1)
+        img = self.helper.to_numpy(img).transpose(2, 0, 1)
         return img
-    
+
     def forward_single(self, x, y, mag):
-        x = [ self._aug_fn(i, mag) for i in x]
+        x = [self._aug_fn(i, mag) for i in x]
         if self.include_y:
-            y = [ self._aug_fn(i, mag) for i in y]
+            y = [self._aug_fn(i, mag) for i in y]
         return x, y

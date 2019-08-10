@@ -31,6 +31,7 @@ from . import validate
 from . import gpu_resource_management
 from . import predict
 
+
 @_add_methods_from(gpu_resource_management)
 @_add_methods_from(init_model)
 @_add_methods_from(fit)
@@ -55,7 +56,7 @@ class Runner:
                  ema_start=100,
                  swa=False,
                  swa_start=20):
-        
+
         self.experiment_name = ''
         self.checkpoint_path = ''
         self.scheduler = None
@@ -102,13 +103,11 @@ class Runner:
 
         if type(loss_fn) == type([]):
             for lf in loss_fn:
-                _loss_fn, _default_metrics = _process_loss_fn(
-                    lf)
+                _loss_fn, _default_metrics = _process_loss_fn(lf)
                 self.loss_fn.append(_loss_fn)
                 self.default_metrics += _default_metrics
         else:
-            _loss_fn, _default_metrics = _process_loss_fn(
-                loss_fn)
+            _loss_fn, _default_metrics = _process_loss_fn(loss_fn)
             self.loss_fn.append(_loss_fn)
             self.default_metrics += _default_metrics
         # --------------------------------------------------------------------------------------------------------------------------------
@@ -192,10 +191,13 @@ class Runner:
                 self.optimizer = [
                     _assign_optim(self.model.discriminator, optimizer,
                                   self.larc, self.swa),
-                    _assign_optim(self.model.generator, optimizer, self.larc, self.swa)
+                    _assign_optim(self.model.generator, optimizer, self.larc,
+                                  self.swa)
                 ]
         else:
-            self.optimizer = _assign_optim(self.model, optimizer, self.larc, self.swa)
+            self.optimizer = _assign_optim(self.model, optimizer, self.larc,
+                                           self.swa)
+
 
 #         self.model, self.optimizer = amp.initialize(self.model,
 #                                                     self.optimizer,
@@ -309,11 +311,11 @@ class Runner:
         if debug:
             self.preprocessing_list.append(PreprocessingDebugger())
         return self
-    
+
     def postprocessing(self, postprocessing_list, debug=False):
         self.postprocessing_list = postprocessing_list
         return self
-    
+
     def augmentation(self, augmentation_list, debug=False):
         self.augmentation_list = augmentation_list
         if debug:

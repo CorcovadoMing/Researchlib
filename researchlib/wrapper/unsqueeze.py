@@ -8,4 +8,3 @@ class _Unsqueeze(nn.Module):
 
     def forward(self, x):
         return x.unsqueeze(self.dim)
-

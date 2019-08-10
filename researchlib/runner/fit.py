@@ -36,9 +36,6 @@ def fit_iteration(self,
               total=iteration)
 
 
-
-
-
 @register_method
 def fit_xy(self,
            data_pack,
@@ -53,9 +50,9 @@ def fit_xy(self,
            self_iterative=False,
            _auto_gpu=False,
            _train=True):
-    
+
     self.set_policy(policy, lr)
-    
+
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
 
@@ -86,16 +83,17 @@ def fit_xy(self,
 @register_method
 def set_policy(self, policy, lr):
     if policy == 'cyclical':
-        self.scheduler = torch.optim.lr_scheduler.CyclicLR(self.optimizer,
-                                                           base_lr=lr/50., 
-                                                           max_lr=lr, 
-                                                           step_size_up=len(self.train_loader), 
-                                                           step_size_down=len(self.train_loader))
+        self.scheduler = torch.optim.lr_scheduler.CyclicLR(
+            self.optimizer,
+            base_lr=lr / 50.,
+            max_lr=lr,
+            step_size_up=len(self.train_loader),
+            step_size_down=len(self.train_loader))
     elif policy == 'cosine':
-        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, len(self.train_loader))
-    
-    
-            
+        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            self.optimizer, len(self.train_loader))
+
+
 @register_method
 def fit(self,
         epochs,
@@ -106,7 +104,7 @@ def fit(self,
         callbacks=[],
         _id='none',
         self_iterative=False):
-    
+
     self.set_policy(policy, lr)
     self._fit(epochs,
               lr,
@@ -126,12 +124,13 @@ def _process_type(self, data_pack, inputs):
     else:
         data, target = data_pack[:inputs], data_pack[inputs:]
 
-    if type(data) != list and type(data) != tuple: 
+    if type(data) != list and type(data) != tuple:
         data = [data]
-    if type(target) != list and type(target) != tuple: 
+    if type(target) != list and type(target) != tuple:
         target = [target]
     if type(data[0]) != torch.Tensor:
-        data, target = [torch.from_numpy(i) for i in data], [torch.from_numpy(i) for i in target]
+        data, target = [torch.from_numpy(i)
+                        for i in data], [torch.from_numpy(i) for i in target]
     return data, target
 
 
@@ -147,7 +146,9 @@ def _process_data(self, data, target, mixup_alpha, inference):
     # On the fly augmentation
     if not inference:
         for augmentation_fn in self.augmentation_list:
-            data, target = augmentation_fn._forward(data, target, random.random(), random.random())
+            data, target = augmentation_fn._forward(data, target,
+                                                    random.random(),
+                                                    random.random())
 
     # Mixup
     if mixup_alpha > 0:
@@ -164,26 +165,32 @@ def _process_data(self, data, target, mixup_alpha, inference):
         target_res = None
     return data, target, target_res
 
+
 @register_method
 def _iteration_pipeline(self, loader, inference=False):
     for batch_idx, data_pack in _cycle(loader, True):
         x, y = self._process_type(data_pack, self.inputs)
         x, y, self.target_res = self._process_data(x, y, 0, inference)
-        yield x, y 
+        yield x, y
+
 
 #==================================================================================
-    
+
+
 def _cycle(data, _cycle_flag=False):
     if _cycle_flag:
         return cycle(enumerate(data))
     else:
         return enumerate(data)
-        
-def _list_avg(l):
-    return sum(l) / len(l) 
 
-#================================================================================== 
-    
+
+def _list_avg(l):
+    return sum(l) / len(l)
+
+
+#==================================================================================
+
+
 @register_method
 def _fit(self,
          epochs,
@@ -195,7 +202,7 @@ def _fit(self,
          self_iterative,
          cycle,
          total=0):
-    
+
     if type(self.optimizer) == list:
         for i in self.optimizer:
             i.zero_grad()
@@ -216,11 +223,14 @@ def _fit(self,
         if len(self.default_metrics):
             metrics = self.default_metrics + metrics
 
-            
-        train_prefetcher = BackgroundGenerator(self._iteration_pipeline(self.train_loader), max_prefetch=3)
+        train_prefetcher = BackgroundGenerator(self._iteration_pipeline(
+            self.train_loader),
+                                               max_prefetch=3)
         if self.test_loader:
-            test_prefetcher = BackgroundGenerator(self._iteration_pipeline(self.test_loader, inference=True), max_prefetch=3)
-        
+            test_prefetcher = BackgroundGenerator(self._iteration_pipeline(
+                self.test_loader, inference=True),
+                                                  max_prefetch=3)
+
         for epoch in range(1, epochs + 1):
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(model=self.model,
@@ -235,14 +245,16 @@ def _fit(self,
             inception_score = []
             matrix_records = History()
 
-            for m in metrics: m.reset()
+            for m in metrics:
+                m.reset()
 
             iteration_break = total
-            
+
             for batch_idx, (x, y) in enumerate(train_prefetcher):
-                liveplot.update_progressbar(batch_idx+1)
-                if self.is_cuda: x, y = [i.cuda() for i in x], [i.cuda() for i in y]
-                    
+                liveplot.update_progressbar(batch_idx + 1)
+                if self.is_cuda:
+                    x, y = [i.cuda() for i in x], [i.cuda() for i in y]
+
                 self.model.train()
                 self.train_fn(train=True,
                               model=self.model,
@@ -266,27 +278,40 @@ def _fit(self,
                               bar=None)
                 self.model.eval()
 
-                liveplot.update_loss_desc(self.epoch, g_loss_history, d_loss_history, loss_history)
-    
+                liveplot.update_loss_desc(self.epoch, g_loss_history,
+                                          d_loss_history, loss_history)
+
                 iteration_break -= 1
                 if iteration_break == 0:
                     break
 
             liveplot.record(epoch, 'norm', _list_avg(norm))
             if liveplot._gan:
-                liveplot.record(epoch, 'g_lr', [i['lr'] for i in self.optimizer[1].param_groups][-1])
-                liveplot.record(epoch, 'd_lr', [i['lr'] for i in self.optimizer[0].param_groups][-1])
-                liveplot.record(epoch, 'train_g_loss', _list_avg(g_loss_history))
-                liveplot.record(epoch, 'train_d_loss', _list_avg(d_loss_history))
+                liveplot.record(epoch, 'g_lr', [
+                    i['lr'] for i in self.optimizer[1].param_groups
+                ][-1])
+                liveplot.record(epoch, 'd_lr', [
+                    i['lr'] for i in self.optimizer[0].param_groups
+                ][-1])
+                liveplot.record(epoch, 'train_g_loss',
+                                _list_avg(g_loss_history))
+                liveplot.record(epoch, 'train_d_loss',
+                                _list_avg(d_loss_history))
             else:
-                liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer.param_groups][-1])
+                liveplot.record(epoch, 'lr',
+                                [i['lr']
+                                 for i in self.optimizer.param_groups][-1])
                 liveplot.record(epoch, 'train_loss', _list_avg(loss_history))
 
             # Output metrics
-            for m in metrics: matrix_records.add(m.output(), prefix='train')
-                
+            for m in metrics:
+                matrix_records.add(m.output(), prefix='train')
+
             if liveplot._gan:
-                loss_records = {'d_loss': _list_avg(d_loss_history), 'g_loss': _list_avg(g_loss_history)}
+                loss_records = {
+                    'd_loss': _list_avg(d_loss_history),
+                    'g_loss': _list_avg(g_loss_history)
+                }
             else:
                 loss_records = {'loss': _list_avg(loss_history)}
 
@@ -294,13 +319,17 @@ def _fit(self,
             self.history_ += matrix_records
 
             try:
-                liveplot.record(epoch, 'train_acc', self.history_.records['train_acc'][-1])
+                liveplot.record(epoch, 'train_acc',
+                                self.history_.records['train_acc'][-1])
             except:
                 pass
 
             if liveplot._gan:
-                liveplot.record(epoch, 'inception_score', self.history_.records['train_inception_score'][-1])
-                liveplot.record(epoch, 'fid', self.history_.records['train_fid'][-1])
+                liveplot.record(
+                    epoch, 'inception_score',
+                    self.history_.records['train_inception_score'][-1])
+                liveplot.record(epoch, 'fid',
+                                self.history_.records['train_fid'][-1])
 
             for callback_func in callbacks:
                 callback_func.on_epoch_end(model=self.model,
@@ -318,7 +347,7 @@ def _fit(self,
                     (0, 2, 3, 1))
                 _grid = plot_montage(_gan_sample, 2, 2, False)
                 liveplot.record(epoch, 'image', _grid)
-                    
+
             # SWA
             if self.swa and self.epoch >= self.swa_start and self.epoch % 2 == 0:
                 if type(self.optimizer) == list:
@@ -326,7 +355,7 @@ def _fit(self,
                         i.update_swa()
                 else:
                     self.optimizer.update_swa()
-                    
+
             if self.test_loader:
                 loss_records, matrix_records = self.validate_fn(
                     test_prefetcher=test_prefetcher,
@@ -342,10 +371,12 @@ def _fit(self,
                 self.history_.add(loss_records, prefix='val')
                 self.history_ += matrix_records
                 try:
-                    liveplot.record(epoch, 'val_acc', self.history_.records['val_acc'][-1])
+                    liveplot.record(epoch, 'val_acc',
+                                    self.history_.records['val_acc'][-1])
                 except:
                     pass
-                liveplot.record(epoch, 'val_loss', self.history_.records['val_loss'][-1])
+                liveplot.record(epoch, 'val_loss',
+                                self.history_.records['val_loss'][-1])
 
             epoch_str = str(self.epoch)
 

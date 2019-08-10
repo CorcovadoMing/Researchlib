@@ -7,9 +7,9 @@ class HFlip(template.NumpyAugmentation):
         self.include_y = include_y
         self.prob = prob
         self.mag = mag
-    
+
     def forward_single(self, x, y, mag):
-        x = [ i[..., ::-1] for i in x]
+        x = [i[..., ::-1] for i in x]
         if self.include_y:
-            y = [ i[..., ::-1] for i in y]
+            y = [i[..., ::-1] for i in y]
         return x, y

@@ -62,9 +62,9 @@ def train_fn(self, train=True, **kwargs):
             for i in self.loss_fn
         ]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
-                                        self.optimizer[0], self.scheduler, 'unsupervise',
-                                        condition, train, True, False,
-                                        self.ema, **kwargs)
+                                        self.optimizer[0], self.scheduler,
+                                        'unsupervise', condition, train, True,
+                                        False, self.ema, **kwargs)
         for m in kwargs['metrics']:
             m.forward_d([self.model.fake_data_metrics, self.model.real_data])
         _restore_grad(self.model.generator)
@@ -87,9 +87,9 @@ def train_fn(self, train=True, **kwargs):
             for i in self.loss_fn
         ]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
-                                        self.optimizer[1], self.scheduler, 'unsupervise',
-                                        condition, train, False, False,
-                                        self.ema, **kwargs)
+                                        self.optimizer[1], self.scheduler,
+                                        'unsupervise', condition, train, False,
+                                        False, self.ema, **kwargs)
         for m in kwargs['metrics']:
             m.forward_g([self.model.fake_data_metrics, self.model.real_data])
         _restore_grad(self.model.discriminator)
@@ -120,8 +120,9 @@ def train_fn(self, train=True, **kwargs):
             i.forward if isinstance(i, nn.Module) else i for i in self.loss_fn
         ]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
-                                        self.optimizer, self.scheduler, learning_type, False,
-                                        train, False, False, self.ema, **kwargs)
+                                        self.optimizer, self.scheduler,
+                                        learning_type, False, train, False,
+                                        False, self.ema, **kwargs)
 
         # Record loss
         kwargs['loss_history'].append(_loss)
@@ -154,8 +155,9 @@ def _cal_regularization(_model, **kwargs):
     return loss
 
 
-def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler, learning_type,
-                     condition, train, retain_graph, orthogonal_reg, ema, **kwargs):
+def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler,
+                     learning_type, condition, train, retain_graph,
+                     orthogonal_reg, ema, **kwargs):
     # Forward
     if condition:
         output = model_ffn(*kwargs['data'], *kwargs['target'])
@@ -179,7 +181,9 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler, learning_typ
     if learning_type == 'supervise':
         kwargs['target'] = [i.view(i.size(0), -1) for i in kwargs['target']]
         if kwargs['mixup_alpha'] != 0:
-            kwargs['target_res'] = [i.view(i.size(0), -1) for i in kwargs['target_res']]
+            kwargs['target_res'] = [
+                i.view(i.size(0), -1) for i in kwargs['target_res']
+            ]
         if len(kwargs['target']) > len(auxout):
             kwargs['target'] = [kwargs['target']]
         for i in range(len(auxout)):
@@ -210,8 +214,8 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler, learning_typ
     loss += _cal_regularization(_model, **kwargs)
 
     # Backward
-#     with amp.scale_loss(loss, optim) as scaled_loss:
-#         if train: scaled_loss.backward(retain_graph=retain_graph)
+    #     with amp.scale_loss(loss, optim) as scaled_loss:
+    #         if train: scaled_loss.backward(retain_graph=retain_graph)
     if train: loss.backward(retain_graph=retain_graph)
 
     for callback_func in kwargs['callbacks']:
@@ -256,7 +260,8 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler, learning_typ
         kwargs = callback_func.on_update_end(**kwargs)
 
     # Apply metrics
-    for m in kwargs['metrics']: m.forward([auxout[-1]] + [kwargs['target'][-1]])
+    for m in kwargs['metrics']:
+        m.forward([auxout[-1]] + [kwargs['target'][-1]])
 
     record = loss.detach().cpu()
     return record, norm

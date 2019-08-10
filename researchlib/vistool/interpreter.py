@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import cv2
 import types
 
+
 class EBLinear(Function):
     @staticmethod
     def forward(ctx, inp, weight, bias=None):
@@ -44,10 +45,11 @@ def _output_size(inp, weight, pad, dilation, stride):
     for d in range(inp.dim() - 2):
         in_size = inp.size(d + 2)
         kernel = dilation * (weight.size(d + 2) - 1) + 1
-        output_size += ((in_size + (2 * pad) - kernel) // stride + 1,)
+        output_size += ((in_size + (2 * pad) - kernel) // stride + 1, )
     if not all(map(lambda s: s > 0, output_size)):
-        raise ValueError("convolution inp is too small (output would be {})".format(
-            'x'.join(map(str, output_size))))
+        raise ValueError(
+            "convolution inp is too small (output would be {})".format(
+                'x'.join(map(str, output_size))))
     return output_size
 
 
@@ -69,8 +71,8 @@ class EBConv2d(Function):
 
         backend = type2backend[inp.type()]
         f = getattr(backend, 'SpatialConvolutionMM_updateOutput')
-        f(backend.library_state, inp, output, weight, bias, columns, ones,
-          kH, kW, ctx.stride[0], ctx.stride[1], ctx.padding[0], ctx.padding[1])
+        f(backend.library_state, inp, output, weight, bias, columns, ones, kH,
+          kW, ctx.stride[0], ctx.stride[1], ctx.padding[0], ctx.padding[1])
 
         return output
 
@@ -92,14 +94,16 @@ class EBConv2d(Function):
           kH, kW, ctx.stride[0], ctx.stride[1], ctx.padding[0], ctx.padding[1])
 
         normalized_grad_output = grad_output.data / (new_output + 1e-10)
-        normalized_grad_output = normalized_grad_output * (new_output > 0).float()
+        normalized_grad_output = normalized_grad_output * (new_output >
+                                                           0).float()
 
         grad_inp = inp.new()
         grad_inp.resize_as_(inp)
 
         g = getattr(backend, 'SpatialConvolutionMM_updateGradInput')
-        g(backend.library_state, inp, normalized_grad_output, grad_inp, wplus, columns, ones,
-          kH, kW, ctx.stride[0], ctx.stride[1], ctx.padding[0], ctx.padding[1])
+        g(backend.library_state, inp, normalized_grad_output, grad_inp, wplus,
+          columns, ones, kH, kW, ctx.stride[0], ctx.stride[1], ctx.padding[0],
+          ctx.padding[1])
 
         grad_inp = grad_inp * inp
 
@@ -108,8 +112,13 @@ class EBConv2d(Function):
 
 class EBAvgPool2d(Function):
     @staticmethod
-    def forward(ctx, inp, kernel_size, stride=None, padding=0,
-                ceil_mode=False, count_include_pad=True):
+    def forward(ctx,
+                inp,
+                kernel_size,
+                stride=None,
+                padding=0,
+                ceil_mode=False,
+                count_include_pad=True):
         ctx.kernel_size = (kernel_size, kernel_size)
         stride = stride if stride is not None else kernel_size
         ctx.stride = (stride, stride)
@@ -120,12 +129,9 @@ class EBAvgPool2d(Function):
         output = inp.new()
 
         backend.SpatialAveragePooling_updateOutput(
-            backend.library_state,
-            inp, output,
-            ctx.kernel_size[1], ctx.kernel_size[0],
-            ctx.stride[1], ctx.stride[0],
-            ctx.padding[1], ctx.padding[0],
-            ctx.ceil_mode, ctx.count_include_pad)
+            backend.library_state, inp, output, ctx.kernel_size[1],
+            ctx.kernel_size[0], ctx.stride[1], ctx.stride[0], ctx.padding[1],
+            ctx.padding[0], ctx.ceil_mode, ctx.count_include_pad)
 
         ctx.save_for_backward(inp, output)
 
@@ -142,18 +148,15 @@ class EBAvgPool2d(Function):
         grad_inp = inp.new()
 
         backend.SpatialAveragePooling_updateGradInput(
-            backend.library_state,
-            inp, normalized_grad_output, grad_inp,
-            ctx.kernel_size[1], ctx.kernel_size[0],
-            ctx.stride[1], ctx.stride[0],
-            ctx.padding[1], ctx.padding[0],
-            ctx.ceil_mode, ctx.count_include_pad)
+            backend.library_state, inp, normalized_grad_output, grad_inp,
+            ctx.kernel_size[1], ctx.kernel_size[0], ctx.stride[1],
+            ctx.stride[0], ctx.padding[1], ctx.padding[0], ctx.ceil_mode,
+            ctx.count_include_pad)
 
         grad_inp = grad_inp * inp
 
         return Variable(grad_inp), None, None, None, None, None
 
-    
 
 class _Interpreter:
     def __init__(self):
@@ -185,13 +188,13 @@ class _Interpreter:
             plot_img = img - img.min()
             plot_img /= plot_img.max()
             _, arr = plt.subplots(1, 3)
-            arr[0].imshow(plot_img.detach().numpy().transpose(1,2,0))
+            arr[0].imshow(plot_img.detach().numpy().transpose(1, 2, 0))
             arr[0].set_title('Input')
             arr[0].axis('off')
             arr[1].imshow(saliencymap.detach().numpy(), cmap='gray')
             arr[1].set_title('Saliency Map')
             arr[1].axis('off')
-            arr[2].imshow(plot_img.detach().numpy().transpose(1,2,0))
+            arr[2].imshow(plot_img.detach().numpy().transpose(1, 2, 0))
             arr[2].imshow(saliencymap.detach().numpy(), cmap='hot', alpha=0.3)
             arr[2].set_title('Saliency map on input')
             arr[2].axis('off')
@@ -199,8 +202,7 @@ class _Interpreter:
             plt.show()
         else:
             return saliencymap
-    
-    
+
     def grad_cam(self, model, img, label, plot=True):
         '''
             Grad-CAM: Why did you say that? Visual Explanations from Deep Networks via Gradient-based Localization
@@ -222,7 +224,7 @@ class _Interpreter:
 
         def _register_conv2d(m):
             if type(m) == nn.Conv2d:
-                if 1 not in m.kernel_size: # avoid 1x1 conv
+                if 1 not in m.kernel_size:  # avoid 1x1 conv
                     b_handler = m.register_backward_hook(backward_hook_fn)
                     f_handler = m.register_forward_hook(forward_hook_fn)
                     hook_module.append(b_handler)
@@ -263,7 +265,7 @@ class _Interpreter:
         if plot:
             plot_img = img - img.min()
             plot_img /= plot_img.max()
-            plot_img = plot_img.detach().numpy().transpose(1,2,0)
+            plot_img = plot_img.detach().numpy().transpose(1, 2, 0)
             _, arr = plt.subplots(1, 3)
             if plot_img.shape[-1] == 1:
                 arr[0].imshow(plot_img[:, :, 0], cmap='gray')
@@ -284,9 +286,9 @@ class _Interpreter:
             plt.tight_layout()
             plt.show()
         else:
-            return torch.from_numpy(cam) # We just want the output still a torch tensor
+            return torch.from_numpy(
+                cam)  # We just want the output still a torch tensor
 
-        
     def grad_cam_pp(self, model, img, label, plot=True):
         '''
             Grad-CAM++: Improved Visual Explanations for Deep Convolutional Networks
@@ -308,7 +310,7 @@ class _Interpreter:
 
         def _register_conv2d(m):
             if type(m) == nn.Conv2d:
-                if 1 not in m.kernel_size: # avoid 1x1 conv
+                if 1 not in m.kernel_size:  # avoid 1x1 conv
                     b_handler = m.register_backward_hook(backward_hook_fn)
                     f_handler = m.register_forward_hook(forward_hook_fn)
                     hook_module.append(b_handler)
@@ -333,8 +335,9 @@ class _Interpreter:
             if target_forward.shape[:2] == shape[:2]:
                 target_gradient = i
 
-
-        alpha = torch.where(target_gradient > 0, torch.ones_like(target_gradient), torch.zeros_like(target_gradient))
+        alpha = torch.where(target_gradient > 0,
+                            torch.ones_like(target_gradient),
+                            torch.zeros_like(target_gradient))
         alpha = 1 / (alpha.sum(-1).sum(-1) + 1e-7)
         target_gradient = alpha[:, :, None, None] * F.relu(target_gradient)
         target_gradient = target_gradient.sum(-1).sum(-1).squeeze()
@@ -353,7 +356,7 @@ class _Interpreter:
         if plot:
             plot_img = img - img.min()
             plot_img /= plot_img.max()
-            plot_img = plot_img.detach().numpy().transpose(1,2,0)
+            plot_img = plot_img.detach().numpy().transpose(1, 2, 0)
             _, arr = plt.subplots(1, 3)
             if plot_img.shape[-1] == 1:
                 arr[0].imshow(plot_img[:, :, 0], cmap='gray')
@@ -374,10 +377,15 @@ class _Interpreter:
             plt.tight_layout()
             plt.show()
         else:
-            return torch.from_numpy(cam) # We just want the output still a torch tensor
-    
+            return torch.from_numpy(
+                cam)  # We just want the output still a torch tensor
 
-    def excitation_backprop(self, model, img, label, contrastive=False, plot=True):
+    def excitation_backprop(self,
+                            model,
+                            img,
+                            label,
+                            contrastive=False,
+                            plot=True):
         '''
             Top-down Neural Attention by Excitation Backprop
             https://arxiv.org/abs/1608.00507
@@ -386,15 +394,18 @@ class _Interpreter:
             Contrstive: P_0 * (P_1 - P_~1) * P-2 * ... * P_{N-1} where P_~1 is with the negative weight of P_1
 
         '''
-
         def new_linear(self, x):
             return EBLinear.apply(x, self.weight, self.bias)
+
         def new_conv2d(self, x):
             return EBConv2d.apply(x, self.weight, self.bias, self.stride,
                                   self.padding, self.dilation, self.groups)
+
         def new_avgpool2d(self, x):
             return EBAvgPool2d.apply(x, self.kernel_size, self.stride,
-                                     self.padding, self.ceil_mode, self.count_include_pad)
+                                     self.padding, self.ceil_mode,
+                                     self.count_include_pad)
+
         def _replace(m):
             name = m.__class__.__name__
             if name == 'Linear':
@@ -413,7 +424,7 @@ class _Interpreter:
         def _register_conv2d(m):
             name = m.__class__.__name__
             if name == 'Conv2d':
-                if 1 not in m.kernel_size: # avoid 1x1 conv
+                if 1 not in m.kernel_size:  # avoid 1x1 conv
                     f_handler = m.register_forward_hook(forward_hook_fn)
                     hook_module.append(f_handler)
 
@@ -429,15 +440,27 @@ class _Interpreter:
 
         if contrastive:
             model.nnlist[-1].weight.data *= -1.0
-            neg_map = grad(output, hook_forward_buffer[-1], grad_out, create_graph=True)[0]
+            neg_map = grad(output,
+                           hook_forward_buffer[-1],
+                           grad_out,
+                           create_graph=True)[0]
 
             model.nnlist[-1].weight.data *= -1.0
-            pos_map = grad(output, hook_forward_buffer[-1], grad_out, create_graph=True)[0]
+            pos_map = grad(output,
+                           hook_forward_buffer[-1],
+                           grad_out,
+                           create_graph=True)[0]
 
             diff = pos_map - neg_map
-            attmap = grad(hook_forward_buffer[-1], hook_forward_buffer[0], diff, create_graph=True)[0]
+            attmap = grad(hook_forward_buffer[-1],
+                          hook_forward_buffer[0],
+                          diff,
+                          create_graph=True)[0]
         else:
-            attmap = grad(output, hook_forward_buffer[0], grad_out, create_graph=True)[0]
+            attmap = grad(output,
+                          hook_forward_buffer[0],
+                          grad_out,
+                          create_graph=True)[0]
 
         attmap = attmap.sum(1).squeeze()
         attmap -= attmap.min()
@@ -448,13 +471,13 @@ class _Interpreter:
             _, arr = plt.subplots(1, 3)
             plot_img = img - img.min()
             plot_img /= plot_img.max()
-            arr[0].imshow(plot_img.detach().numpy().transpose(1,2,0))
+            arr[0].imshow(plot_img.detach().numpy().transpose(1, 2, 0))
             arr[0].set_title('Input')
             arr[0].axis('off')
             arr[1].imshow(attmap, cmap='gray')
             arr[1].set_title('EB')
             arr[1].axis('off')
-            arr[2].imshow(plot_img.detach().numpy().transpose(1,2,0))
+            arr[2].imshow(plot_img.detach().numpy().transpose(1, 2, 0))
             arr[2].imshow(attmap, cmap='hot', alpha=0.3)
             arr[2].set_title('EB on input')
             arr[2].axis('off')
