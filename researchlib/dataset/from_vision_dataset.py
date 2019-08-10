@@ -1,15 +1,17 @@
 import torch
-from .fast_collate import fast_collate
+
 
 def VisionDataset(dataset,
                   batch_size,
                   train=True,
                   sampler=None,
+                  normalize=True,
                   batch_sampler=None,
                   num_workers=2,
                   pin_memory=True,
-                  drop_last=False):
-    _dataset = dataset(train)
+                  drop_last=False,
+                  custom_tf=[]):
+    _dataset = dataset(train, normalize=normalize, custom_tf=custom_tf)
     _shuffle = train
     _sampler = None
     if sampler is not None:
@@ -22,6 +24,5 @@ def VisionDataset(dataset,
                                          batch_sampler=batch_sampler,
                                          num_workers=num_workers,
                                          pin_memory=pin_memory,
-                                         drop_last=drop_last,
-                                         collate_fn=fast_collate)
+                                         drop_last=drop_last)
     return loader
