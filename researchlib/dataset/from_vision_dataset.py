@@ -1,5 +1,5 @@
 import torch
-
+from .fast_collate import fast_collate
 
 def VisionDataset(dataset,
                   batch_size,
@@ -24,5 +24,6 @@ def VisionDataset(dataset,
                                          batch_sampler=batch_sampler,
                                          num_workers=num_workers,
                                          pin_memory=pin_memory,
-                                         drop_last=drop_last)
+                                         drop_last=drop_last,
+                                         collate_fn=fast_collate)
     return loader
