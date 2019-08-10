@@ -6,6 +6,7 @@ import threading
 from pynvml import *
 import time
 from texttable import Texttable
+from ..utils import Timer
 
 
 def _get_gpu_monitor():
@@ -38,7 +39,8 @@ class Liveplot:
         self._gan = True if type(model) == GANModel else False
         self.history = hl.History()
         self.text_table = Texttable()
-
+        self.timer = Timer(total_iteration)
+        
         # Label + Pregress
         self.progress = Output()
         self.progress_label = Output()
@@ -109,11 +111,12 @@ class Liveplot:
 
     def update_loss_desc(self, epoch, g_loss_history, d_loss_history,
                          loss_history):
+        misc = self.timer.output()
         if self._gan:
-            self.progress_label_text.value = f'Epoch: {epoch}, G Loss: {_list_avg(g_loss_history):.4f}, D Loss: {_list_avg(d_loss_history):.4f}'
+            self.progress_label_text.value = f'Epoch: {epoch}, G Loss: {_list_avg(g_loss_history):.4f}, D Loss: {_list_avg(d_loss_history):.4f}, {misc}'
             #Iter: ({batch_idx+1}/{total_iteration}:{desc_current}/{self._accum_gradient})'
         else:
-            self.progress_label_text.value = f'Epoch: {epoch}, Loss: {_list_avg(loss_history):.4f}'
+            self.progress_label_text.value = f'Epoch: {epoch}, Loss: {_list_avg(loss_history):.4f}, {misc}'
 
     def record(self, epoch, key, value, mode=''):
         if mode == 'gan' and self._gan == True:

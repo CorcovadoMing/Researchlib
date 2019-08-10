@@ -181,6 +181,7 @@ def _fit(self,
                 m.reset()
 
             iteration_break = iterations
+            liveplot.timer.clear()
             for batch_idx, (x, y) in enumerate(train_prefetcher):
                 liveplot.update_progressbar(batch_idx + 1)
                 if self.is_cuda:

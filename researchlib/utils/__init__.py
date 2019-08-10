@@ -13,3 +13,4 @@ from .get_iteration import _get_iteration
 from .parallel_executor import ParallelExecutor
 
 from .mapping import mapping
+from .timer import Timer
