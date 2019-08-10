@@ -13,74 +13,6 @@ register_method = _register_method(__methods__)
 
 
 @register_method
-def fit_iteration(self,
-                  iteration,
-                  lr=1e-1,
-                  policy='cyclical',
-                  augmentor=None,
-                  mixup_alpha=0,
-                  metrics=[],
-                  callbacks=[],
-                  _id='none',
-                  self_iterative=False):
-    self.set_policy(policy, lr)
-    self._fit(1,
-              lr,
-              augmentor,
-              mixup_alpha,
-              metrics,
-              callbacks,
-              _id,
-              self_iterative,
-              cycle=True,
-              total=iteration)
-
-
-@register_method
-def fit_xy(self,
-           data_pack,
-           inputs,
-           lr=1e-1,
-           policy='cyclical',
-           augmentor=None,
-           mixup_alpha=0,
-           metrics=[],
-           callbacks=[],
-           _id='none',
-           self_iterative=False,
-           _auto_gpu=False,
-           _train=True):
-
-    self.set_policy(policy, lr)
-
-    if len(self.experiment_name) == 0:
-        self.start_experiment('default')
-
-    if _auto_gpu:
-        self.preload_gpu()
-
-    try:
-        self._fit_xy(data_pack,
-                     inputs,
-                     augmentor,
-                     mixup_alpha,
-                     callbacks,
-                     metrics,
-                     loss_history=[],
-                     g_loss_history=[],
-                     d_loss_history=[],
-                     norm=[],
-                     matrix_records=History(),
-                     bar=None,
-                     train=_train)
-    except:
-        raise
-    finally:
-        if _auto_gpu:
-            self.unload_gpu()
-
-
-@register_method
 def set_policy(self, policy, lr):
     if policy == 'cyclical':
         self.scheduler = torch.optim.lr_scheduler.CyclicLR(
@@ -103,7 +35,8 @@ def fit(self,
         metrics=[],
         callbacks=[],
         _id='none',
-        self_iterative=False):
+        self_iterative=False,
+        iterations=0):
 
     self.set_policy(policy, lr)
     self._fit(epochs,
@@ -113,7 +46,7 @@ def fit(self,
               callbacks,
               _id,
               self_iterative,
-              cycle=False)
+              iterations=iterations)
 
 
 @register_method
@@ -200,8 +133,7 @@ def _fit(self,
          callbacks,
          _id,
          self_iterative,
-         cycle,
-         total=0):
+         iterations):
 
     if type(self.optimizer) == list:
         for i in self.optimizer:
@@ -211,8 +143,8 @@ def _fit(self,
 
     liveplot = Liveplot(self.model, len(self.train_loader))
 
-    if total == 0:
-        total = len(self.train_loader)
+    if iterations == 0:
+        iterations = len(self.train_loader)
 
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
@@ -248,8 +180,7 @@ def _fit(self,
             for m in metrics:
                 m.reset()
 
-            iteration_break = total
-
+            iteration_break = iterations
             for batch_idx, (x, y) in enumerate(train_prefetcher):
                 liveplot.update_progressbar(batch_idx + 1)
                 if self.is_cuda:
