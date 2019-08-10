@@ -114,7 +114,6 @@ class Liveplot:
         misc = self.timer.output()
         if self._gan:
             self.progress_label_text.value = f'Epoch: {epoch}, G Loss: {_list_avg(g_loss_history):.4f}, D Loss: {_list_avg(d_loss_history):.4f}, {misc}'
-            #Iter: ({batch_idx+1}/{total_iteration}:{desc_current}/{self._accum_gradient})'
         else:
             self.progress_label_text.value = f'Epoch: {epoch}, Loss: {_list_avg(loss_history):.4f}, {misc}'
 
