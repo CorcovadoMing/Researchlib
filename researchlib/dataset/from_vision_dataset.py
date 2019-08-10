@@ -5,13 +5,11 @@ def VisionDataset(dataset,
                   batch_size,
                   train=True,
                   sampler=None,
-                  normalize=True,
                   batch_sampler=None,
                   num_workers=2,
                   pin_memory=True,
-                  drop_last=False,
-                  custom_tf=[]):
-    _dataset = dataset(train, normalize=normalize, custom_tf=custom_tf)
+                  drop_last=False):
+    _dataset = dataset(train)
     _shuffle = train
     _sampler = None
     if sampler is not None:

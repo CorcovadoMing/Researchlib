@@ -3,6 +3,10 @@ import numpy as np
 
 
 def fast_collate(batch):
+    '''
+        Adapted from
+        https://github.com/NVIDIA/apex/blob/master/examples/imagenet/main_amp.py#L77
+    '''
     imgs = [img[0] for img in batch]
     t = [target[1] for target in batch]
     targets = torch.tensor([target[1] for target in batch], dtype=torch.int64)
