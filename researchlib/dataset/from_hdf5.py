@@ -30,7 +30,6 @@ def FromHDF5(data,
              sampler=None,
              batch_sampler=None,
              num_workers=2,
-             pin_memory=True,
              drop_last=False):
     _dataset_loader = DataLoader(_HDF5Dataset(data, key),
                                  batch_size=batch_size,
@@ -38,6 +37,6 @@ def FromHDF5(data,
                                  sampler=sampler,
                                  batch_sampler=batch_sampler,
                                  num_workers=num_workers,
-                                 pin_memory=pin_memory,
+                                 pin_memory=False,
                                  drop_last=drop_last)
     return _dataset_loader, inputs

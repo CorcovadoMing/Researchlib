@@ -8,7 +8,6 @@ def VisionDataset(dataset,
                   normalize=True,
                   batch_sampler=None,
                   num_workers=2,
-                  pin_memory=True,
                   drop_last=False,
                   custom_tf=[]):
     _dataset = dataset(train, normalize=normalize, custom_tf=custom_tf)
@@ -23,6 +22,6 @@ def VisionDataset(dataset,
                                          sampler=_sampler,
                                          batch_sampler=batch_sampler,
                                          num_workers=num_workers,
-                                         pin_memory=pin_memory,
+                                         pin_memory=False,
                                          drop_last=drop_last)
     return loader

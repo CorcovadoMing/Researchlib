@@ -9,7 +9,6 @@ def FromNumpy(data,
               sampler=None,
               batch_sampler=None,
               num_workers=2,
-              pin_memory=True,
               drop_last=False):
     data = [torch.from_numpy(i).float() for i in data]
     _dataset = utils.TensorDataset(*data)
@@ -24,6 +23,6 @@ def FromNumpy(data,
                                sampler=_sampler,
                                batch_sampler=batch_sampler,
                                num_workers=num_workers,
-                               pin_memory=pin_memory,
+                               pin_memory=False,
                                drop_last=drop_last)
     return _loader, inputs
