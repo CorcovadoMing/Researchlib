@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/tensorrt:19.06-py3
+FROM nvcr.io/nvidia/tensorrt:19.07-py3
 
 ARG ONNXRUNTIME_REPO=https://github.com/Microsoft/onnxruntime
 ARG ONNXRUNTIME_SERVER_BRANCH=master
@@ -33,11 +33,6 @@ RUN pip install -U torch-scatter torch-sparse torch-cluster torch-spline-conv to
 # QRNN
 RUN pip install -U cupy
 RUN pip install git+https://github.com/CorcovadoMing/pynvrtc.git
-
-# Apex
-# RUN pip install -U pip
-# RUN git clone https://github.com/NVIDIA/apex apex_build
-# RUN cd apex_build && pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" .
 
 # DALI
 RUN pip install --extra-index-url https://developer.download.nvidia.com/compute/redist/cuda/10.0 nvidia-dali
@@ -103,8 +98,37 @@ RUN pip install -U zarr
 # Augmentation and preprocessing
 RUN pip install -U albumentations
 RUN pip install git+https://github.com/pytorch/contrib.git
-
 RUN pip install -U texttable
+
+
+# Fontend
+RUN pip install -U dash dash-daq
+RUN pip install -U psutil
+
+# Install Redis.
+RUN \
+  cd /tmp && \
+  wget http://download.redis.io/redis-stable.tar.gz && \
+  tar xvzf redis-stable.tar.gz && \
+  cd redis-stable && \
+  make && \
+  make install && \
+  cp -f src/redis-sentinel /usr/local/bin && \
+  mkdir -p /etc/redis && \
+  cp -f *.conf /etc/redis && \
+  rm -rf /tmp/redis-stable* && \
+  sed -i 's/^\(bind .*\)$/# \1/' /etc/redis/redis.conf && \
+  sed -i 's/^\(daemonize .*\)$/# \1/' /etc/redis/redis.conf && \
+  sed -i 's/^\(dir .*\)$/# \1\ndir \/data/' /etc/redis/redis.conf && \
+  sed -i 's/^\(logfile .*\)$/# \1/' /etc/redis/redis.conf
+
+
+
+# Apex
+#RUN pip install -U pip
+#RUN git clone https://github.com/NVIDIA/apex apex_build
+#RUN cd apex_build && pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" .
 
 # Version tag
 ENV _RESEARCHLIB_IMAGE_TAG 19.08
+
