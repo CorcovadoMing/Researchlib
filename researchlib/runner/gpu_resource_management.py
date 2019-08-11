@@ -6,12 +6,6 @@ register_method = _register_method(__methods__)
 
 
 @register_method
-def _unload_data(self):
-    del self.data, self.target, self.target_res
-    torch.cuda.empty_cache()
-
-
-@register_method
 def preload_gpu(self):
     if self.is_cuda:
         if type(self.optimizer) == tuple or type(self.optimizer) == list:
@@ -43,7 +37,7 @@ def preload_gpu(self):
 
 
 @register_method
-def unload_gpu(self, unload_data=True):
+def unload_gpu(self):
     if self.is_cuda:
         if type(self.optimizer) == tuple or type(self.optimizer) == list:
             for optim in self.optimizer:
@@ -71,5 +65,4 @@ def unload_gpu(self, unload_data=True):
                     except:
                         pass
         self.model.cpu()
-        if unload_data: self._unload_data()
         torch.cuda.empty_cache()

@@ -7,6 +7,8 @@ from pynvml import *
 import time
 from texttable import Texttable
 from ..utils import Timer
+import redis
+import pickle
 
 
 def _get_gpu_monitor():
@@ -40,6 +42,9 @@ class Liveplot:
         self.history = hl.History()
         self.text_table = Texttable()
         self.timer = Timer(total_iteration)
+        self.redis = redis.Redis()
+        self.redis.set('desc', '')
+        self.redis.set('history', pickle.dumps({'train_loss':[], 'train_acc':[], 'val_loss':[], 'val_acc':[]}))
         
         # Label + Pregress
         self.progress = Output()
@@ -116,6 +121,7 @@ class Liveplot:
             self.progress_label_text.value = f'Epoch: {epoch}, G Loss: {_list_avg(g_loss_history):.4f}, D Loss: {_list_avg(d_loss_history):.4f}, {misc}'
         else:
             self.progress_label_text.value = f'Epoch: {epoch}, Loss: {_list_avg(loss_history):.4f}, {misc}'
+        self.redis.set('desc', self.progress_label_text.value)
 
     def record(self, epoch, key, value, mode=''):
         if mode == 'gan' and self._gan == True:
@@ -126,6 +132,7 @@ class Liveplot:
             self.history.log(epoch, **{key: value})
 
     def plot(self, epoch, history_, epoch_str):
+        self.redis.set('history', pickle.dumps(history_.records))
         if self._gan:
             with self.gan_gallary:
                 self.gan_canvas.draw_image(self.history['image'])
