@@ -105,6 +105,9 @@ RUN pip install -U texttable
 RUN pip install -U dash dash-daq dash-bootstrap-components
 RUN pip install -U psutil
 
+# Adaptive robust loss
+RUN pip install git+https://github.com/jonbarron/robust_loss_pytorch
+
 # Install Redis.
 RUN \
   cd /tmp && \
