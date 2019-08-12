@@ -27,7 +27,6 @@ for i in range(deviceCount):
 print("Driver:", nvmlSystemGetDriverVersion().decode('utf-8'))
 
 current_version = '19.08'
-print()
 print('Researchlib version', current_version)
 print('Image version:', os.environ['_RESEARCHLIB_IMAGE_TAG'])
 if os.environ['_RESEARCHLIB_IMAGE_TAG'] != current_version:
@@ -38,3 +37,10 @@ else:
 
 # out = subprocess.check_output("git branch -vv", shell=True)
 # print(out.decode('utf-8').strip())
+
+# Frontend
+from ..frontend.dashboard import _Dashboard
+dash = _Dashboard()
+dash.start()
+print()
+print('* The dashboard is open at http://<ip>:8050')

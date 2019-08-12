@@ -122,12 +122,13 @@ RUN \
   sed -i 's/^\(dir .*\)$/# \1\ndir \/data/' /etc/redis/redis.conf && \
   sed -i 's/^\(logfile .*\)$/# \1/' /etc/redis/redis.conf
 
-
+RUN pip install -U redis
 
 # Apex
 #RUN pip install -U pip
 #RUN git clone https://github.com/NVIDIA/apex apex_build
 #RUN cd apex_build && pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" .
+VOLUME ["/data"]
 
 # Version tag
 ENV _RESEARCHLIB_IMAGE_TAG 19.08

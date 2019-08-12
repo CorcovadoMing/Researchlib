@@ -11,6 +11,7 @@ import psutil
 import redis
 import pickle
 from pynvml import *
+import logging
 
 _external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 _app = dash.Dash(__name__, external_stylesheets=_external_stylesheets)
@@ -156,7 +157,8 @@ def _update_acc_live(n):
 
 class _Dashboard:
     def __init__(self):
-        pass
+        self.log = logging.getLogger('werkzeug')
+        self.log.disabled = True
 
     def start(self):
         self.flask_process = Process(target=_app.run_server, kwargs={'debug':False, 'host':'0.0.0.0'})
