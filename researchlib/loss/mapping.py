@@ -30,6 +30,10 @@ def loss_mapping(loss_fn):
         loss_fn = F.binary_cross_entropy
         default_metrics = [BCEAcc(), AUROC()]
 
+    elif loss_fn == 'adaptive_robust':
+        loss_fn = AdaptiveRobustLoss(1)
+        default_metrics = []
+        
     elif loss_fn == 'focal':
         loss_fn = FocalLoss()
         default_metrics = [Acc()]

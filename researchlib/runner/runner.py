@@ -154,25 +154,31 @@ class Runner:
     # ===================================================================================================
     def set_optimizer(self, optimizer):
         def _assign_optim(model, optimizer, larc, swa):
+            # if there are learnable loss parameters
+            loss_params = []
+            for i in self.loss_fn:
+                print(i)
+                loss_params += i.parameters()
+                
             if optimizer == 'adam':
-                optimizer = Adam(model.parameters(), betas=(0.9, 0.999))
+                optimizer = Adam(list(model.parameters()) + loss_params, betas=(0.9, 0.999))
             elif optimizer == 'adam_gan':
-                optimizer = Adam(model.parameters(), betas=(0., 0.999))
+                optimizer = Adam(list(model.parameters()) + loss_params, betas=(0., 0.999))
             elif optimizer == 'sgd':
-                optimizer = SGD(model.parameters(), lr=1e-1, momentum=0.9)
+                optimizer = SGD(list(model.parameters()) + loss_params, lr=1e-1, momentum=0.9)
             elif optimizer == 'nesterov':
-                optimizer = SGD(model.parameters(),
+                optimizer = SGD(list(model.parameters()) + loss_params,
                                 lr=1e-2,
                                 momentum=0.9,
                                 nesterov=True)
             elif optimizer == 'rmsprop':
-                optimizer = RMSprop(model.parameters())
+                optimizer = RMSprop(list(model.parameters()) + loss_params)
             elif optimizer == 'adabound':
-                optimizer = AdaBound(model.parameters(), lr=1e-3, final_lr=0.1)
+                optimizer = AdaBound(list(model.parameters()) + loss_params, lr=1e-3, final_lr=0.1)
             elif optimizer == 'adagrad':
-                optimizer = Adagrad(model.parameters())
+                optimizer = Adagrad(list(model.parameters()) + loss_params)
             elif optimizer == 'adafactor':
-                optimizer = Adafactor(model.parameters(), lr=1e-3)
+                optimizer = Adafactor(list(model.parameters()) + loss_params, lr=1e-3)
             if larc:
                 optimizer = LARC(optimizer)
             if swa:
