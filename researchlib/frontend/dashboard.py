@@ -18,6 +18,7 @@ import logging
 _app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 _app.layout = html.Div(
     html.Div([
+        # NavBar
         dbc.Navbar(
             html.A(
                 # Use row and col to control vertical alignment of logo / brand
@@ -32,12 +33,8 @@ _app.layout = html.Div(
             ),
             dark=False,
         ),
-        dbc.Card(
-            dbc.CardBody([
-                html.Div(id='live-update-text'),
-                dbc.Progress(id="progress", value=0, striped=True, animated=True),
-            ])
-        ),
+        
+        # Resource monitor
         dbc.Card(
             dbc.CardBody([
                 dcc.Graph(id='live-update-pie',
@@ -46,18 +43,40 @@ _app.layout = html.Div(
                         }),
             ])
         ),
-        dbc.Card(
-            dbc.CardBody([
-                dcc.Graph(id='live-update-loss',
-                        config={
-                            'displayModeBar': False
-                        }),
-                dcc.Graph(id='live-update-acc',
-                        config={
-                            'displayModeBar': False
-                        }),
-            ])
-        ),
+        
+        # Experiments choose (TODO)
+        html.Div([
+            dbc.Tabs(
+                [
+                    dbc.Tab(label="Experiment 1", tab_id="exp-1"),
+                    dbc.Tab(label="Experiment 2", tab_id="exp-2"),
+                ],
+                id="tabs",
+                active_tab="exp-1",
+            ),
+            
+            dbc.Card(
+                dbc.CardBody([
+                    html.Div(id='live-update-text'),
+                    dbc.Progress(id="progress", value=0, striped=True, animated=True),
+                ])
+            ),
+
+            dbc.Card(
+                dbc.CardBody([
+                    dcc.Graph(id='live-update-loss',
+                            config={
+                                'displayModeBar': False
+                            }),
+                    dcc.Graph(id='live-update-acc',
+                            config={
+                                'displayModeBar': False
+                            }),
+                ])
+            ),
+        ]),
+        
+        
         dcc.Interval(
             id='text-update',
             interval=1000,
