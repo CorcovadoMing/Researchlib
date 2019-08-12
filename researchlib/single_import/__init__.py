@@ -39,16 +39,26 @@ else:
 # print(out.decode('utf-8').strip())
 
 # Frontend
+def _is_port_in_use(port):
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
+
 from ..frontend.dashboard import _Dashboard
 import redis
 import pickle
-r = redis.Redis()
-r.set('progress', 0)
-r.set('desc', '')
-r.set('stage', 'stop')
-r.set('history', pickle.dumps({'train_loss':[], 'train_acc':[], 'val_loss':[], 'val_acc':[]}))
-del r
-dash = _Dashboard()
-dash.start()
-print()
-print('* The dashboard is open at http://<ip>:8050')
+
+if _is_port_in_use(8050):
+    print()
+    print('* Visit dashboard at http://<ip>:8050')
+else:
+    r = redis.Redis()
+    r.set('progress', 0)
+    r.set('desc', '')
+    r.set('stage', 'stop')
+    r.set('history', pickle.dumps({'train_loss':[], 'train_acc':[], 'val_loss':[], 'val_acc':[]}))
+    del r
+    dash = _Dashboard()
+    dash.start()
+    print()
+    print('* Dashboard is open at http://<ip>:8050')
