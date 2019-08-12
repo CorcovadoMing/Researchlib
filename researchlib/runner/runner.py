@@ -157,8 +157,10 @@ class Runner:
             # if there are learnable loss parameters
             loss_params = []
             for i in self.loss_fn:
-                print(i)
-                loss_params += i.parameters()
+                try:
+                    loss_params += i.parameters()
+                except:
+                    pass
                 
             if optimizer == 'adam':
                 optimizer = Adam(list(model.parameters()) + loss_params, betas=(0.9, 0.999))
