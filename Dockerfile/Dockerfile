@@ -102,7 +102,7 @@ RUN pip install -U texttable
 
 
 # Fontend
-RUN pip install -U dash dash-daq
+RUN pip install -U dash dash-daq dash-bootstrap-components
 RUN pip install -U psutil
 
 # Install Redis.

@@ -1,6 +1,7 @@
 import datetime
 import dash
 import dash_core_components as dcc
+import dash_bootstrap_components as dbc
 import dash_html_components as html
 import plotly
 from dash.dependencies import Input, Output
@@ -13,15 +14,50 @@ import pickle
 from pynvml import *
 import logging
 
-_external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-_app = dash.Dash(__name__, external_stylesheets=_external_stylesheets)
+
+_app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 _app.layout = html.Div(
     html.Div([
-        html.H4('Researchlib Dashboard'),
-        html.Div(id='live-update-text'),
-        dcc.Graph(id='live-update-pie'),
-        dcc.Graph(id='live-update-loss'),
-        dcc.Graph(id='live-update-acc'),
+        dbc.Navbar(
+            html.A(
+                # Use row and col to control vertical alignment of logo / brand
+                dbc.Row(
+                    [
+                        dbc.Col(dbc.NavbarBrand("Researchlib Dashboard", className="ml-2")),
+                    ],
+                    align="left",
+                    no_gutters=True,
+                ),
+                href="#",
+            ),
+            dark=False,
+        ),
+        dbc.Card(
+            dbc.CardBody([
+                html.Div(id='live-update-text'),
+                dbc.Progress(id="progress", value=0, striped=True, animated=True),
+            ])
+        ),
+        dbc.Card(
+            dbc.CardBody([
+                dcc.Graph(id='live-update-pie',
+                        config={
+                            'displayModeBar': False
+                        }),
+            ])
+        ),
+        dbc.Card(
+            dbc.CardBody([
+                dcc.Graph(id='live-update-loss',
+                        config={
+                            'displayModeBar': False
+                        }),
+                dcc.Graph(id='live-update-acc',
+                        config={
+                            'displayModeBar': False
+                        }),
+            ])
+        ),
         dcc.Interval(
             id='text-update',
             interval=1000,
@@ -45,14 +81,21 @@ _app.layout = html.Div(
     ])
 )
 
-@_app.callback(Output('live-update-text', 'children'), [Input('text-update', 'n_intervals')])
+@_app.callback([Output('live-update-text', 'children'), Output('progress', 'value')], [Input('text-update', 'n_intervals')])
 def _update_desc(n):
     r = redis.Redis()
     desc = r.get('desc').decode('utf-8')
+    stage = r.get('stage').decode('utf-8')
+    value = int(float(r.get('progress'))*100)
+    stage_color = {'train':'success', 'validate':'danger'}
     style = {'padding': '5px', 'fontSize': '16px'}
-    return [
-        html.Span(f'{desc}', style=style)
-    ]
+    if stage == 'stop':
+        return [html.Span(f'{desc}', style=style)], value
+    else:
+        return [
+            dbc.Spinner(color=stage_color[stage], type="grow"),
+            html.Span(f'{desc}', style=style)
+        ], value
 
 def _add_trace(fig, x, y, name, row_index, col_index):
     fig.append_trace({
@@ -60,7 +103,7 @@ def _add_trace(fig, x, y, name, row_index, col_index):
         'y': y,
         'name': name,
         'mode': 'lines+markers',
-        'type': 'scatter'
+        'type': 'scatter',
     }, row_index, col_index)
     return fig
 

@@ -43,7 +43,9 @@ class Liveplot:
         self.text_table = Texttable()
         self.timer = Timer(total_iteration)
         self.redis = redis.Redis()
+        self.redis.set('progress', 0)
         self.redis.set('desc', '')
+        self.redis.set('stage', 'stop')
         self.redis.set('history', pickle.dumps({'train_loss':[], 'train_acc':[], 'val_loss':[], 'val_acc':[]}))
         
         # Label + Pregress
@@ -116,12 +118,13 @@ class Liveplot:
 
     def update_loss_desc(self, epoch, g_loss_history, d_loss_history,
                          loss_history):
-        misc = self.timer.output()
+        misc, progress = self.timer.output()
         if self._gan:
             self.progress_label_text.value = f'Epoch: {epoch}, G Loss: {_list_avg(g_loss_history):.4f}, D Loss: {_list_avg(d_loss_history):.4f}, {misc}'
         else:
             self.progress_label_text.value = f'Epoch: {epoch}, Loss: {_list_avg(loss_history):.4f}, {misc}'
         self.redis.set('desc', self.progress_label_text.value)
+        self.redis.set('progress', progress)
 
     def record(self, epoch, key, value, mode=''):
         if mode == 'gan' and self._gan == True:

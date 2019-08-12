@@ -40,6 +40,14 @@ else:
 
 # Frontend
 from ..frontend.dashboard import _Dashboard
+import redis
+import pickle
+r = redis.Redis()
+r.set('progress', 0)
+r.set('desc', '')
+r.set('stage', 'stop')
+r.set('history', pickle.dumps({'train_loss':[], 'train_acc':[], 'val_loss':[], 'val_acc':[]}))
+del r
 dash = _Dashboard()
 dash.start()
 print()

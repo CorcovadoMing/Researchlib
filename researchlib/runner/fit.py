@@ -181,6 +181,7 @@ def _fit(self,
                 m.reset()
 
             iteration_break = iterations
+            liveplot.redis.set('stage', 'train')
             liveplot.timer.clear()
             for batch_idx, (x, y) in enumerate(train_prefetcher):
                 liveplot.update_progressbar(batch_idx + 1)
@@ -279,7 +280,7 @@ def _fit(self,
                     (0, 2, 3, 1))
                 _grid = plot_montage(_gan_sample, 2, 2, False)
                 liveplot.record(epoch, 'image', _grid)
-
+                
             # SWA
             if self.swa and self.epoch >= self.swa_start and self.epoch % 2 == 0:
                 if type(self.optimizer) == list:
@@ -287,7 +288,9 @@ def _fit(self,
                         i.update_swa()
                 else:
                     self.optimizer.update_swa()
-
+                    
+            liveplot.redis.set('stage', 'validate')
+            
             if self.test_loader:
                 loss_records, matrix_records = self.validate_fn(
                     test_prefetcher=test_prefetcher,
@@ -345,6 +348,9 @@ def _fit(self,
                         self.train_loader.dataset.tensors[1][i] = \
                         self.model(self.train_loader.dataset.tensors[0][i].unsqueeze(0).cuda()).detach().cpu()[0]
                         torch.cuda.empty_cache()
+                        
+        liveplot.redis.set('stage', 'stop')
+        
     except:
         raise
 

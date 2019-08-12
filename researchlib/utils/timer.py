@@ -21,4 +21,4 @@ class Timer:
         self._tick()
         accum = self.cur_time - self.start_time
         eta = ((accum / self.cur_iterations) * self.max_iterations) - accum
-        return f'Iterations: ({self.cur_iterations}/{self.max_iterations}), ETA: {accum:.1f}:{eta:.1f} secs'
+        return f'Iterations: ({self.cur_iterations}/{self.max_iterations}), ETA: {accum:.1f}:{eta:.1f} secs', self.cur_iterations/self.max_iterations
