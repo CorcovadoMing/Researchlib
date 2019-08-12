@@ -155,13 +155,9 @@ def _fit(self,
         if len(self.default_metrics):
             metrics = self.default_metrics + metrics
 
-        train_prefetcher = BackgroundGenerator(self._iteration_pipeline(
-            self.train_loader),
-                                               max_prefetch=3)
+        train_prefetcher = BackgroundGenerator(self._iteration_pipeline(self.train_loader))
         if self.test_loader:
-            test_prefetcher = BackgroundGenerator(self._iteration_pipeline(
-                self.test_loader, inference=True),
-                                                  max_prefetch=3)
+            test_prefetcher = BackgroundGenerator(self._iteration_pipeline(self.test_loader, inference=True))
 
         for epoch in range(1, epochs + 1):
             for callback_func in callbacks:
