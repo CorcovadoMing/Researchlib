@@ -124,11 +124,11 @@ def _update_desc(n):
 
 
 
-def _add_trace(fig, x, y, name, row_index, col_index):
+def _add_trace(fig, data, key, name, row_index, col_index):
     try:
         fig.append_trace({
-            'x': x,
-            'y': y,
+            'x': data[key],
+            'y': list(range(len(data[key]))),
             'name': name,
             'mode': 'lines+markers',
             'type': 'scatter',
@@ -200,8 +200,8 @@ def _update_loss_live(n):
     fig['layout']['legend'] = {'x': 0, 'y': 1, 'xanchor': 'left'}
 
     fig.update_layout(autosize=True, showlegend=True, height=200)
-    fig = _add_trace(fig, list(range(len(data['train_loss']))), data['train_loss'], 'Train Loss', 1, 1)
-    fig = _add_trace(fig, list(range(len(data['val_loss']))), data['val_loss'], 'Validation Loss', 1, 1)
+    fig = _add_trace(fig, data, 'train_loss', 'Train Loss', 1, 1)
+    fig = _add_trace(fig, data, 'val_loss', 'Validation Loss', 1, 1)
     return fig
 
 @_app.callback(Output('live-update-acc', 'figure'), [Input('acc-update', 'n_intervals')])
@@ -221,8 +221,8 @@ def _update_acc_live(n):
 
     fig.update_layout(autosize=True, showlegend=True, height=200)
 
-    fig = _add_trace(fig, list(range(len(data['train_acc']))), data['train_acc'], 'Train Accuracy', 1, 1)
-    fig = _add_trace(fig, list(range(len(data['val_acc']))), data['val_acc'], 'Validation Accuracy', 1, 1)
+    fig = _add_trace(fig, data, 'train_acc', 'Train Accuracy', 1, 1)
+    fig = _add_trace(fig, data, 'val_acc', 'Validation Accuracy', 1, 1)
     return fig
 
 
