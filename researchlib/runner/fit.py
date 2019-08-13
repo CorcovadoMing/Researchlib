@@ -17,12 +17,22 @@ register_method = _register_method(__methods__)
 @register_method
 def set_policy(self, policy, lr):
     if policy == 'cyclical':
-        self.scheduler = torch.optim.lr_scheduler.CyclicLR(
-            self.optimizer,
-            base_lr=lr / 50.,
-            max_lr=lr,
-            step_size_up=len(self.train_loader),
-            step_size_down=len(self.train_loader))
+        try:
+            self.scheduler = torch.optim.lr_scheduler.CyclicLR(
+                self.optimizer,
+                base_lr=lr / 50.,
+                max_lr=lr,
+                step_size_up=len(self.train_loader),
+                step_size_down=len(self.train_loader),
+                cycle_momentum=True)
+        except: # No momentum
+            self.scheduler = torch.optim.lr_scheduler.CyclicLR(
+                self.optimizer,
+                base_lr=lr / 50.,
+                max_lr=lr,
+                step_size_up=len(self.train_loader),
+                step_size_down=len(self.train_loader),
+                cycle_momentum=False)
     elif policy == 'cosine':
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             self.optimizer, len(self.train_loader))
