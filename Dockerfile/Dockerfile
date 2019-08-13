@@ -130,6 +130,7 @@ RUN pip install -U redis
 # TensorRT
 COPY torch2trt ./torch2trt
 RUN cd torch2trt && sh install.sh
+RUN cp -r /usr/lib/python3.6/dist-packages/tensorrt /opt/miniconda/lib/python3.6/site-packages/torch2trt-0.0.0-py3.6.egg/tensorrt
 
 # Apex
 #RUN pip install -U pip

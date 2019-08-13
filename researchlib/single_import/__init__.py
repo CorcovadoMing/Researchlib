@@ -1,6 +1,3 @@
-import sys
-sys.path.append('/usr/lib/python3.6/dist-packages/tensorrt')
-
 from ..dataset import *
 from ..models import *
 from ..runner import *
