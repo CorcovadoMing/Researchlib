@@ -1,6 +1,7 @@
 import torch
 import onnxruntime
 import os
+from torch2trt import torch2trt
 
 
 class _Export:
@@ -35,3 +36,17 @@ class _Export:
             The data should feed in numpy array
         '''
         return self.session.run(None, {self.input_name: data})
+
+    def weak_optimized(self, shape):
+        '''
+            Only limited OP sets supported
+        '''
+        dummy_input = torch.randn(1, *shape).cuda()
+        self.trt_model = torch2trt(self.runner.model.cuda().eval(), [dummy_input])
+        
+    def weak_inference(self, data):
+        '''
+            Only limited OP sets supported
+        '''
+        return self.trt_model(data)
+    
