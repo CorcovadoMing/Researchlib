@@ -103,21 +103,13 @@ def _process_data(self, data, target, mixup_alpha, inference):
 
 @register_method
 def _iteration_pipeline(self, loader, inference=False):
-    for batch_idx, data_pack in _cycle(loader, True):
+    for batch_idx, data_pack in cycle(enumerate(loader)):
         x, y = self._process_type(data_pack, self.inputs)
         x, y, self.target_res = self._process_data(x, y, 0, inference)
         yield x, y
 
 
 #==================================================================================
-
-
-def _cycle(data, _cycle_flag=False):
-    if _cycle_flag:
-        return cycle(enumerate(data))
-    else:
-        return enumerate(data)
-
 
 def _list_avg(l):
     return sum(l) / len(l)
@@ -163,7 +155,7 @@ def _fit(self,
 
         train_prefetcher = BackgroundGenerator(self._iteration_pipeline(self.train_loader))
         if self.test_loader:
-            test_prefetcher = BackgroundGenerator(self._iteration_pipeline(self.test_loader, inference=True))
+            test_loader = self._iteration_pipeline(self.test_loader, inference=True)
 
         for epoch in range(1, epochs + 1):
             for callback_func in callbacks:
@@ -295,7 +287,7 @@ def _fit(self,
             
             if self.test_loader:
                 loss_records, matrix_records = self.validate_fn(
-                    test_prefetcher=test_prefetcher,
+                    test_pipe_generator=test_loader,
                     model=self.model,
                     test_loader=self.test_loader,
                     loss_fn=self.loss_fn,

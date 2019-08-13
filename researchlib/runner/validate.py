@@ -30,7 +30,7 @@ def validate_fn(self, **kwargs):
 
     total = len(self.test_loader)
     with torch.no_grad():
-        for batch_idx, (x, y) in enumerate(kwargs['test_prefetcher']):
+        for batch_idx, (x, y) in enumerate(kwargs['test_pipe_generator']):
             kwargs['batch_idx'] = batch_idx
 
             if kwargs['is_cuda']:
@@ -63,8 +63,8 @@ def validate_fn(self, **kwargs):
 
             for callback_func in kwargs['callbacks']:
                 kwargs = callback_func.on_iteration_end(**kwargs)
-
-            if batch_idx >= total:
+            
+            if batch_idx + 1 == total:
                 break
 
     test_loss /= (kwargs['batch_idx'] + 1)
