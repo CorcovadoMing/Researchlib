@@ -7,6 +7,8 @@ import torch
 import random
 from .liveplot import Liveplot
 from .prefetch import *
+import pickle
+
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -148,6 +150,10 @@ def _fit(self,
 
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
+        
+    exist_experiments = pickle.loads(liveplot.redis.get('experiment'))
+    exist_experiments.append(self.experiment_name)
+    liveplot.redis.set('experiment', pickle.dumps(exist_experiments))
 
     self.preload_gpu()
 

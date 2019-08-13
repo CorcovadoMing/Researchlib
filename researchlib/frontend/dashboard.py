@@ -46,13 +46,10 @@ _app.layout = html.Div(
         
         # Experiments choose (TODO)
         html.Div([
-            dbc.Tabs(
-                [
-                    dbc.Tab(label="Experiment 1", tab_id="exp-1"),
-                    dbc.Tab(label="Experiment 2", tab_id="exp-2"),
-                ],
-                id="tabs",
-                active_tab="exp-1",
+            dcc.Tabs(id="tabs", value='tab-0', 
+                children=[
+                    dcc.Tab(label='Loading', value='tab-0'),
+                ]
             ),
             
             dbc.Card(
@@ -100,7 +97,7 @@ _app.layout = html.Div(
     ])
 )
 
-@_app.callback([Output('live-update-text', 'children'), Output('progress', 'value')], [Input('text-update', 'n_intervals')])
+@_app.callback([Output('live-update-text', 'children'), Output('progress', 'value'), Output('tabs', 'children')], [Input('text-update', 'n_intervals')])
 def _update_desc(n):
     r = redis.Redis()
     desc = r.get('desc').decode('utf-8')
@@ -108,13 +105,24 @@ def _update_desc(n):
     value = int(float(r.get('progress'))*100)
     stage_color = {'train':'success', 'validate':'danger'}
     style = {'padding': '5px', 'fontSize': '16px'}
+    
+    tabs = []
+    experiments = pickle.loads(r.get('experiment'))
+    for i, name in enumerate(experiments):
+        tabs.append(dcc.Tab(label=str(name), value='tab-'+str(i)))
+    if len(tabs) == 0:
+        tabs.append(dcc.Tab(label='Loading', value='tab-0'))
+    
+    
     if stage == 'stop':
-        return [html.Span(f'{desc}', style=style)], value
+        return [html.Span(f'{desc}', style=style)], value, tabs
     else:
         return [
             dbc.Spinner(color=stage_color[stage], type="grow"),
             html.Span(f'{desc}', style=style)
-        ], value
+        ], value, tabs
+
+
 
 def _add_trace(fig, x, y, name, row_index, col_index):
     fig.append_trace({

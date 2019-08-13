@@ -19,6 +19,10 @@ from .permute import _Permute
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
 
+# Blocks
+from .block import block
+
+
 
 class layer(object):
     # Recurrent
@@ -58,6 +62,16 @@ class layer(object):
     ConditionProjection = _ConditionProjection
     SpatialTransform = _SpatialTransform
 
+    
+# Merge nn and layer module if it didn't cause conflict
+from torch import nn
+for i, j in nn.__dict__.items():
+    try:
+        if 'torch.nn.modules' in str(j) and str(i)[0].isupper():
+            try:
+                getattr(layer, i)
+            except:
+                setattr(layer, i, j)
+    except:
+        pass
 
-# Blocks
-from .block import block
