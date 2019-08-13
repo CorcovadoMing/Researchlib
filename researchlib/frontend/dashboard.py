@@ -125,13 +125,16 @@ def _update_desc(n):
 
 
 def _add_trace(fig, x, y, name, row_index, col_index):
-    fig.append_trace({
-        'x': x,
-        'y': y,
-        'name': name,
-        'mode': 'lines+markers',
-        'type': 'scatter',
-    }, row_index, col_index)
+    try:
+        fig.append_trace({
+            'x': x,
+            'y': y,
+            'name': name,
+            'mode': 'lines+markers',
+            'type': 'scatter',
+        }, row_index, col_index)
+    except:
+        pass
     return fig
 
 def _add_pie(fig, values, name, row_index, col_index):
