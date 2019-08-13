@@ -127,6 +127,10 @@ RUN \
 
 RUN pip install -U redis
 
+# TensorRT
+COPY torch2trt ./torch2trt
+RUN cd torch2trt && sh install.sh
+
 # Apex
 #RUN pip install -U pip
 #RUN git clone https://github.com/NVIDIA/apex apex_build
@@ -134,5 +138,5 @@ RUN pip install -U redis
 VOLUME ["/data"]
 
 # Version tag
-ENV _RESEARCHLIB_IMAGE_TAG 19.08
+ENV _RESEARCHLIB_IMAGE_TAG 19.08.1
 

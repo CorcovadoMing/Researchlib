@@ -1,3 +1,6 @@
+import sys
+sys.path.append('/usr/lib/python3.6/dist-packages/tensorrt')
+
 from ..dataset import *
 from ..models import *
 from ..runner import *
@@ -26,7 +29,7 @@ for i in range(deviceCount):
     print("Using GPU", str(i) + ":", nvmlDeviceGetName(handle).decode('utf-8'))
 print("Driver:", nvmlSystemGetDriverVersion().decode('utf-8'))
 
-current_version = '19.08'
+current_version = '19.08.1'
 print('Researchlib version', current_version)
 print('Image version:', os.environ['_RESEARCHLIB_IMAGE_TAG'])
 if os.environ['_RESEARCHLIB_IMAGE_TAG'] != current_version:
