@@ -1,10 +1,9 @@
+import torch
 from torch import nn
 import torch.nn.functional as F
 from .custom_loss import *
-from ..metrics import *
-import torch
-from .margin import *
-
+from ..metrics import Acc, BCEAcc, AUROC
+from .margin import MarginLoss
 
 def nl_loss(x, y):
     y = y.squeeze().long()

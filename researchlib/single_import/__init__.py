@@ -2,11 +2,11 @@ from ..dataset import *
 from ..models import *
 from ..runner import *
 from ..callbacks import *
-from ..utils import *
+from ..utils import * 
 from ..layers import *
 from ..blocks import *
-from ..loss import *
-from ..metrics import *
+from ..loss import * 
+from ..metrics import * 
 from ..search import *
 from ..ml import *
 from ..pipeline import *
@@ -35,9 +35,6 @@ if os.environ['_RESEARCHLIB_IMAGE_TAG'] != current_version:
     print(', consider to update the library or the image depend situation.')
 else:
     print('Current version is up-to-date!')
-
-# out = subprocess.check_output("git branch -vv", shell=True)
-# print(out.decode('utf-8').strip())
 
 
 # Frontend

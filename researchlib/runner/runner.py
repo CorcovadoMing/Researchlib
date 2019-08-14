@@ -1,13 +1,10 @@
-from .history import *
 from ..utils import *
-from ..metrics import *
-from ..loss import *
-from ..layers import *
 from torch.optim import *
-from ..models import *
-from ..callbacks import *
 
 # -------------------------------------------------------
+from ..loss import loss_mapping, loss_ensemble
+from .history import History
+from ..models import GANModel
 from .adafactor import Adafactor
 from .validate import validate_fn
 from .preprocessing import PreprocessingDebugger
@@ -172,7 +169,8 @@ class Runner:
             elif optimizer == 'sgd':
                 optimizer = SGD(list(model.parameters()) + loss_params,
                                 lr=1e-1,
-                                momentum=0.9)
+                                momentum=0.9,
+                                weight_decay=1e-4)
             elif optimizer == 'nesterov':
                 optimizer = SGD(list(model.parameters()) + loss_params,
                                 lr=1e-2,
@@ -341,37 +339,39 @@ class Runner:
                 i._debug_flag = True
         return self
 
-    def find_lr(self, mixup_alpha=0, plot=False, callbacks=[]):
-        _save_model(self.model, 'find_lr_tmp.h5')
-        try:
-            loss, _ = self.trainer(
-                model=self.model,
-                train_loader=self.train_loader,
-                optimizer=self.optimizer,
-                loss_fn=self.loss_fn,
-                reg_fn=self.reg_fn,
-                reg_weights=self.reg_weights,
-                epoch=1,
-                augmentor=None,
-                is_cuda=self.is_cuda,
-                mixup_alpha=mixup_alpha,
-                callbacks=[
-                    LRRangeTest(_get_iteration(self.train_loader),
-                                cutoff_ratio=10)
-                ] + callbacks,
-                metrics=[],
-                inputs=self.inputs)
+# **** Temporily removed
+# 
+#     def find_lr(self, mixup_alpha=0, plot=False, callbacks=[]):
+#         _save_model(self.model, 'find_lr_tmp.h5')
+#         try:
+#             loss, _ = self.trainer(
+#                 model=self.model,
+#                 train_loader=self.train_loader,
+#                 optimizer=self.optimizer,
+#                 loss_fn=self.loss_fn,
+#                 reg_fn=self.reg_fn,
+#                 reg_weights=self.reg_weights,
+#                 epoch=1,
+#                 augmentor=None,
+#                 is_cuda=self.is_cuda,
+#                 mixup_alpha=mixup_alpha,
+#                 callbacks=[
+#                     LRRangeTest(_get_iteration(self.train_loader),
+#                                 cutoff_ratio=10)
+#                 ] + callbacks,
+#                 metrics=[],
+#                 inputs=self.inputs)
 
-            step = (10 / 1e-9)**(1 / _get_iteration(self.train_loader))
-            self.loss_history = []
-            self.lr_history = []
-            for i, j in enumerate(loss):
-                self.loss_history.append(j)
-                self.lr_history.append(1e-9 * (step**i))
-            if plot:
-                plot_utils(self.loss_history, self.lr_history)
-        except Exception as e:
-            print('Error:', e)
-        finally:
-            self.model = _load_model(self.model, 'find_lr_tmp.h5',
-                                     self.multigpu)
+#             step = (10 / 1e-9)**(1 / _get_iteration(self.train_loader))
+#             self.loss_history = []
+#             self.lr_history = []
+#             for i, j in enumerate(loss):
+#                 self.loss_history.append(j)
+#                 self.lr_history.append(1e-9 * (step**i))
+#             if plot:
+#                 plot_utils(self.loss_history, self.lr_history)
+#         except Exception as e:
+#             print('Error:', e)
+#         finally:
+#             self.model = _load_model(self.model, 'find_lr_tmp.h5',
+#                                      self.multigpu)

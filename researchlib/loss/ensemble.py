@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from .mapping import *
+from .mapping import loss_mapping
 
 
 class EnsembleLoss(nn.Module):

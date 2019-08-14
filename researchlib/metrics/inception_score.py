@@ -1,15 +1,13 @@
 import torch
 from torch import nn
-from torch.autograd import Variable
 from torch.nn import functional as F
-import torch.utils.data
 from torchvision.models.inception import inception_v3
 import numpy as np
 from scipy.stats import entropy
-import warnings
 from torch.nn import Parameter as P
+import warnings
 warnings.simplefilter('ignore', UserWarning)
-from .matrix import *
+from .matrix import Matrix
 
 
 class WrapInception(nn.Module):
@@ -52,21 +50,28 @@ class WrapInception(nn.Module):
             F.dropout(pool, training=False).view(pool.size(0), -1))
         return pool, logits
 
+import time
+s = time.time()
+class _InceptionModelV3:
+    _model = None
 
-inception_model = inception_v3(pretrained=True, transform_input=False)
-inception_model = WrapInception(inception_model.eval()).cuda()
-
+    @staticmethod
+    def lazy_load():
+        if _InceptionModelV3._model is None:
+            _InceptionModelV3._model = inception_v3(pretrained=True, transform_input=False)
+            _InceptionModelV3._model = WrapInception(inception_model.eval()).cuda()
 
 class InceptionScore(Matrix):
     def __init__(self):
         super().__init__()
         self.data = None
+        _InceptionModelV3.lazy_load()
 
     def forward_g(self, x):
         with torch.no_grad():
             #(fake, real)
             x = x[0]
-            _, x = inception_model(x)
+            _, x = _InceptionModelV3._model(x)
             x = F.softmax(x, dim=-1).data.cpu()
             if self.data is None:
                 self.data = x
@@ -167,11 +172,12 @@ class FID(Matrix):
         super().__init__()
         self.fake_pool = None
         self.real_pool = None
+        _InceptionModelV3.lazy_load()
 
     def forward_g(self, x):
         with torch.no_grad():
-            fake_pool, _ = inception_model(x[0])
-            real_pool, _ = inception_model(x[1])
+            fake_pool, _ = _InceptionModelV3._model(x[0])
+            real_pool, _ = _InceptionModelV3._model(x[1])
             fake_pool = fake_pool.cpu()
             real_pool = real_pool.cpu()
 

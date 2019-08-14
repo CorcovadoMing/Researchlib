@@ -1,7 +1,5 @@
-from .matrix import *
-from ..utils import *
+from .matrix import Matrix
 import torch
-
 
 class Acc(Matrix):
     def __init__(self):
