@@ -4,6 +4,7 @@ from ..runner import *
 from ..callbacks import *
 from ..utils import *
 from ..layers import *
+from ..blocks import *
 from ..loss import *
 from ..metrics import *
 from ..search import *
@@ -38,11 +39,13 @@ else:
 # out = subprocess.check_output("git branch -vv", shell=True)
 # print(out.decode('utf-8').strip())
 
+
 # Frontend
 def _is_port_in_use(port):
     import socket
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('localhost', port)) == 0
+
 
 def _initialize_redis(r, variable, init_value, need_encode=False):
     try:
@@ -51,6 +54,7 @@ def _initialize_redis(r, variable, init_value, need_encode=False):
         if need_encode:
             init_value = pickle.dumps(init_value)
         r.set(variable, init_value)
+
 
 from ..frontend.dashboard import _Dashboard
 import redis
@@ -64,7 +68,14 @@ else:
     _initialize_redis(r, 'progress', 0)
     _initialize_redis(r, 'desc', '')
     _initialize_redis(r, 'stage', 'stop')
-    _initialize_redis(r, 'history', {'train_loss':[], 'train_acc':[], 'val_loss':[], 'val_acc':[]}, need_encode=True)
+    _initialize_redis(r,
+                      'history', {
+                          'train_loss': [],
+                          'train_acc': [],
+                          'val_loss': [],
+                          'val_acc': []
+                      },
+                      need_encode=True)
     _initialize_redis(r, 'experiment', [], need_encode=True)
     del r
     dash = _Dashboard()

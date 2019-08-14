@@ -1,6 +1,6 @@
 from torch import nn
 from .basic_components import get_down_sampling_fn, get_up_sampling_fn, get_norm_fn
-from ...models import builder
+from ..models import builder
 
 
 class _ConvBlock2d(nn.Module):

@@ -33,7 +33,7 @@ def loss_mapping(loss_fn):
     elif loss_fn == 'adaptive_robust':
         loss_fn = AdaptiveRobustLoss(1)
         default_metrics = []
-        
+
     elif loss_fn == 'focal':
         loss_fn = FocalLoss()
         default_metrics = [Acc()]

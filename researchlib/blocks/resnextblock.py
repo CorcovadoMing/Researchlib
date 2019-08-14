@@ -3,7 +3,7 @@ import torch.nn.functional as F
 from torch import nn
 from .basic_components import get_down_sampling_fn, get_up_sampling_fn
 from .convblock import _ConvBlock2d, _ConvTransposeBlock2d
-from ...models import builder
+from ..models import builder
 from .resblock import _ResBlock2d
 
 

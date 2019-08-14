@@ -1,6 +1,7 @@
 from torch import nn
 import torch.nn.functional as F
-from ..layers import *
+from ..layers import layer
+from ..blocks import block
 from .builder import builder
 
 
@@ -21,7 +22,7 @@ def _get_op_type(type):
 
 
 def AutoConvNet2d(input_dim,
-                  blocks,
+                  block_num,
                   type='vgg',
                   filters=(128, 1024),
                   pooling_type='combined',
@@ -35,7 +36,8 @@ def AutoConvNet2d(input_dim,
                   input_multiscale=False,
                   return_multiscale=False,
                   se=True,
-                  sn=False):
+                  sn=False,
+                  **kwargs):
 
     _op_type, _op_transpose_type = _get_op_type(type)
     start_filter, max_filter = filters
@@ -54,7 +56,7 @@ def AutoConvNet2d(input_dim,
                           se=se,
                           sn=sn))
 
-    for i in range(blocks):
+    for i in range(block_num):
         count += 1
         in_dim = out_dim
         if count == pooling_freq:
@@ -73,7 +75,10 @@ def AutoConvNet2d(input_dim,
                                            pooling_factor=pooling_factor,
                                            preact=preact,
                                            se=se,
-                                           sn=sn))
+                                           sn=sn,
+                                           block_idx=i + 1,
+                                           block_num=block_num,
+                                           **kwargs))
             else:
                 layers.append(
                     _op_type(in_dim,
@@ -84,7 +89,10 @@ def AutoConvNet2d(input_dim,
                              pooling_factor=pooling_factor,
                              preact=preact,
                              se=se,
-                             sn=sn))
+                             sn=sn,
+                             block_idx=i + 1,
+                             block_num=block_num,
+                             **kwargs))
             count = 0
         else:
             if attention:
@@ -98,7 +106,10 @@ def AutoConvNet2d(input_dim,
                                            pooling=False,
                                            preact=preact,
                                            se=se,
-                                           sn=sn))
+                                           sn=sn,
+                                           block_idx=i + 1,
+                                           block_num=block_num,
+                                           **kwargs))
             else:
                 layers.append(
                     _op_type(in_dim,
@@ -108,14 +119,17 @@ def AutoConvNet2d(input_dim,
                              pooling=False,
                              preact=preact,
                              se=se,
-                             sn=sn))
+                             sn=sn,
+                             block_idx=i + 1,
+                             block_num=block_num,
+                             **kwargs))
         print(in_dim, out_dim)
     if flatten: layers.append(layer.Flatten())
     return builder(layers)
 
 
 def AutoConvTransposeNet2d(input_dim,
-                           blocks,
+                           block_num,
                            type='vgg',
                            filters=(1024, 128),
                            pooling_type='interpolate',
@@ -129,7 +143,8 @@ def AutoConvTransposeNet2d(input_dim,
                            input_multiscale=False,
                            return_multiscale=False,
                            se=True,
-                           sn=False):
+                           sn=False,
+                           **kwargs):
 
     _op_type, _op_transpose_type = _get_op_type(type)
     start_filter, min_filter = filters
@@ -142,7 +157,7 @@ def AutoConvTransposeNet2d(input_dim,
     #     print(in_dim, out_dim)
     #     layers.append(block.ConvBlock2d(in_dim, out_dim, pooling=False, activator=activator, se=se, sn=sn))
 
-    for i in range(blocks):
+    for i in range(block_num):
         print(in_dim, out_dim)
         count += 1
         if count == pooling_freq:
@@ -159,7 +174,10 @@ def AutoConvTransposeNet2d(input_dim,
                         pooling_factor=pooling_factor,
                         preact=preact,
                         se=se,
-                        sn=sn))
+                        sn=sn,
+                        block_idx=i + 1,
+                        block_num=block_num,
+                        **kwargs))
             else:
                 layers.append(
                     _op_transpose_type(in_dim,
@@ -170,7 +188,10 @@ def AutoConvTransposeNet2d(input_dim,
                                        pooling_factor=pooling_factor,
                                        preact=preact,
                                        se=se,
-                                       sn=sn))
+                                       sn=sn,
+                                       block_idx=i + 1,
+                                       block_num=block_num,
+                                       **kwargs))
             count = 0
             in_dim = out_dim
             if out_dim > min_filter:
@@ -187,7 +208,10 @@ def AutoConvTransposeNet2d(input_dim,
                                                     pooling=False,
                                                     preact=preact,
                                                     se=se,
-                                                    sn=sn))
+                                                    sn=sn,
+                                                    block_idx=i + 1,
+                                                    block_num=block_num,
+                                                    **kwargs))
             else:
                 layers.append(
                     _op_transpose_type(in_dim,
@@ -197,7 +221,10 @@ def AutoConvTransposeNet2d(input_dim,
                                        pooling=False,
                                        preact=preact,
                                        se=se,
-                                       sn=sn))
+                                       sn=sn,
+                                       block_idx=i + 1,
+                                       block_num=block_num,
+                                       **kwargs))
             in_dim = out_dim
     if flatten: layers.append(layer.Flatten())
     return builder(layers)

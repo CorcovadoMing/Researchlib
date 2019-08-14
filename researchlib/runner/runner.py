@@ -162,13 +162,17 @@ class Runner:
                     loss_params += i.parameters()
                 except:
                     pass
-                
+
             if optimizer == 'adam':
-                optimizer = Adam(list(model.parameters()) + loss_params, betas=(0.9, 0.999))
+                optimizer = Adam(list(model.parameters()) + loss_params,
+                                 betas=(0.9, 0.999))
             elif optimizer == 'adam_gan':
-                optimizer = Adam(list(model.parameters()) + loss_params, betas=(0., 0.999))
+                optimizer = Adam(list(model.parameters()) + loss_params,
+                                 betas=(0., 0.999))
             elif optimizer == 'sgd':
-                optimizer = SGD(list(model.parameters()) + loss_params, lr=1e-1, momentum=0.9)
+                optimizer = SGD(list(model.parameters()) + loss_params,
+                                lr=1e-1,
+                                momentum=0.9)
             elif optimizer == 'nesterov':
                 optimizer = SGD(list(model.parameters()) + loss_params,
                                 lr=1e-2,
@@ -177,11 +181,14 @@ class Runner:
             elif optimizer == 'rmsprop':
                 optimizer = RMSprop(list(model.parameters()) + loss_params)
             elif optimizer == 'adabound':
-                optimizer = AdaBound(list(model.parameters()) + loss_params, lr=1e-3, final_lr=0.1)
+                optimizer = AdaBound(list(model.parameters()) + loss_params,
+                                     lr=1e-3,
+                                     final_lr=0.1)
             elif optimizer == 'adagrad':
                 optimizer = Adagrad(list(model.parameters()) + loss_params)
             elif optimizer == 'adafactor':
-                optimizer = Adafactor(list(model.parameters()) + loss_params, lr=1e-3)
+                optimizer = Adafactor(list(model.parameters()) + loss_params,
+                                      lr=1e-3)
             if larc:
                 optimizer = LARC(optimizer)
             if swa:
@@ -215,7 +222,8 @@ class Runner:
 
     def start_experiment(self, name):
         self.experiment_name = name
-        self.experiment_name += str(datetime.datetime.utcnow()).replace(' ', '_')
+        self.experiment_name += str(datetime.datetime.utcnow()).replace(
+            ' ', '_')
         self.checkpoint_path = os.path.join('.', 'checkpoint',
                                             self.experiment_name)
         os.makedirs(self.checkpoint_path, exist_ok=True)

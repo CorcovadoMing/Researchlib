@@ -42,11 +42,11 @@ class _Export:
             Only limited OP sets supported
         '''
         dummy_input = torch.randn(1, *shape).cuda()
-        self.trt_model = torch2trt(self.runner.model.cuda().eval(), [dummy_input])
-        
+        self.trt_model = torch2trt(self.runner.model.cuda().eval(),
+                                   [dummy_input])
+
     def weak_inference(self, data):
         '''
             Only limited OP sets supported
         '''
         return self.trt_model(data)
-    
