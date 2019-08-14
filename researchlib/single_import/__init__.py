@@ -49,7 +49,10 @@ def _is_port_in_use(port):
 
 def _initialize_redis(r, variable, init_value, need_encode=False):
     try:
-        r.get(variable)
+        result = r.get(variable)
+        assert result is not None
+        if need_encode:
+            result = pickle.loads(result)
     except:
         if need_encode:
             init_value = pickle.dumps(init_value)
