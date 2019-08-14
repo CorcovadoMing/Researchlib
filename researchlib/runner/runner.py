@@ -17,7 +17,6 @@ import torch.backends.cudnn as cudnn
 # from apex import amp
 import torchcontrib
 import os
-import datetime
 import pandas as pd
 from adabound import AdaBound
 from .larc import LARC
@@ -220,8 +219,6 @@ class Runner:
 
     def start_experiment(self, name):
         self.experiment_name = name
-        self.experiment_name += str(datetime.datetime.utcnow()).replace(
-            ' ', '_')
         self.checkpoint_path = os.path.join('.', 'checkpoint',
                                             self.experiment_name)
         os.makedirs(self.checkpoint_path, exist_ok=True)
