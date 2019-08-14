@@ -81,7 +81,7 @@ else:
                       need_encode=True)
     _initialize_redis(r, 'experiment', [], need_encode=True)
     del r
-    dash = _Dashboard()
+    dash = _Dashboard(verbose=False)
     dash.start()
     print()
     print('* Dashboard is open at http://<ip>:8050')
