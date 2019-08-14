@@ -15,13 +15,10 @@ from .reshape import _Reshape
 from .condition_projection import _ConditionProjection
 from .spatial_transform import _SpatialTransform
 from .permute import _Permute
+from .shakedrop import _ShakeDrop
 
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
-
-# Blocks
-from .block import block
-
 
 
 class layer(object):
@@ -49,6 +46,9 @@ class layer(object):
     # Variants Convolution
     OctConv2d = _OctConv2d
 
+    # ShakeDrop
+    ShakeDrop = _ShakeDrop
+
     # Others
     Norm = _Norm
     AdaptiveConcatPool1d = _AdaptiveConcatPool1d
@@ -62,7 +62,7 @@ class layer(object):
     ConditionProjection = _ConditionProjection
     SpatialTransform = _SpatialTransform
 
-    
+
 # Merge nn and layer module if it didn't cause conflict
 from torch import nn
 for i, j in nn.__dict__.items():
@@ -74,4 +74,3 @@ for i, j in nn.__dict__.items():
                 setattr(layer, i, j)
     except:
         pass
-

@@ -9,7 +9,6 @@ from .liveplot import Liveplot
 from .prefetch import *
 import pickle
 
-
 __methods__ = []
 register_method = _register_method(__methods__)
 
@@ -25,7 +24,7 @@ def set_policy(self, policy, lr):
                 step_size_up=len(self.train_loader),
                 step_size_down=len(self.train_loader),
                 cycle_momentum=True)
-        except: # No momentum
+        except:  # No momentum
             self.scheduler = torch.optim.lr_scheduler.CyclicLR(
                 self.optimizer,
                 base_lr=lr / 50.,
@@ -121,6 +120,7 @@ def _iteration_pipeline(self, loader, inference=False):
 
 #==================================================================================
 
+
 def _list_avg(l):
     return sum(l) / len(l)
 
@@ -129,15 +129,8 @@ def _list_avg(l):
 
 
 @register_method
-def _fit(self,
-         epochs,
-         lr,
-         mixup_alpha,
-         metrics,
-         callbacks,
-         _id,
-         self_iterative,
-         iterations):
+def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id,
+         self_iterative, iterations):
 
     if type(self.optimizer) == list:
         for i in self.optimizer:
@@ -152,7 +145,7 @@ def _fit(self,
 
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
-        
+
     exist_experiments = pickle.loads(liveplot.redis.get('experiment'))
     exist_experiments.append(self.experiment_name)
     liveplot.redis.set('experiment', pickle.dumps(exist_experiments))
@@ -163,9 +156,11 @@ def _fit(self,
         if len(self.default_metrics):
             metrics = self.default_metrics + metrics
 
-        train_prefetcher = BackgroundGenerator(self._iteration_pipeline(self.train_loader))
+        train_prefetcher = BackgroundGenerator(
+            self._iteration_pipeline(self.train_loader))
         if self.test_loader:
-            test_loader = self._iteration_pipeline(self.test_loader, inference=True)
+            test_loader = self._iteration_pipeline(self.test_loader,
+                                                   inference=True)
 
         for epoch in range(1, epochs + 1):
             for callback_func in callbacks:
@@ -284,7 +279,7 @@ def _fit(self,
                     (0, 2, 3, 1))
                 _grid = plot_montage(_gan_sample, 2, 2, False)
                 liveplot.record(epoch, 'image', _grid)
-                
+
             # SWA
             if self.swa and self.epoch >= self.swa_start and self.epoch % 2 == 0:
                 if type(self.optimizer) == list:
@@ -292,9 +287,9 @@ def _fit(self,
                         i.update_swa()
                 else:
                     self.optimizer.update_swa()
-                    
+
             liveplot.redis.set('stage', 'validate')
-            
+
             if self.test_loader:
                 loss_records, matrix_records = self.validate_fn(
                     test_pipe_generator=test_loader,
@@ -352,9 +347,9 @@ def _fit(self,
                         self.train_loader.dataset.tensors[1][i] = \
                         self.model(self.train_loader.dataset.tensors[0][i].unsqueeze(0).cuda()).detach().cpu()[0]
                         torch.cuda.empty_cache()
-                        
+
         liveplot.redis.set('stage', 'stop')
-        
+
     except:
         raise
 

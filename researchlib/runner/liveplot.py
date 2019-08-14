@@ -46,8 +46,15 @@ class Liveplot:
         self.redis.set('progress', 0)
         self.redis.set('desc', '')
         self.redis.set('stage', 'stop')
-        self.redis.set('history', pickle.dumps({'train_loss':[], 'train_acc':[], 'val_loss':[], 'val_acc':[]}))
-        
+        self.redis.set(
+            'history',
+            pickle.dumps({
+                'train_loss': [],
+                'train_acc': [],
+                'val_loss': [],
+                'val_acc': []
+            }))
+
         # Label + Pregress
         self.progress = Output()
         self.progress_label = Output()

@@ -1,6 +1,7 @@
 from torch import nn
 import torch.nn.functional as F
-from ..layers import *
+from ..layers import layer
+from ..blocks import block
 from ..wrapper import *
 from .builder import builder
 
@@ -22,7 +23,7 @@ def _get_op_type(type):
 
 
 def AutoUNet2d(input_dim,
-               blocks,
+               block_num,
                down_type='residual',
                up_type='vgg',
                start_filter=128,
@@ -59,7 +60,7 @@ def AutoUNet2d(input_dim,
                                   pooling=False,
                                   activator=activator)))
 
-    for i in range(blocks):
+    for i in range(block_num):
         in_dim = out_dim
         count += 1
         if count == pooling_freq:
@@ -144,7 +145,7 @@ def AutoUNet2d(input_dim,
 
     layers = []
     count = 0
-    for i in range(blocks):
+    for i in range(block_num):
         in_dim = out_dim
         count += 1
         if count == pooling_freq:

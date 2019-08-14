@@ -63,7 +63,7 @@ def validate_fn(self, **kwargs):
 
             for callback_func in kwargs['callbacks']:
                 kwargs = callback_func.on_iteration_end(**kwargs)
-            
+
             if batch_idx + 1 == total:
                 break
 

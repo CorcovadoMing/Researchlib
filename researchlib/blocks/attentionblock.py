@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch import nn
-from ...models import builder
+from ..models import builder
 from .basic_components import get_down_sampling_fn, get_up_sampling_fn
 
 

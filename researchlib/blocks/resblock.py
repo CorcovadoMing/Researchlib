@@ -3,7 +3,8 @@ import torch.nn.functional as F
 from torch import nn
 from .basic_components import get_down_sampling_fn, get_up_sampling_fn
 from .convblock import _ConvBlock2d, _ConvTransposeBlock2d
-from ...models import builder
+from ..models import builder
+from ..layers import layer
 
 
 class _ResBlock2d(nn.Module):
@@ -17,7 +18,8 @@ class _ResBlock2d(nn.Module):
                  pooling_factor=2,
                  preact=True,
                  se=False,
-                 sn=False):
+                 sn=False,
+                 **kwargs):
         super().__init__()
 
         self.pooling = pooling
@@ -51,8 +53,20 @@ class _ResBlock2d(nn.Module):
                 nn.Sigmoid()
             ])
 
+        if kwargs['sd']:
+            self.sd = kwargs['sd']
+            self.block_idx = kwargs['block_idx']
+            self.block_num = kwargs['block_num']
+            self.shakedrop = layer.ShakeDrop(self.block_idx,
+                                             self.block_num,
+                                             p=0.5,
+                                             alpha_range=[-1, 1],
+                                             beta_range=[0, 1],
+                                             p_L=0.5)
+
     def forward(self, x):
         x_ = self.branch(x)
+        if self.sd: x_ = self.shakedrop(x_)
         if self.se: x_ = x_ * self.se_branch(x_)
         if self.pooling: x = self.shortcut_reduce(x)
         return x + x_
