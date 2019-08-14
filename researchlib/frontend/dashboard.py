@@ -105,8 +105,8 @@ def _add_trace(fig, data, key, name, row_index, col_index):
     try:
         fig.append_trace(
             {
-                'x': data[key],
-                'y': list(range(len(data[key]))),
+                'y': data[key],
+                'x': list(range(len(data[key]))),
                 'name': name,
                 'mode': 'lines+markers',
                 'type': 'scatter',
