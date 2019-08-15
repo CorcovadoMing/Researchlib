@@ -1,6 +1,7 @@
 from .template.block import _Block
 from ..layers import layer
 from torch import nn
+import torch.nn.utils.spectral_norm as sn
 
 
 class ConvBlock(_Block):
@@ -12,7 +13,10 @@ class ConvBlock(_Block):
         conv_kwargs = self._get_conv_kwargs()
 
         # Layers
+        spectral_norm = self._get_param('sn', False)
         conv_layer = self.op(self.in_dim, self.out_dim, **conv_kwargs)
+        if spectral_norm:
+            conv_layer = sn(conv_layer)
         activator_layer = nn.ReLU()  # TODO
         pool_layer = self._get_pool_layer(
             pool_type, pool_factor) if self.do_pool else None
