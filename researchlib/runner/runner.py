@@ -211,7 +211,6 @@ class Runner:
             self.optimizer = _assign_optim(self.model, optimizer, self.larc,
                                            self.swa)
 
-
 #         self.model, self.optimizer = amp.initialize(self.model,
 #                                                     self.optimizer,
 #                                                     opt_level="O2",
@@ -336,8 +335,9 @@ class Runner:
                 i._debug_flag = True
         return self
 
+
 # **** Temporily removed
-# 
+#
 #     def find_lr(self, mixup_alpha=0, plot=False, callbacks=[]):
 #         _save_model(self.model, 'find_lr_tmp.h5')
 #         try:

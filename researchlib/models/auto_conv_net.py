@@ -8,13 +8,15 @@ from ..blocks._resblock import ResBlock as rb
 
 # =============================================================
 
+
 def _get_param(kwargs, key, init_value):
     try:
         query = kwargs[key]
         return query
     except:
         return init_value
-    
+
+
 def _get_op_type(type):
     if type == 'vgg':
         _op_type = cb
@@ -22,10 +24,12 @@ def _get_op_type(type):
         _op_type = rb
     return _op_type
 
+
 def _get_dim_type(op):
     match = re.search('\dd', str(op))
     dim_str = match.group(0)
     return dim_str
+
 
 # =============================================================
 
@@ -45,18 +49,20 @@ def AutoConvNet(op,
     start_filter, max_filter = filters
 
     layers = []
-    
+
     in_dim = input_dim
     out_dim = start_filter
-    
+
     print(in_dim, out_dim)
-    
+
     if preact:
-        layers.append(layer.__dict__['Conv'+_get_dim_type(op)](in_dim, out_dim, 3, 1, 1)) # Preact first layer is simply a hardcore transform
+        layers.append(layer.__dict__['Conv' + _get_dim_type(op)](
+            in_dim, out_dim, 3, 1,
+            1))  # Preact first layer is simply a hardcore transform
 
     for i in range(block_num):
-        id = i+1
-        
+        id = i + 1
+
         in_dim = out_dim
         if id % pool_freq == 0:
             do_pool = True
@@ -67,14 +73,13 @@ def AutoConvNet(op,
 
         layers.append(
             _op_type(op,
-                     in_dim, 
-                     out_dim, 
-                     do_pool=do_pool, 
-                     do_norm=do_norm, 
+                     in_dim,
+                     out_dim,
+                     do_pool=do_pool,
+                     do_norm=do_norm,
                      preact=preact,
                      id=id,
-                     **kwargs)
-        )
+                     **kwargs))
 
         print(in_dim, out_dim)
     if flatten: layers.append(layer.Flatten())
