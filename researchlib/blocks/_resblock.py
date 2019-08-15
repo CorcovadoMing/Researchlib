@@ -39,8 +39,8 @@ class ResBlock(_Block):
         # shakedrop (sd)
         self.sd = self._get_param('sd', False)
         if self.sd:
-            self.block_idx = self._get_param('block_idx', required=True)
-            self.block_num = self._get_param('block_num', required=True)
+            self.block_idx = self._get_param('id', required=True)
+            self.block_num = self._get_param('total_blocks', required=True)
             self.alpha_range = self._get_param('alpha_range',
                                                init_value=[-1, 1])
             self.beta_range = self._get_param('beta_range', init_value=[0, 1])
