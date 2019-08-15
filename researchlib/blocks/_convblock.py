@@ -5,8 +5,8 @@ from torch import nn
 class ConvBlock(_Block):
     def __postinit__(self):
         # Parameters
-        norm_type = self._get_param('norm_type', 'batchnorm')
-        pool_type = self._get_param('pool_type', 'maxpool')
+        norm_type = self._get_param('norm_type', 'BatchNorm')
+        pool_type = self._get_param('pool_type', 'MaxPool')
         pool_factor = self._get_param('pool_factor', 2)
         conv_args = self._get_conv_args()
         

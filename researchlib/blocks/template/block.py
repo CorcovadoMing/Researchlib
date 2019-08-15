@@ -1,4 +1,6 @@
+import re 
 from torch import nn
+from ...layers import layer
 
 class _Block(nn.Module):
     def __init__(self, op, in_dim, out_dim, do_pool, do_norm, preact, **kwargs):
@@ -34,15 +36,30 @@ class _Block(nn.Module):
             return init_value
     
     def _get_norm_layer(self, norm_type):
+        if norm_type not in ['BatchNorm', 'InstanceNorm']:
+            raise('Unknown norm type')
+        
+        match = re.search('\dd', str(self.op))
+        dim_str = match.group(0)
+        norm_op_str = norm_type + dim_str
+        norm_op = layer.__dict__[norm_op_str]
+        
         # TODO
         if self.preact:
-            return nn.BatchNorm2d(self.in_dim)
+            return norm_op(self.in_dim)
         else:
-            return nn.BatchNorm2d(self.out_dim)
+            return norm_op(self.out_dim)
     
     def _get_pool_layer(self, pool_type, pool_factor):
-        # TODO
-        return nn.MaxPool2d(2)
+        if pool_type not in ['MaxPool', 'AvgPool']:
+            raise('Unknown pool type')
+        
+        match = re.search('\dd', str(self.op))
+        dim_str = match.group(0)
+        pool_op_str = pool_type + dim_str
+        pool_op = layer.__dict__[pool_op_str]
+        
+        return pool_op(pool_factor)
         
     def forward(self, x):
         pass
