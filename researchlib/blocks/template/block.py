@@ -29,7 +29,9 @@ class _Block(nn.Module):
         bias = self._get_param('bias', False)
         return kernel_size, stride, padding, dilation, groups, bias
     
-    def _get_param(self, key, init_value):
+    def _get_param(self, key, init_value=None, required=False):
+        if required and key is not in self.kwargs:
+            raise ValueError("{} is required in **kwargs".format(key))
         try:
             query = self.kwargs[key]
             return query
