@@ -53,23 +53,26 @@ def AutoConvNet(op,
     in_dim = input_dim
     out_dim = start_filter
 
-    print(in_dim, out_dim)
+    
 
     if preact:
+        print(in_dim, out_dim)
         layers.append(layer.__dict__['Conv' + _get_dim_type(op)](
             in_dim, out_dim, 3, 1,
             1))  # Preact first layer is simply a hardcore transform
+        in_dim = out_dim
 
     for i in range(total_blocks):
+        print(in_dim, out_dim)
         id = i + 1
-        in_dim = out_dim
+        
         if id % pool_freq == 0:
             do_pool = True
-            if out_dim < max_filter:
+            if out_dim < max_filter and id != 1:
                 out_dim *= 2
         else:
             do_pool = False
-
+        
         layers.append(
             _op_type(op,
                      in_dim,
@@ -81,7 +84,8 @@ def AutoConvNet(op,
                      total_blocks=total_blocks,
                      **kwargs)
         )
-
-        print(in_dim, out_dim)
+        
+        in_dim = out_dim
+        
     if flatten: layers.append(layer.Flatten())
     return builder(layers)
