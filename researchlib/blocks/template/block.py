@@ -20,17 +20,17 @@ class _Block(nn.Module):
     def __postinit__(self):
         pass
     
-    def _get_conv_args(self):
+    def _get_conv_kwargs(self):
         kernel_size = self._get_param('kernel_size', 3)
         stride = self._get_param('stride', 1)
         padding = self._get_param('padding', 1)
         dilation = self._get_param('dilation', 1)
         groups = self._get_param('groups', 1)
         bias = self._get_param('bias', False)
-        return kernel_size, stride, padding, dilation, groups, bias
+        return {'kernel_size':kernel_size, 'stride':stride, 'padding':padding, 'dilation':dilation, 'groups':groups, 'bias':bias}
     
     def _get_param(self, key, init_value=None, required=False):
-        if required and key is not in self.kwargs:
+        if required and key not in self.kwargs:
             raise ValueError("{} is required in **kwargs".format(key))
         try:
             query = self.kwargs[key]
