@@ -281,7 +281,9 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id,
                 liveplot.record(epoch, 'image', _grid)
 
             # SWA
-            if self.swa and self.epoch >= self.swa_start and self.epoch % 2 == 0:
+            last_acc_val = self.history_.records['val_acc'][-1] if 'val_acc' in self.history_.records else 0.
+            if self.swa and (self.epoch >= self.swa_start or last_acc_val >=
+                             self.swa_val_acc) and self.epoch % 2 == 0:
                 if type(self.optimizer) == list:
                     for i in self.optimizer:
                         i.update_swa()
