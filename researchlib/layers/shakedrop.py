@@ -34,32 +34,32 @@ class ShakeDropFunction(torch.autograd.Function):
             = (E(gate) + E(alpha) - E(gate)*E(alpha)) * x
             = (p + alpha_mu - p * alpha_mu) * x
         """
-        if type(alpha_range)==list:
-            if len(alpha_range)!=2:
+        if type(alpha_range) == list:
+            if len(alpha_range) != 2:
                 raise ValueError("alpha_range should be two-element list or 0")
             alpha_mu = (alpha_range[0] + alpha_range[1]) / 2.0
-        elif alpha_range==0:
+        elif alpha_range == 0:
             alpha_mu = 0
         else:
-            raise ValueError("alpha_range should be two-element list or 0") 
-            
-        if type(beta_range)==list:
-            if len(beta_range)!=2:
+            raise ValueError("alpha_range should be two-element list or 0")
+
+        if type(beta_range) == list:
+            if len(beta_range) != 2:
                 raise ValueError("beta_range should be two-element list or 0")
-        elif beta_range!=0:
-            raise ValueError("beta_range should be two-element list or 0") 
-            
+        elif beta_range != 0:
+            raise ValueError("beta_range should be two-element list or 0")
+
         if training:
             gate = torch.cuda.FloatTensor([0]).bernoulli_(p)
             beta_range = torch.tensor(beta_range)
             ctx.save_for_backward(gate, beta_range)
             if gate.item() == 0:
-                if type(alpha_range)==list: # two-element list
+                if type(alpha_range) == list:  # two-element list
                     alpha = torch.cuda.FloatTensor(
                         x.size(0)).uniform_(*alpha_range)
                     alpha = alpha.view(alpha.size(0), 1, 1, 1).expand_as(x)
-                elif alpha_range==0:
-                    alpha=0
+                elif alpha_range == 0:
+                    alpha = 0
                 return alpha * x
             else:
                 return x
@@ -73,12 +73,12 @@ class ShakeDropFunction(torch.autograd.Function):
         """
         gate, beta_range = ctx.saved_tensors
         if gate.item() == 0:
-            if len(beta_range)==2: # two-element list
+            if len(beta_range) == 2:  # two-element list
                 beta = torch.cuda.FloatTensor(
                     grad_output.size(0)).uniform_(*beta_range)
                 beta = beta.view(beta.size(0), 1, 1, 1).expand_as(grad_output)
                 beta = Variable(beta)
-            elif beta_range==0:
+            elif beta_range == 0:
                 beta = beta_range
             return beta * grad_output, None, None, None, None
         else:
