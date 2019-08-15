@@ -32,7 +32,7 @@ def _get_dim_type(op):
 
 def AutoConvNet(op,
                 input_dim,
-                block_num,
+                total_blocks,
                 type='vgg',
                 filters=(128, 1024),
                 flatten=False,
@@ -54,7 +54,7 @@ def AutoConvNet(op,
     if preact:
         layers.append(layer.__dict__['Conv'+_get_dim_type(op)](in_dim, out_dim, 3, 1, 1)) # Preact first layer is simply a hardcore transform
 
-    for i in range(block_num):
+    for i in range(total_blocks):
         id = i+1
         
         in_dim = out_dim
@@ -73,6 +73,7 @@ def AutoConvNet(op,
                      do_norm=do_norm, 
                      preact=preact,
                      id=id,
+                     total_blocks=total_blocks,
                      **kwargs)
         )
 
