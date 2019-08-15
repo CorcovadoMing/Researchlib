@@ -71,7 +71,8 @@ def AutoConvNet(op,
                      out_dim, 
                      do_pool=do_pool, 
                      do_norm=do_norm, 
-                     preact=preact, 
+                     preact=preact,
+                     id=id,
                      **kwargs))
 
         print(in_dim, out_dim)
