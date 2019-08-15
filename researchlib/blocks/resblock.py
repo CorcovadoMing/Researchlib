@@ -57,11 +57,13 @@ class _ResBlock2d(nn.Module):
             self.sd = kwargs['sd']
             self.block_idx = kwargs['block_idx']
             self.block_num = kwargs['block_num']
+            self.alpha_range = kwargs['alpha_range'] if 'alpha_range' in kwargs else [-1, 1]
+            self.beta_range = kwargs['beta_range'] if 'beta_range' in kwargs else [0, 1]
             self.shakedrop = layer.ShakeDrop(self.block_idx,
                                              self.block_num,
                                              p=0.5,
-                                             alpha_range=[-1, 1],
-                                             beta_range=[0, 1],
+                                             alpha_range=self.alpha_range,
+                                             beta_range=self.beta_range,
                                              p_L=0.5)
 
     def forward(self, x):

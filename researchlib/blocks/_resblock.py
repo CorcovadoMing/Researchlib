@@ -29,9 +29,26 @@ class ResBlock(_Block):
             nn.Sigmoid()
         )
         
+        # shakedrop (sd)
+        self.sd = self._get_param('sd', False)
+        if self.sd:
+            self.block_idx = self._get_param('block_idx', required=True)
+            self.block_num = self._get_param('block_num', required=True)
+            self.alpha_range = self._get_param('alpha_range', init_value=[-1, 1])
+            self.beta_range = self._get_param('beta_range', init_value=[0, 1])
+            self.shakedrop = layer.ShakeDrop(self.block_idx,
+                                             self.block_num,
+                                             p=0.5,
+                                             alpha_range=self.alpha_range,
+                                             beta_range=self.beta_range,
+                                             p_L=0.5)
+        
+        
     def forward(self, x):
         _x = self.conv(x)
         if self.se:
             _x = self.se_branch(_x)
+        if self.sd:
+            _x = self.shakedrop(_x)
         x = self.shortcut(x)
         return x + _x
