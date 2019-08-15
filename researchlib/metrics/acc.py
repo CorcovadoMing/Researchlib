@@ -1,6 +1,7 @@
 from .matrix import Matrix
 import torch
 
+
 class Acc(Matrix):
     def __init__(self):
         super().__init__()

@@ -21,24 +21,23 @@ class ResBlock(_Block):
         else:
             reduction_op = None 
         self.shortcut = nn.Sequential(*list(filter(None, [reduction_op])))
-        
-        
+
         # Se
         self.se = self._get_param('se', True)
         self.se_branch = nn.Sequential(
-            layer.__dict__['AdaptiveMaxPool'+self._get_dim_type()](1),
-            self.op(self.out_dim, self.out_dim // 16, kernel_size=1),
-            nn.ReLU(),
+            layer.__dict__['AdaptiveMaxPool' + self._get_dim_type()](1),
+            self.op(self.out_dim, self.out_dim // 16,
+                    kernel_size=1), nn.ReLU(),
             self.op(self.out_dim // 16, self.out_dim, kernel_size=1),
-            nn.Sigmoid()
-        )
-        
+            nn.Sigmoid())
+
         # shakedrop (sd)
         self.sd = self._get_param('sd', False)
         if self.sd:
-            self.block_idx = self._get_param('block_idx', required=True)
-            self.block_num = self._get_param('block_num', required=True)
-            self.alpha_range = self._get_param('alpha_range', init_value=[-1, 1])
+            self.block_idx = self._get_param('id', required=True)
+            self.block_num = self._get_param('total_blocks', required=True)
+            self.alpha_range = self._get_param('alpha_range',
+                                               init_value=[-1, 1])
             self.beta_range = self._get_param('beta_range', init_value=[0, 1])
             self.shakedrop = layer.ShakeDrop(self.block_idx,
                                              self.block_num,
@@ -46,8 +45,7 @@ class ResBlock(_Block):
                                              alpha_range=self.alpha_range,
                                              beta_range=self.beta_range,
                                              p_L=0.5)
-        
-        
+
     def forward(self, x):
         _x = self.conv(x)
         if self.se:

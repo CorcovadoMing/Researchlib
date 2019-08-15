@@ -5,6 +5,7 @@ from .custom_loss import *
 from ..metrics import Acc, BCEAcc, AUROC
 from .margin import MarginLoss
 
+
 def nl_loss(x, y):
     y = y.squeeze().long()
     return -x[range(y.shape[0]), y].log().mean()

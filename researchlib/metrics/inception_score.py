@@ -50,16 +50,22 @@ class WrapInception(nn.Module):
             F.dropout(pool, training=False).view(pool.size(0), -1))
         return pool, logits
 
+
 import time
 s = time.time()
+
+
 class _InceptionModelV3:
     _model = None
 
     @staticmethod
     def lazy_load():
         if _InceptionModelV3._model is None:
-            _InceptionModelV3._model = inception_v3(pretrained=True, transform_input=False)
-            _InceptionModelV3._model = WrapInception(inception_model.eval()).cuda()
+            _InceptionModelV3._model = inception_v3(pretrained=True,
+                                                    transform_input=False)
+            _InceptionModelV3._model = WrapInception(
+                inception_model.eval()).cuda()
+
 
 class InceptionScore(Matrix):
     def __init__(self):
