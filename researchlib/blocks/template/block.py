@@ -36,19 +36,26 @@ class _Block(nn.Module):
             return init_value
     
     def _get_norm_layer(self, norm_type):
-        if norm_type not in ['BatchNorm', 'InstanceNorm']:
+        if norm_type not in ['BatchNorm', 'InstanceNorm', 'GroupNorm']:
             raise('Unknown norm type')
         
-        match = re.search('\dd', str(self.op))
-        dim_str = match.group(0)
+        if self.preact:
+            dim = [self.in_dim]
+        else:
+            dim = [self.out_dim]
+        
+        if norm_type is not 'GroupNorm':
+            match = re.search('\dd', str(self.op))
+            dim_str = match.group(0)
+        else:
+            dim_str = ''
+            group_num = self._get_param('groupnorm_group', 4)
+            dim.insert(0, group_num)
         norm_op_str = norm_type + dim_str
         norm_op = layer.__dict__[norm_op_str]
         
-        # TODO
-        if self.preact:
-            return norm_op(self.in_dim)
-        else:
-            return norm_op(self.out_dim)
+        return norm_op(*dim)
+    
     
     def _get_pool_layer(self, pool_type, pool_factor):
         if pool_type not in ['MaxPool', 'AvgPool']:
