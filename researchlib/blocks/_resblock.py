@@ -3,20 +3,21 @@ from ..layers import layer
 from torch import nn
 from ._convblock import ConvBlock
 
+
 class ResBlock(_Block):
     def __postinit__(self):
-        self.conv = ConvBlock(self.op, self.in_dim, self.out_dim, self.do_pool, self.do_norm, self.preact, **self.kwargs)
+        stride = self._get_param('pool_factor', 2) if self.do_pool else 1
+        self.conv = nn.Sequential(
+            ConvBlock(self.op, self.in_dim, self.out_dim, False, self.do_norm, self.preact, stride=stride, **self.kwargs),
+            ConvBlock(self.op, self.out_dim, self.out_dim, False, self.do_norm, self.preact, **self.kwargs)
+        )
         
-        pool_type = self._get_param('pool_type', 'MaxPool')
-        pool_factor = self._get_param('pool_factor', 2)
-        pool_layer = self._get_pool_layer(pool_type, pool_factor) if self.do_pool else None
-          
-        if self.in_dim != self.out_dim:
-            reduction_op = layer.__dict__['Conv'+self._get_dim_type()](self.in_dim, self.out_dim, 1)
+        if self.in_dim != self.out_dim or self.do_pool:
+            reduction_op = layer.__dict__['Conv'+self._get_dim_type()](self.in_dim, self.out_dim, 1, stride)
         else:
             reduction_op = None
             
-        self.shortcut = nn.Sequential(*list(filter(None, [reduction_op, pool_layer])))
+        self.shortcut = nn.Sequential(*list(filter(None, [reduction_op])))
         
         
         # Se
@@ -47,7 +48,7 @@ class ResBlock(_Block):
     def forward(self, x):
         _x = self.conv(x)
         if self.se:
-            _x = self.se_branch(_x)
+            _x = _x * self.se_branch(_x)
         if self.sd:
             _x = self.shakedrop(_x)
         x = self.shortcut(x)

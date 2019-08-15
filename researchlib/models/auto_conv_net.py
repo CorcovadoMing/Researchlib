@@ -73,7 +73,8 @@ def AutoConvNet(op,
                      do_norm=do_norm, 
                      preact=preact,
                      id=id,
-                     **kwargs))
+                     **kwargs)
+        )
 
         print(in_dim, out_dim)
     if flatten: layers.append(layer.Flatten())
