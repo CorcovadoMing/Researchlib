@@ -56,6 +56,11 @@ class _Block(nn.Module):
         match = re.search('Transpose', str(self.op))
         return True if match is not None else False
     
+    def _get_activator_layer(self, activator_type):
+        if activator_type not in ['ReLU', 'ELU', 'PReLU', 'LeakyReLU', 'SELU', 'Swish', 'GeLU']:
+            raise('Unknown activator type')
+        return layer.__dict__[activator_type]()
+    
     def _get_norm_layer(self, norm_type):
         if norm_type not in ['BatchNorm', 'InstanceNorm', 'GroupNorm']:
             raise ('Unknown norm type')
