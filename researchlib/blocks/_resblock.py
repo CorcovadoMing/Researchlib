@@ -6,25 +6,20 @@ from ._convblock import ConvBlock
 
 class ResBlock(_Block):
     def __postinit__(self):
+        is_transpose = self._is_transpose()
         stride = self._get_param('pool_factor', 2) if self.do_pool else 1
+        padding = 0 if is_transpose and self.do_pool else self._get_param('padding', 1)
+        kernel_size = 2 if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
         self.conv = nn.Sequential(
-            ConvBlock(self.op,
-                      self.in_dim,
-                      self.out_dim,
-                      False,
-                      self.do_norm,
-                      self.preact,
-                      stride=stride,
-                      **self.kwargs),
-            ConvBlock(self.op, self.out_dim, self.out_dim, False, self.do_norm,
-                      self.preact, **self.kwargs))
-
+            ConvBlock(self.op, self.in_dim, self.out_dim, False, self.do_norm, self.preact, kernel_size=kernel_size, stride=stride, padding=padding, **self.kwargs),
+            ConvBlock(self.op, self.out_dim, self.out_dim, False, self.do_norm, self.preact, **self.kwargs)
+        )
+        
+        shortcut_kernel_size = 2 if is_transpose and self.do_pool else 1
         if self.in_dim != self.out_dim or self.do_pool:
-            reduction_op = layer.__dict__['Conv' + self._get_dim_type()](
-                self.in_dim, self.out_dim, 1, stride)
+            reduction_op = self.op(self.in_dim, self.out_dim, kernel_size=shortcut_kernel_size, stride=stride)
         else:
-            reduction_op = None
-
+            reduction_op = None 
         self.shortcut = nn.Sequential(*list(filter(None, [reduction_op])))
 
         # Se

@@ -52,6 +52,10 @@ class _Block(nn.Module):
         dim_str = match.group(0)
         return dim_str
 
+    def _is_transpose(self):
+        match = re.search('Transpose', str(self.op))
+        return True if match is not None else False
+    
     def _get_norm_layer(self, norm_type):
         if norm_type not in ['BatchNorm', 'InstanceNorm', 'GroupNorm']:
             raise ('Unknown norm type')
