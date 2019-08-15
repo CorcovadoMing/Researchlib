@@ -6,16 +6,18 @@ from ._convblock import ConvBlock
 class ResBlock(_Block):
     def __postinit__(self):
         self.conv = ConvBlock(self.op, self.in_dim, self.out_dim, self.do_pool, self.do_norm, self.preact, **self.kwargs)
-        if self.do_pool:
-            reduction_stride = self._get_param('pool_factor', 2)
-        else:
-            reduction_stride = 1
-            
+        
+        pool_type = self._get_param('pool_type', 'MaxPool')
+        pool_factor = self._get_param('pool_factor', 2)
+        pool_layer = self._get_pool_layer(pool_type, pool_factor) if self.do_pool else None
+          
         if self.in_dim != self.out_dim:
-            self.do_reduction = True
-            self.reduction_op = layer.__dict__['Conv'+self._get_dim_type()](self.in_dim, self.out_dim, 1, reduction_stride)
+            reduction_op = layer.__dict__['Conv'+self._get_dim_type()](self.in_dim, self.out_dim, 1)
         else:
-            self.do_reduction = False
+            reduction_op = None
+            
+        self.shortcut = nn.Sequential(*list(filter(None, [reduction_op, pool_layer])))
+        
         
         # Se
         self.se = self._get_param('se', True)
@@ -31,6 +33,5 @@ class ResBlock(_Block):
         _x = self.conv(x)
         if self.se:
             _x = self.se_branch(_x)
-        if self.do_reduction:
-            x = self.reduction_op(x)
+        x = self.shortcut(x)
         return x + _x

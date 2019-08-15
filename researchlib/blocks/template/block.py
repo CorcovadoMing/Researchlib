@@ -65,10 +65,13 @@ class _Block(nn.Module):
     
     
     def _get_pool_layer(self, pool_type, pool_factor):
-        if pool_type not in ['MaxPool', 'AvgPool', 'Combined']:
+        if pool_type not in ['MaxPool', 'AvgPool', 'Combined', 'Upsample']:
             raise('Unknown pool type')
         
         dim_str = self._get_dim_type()
+        if pool_type is 'Upsample':
+            pool_op = layer.__dict__[pool_type]
+            return pool_op(scale_factor=pool_factor)
         if pool_type is not 'Combined':
             pool_op_str = pool_type + dim_str
             pool_op = layer.__dict__[pool_op_str]

@@ -37,7 +37,7 @@ def AutoConvNet(op,
                 filters=(128, 1024),
                 flatten=False,
                 preact=True,
-                pooling_freq=1,
+                pool_freq=1,
                 do_norm=True,
                 **kwargs):
 
@@ -58,7 +58,7 @@ def AutoConvNet(op,
         id = i+1
         
         in_dim = out_dim
-        if id % pooling_freq == 0:
+        if id % pool_freq == 0:
             do_pool = True
             if out_dim < max_filter:
                 out_dim *= 2
