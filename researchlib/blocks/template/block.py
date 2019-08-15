@@ -1,4 +1,5 @@
 import re 
+import torch
 from torch import nn
 from ...layers import layer
 
@@ -58,15 +59,38 @@ class _Block(nn.Module):
     
     
     def _get_pool_layer(self, pool_type, pool_factor):
-        if pool_type not in ['MaxPool', 'AvgPool']:
+        if pool_type not in ['MaxPool', 'AvgPool', 'Combined']:
             raise('Unknown pool type')
         
         match = re.search('\dd', str(self.op))
         dim_str = match.group(0)
-        pool_op_str = pool_type + dim_str
-        pool_op = layer.__dict__[pool_op_str]
-        
-        return pool_op(pool_factor)
+        if pool_type is not 'Combined':
+            pool_op_str = pool_type + dim_str
+            pool_op = layer.__dict__[pool_op_str]
+            return pool_op(pool_factor)
+        else:
+            max_pool_op = layer.__dict__['MaxPool'+dim_str](pool_factor)
+            avg_pool_op = layer.__dict__['AvgPool'+dim_str](pool_factor)
+            conv_pool_op = nn.Sequential(layer.__dict__['Conv'+dim_str](self.out_dim, self.out_dim, 4, 2, 1), nn.LeakyReLU(0.5)) # Special case
+            reduction_op = layer.__dict__['Conv'+dim_str](self.out_dim*3, self.out_dim, 1)
+            return _Combined([max_pool_op, avg_pool_op, conv_pool_op], reduction_op, self.preact)
         
     def forward(self, x):
         pass
+
+
+# ================================================================================================
+    
+class _Combined(nn.Module):
+    def __init__(self, fn_list, reduction_op, preact):
+        super().__init__()
+        self.fn_list = nn.ModuleList(fn_list)
+        if preact:
+            self.reduction_op = reduction_op
+        else:
+            self.reduction_op = nn.Sequential(reduction_op, nn.LeakyReLU(0.5))
+        
+    def forward(self, x):
+        out = [f(x) for f in self.fn_list]
+        out = torch.cat(out, dim=1)
+        return self.reduction_op(out)
