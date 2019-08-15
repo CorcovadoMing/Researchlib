@@ -11,6 +11,6 @@ from .reg import *
 from .class_lib import _register_method, _add_methods_from
 from .get_iteration import _get_iteration
 from .parallel_executor import ParallelExecutor
-
+from .check_ports import _is_port_in_use
 from .mapping import mapping
 from .timer import Timer

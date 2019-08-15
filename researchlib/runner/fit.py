@@ -1,6 +1,6 @@
 import os
 from tqdm import tnrange
-from ..utils import _register_method, plot_montage
+from ..utils import _register_method, plot_montage, _is_port_in_use
 from .history import History
 from itertools import cycle
 import torch
@@ -8,6 +8,7 @@ import random
 from .liveplot import Liveplot
 from .prefetch import *
 import pickle
+from ..frontend.dashboard import _Dashboard
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -49,6 +50,11 @@ def fit(self,
         self_iterative=False,
         iterations=0):
 
+    # Fix issue the dashboard is down while training is interrupted
+    if not _is_port_in_use(8050):
+        dash = _Dashboard(verbose=False)
+        dash.start()
+    
     self.set_policy(policy, lr)
     self._fit(epochs,
               lr,

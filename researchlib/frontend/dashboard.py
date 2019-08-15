@@ -13,6 +13,7 @@ import redis
 import pickle
 from pynvml import *
 import logging
+import os
 
 _app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 _app.layout = html.Div(
@@ -225,6 +226,7 @@ class _Dashboard:
         self.log.disabled = not verbose
 
     def start(self):
+        os.environ['WERKZEUG_RUN_MAIN'] = 'true'
         self.flask_process = Process(target=_app.run_server,
                                      kwargs={
                                          'debug': False,

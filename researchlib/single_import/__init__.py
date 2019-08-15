@@ -16,6 +16,9 @@ from ..wrapper import *
 from pynvml import *
 import seaborn as sns
 import subprocess
+from ..frontend.dashboard import _Dashboard
+import redis
+import pickle
 
 sns.set()
 sns.set_style("whitegrid", {'axes.grid': False})
@@ -38,12 +41,6 @@ else:
 
 
 # Frontend
-def _is_port_in_use(port):
-    import socket
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(('localhost', port)) == 0
-
-
 def _initialize_redis(r, variable, init_value, need_encode=False):
     try:
         result = r.get(variable)
@@ -55,11 +52,7 @@ def _initialize_redis(r, variable, init_value, need_encode=False):
             init_value = pickle.dumps(init_value)
         r.set(variable, init_value)
 
-
-from ..frontend.dashboard import _Dashboard
-import redis
-import pickle
-
+from ..utils import _is_port_in_use
 if _is_port_in_use(8050):
     print()
     print('* Visit dashboard at http://<ip>:8050')
