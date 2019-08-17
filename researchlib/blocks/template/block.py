@@ -1,5 +1,6 @@
 import re
 import torch
+import copy
 from torch import nn
 from ...layers import layer
 
@@ -38,6 +39,12 @@ class _Block(nn.Module):
             'bias': bias
         }
 
+    def _get_custom_kwargs(self, custom_kwargs):
+        _new = copy.deepcopy(self.kwargs)
+        for key, value in custom_kwargs.items():
+            _new[key] = value
+        return _new
+    
     def _get_param(self, key, init_value=None, required=False):
         if required and key not in self.kwargs:
             raise ValueError("{} is required in **kwargs".format(key))

@@ -2,21 +2,34 @@ from .template.block import _Block
 from ..layers import layer
 from torch import nn
 from ._convblock import ConvBlock
-
+import copy
 
 class ResBlock(_Block):
+    '''
+        Deep Residual Learning for Image Recognition
+        https://arxiv.org/abs/1512.03385
+    '''
     def __postinit__(self):
         is_transpose = self._is_transpose()
+
+        erased_activator = self._get_param('erased_activator', False)
+        activator_type = self._get_param('actvator_type', 'ReLU')
+        activator_layer = self._get_activator_layer(activator_type) if not erased_activator and not self.preact else None
+        self.merge_layer = nn.Sequential(*list(filter(None, [activator_layer])))
+
         stride = self._get_param('pool_factor', 2) if self.do_pool else 1
         padding = 0 if is_transpose and self.do_pool else self._get_param('padding', 1)
         kernel_size = 2 if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
+        first_custom_kwargs = self._get_custom_kwargs({'kenel_size': kernel_size, 'stride': stride, 'padding': padding, 'erased_activator': False})
+        second_custom_kwargs = self._get_custom_kwargs({'erased_activator': True if not self.preact else False})
         self.conv = nn.Sequential(
-            ConvBlock(self.op, self.in_dim, self.out_dim, False, self.do_norm, self.preact, kernel_size=kernel_size, stride=stride, padding=padding, **self.kwargs),
-            ConvBlock(self.op, self.out_dim, self.out_dim, False, self.do_norm, self.preact, **self.kwargs)
+            ConvBlock(self.op, self.in_dim, self.out_dim, False, self.do_norm, self.preact, **first_custom_kwargs),
+            ConvBlock(self.op, self.out_dim, self.out_dim, False, self.do_norm, self.preact, **second_custom_kwargs)
         )
         
         shortcut_kernel_size = 2 if is_transpose and self.do_pool else 1
         if self.in_dim != self.out_dim or self.do_pool:
+            custom_kwargs = self._get_custom_kwargs({'kenel_size': shortcut_kernel_size, 'stride': stride})
             reduction_op = self.op(self.in_dim, self.out_dim, kernel_size=shortcut_kernel_size, stride=stride)
         else:
             reduction_op = None 
@@ -53,4 +66,4 @@ class ResBlock(_Block):
         if self.sd:
             _x = self.shakedrop(_x)
         x = self.shortcut(x)
-        return x + _x
+        return self.merge_layer(x + _x)
