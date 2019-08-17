@@ -38,7 +38,8 @@ def _filter_policy(base_dim, block_group, cur_dim, total_blocks, policy):
     if policy == 'default':
         return base_dim * (2 ** (block_group - 1))
     elif policy == 'pyramid':
-        return math.floor(cur_dim + 200 / total_blocks)
+        N = (total_blocks / 2) if total_blocks < 16 else (total_blocks / 3)
+        return math.floor(cur_dim + 200 / N)
     
 
 def AutoConvNet(op,
