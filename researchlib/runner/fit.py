@@ -362,8 +362,5 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id,
         raise
 
     finally:
-        self.preprocessing_list = []
-        self.postprocessing_list = []
-        self.augmentation_list = []
         self.unload_gpu()
         _STOP_GPU_MONITOR_ = True
