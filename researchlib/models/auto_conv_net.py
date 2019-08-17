@@ -1,5 +1,6 @@
 import re
 import math
+from ..runner import Runner
 from ..layers import layer
 from ..blocks import block
 from .builder import builder
@@ -53,6 +54,8 @@ def AutoConvNet(op,
                 pool_freq=1,
                 do_norm=True,
                 **kwargs):
+    
+    Runner.__model_settings__.append(locals())
 
     _op_type = _get_op_type(type)
     base_dim, max_dim = filters

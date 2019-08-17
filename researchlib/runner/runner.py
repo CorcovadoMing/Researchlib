@@ -36,6 +36,7 @@ from . import predict
 @_add_methods_from(validate)
 @_add_methods_from(predict)
 class Runner:
+    __model_settings__ = []
     def __init__(self,
                  model=None,
                  train_loader=None,
@@ -337,40 +338,22 @@ class Runner:
                 i._debug_flag = True
         return self
 
+    def describe(self):
+        keys = ['ema', 'ema_start', 'swa', 'swa_start', 'larc', 'fp16', 'augmentation_list', 'loss_fn', 'optimizer']
+        query = {}
+        for key, value in self.__dict__.items():
+            if key in keys:
+                query[key] = value
+        try:
+            query['loss_fn'] = query['loss_fn'][0].__name__
+        except:
+            query['loss_fn'] = query['loss_fn'][0].__class__.__name__
 
-# **** Temporily removed
-#
-#     def find_lr(self, mixup_alpha=0, plot=False, callbacks=[]):
-#         _save_model(self.model, 'find_lr_tmp.h5')
-#         try:
-#             loss, _ = self.trainer(
-#                 model=self.model,
-#                 train_loader=self.train_loader,
-#                 optimizer=self.optimizer,
-#                 loss_fn=self.loss_fn,
-#                 reg_fn=self.reg_fn,
-#                 reg_weights=self.reg_weights,
-#                 epoch=1,
-#                 augmentor=None,
-#                 is_cuda=self.is_cuda,
-#                 mixup_alpha=mixup_alpha,
-#                 callbacks=[
-#                     LRRangeTest(_get_iteration(self.train_loader),
-#                                 cutoff_ratio=10)
-#                 ] + callbacks,
-#                 metrics=[],
-#                 inputs=self.inputs)
+        try:
+            query['optimizer'] = query['optimizer'].__dict__['optimizer']
+        except:
+            pass
 
-#             step = (10 / 1e-9)**(1 / _get_iteration(self.train_loader))
-#             self.loss_history = []
-#             self.lr_history = []
-#             for i, j in enumerate(loss):
-#                 self.loss_history.append(j)
-#                 self.lr_history.append(1e-9 * (step**i))
-#             if plot:
-#                 plot_utils(self.loss_history, self.lr_history)
-#         except Exception as e:
-#             print('Error:', e)
-#         finally:
-#             self.model = _load_model(self.model, 'find_lr_tmp.h5',
-#                                      self.multigpu)
+        query['optimizer'] = query['optimizer'].__class__.__name__
+        query['model'] = self.__class__.__model_settings__
+        return query
