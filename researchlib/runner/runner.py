@@ -64,6 +64,7 @@ class Runner:
         self.experiment_name = ''
         self.checkpoint_path = ''
         self.scheduler = None
+        self.multisteps = []
         self.ema = ema
         self.ema_start = ema_start
         self.swa = swa
@@ -176,8 +177,7 @@ class Runner:
             elif optimizer == 'sgd':
                 optimizer = SGD(list(model.parameters()) + loss_params,
                                 lr=1e-1,
-                                momentum=0.9,
-                                weight_decay=1e-4)
+                                momentum=0.9)
             elif optimizer == 'nesterov':
                 optimizer = SGD(list(model.parameters()) + loss_params,
                                 lr=1e-2,

@@ -1,6 +1,6 @@
 import os
 from tqdm import tnrange
-from ..utils import _register_method, plot_montage, _is_port_in_use
+from ..utils import _register_method, plot_montage, _is_port_in_use, set_lr
 from .history import History
 from itertools import cycle
 import torch
@@ -20,7 +20,7 @@ def set_policy(self, policy, lr):
         try:
             self.scheduler = torch.optim.lr_scheduler.CyclicLR(
                 self.optimizer,
-                base_lr=lr / 50.,
+                base_lr=lr/50,
                 max_lr=lr,
                 step_size_up=len(self.train_loader),
                 step_size_down=len(self.train_loader),
@@ -28,7 +28,7 @@ def set_policy(self, policy, lr):
         except:  # No momentum
             self.scheduler = torch.optim.lr_scheduler.CyclicLR(
                 self.optimizer,
-                base_lr=lr / 50.,
+                base_lr=lr/50.,
                 max_lr=lr,
                 step_size_up=len(self.train_loader),
                 step_size_down=len(self.train_loader),
@@ -48,7 +48,8 @@ def fit(self,
         callbacks=[],
         _id='none',
         self_iterative=False,
-        iterations=0):
+        iterations=0,
+        multisteps=None):
     
     self.__class__.__fit_settings__[f'epoch_{self.epoch}-{self.epoch+epochs}'] = locals()
 
@@ -57,7 +58,10 @@ def fit(self,
         dash = _Dashboard(verbose=False)
         dash.start()
     
-    self.set_policy(policy, lr)
+    if multisteps is not None:
+        assert type(multisteps) == list
+        self.multisteps = multisteps
+        
     self._fit(epochs,
               lr,
               mixup_alpha,
@@ -65,7 +69,8 @@ def fit(self,
               callbacks,
               _id,
               self_iterative,
-              iterations=iterations)
+              iterations=iterations,
+              policy=policy)
 
 
 @register_method
@@ -138,7 +143,11 @@ def _list_avg(l):
 
 @register_method
 def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id,
-         self_iterative, iterations):
+         self_iterative, iterations, policy):
+    
+    base_lr = lr
+    set_lr(self.optimizer, base_lr)
+    self.set_policy(policy, base_lr)
 
     if type(self.optimizer) == list:
         for i in self.optimizer:
@@ -348,6 +357,17 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id,
 
             liveplot.plot(self.epoch, self.history_, epoch_str)
             self.epoch += 1
+            
+            # Steps Anneling
+            if self.epoch in self.multisteps:
+                base_lr *= 0.1
+                if policy == 'cyclical':
+                    # Strange trick, don't change this line for cyclical
+                    set_lr(self.optimizer, base_lr/50, 'initial_lr')
+                else:
+                    set_lr(self.optimizer, base_lr)
+                self.set_policy(policy, base_lr)
+                
 
             # Self-interative
             if self_iterative:
