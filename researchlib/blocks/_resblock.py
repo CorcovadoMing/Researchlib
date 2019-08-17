@@ -17,15 +17,33 @@ class ResBlock(_Block):
         activator_layer = self._get_activator_layer(activator_type) if not erased_activator and not self.preact else None
         self.merge_layer = nn.Sequential(*list(filter(None, [activator_layer])))
 
-        stride = self._get_param('pool_factor', 2) if self.do_pool else 1
-        padding = 0 if is_transpose and self.do_pool else self._get_param('padding', 1)
-        kernel_size = 2 if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
-        first_custom_kwargs = self._get_custom_kwargs({'kenel_size': kernel_size, 'stride': stride, 'padding': padding, 'erased_activator': False})
-        second_custom_kwargs = self._get_custom_kwargs({'erased_activator': True if not self.preact else False})
-        self.conv = nn.Sequential(
-            ConvBlock(self.op, self.in_dim, self.out_dim, False, self.do_norm, self.preact, **first_custom_kwargs),
-            ConvBlock(self.op, self.out_dim, self.out_dim, False, self.do_norm, self.preact, **second_custom_kwargs)
-        )
+        # Layers
+        total_blocks = self._get_param('total_blocks', required=True)
+        # 16-resblocks equals to resnet 34, however, replace each 2-conv block with 3-conv block results in boost performance
+        # Here replace the block design if using more than 15 resblocks, which means we don't have resnet-34, use resnet-50 instead in same total blocks.
+        if total_blocks > 15:
+            hidden_size = self.out_dim // 4
+            stride = self._get_param('pool_factor', 2) if self.do_pool else 1
+            padding = 0 if is_transpose and self.do_pool else self._get_param('padding', 1)
+            kernel_size = 2 if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
+            first_custom_kwargs = self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False})
+            second_custom_kwargs = self._get_custom_kwargs({'kenel_size': kernel_size, 'stride': stride, 'padding': padding, 'erased_activator': False})
+            third_custom_kwargs = self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': True if not self.preact else False})
+            self.conv = nn.Sequential(
+                ConvBlock(self.op, self.in_dim, hidden_size, False, self.do_norm, self.preact, **first_custom_kwargs),
+                ConvBlock(self.op, hidden_size, hidden_size, False, self.do_norm, self.preact, **second_custom_kwargs),
+                ConvBlock(self.op, hidden_size, self.out_dim, False, self.do_norm, self.preact, **third_custom_kwargs)
+            )
+        else:
+            stride = self._get_param('pool_factor', 2) if self.do_pool else 1
+            padding = 0 if is_transpose and self.do_pool else self._get_param('padding', 1)
+            kernel_size = 2 if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
+            first_custom_kwargs = self._get_custom_kwargs({'kenel_size': kernel_size, 'stride': stride, 'padding': padding, 'erased_activator': False})
+            second_custom_kwargs = self._get_custom_kwargs({'erased_activator': True if not self.preact else False})
+            self.conv = nn.Sequential(
+                ConvBlock(self.op, self.in_dim, self.out_dim, False, self.do_norm, self.preact, **first_custom_kwargs),
+                ConvBlock(self.op, self.out_dim, self.out_dim, False, self.do_norm, self.preact, **second_custom_kwargs)
+            )
         
         shortcut_kernel_size = 2 if is_transpose and self.do_pool else 1
         if self.in_dim != self.out_dim or self.do_pool:
