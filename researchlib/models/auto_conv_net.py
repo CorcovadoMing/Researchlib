@@ -55,7 +55,7 @@ def AutoConvNet(op,
                 do_norm=True,
                 **kwargs):
     
-    Runner.__model_settings__.append(locals())
+    Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
 
     _op_type = _get_op_type(type)
     base_dim, max_dim = filters

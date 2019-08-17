@@ -17,6 +17,7 @@ import torch.backends.cudnn as cudnn
 # from apex import amp
 import torchcontrib
 import os
+import copy
 import pandas as pd
 from adabound import AdaBound
 from .larc import LARC
@@ -36,7 +37,9 @@ from . import predict
 @_add_methods_from(validate)
 @_add_methods_from(predict)
 class Runner:
-    __model_settings__ = []
+    __model_settings__ = {}
+    __fit_settings__ = {}
+    __runner_settings__ = None
     def __init__(self,
                  model=None,
                  train_loader=None,
@@ -55,7 +58,9 @@ class Runner:
                  swa=False,
                  swa_start=20,
                  swa_val_acc=100.):
-
+        
+        self.__class__.__runner_settings__ = locals()
+        
         self.experiment_name = ''
         self.checkpoint_path = ''
         self.scheduler = None
@@ -339,9 +344,34 @@ class Runner:
         return self
 
     def describe(self):
-        keys = ['ema', 'ema_start', 'swa', 'swa_start', 'larc', 'fp16', 'augmentation_list', 'loss_fn', 'optimizer']
+        def _describe_model(model_dict):
+            query = {}
+            keys = ['do_norm', 'pool_freq', 'preact', 'filter_policy', 'filters', 'type', 'total_blocks', 'op']
+            for key, value in model_dict.items():
+                if key in keys:
+                    query[key] = value
+            target_dict = model_dict['kwargs']
+            for key, value in target_dict.items():
+                query[key] = value
+            return query
+
+        def _describe_fit(fit_dict):
+            query = {}
+            keys = ['self_iterative', 'mixup_alpha', 'policy', 'lr', 'epochs']
+            for key, value in fit_dict.items():
+                if key in keys:
+                    query[key] = value
+            return query
+
+        def _get_best_metrics(runner, metrics):
+            index = runner.history_.records['saved'].index('*', -1)
+            return runner.histroy_.records['val_'+str(metrics)][index]
+
+
+        target_dict = copy.deepcopy(self.__dict__)
+        keys = ['ema', 'ema_start', 'swa', 'swa_start', 'larc', 'fp16', 'augmentation_list', 'preprocessing_list', 'loss_fn', 'train_loader']
         query = {}
-        for key, value in self.__dict__.items():
+        for key, value in target_dict.items():
             if key in keys:
                 query[key] = value
         try:
@@ -350,10 +380,32 @@ class Runner:
             query['loss_fn'] = query['loss_fn'][0].__class__.__name__
 
         try:
-            query['optimizer'] = query['optimizer'].__dict__['optimizer']
+            for i, j in enumerate(query['augmentation_list']):
+                query['augmentation_list'][i] = j.__class__.__name__
         except:
             pass
 
-        query['optimizer'] = query['optimizer'].__class__.__name__
-        query['model'] = self.__class__.__model_settings__
+        try:
+            for i, j in enumerate(query['preprocessing_list']):
+                query['preprocessing_list'][i] = j.__class__.__name__
+        except:
+            pass
+
+        query['train_loader'] = query['train_loader'].dataset.__class__.__name__
+
+        query['model'] = copy.deepcopy(self.__class__.__model_settings__)
+        query['fit'] = copy.deepcopy(self.__class__.__fit_settings__)
+        query['optimizer'] = self.__class__.__runner_settings__['optimizer']
+        query['monitor_state'] = self.__class__.__runner_settings__['monitor_state']
+
+        try:
+            query['best_state'] = self.__dict__['monitor']
+        except:
+            query['best_state'] = _get_best_metrics(self, query['monitor_state'])
+
+        for i, j in query['model'].items():
+            query['model'][i] = _describe_model(j)
+        for i, j in query['fit'].items():
+            query['fit'][i] = _describe_fit(j)
+        del target_dict
         return query
