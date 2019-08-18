@@ -349,10 +349,10 @@ class Runner:
             keys = ['do_norm', 'pool_freq', 'preact', 'filter_policy', 'filters', 'type', 'total_blocks', 'op']
             for key, value in model_dict.items():
                 if key in keys:
-                    query[key] = value
+                    query[key] = copy.deepcopy(value)
             target_dict = model_dict['kwargs']
             for key, value in target_dict.items():
-                query[key] = value
+                query[key] = copy.deepcopy(value)
             return query
 
         def _describe_fit(fit_dict):
@@ -360,7 +360,7 @@ class Runner:
             keys = ['self_iterative', 'mixup_alpha', 'policy', 'lr', 'epochs']
             for key, value in fit_dict.items():
                 if key in keys:
-                    query[key] = value
+                    query[key] = copy.deepcopy(value)
             return query
 
         def _get_best_metrics(runner, metrics):
@@ -368,12 +368,11 @@ class Runner:
             return runner.histroy_.records['val_'+str(metrics)][index]
 
 
-        target_dict = copy.deepcopy(self.__dict__)
         keys = ['ema', 'ema_start', 'swa', 'swa_start', 'larc', 'fp16', 'augmentation_list', 'preprocessing_list', 'loss_fn', 'train_loader']
         query = {}
-        for key, value in target_dict.items():
+        for key, value in self.__dict__.items():
             if key in keys:
-                query[key] = value
+                query[key] = copy.deepcopy(value)
         try:
             query['loss_fn'] = query['loss_fn'][0].__name__
         except:
@@ -393,8 +392,6 @@ class Runner:
 
         query['train_loader'] = query['train_loader'].dataset.__class__.__name__
 
-        query['model'] = copy.deepcopy(self.__class__.__model_settings__)
-        query['fit'] = copy.deepcopy(self.__class__.__fit_settings__)
         query['optimizer'] = self.__class__.__runner_settings__['optimizer']
         query['monitor_state'] = self.__class__.__runner_settings__['monitor_state']
 
@@ -403,9 +400,12 @@ class Runner:
         except:
             query['best_state'] = _get_best_metrics(self, query['monitor_state'])
 
-        for i, j in query['model'].items():
+        query['model'] = {}
+        for i, j in self.__class__.__model_settings__.items():
+            query['model'].setdefault(i, {})
             query['model'][i] = _describe_model(j)
-        for i, j in query['fit'].items():
+        query['fit'] = {}
+        for i, j in self.__class__.__fit_settings__.items():
+            query['fit'].setdefault(i, {})
             query['fit'][i] = _describe_fit(j)
-        del target_dict
         return query
