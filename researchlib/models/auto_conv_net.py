@@ -35,13 +35,14 @@ def _get_dim_type(op):
 
 # =============================================================
 
+
 def _filter_policy(base_dim, block_group, cur_dim, total_blocks, policy):
     if policy == 'default':
-        return base_dim * (2 ** (block_group - 1))
+        return base_dim * (2**(block_group - 1))
     elif policy == 'pyramid':
         N = (total_blocks / 2) if total_blocks < 16 else (total_blocks / 3)
         return math.floor(cur_dim + 200 / N)
-    
+
 
 def AutoConvNet(op,
                 input_dim,
@@ -54,15 +55,16 @@ def AutoConvNet(op,
                 pool_freq=1,
                 do_norm=True,
                 **kwargs):
-    
-    Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
+
+    Runner.__model_settings__[
+        f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
 
     _op_type = _get_op_type(type)
     base_dim, max_dim = filters
     block_group = 1
 
     layers = []
-    
+
     in_dim = input_dim
     out_dim = base_dim
 
@@ -75,19 +77,20 @@ def AutoConvNet(op,
 
     for i in range(total_blocks):
         id = i + 1
-        
+
         if id % pool_freq == 0:
             do_pool = True
             block_group += 1
         else:
             do_pool = False
-        
+
         if not preact and id == 1:
             out_dim = base_dim
         else:
-            out_dim = _filter_policy(base_dim, block_group, in_dim, total_blocks, filter_policy)
+            out_dim = _filter_policy(base_dim, block_group, in_dim,
+                                     total_blocks, filter_policy)
         print(in_dim, out_dim)
-        
+
         layers.append(
             _op_type(op,
                      in_dim,
@@ -97,10 +100,9 @@ def AutoConvNet(op,
                      preact=preact,
                      id=id,
                      total_blocks=total_blocks,
-                     **kwargs)
-        )
-        
+                     **kwargs))
+
         in_dim = out_dim
-        
+
     if flatten: layers.append(layer.Flatten())
     return builder(layers)

@@ -20,6 +20,9 @@ from ..frontend.dashboard import _Dashboard
 import redis
 import pickle
 
+# google api authorization
+benchmark()
+
 sns.set()
 sns.set_style("whitegrid", {'axes.grid': False})
 
@@ -51,6 +54,7 @@ def _initialize_redis(r, variable, init_value, need_encode=False):
         if need_encode:
             init_value = pickle.dumps(init_value)
         r.set(variable, init_value)
+
 
 from ..utils import _is_port_in_use
 if _is_port_in_use(8050):

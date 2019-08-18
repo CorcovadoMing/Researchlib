@@ -13,7 +13,8 @@ def validate_fn(self, **kwargs):
     test_loss = 0
     matrix_records = History()
 
-    last_acc_val = self.history_.records['val_acc'][-1] if 'val_acc' in self.history_.records else 0.
+    last_acc_val = self.history_.records['val_acc'][
+        -1] if 'val_acc' in self.history_.records else 0.
     if self.swa and (self.epoch >= self.swa_start
                      or last_acc_val >= self.swa_val_acc):
         if type(self.optimizer) == list:

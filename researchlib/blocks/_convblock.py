@@ -16,15 +16,17 @@ class ConvBlock(_Block):
         pool_type = self._get_param('pool_type', 'MaxPool')
         pool_factor = self._get_param('pool_factor', 2)
         conv_kwargs = self._get_conv_kwargs()
-        
+
         spectral_norm = self._get_param('sn', False)
         erased_activator = self._get_param('erased_activator', False)
 
         # Layers
         conv_layer = self.op(self.in_dim, self.out_dim, **conv_kwargs)
         if spectral_norm: conv_layer = sn(conv_layer)
-        activator_layer = self._get_activator_layer(activator_type) if not erased_activator else None
-        pool_layer = self._get_pool_layer(pool_type, pool_factor) if self.do_pool else None
+        activator_layer = self._get_activator_layer(
+            activator_type) if not erased_activator else None
+        pool_layer = self._get_pool_layer(
+            pool_type, pool_factor) if self.do_pool else None
         norm_layer = self._get_norm_layer(norm_type) if self.do_norm else None
 
         if self.preact:

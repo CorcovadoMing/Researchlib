@@ -44,7 +44,7 @@ class _Block(nn.Module):
         for key, value in custom_kwargs.items():
             _new[key] = value
         return _new
-    
+
     def _get_param(self, key, init_value=None, required=False):
         if required and key not in self.kwargs:
             raise ValueError("{} is required in **kwargs".format(key))
@@ -62,12 +62,14 @@ class _Block(nn.Module):
     def _is_transpose(self):
         match = re.search('Transpose', str(self.op))
         return True if match is not None else False
-    
+
     def _get_activator_layer(self, activator_type):
-        if activator_type not in ['ReLU', 'ELU', 'PReLU', 'LeakyReLU', 'SELU', 'Swish', 'GeLU']:
-            raise('Unknown activator type')
+        if activator_type not in [
+                'ReLU', 'ELU', 'PReLU', 'LeakyReLU', 'SELU', 'Swish', 'GeLU'
+        ]:
+            raise ('Unknown activator type')
         return layer.__dict__[activator_type]()
-    
+
     def _get_norm_layer(self, norm_type, dim=None):
         if norm_type not in ['BatchNorm', 'InstanceNorm', 'GroupNorm']:
             raise ('Unknown norm type')
@@ -92,8 +94,7 @@ class _Block(nn.Module):
         return norm_op(*dim)
 
     def _get_pool_layer(self, pool_type, pool_factor):
-        if pool_type not in [
-                'MaxPool', 'AvgPool', 'Combined', 'Upsample']:
+        if pool_type not in ['MaxPool', 'AvgPool', 'Combined', 'Upsample']:
             raise ('Unknown pool type')
 
         dim_str = self._get_dim_type()
