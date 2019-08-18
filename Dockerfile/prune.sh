@@ -1,3 +1,3 @@
 #!/bin/sh
 
-docker system prune -af
+docker system prune -f
