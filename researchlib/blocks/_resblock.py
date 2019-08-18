@@ -42,7 +42,7 @@ class ResBlock(_Block):
             stride = self._get_param('pool_factor', 2) if self.do_pool else 1
             padding = 0 if is_transpose and self.do_pool else self._get_param('padding', 1)
             kernel_size = 2 if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
-            first_custom_kwargs = self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False})
+            first_custom_kwargs = self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': True if self.preact and erased_activator else False})
             second_custom_kwargs = self._get_custom_kwargs({'kenel_size': kernel_size, 'stride': stride, 'padding': padding, 'erased_activator': False})
             third_custom_kwargs = self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': True if not self.preact else False})
             self.conv = nn.Sequential(
@@ -54,7 +54,7 @@ class ResBlock(_Block):
             stride = self._get_param('pool_factor', 2) if self.do_pool else 1
             padding = 0 if is_transpose and self.do_pool else self._get_param('padding', 1)
             kernel_size = 2 if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
-            first_custom_kwargs = self._get_custom_kwargs({'kenel_size': kernel_size, 'stride': stride, 'padding': padding, 'erased_activator': False})
+            first_custom_kwargs = self._get_custom_kwargs({'kenel_size': kernel_size, 'stride': stride, 'padding': padding, 'erased_activator': True if self.preact and erased_activator else False})
             second_custom_kwargs = self._get_custom_kwargs({'erased_activator': True if not self.preact else False})
             self.conv = nn.Sequential(
                 ConvBlock(self.op, self.in_dim, self.out_dim, False, self.do_norm, self.preact, **first_custom_kwargs),
