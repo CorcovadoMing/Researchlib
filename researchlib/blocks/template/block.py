@@ -68,14 +68,17 @@ class _Block(nn.Module):
             raise('Unknown activator type')
         return layer.__dict__[activator_type]()
     
-    def _get_norm_layer(self, norm_type):
+    def _get_norm_layer(self, norm_type, dim=None):
         if norm_type not in ['BatchNorm', 'InstanceNorm', 'GroupNorm']:
             raise ('Unknown norm type')
 
-        if self.preact:
-            dim = [self.in_dim]
+        if dim is None:
+            if self.preact:
+                dim = [self.in_dim]
+            else:
+                dim = [self.out_dim]
         else:
-            dim = [self.out_dim]
+            dim = [dim]
 
         if norm_type is not 'GroupNorm':
             dim_str = self._get_dim_type()
