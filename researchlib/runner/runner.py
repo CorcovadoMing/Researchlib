@@ -178,7 +178,7 @@ class Runner:
                 optimizer = Adam(list(model.parameters()) + loss_params,
                                  betas=(0.9, 0.999))
             elif optimizer == 'adamw':
-                optimizer = Adam(list(model.parameters()) + loss_params,
+                optimizer = AdamW(list(model.parameters()) + loss_params,
                                  betas=(0.9, 0.999))
             elif optimizer == 'adam_gan':
                 optimizer = Adam(list(model.parameters()) + loss_params,
