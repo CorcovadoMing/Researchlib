@@ -9,7 +9,7 @@ from .adafactor import Adafactor
 from .validate import validate_fn
 from .preprocessing import PreprocessingDebugger
 from .export import _Export
-from ..utils import _add_methods_from, _get_iteration
+from ..utils import _add_methods_from, _get_iteration, benchmark
 from .save_load import _save_model, _save_optimizer, _load_model, _load_optimizer
 from torch.cuda import is_available
 from torch.nn import DataParallel
@@ -19,6 +19,8 @@ import torchcontrib
 import os
 import copy
 import pandas as pd
+import datetime as dt
+from pytz import timezone
 from adabound import AdaBound
 from .larc import LARC
 
@@ -40,6 +42,7 @@ class Runner:
     __model_settings__ = {}
     __fit_settings__ = {}
     __runner_settings__ = None
+
     def __init__(self,
                  model=None,
                  train_loader=None,
@@ -58,9 +61,9 @@ class Runner:
                  swa=False,
                  swa_start=20,
                  swa_val_acc=100.):
-        
+
         self.__class__.__runner_settings__ = locals()
-        
+
         self.experiment_name = ''
         self.checkpoint_path = ''
         self.scheduler = None
@@ -85,6 +88,11 @@ class Runner:
             self.inputs = test_loader[1]
         self.history_ = History()
         self.fp16 = fp16
+
+        # for benchmark date_id
+        self._date_id = dt.datetime.now(
+            timezone('Asia/Taipei')).strftime('%Y/%m/%d %H:%M:%S')
+        self.bencher = benchmark()
 
         self.default_callbacks = []
 
@@ -219,6 +227,7 @@ class Runner:
             self.optimizer = _assign_optim(self.model, optimizer, self.larc,
                                            self.swa)
 
+
 #         self.model, self.optimizer = amp.initialize(self.model,
 #                                                     self.optimizer,
 #                                                     opt_level="O2",
@@ -346,7 +355,10 @@ class Runner:
     def describe(self):
         def _describe_model(model_dict):
             query = {}
-            keys = ['do_norm', 'pool_freq', 'preact', 'filter_policy', 'filters', 'type', 'total_blocks', 'op']
+            keys = [
+                'do_norm', 'pool_freq', 'preact', 'filter_policy', 'filters',
+                'type', 'total_blocks', 'op'
+            ]
             for key, value in model_dict.items():
                 if key in keys:
                     query[key] = copy.deepcopy(value)
@@ -365,10 +377,13 @@ class Runner:
 
         def _get_best_metrics(runner, metrics):
             index = runner.history_.records['saved'].index('*', -1)
-            return runner.histroy_.records['val_'+str(metrics)][index]
+            return runner.histroy_.records['val_' + str(metrics)][index]
 
-
-        keys = ['ema', 'ema_start', 'swa', 'swa_start', 'larc', 'fp16', 'augmentation_list', 'preprocessing_list', 'loss_fn', 'train_loader']
+        keys = [
+            'ema', 'ema_start', 'swa', 'swa_start', 'larc', 'fp16',
+            'augmentation_list', 'preprocessing_list', 'loss_fn',
+            'train_loader'
+        ]
         query = {}
         for key, value in self.__dict__.items():
             if key in keys:
@@ -390,15 +405,18 @@ class Runner:
         except:
             pass
 
-        query['train_loader'] = query['train_loader'].dataset.__class__.__name__
+        query['train_loader'] = query[
+            'train_loader'].dataset.__class__.__name__
 
         query['optimizer'] = self.__class__.__runner_settings__['optimizer']
-        query['monitor_state'] = self.__class__.__runner_settings__['monitor_state']
+        query['monitor_state'] = self.__class__.__runner_settings__[
+            'monitor_state']
 
         try:
             query['best_state'] = self.__dict__['monitor']
         except:
-            query['best_state'] = _get_best_metrics(self, query['monitor_state'])
+            query['best_state'] = _get_best_metrics(self,
+                                                    query['monitor_state'])
 
         query['model'] = {}
         for i, j in self.__class__.__model_settings__.items():
@@ -409,3 +427,7 @@ class Runner:
             query['fit'].setdefault(i, {})
             query['fit'][i] = _describe_fit(j)
         return query
+
+    def submit_benchmark(self, category):
+        self.bencher.update_from_runner(category, self._date_id,
+                                        self.describe())

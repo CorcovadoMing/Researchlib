@@ -20,7 +20,7 @@ def set_policy(self, policy, lr):
         try:
             self.scheduler = torch.optim.lr_scheduler.CyclicLR(
                 self.optimizer,
-                base_lr=lr/50,
+                base_lr=lr / 50,
                 max_lr=lr,
                 step_size_up=len(self.train_loader),
                 step_size_down=len(self.train_loader),
@@ -28,7 +28,7 @@ def set_policy(self, policy, lr):
         except:  # No momentum
             self.scheduler = torch.optim.lr_scheduler.CyclicLR(
                 self.optimizer,
-                base_lr=lr/50.,
+                base_lr=lr / 50.,
                 max_lr=lr,
                 step_size_up=len(self.train_loader),
                 step_size_down=len(self.train_loader),
@@ -50,18 +50,19 @@ def fit(self,
         self_iterative=False,
         iterations=0,
         multisteps=None):
-    
-    self.__class__.__fit_settings__[f'epoch_{self.epoch}-{self.epoch+epochs}'] = locals()
+
+    self.__class__.__fit_settings__[
+        f'epoch_{self.epoch}-{self.epoch+epochs}'] = locals()
 
     # Fix issue the dashboard is down while training is interrupted
     if not _is_port_in_use(8050):
         dash = _Dashboard(verbose=False)
         dash.start()
-    
+
     if multisteps is not None:
         assert type(multisteps) == list
         self.multisteps = multisteps
-        
+
     self._fit(epochs,
               lr,
               mixup_alpha,
@@ -144,7 +145,7 @@ def _list_avg(l):
 @register_method
 def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id,
          self_iterative, iterations, policy):
-    
+
     base_lr = lr
     set_lr(self.optimizer, base_lr)
     self.set_policy(policy, base_lr)
@@ -298,7 +299,8 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id,
                 liveplot.record(epoch, 'image', _grid)
 
             # SWA
-            last_acc_val = self.history_.records['val_acc'][-1] if 'val_acc' in self.history_.records else 0.
+            last_acc_val = self.history_.records['val_acc'][
+                -1] if 'val_acc' in self.history_.records else 0.
             if self.swa and (self.epoch >= self.swa_start or last_acc_val >=
                              self.swa_val_acc) and self.epoch % 2 == 0:
                 if type(self.optimizer) == list:
@@ -357,17 +359,16 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id,
 
             liveplot.plot(self.epoch, self.history_, epoch_str)
             self.epoch += 1
-            
+
             # Steps Anneling
             if self.epoch in self.multisteps:
                 base_lr *= 0.1
                 if policy == 'cyclical':
                     # Strange trick, don't change this line for cyclical
-                    set_lr(self.optimizer, base_lr/50, 'initial_lr')
+                    set_lr(self.optimizer, base_lr / 50, 'initial_lr')
                 else:
                     set_lr(self.optimizer, base_lr)
                 self.set_policy(policy, base_lr)
-                
 
             # Self-interative
             if self_iterative:
