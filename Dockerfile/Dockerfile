@@ -132,6 +132,9 @@ COPY torch2trt ./torch2trt
 RUN cd torch2trt && sh install.sh
 RUN cp -r /usr/lib/python3.6/dist-packages/tensorrt /opt/miniconda/lib/python3.6/site-packages/torch2trt-0.0.0-py3.6.egg/tensorrt
 
+RUN pip install -U pytorch-nlp pygsheets
+RUN apt update && apt install -y sox libsox-dev libsox-fmt-all
+RUN pip install http://download.pytorch.org/whl/torchaudio-0.2-cp36-cp36m-linux_x86_64.whl
 # Apex
 #RUN pip install -U pip
 #RUN git clone https://github.com/NVIDIA/apex apex_build
@@ -139,5 +142,5 @@ RUN cp -r /usr/lib/python3.6/dist-packages/tensorrt /opt/miniconda/lib/python3.6
 VOLUME ["/data"]
 
 # Version tag
-ENV _RESEARCHLIB_IMAGE_TAG 19.08.1
+ENV _RESEARCHLIB_IMAGE_TAG 19.08.2
 
