@@ -56,6 +56,7 @@ class _ResBlock2d(nn.Module):
                 nn.Sigmoid()
             ])
 
+        self.sd = False
         if kwargs['sd']:
             self.sd = kwargs['sd']
             self.block_idx = kwargs['block_idx']
