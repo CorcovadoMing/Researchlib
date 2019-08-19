@@ -7,6 +7,7 @@ from .builder import builder
 
 from ..blocks._convblock import ConvBlock as cb
 from ..blocks._resblock import ResBlock as rb
+from ..blocks._res2block import Res2Block as r2b
 
 # =============================================================
 
@@ -22,8 +23,10 @@ def _get_param(kwargs, key, init_value):
 def _get_op_type(type):
     if type == 'vgg':
         _op_type = cb
-    elif type == 'residual':
+    elif type == 'resblock':
         _op_type = rb
+    elif type == 'res2block':
+        _op_type = r2b
     return _op_type
 
 

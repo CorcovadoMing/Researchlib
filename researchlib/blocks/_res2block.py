@@ -2,7 +2,7 @@ from .template.block import _Block
 from ..layers import layer
 from torch import nn
 import torch
-from ._convblock import ConvBlock
+from ._res2convblock import Res2ConvBlock as ConvBlock
 import copy
 
 
@@ -26,7 +26,7 @@ class _padding_shortcut(nn.Module):
                              device=x.device)), 1)
 
 
-class ResBlock(_Block):
+class Res2Block(_Block):
     '''
         Deep Residual Learning for Image Recognition
         https://arxiv.org/abs/1512.03385
