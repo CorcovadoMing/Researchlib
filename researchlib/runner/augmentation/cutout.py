@@ -5,6 +5,7 @@ import torch
 
 
 class Cutout(template.TorchAugmentation):
+
     def __init__(self, prob=None, mag=None, include_y=False):
         super().__init__()
         self.include_y = include_y

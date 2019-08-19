@@ -5,6 +5,7 @@ import math
 
 
 class _PositionEncoding(nn.Module):
+
     def __init__(self, dk=512):
         super().__init__()
         self.encode_map = None
@@ -15,11 +16,11 @@ class _PositionEncoding(nn.Module):
         for p in range(pos):
             for l in range(length):
                 if l % 2:
-                    self.encode_map[l, p] = np.cos(
-                        p / (10000**((2 * l) / self.dk)))
+                    self.encode_map[l, p] = np.cos(p /
+                                                   (10000**((2 * l) / self.dk)))
                 else:
-                    self.encode_map[l, p] = np.sin(
-                        p / (10000**((2 * l) / self.dk)))
+                    self.encode_map[l, p] = np.sin(p /
+                                                   (10000**((2 * l) / self.dk)))
         self.encode_map = torch.from_numpy(self.encode_map).to(device).float()
         self.encode_map.require_grad = False
 

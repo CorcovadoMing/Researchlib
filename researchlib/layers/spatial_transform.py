@@ -5,6 +5,7 @@ from . import *
 
 
 class _SpatialTransform(nn.Module):
+
     def __init__(self, localization, out='transform'):
         super().__init__()
         self.localization = localization

@@ -3,6 +3,7 @@ import torch
 
 
 class Acc(Matrix):
+
     def __init__(self):
         super().__init__()
         self.total = 0

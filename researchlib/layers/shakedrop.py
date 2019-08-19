@@ -5,6 +5,7 @@ from torch.autograd import Variable
 
 
 class ShakeDropFunction(torch.autograd.Function):
+
     @staticmethod
     def forward(ctx,
                 x,
@@ -90,6 +91,7 @@ class _ShakeDrop(nn.Module):
     .. _ShakeDrop Regularization for Deep Residual Learning:
         https://arxiv.org/abs/1802.02375
     """
+
     def __init__(self,
                  block_idx,
                  block_num,

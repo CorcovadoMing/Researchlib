@@ -4,6 +4,7 @@ import numpy as np
 
 
 class Correlation(Matrix):
+
     def __init__(self, difference=True, categorical=False):
         super().__init__()
         self.pred = None

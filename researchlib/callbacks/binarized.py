@@ -2,6 +2,7 @@ from .callback import Callback
 
 
 class Binarized(Callback):
+
     def __init__(self):
         super().__init__()
 

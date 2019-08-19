@@ -7,6 +7,7 @@ import torch
 
 
 class DiceMatrix(Matrix):
+
     def __init__(self, smooth=1, target_class=1, need_exp=False):
         super().__init__()
         self.smooth = smooth

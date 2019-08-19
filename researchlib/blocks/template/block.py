@@ -6,8 +6,8 @@ from ...layers import layer
 
 
 class _Block(nn.Module):
-    def __init__(self, op, in_dim, out_dim, do_pool, do_norm, preact,
-                 **kwargs):
+
+    def __init__(self, op, in_dim, out_dim, do_pool, do_norm, preact, **kwargs):
         super().__init__()
         self.op = op
         self.in_dim = in_dim
@@ -124,6 +124,7 @@ class _Block(nn.Module):
 
 
 class _Combined(nn.Module):
+
     def __init__(self, fn_list, reduction_op, preact):
         super().__init__()
         self.fn_list = nn.ModuleList(fn_list)

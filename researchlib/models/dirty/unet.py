@@ -17,18 +17,21 @@ def get_sfs_idxs(sfs, last=True):
         sfs_idxs = list(
             np.where(
                 np.array(feature_szs[:-1]) != np.array(feature_szs[1:]))[0])
-        if feature_szs[0] != feature_szs[1]: sfs_idxs = [0] + sfs_idxs
-    else: sfs_idxs = list(range(len(sfs)))
+        if feature_szs[0] != feature_szs[1]:
+            sfs_idxs = [0] + sfs_idxs
+    else:
+        sfs_idxs = list(range(len(sfs)))
     return sfs_idxs
 
 
 def conv_bn_relu(in_c, out_c, kernel_size, stride, padding):
     return [
-        nn.Conv2d(in_c,
-                  out_c,
-                  kernel_size=kernel_size,
-                  stride=stride,
-                  padding=padding),
+        nn.Conv2d(
+            in_c,
+            out_c,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding),
         nn.ReLU(),
         nn.BatchNorm2d(out_c)
     ]
@@ -90,6 +93,7 @@ class DynamicUnet(nn.Module):
     not a problem for state-of-the-art architectures as they follow this pattern but it should
     be changed for custom encoders that might have a different size decay.
     """
+
     def __init__(self, encoder, last=True, n_classes=3):
         super().__init__()
         self.encoder = encoder
@@ -109,9 +113,7 @@ class DynamicUnet(nn.Module):
 
         # initialize sfs_idxs, sfs_szs, middle_in_c and middle_conv only once
         if not hasattr(self, 'middle_conv'):
-            self.sfs_szs = [
-                sfs_feats.features.size() for sfs_feats in self.sfs
-            ]
+            self.sfs_szs = [sfs_feats.features.size() for sfs_feats in self.sfs]
             self.sfs_idxs = get_sfs_idxs(self.sfs, self.last)
             middle_in_c = self.sfs_szs[-1][1]
             middle_conv = nn.Sequential(
@@ -136,8 +138,8 @@ class DynamicUnet(nn.Module):
 
             if imsize != self.sfs_szs[0][-2:]:
                 extra_in_c = self.upmodel[-1].conv2.out_channels
-                self.extra_block = nn.ConvTranspose2d(extra_in_c, extra_in_c,
-                                                      2, 2).type(dtype)
+                self.extra_block = nn.ConvTranspose2d(extra_in_c, extra_in_c, 2,
+                                                      2).type(dtype)
 
             final_in_c = self.upmodel[-1].conv2.out_channels
             self.final_conv = nn.Conv2d(final_in_c, self.n_classes,

@@ -73,6 +73,7 @@ __global__ void bwd_recurrent_forget_mult(const float *h, const float *f, const 
 
 
 class CPUForgetMult(torch.nn.Module):
+
     def __init__(self):
         super(CPUForgetMult, self).__init__()
 
@@ -82,7 +83,8 @@ class CPUForgetMult(torch.nn.Module):
         forgets = f.split(1, dim=0)
         prev_h = hidden_init
         for i, h in enumerate((f * x).split(1, dim=0)):
-            if prev_h is not None: h = h + (1 - forgets[i]) * prev_h
+            if prev_h is not None:
+                h = h + (1 - forgets[i]) * prev_h
             # h is (1, batch, hidden) when it needs to be (batch_hidden)
             # Calling squeeze will result in badness if batch size is 1
             h = h.view(h.size()[1:])
@@ -127,19 +129,22 @@ class GPUForgetMult(torch.autograd.Function):
         result = f.new(seq_size + 1, batch_size, hidden_size)
         # We only zero the result array (result[0]) if we don't set a hidden initial state
         # All other values (result[1:]) are overwritten by default
-        if hidden_init is not None: result[0, :, :] = hidden_init
-        else: result = result.zero_()
+        if hidden_init is not None:
+            result[0, :, :] = hidden_init
+        else:
+            result = result.zero_()
         ###
         grid_hidden_size = min(hidden_size, 512)
         grid = (math.ceil(hidden_size / grid_hidden_size), batch_size)
-        self.forget_mult(grid=grid,
-                         block=(grid_hidden_size, 1),
-                         args=[
-                             result.data_ptr(),
-                             f.data_ptr(),
-                             x.data_ptr(), seq_size, batch_size, hidden_size
-                         ],
-                         stream=self.stream)
+        self.forget_mult(
+            grid=grid,
+            block=(grid_hidden_size, 1),
+            args=[
+                result.data_ptr(),
+                f.data_ptr(),
+                x.data_ptr(), seq_size, batch_size, hidden_size
+            ],
+            stream=self.stream)
         self.save_for_backward(f, x, hidden_init)
         self.result = result
         return result[1:, :, :]
@@ -157,19 +162,19 @@ class GPUForgetMult(torch.autograd.Function):
         ###
         grid_hidden_size = min(hidden_size, 512)
         grid = (math.ceil(hidden_size / grid_hidden_size), batch_size)
-        self.bwd_forget_mult(grid=grid,
-                             block=(grid_hidden_size, 1),
-                             args=[
-                                 h.data_ptr(),
-                                 f.data_ptr(),
-                                 x.data_ptr(),
-                                 grad_h.data_ptr(),
-                                 grad_f.data_ptr(),
-                                 grad_x.data_ptr(),
-                                 grad_h_init.data_ptr(), seq_size, batch_size,
-                                 hidden_size
-                             ],
-                             stream=self.stream)
+        self.bwd_forget_mult(
+            grid=grid,
+            block=(grid_hidden_size, 1),
+            args=[
+                h.data_ptr(),
+                f.data_ptr(),
+                x.data_ptr(),
+                grad_h.data_ptr(),
+                grad_f.data_ptr(),
+                grad_x.data_ptr(),
+                grad_h_init.data_ptr(), seq_size, batch_size, hidden_size
+            ],
+            stream=self.stream)
         ###
         if hidden_init is not None:
             return grad_f, grad_x, grad_h_init
@@ -188,6 +193,7 @@ class ForgetMult(torch.nn.Module):
         - hidden_init (batch, input_size): tensor containing the initial hidden state for the recurrence (h_{t-1}).
         - use_cuda: If True, use the fast element-wise CUDA kernel for recurrence. If False, uses naive for loop. Default: True.
     """
+
     def __init__(self):
         super(ForgetMult, self).__init__()
 
@@ -213,8 +219,7 @@ if __name__ == '__main__':
     # Larger input (batch * seq * hidden) results in excessive memory for gradient check
     seq, batch, hidden = 3, 7, 19
     a = Variable(torch.rand(seq, batch, hidden).cuda(), requires_grad=True)
-    forget = Variable(torch.rand(seq, batch, hidden).cuda(),
-                      requires_grad=True)
+    forget = Variable(torch.rand(seq, batch, hidden).cuda(), requires_grad=True)
     last_h = Variable(torch.rand(batch, hidden).cuda(), requires_grad=True)
 
     #seq, batch, hidden = 4, 1, 1

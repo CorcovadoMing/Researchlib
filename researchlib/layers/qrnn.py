@@ -4,6 +4,7 @@ import torch
 
 
 class _QRNN(nn.Module):
+
     def __init__(self,
                  in_dim,
                  out_dim,

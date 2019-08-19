@@ -15,12 +15,13 @@ model_urls = {
 
 def conv3x3(in_planes, out_planes, stride=1):
     "3x3 convolution with padding"
-    return nn.Conv2d(in_planes,
-                     out_planes,
-                     kernel_size=3,
-                     stride=stride,
-                     padding=1,
-                     bias=False)
+    return nn.Conv2d(
+        in_planes,
+        out_planes,
+        kernel_size=3,
+        stride=stride,
+        padding=1,
+        bias=False)
 
 
 def bn1(planes):
@@ -52,7 +53,8 @@ class BasicBlock(nn.Module):
 
     def forward(self, x):
         residual = x
-        if self.downsample is not None: residual = self.downsample(x)
+        if self.downsample is not None:
+            residual = self.downsample(x)
 
         out = self.conv1(x)
         out = self.relu(out)
@@ -74,12 +76,8 @@ class BottleneckFinal(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         self.bn1 = bn(planes)
-        self.conv2 = nn.Conv2d(planes,
-                               planes,
-                               kernel_size=3,
-                               stride=stride,
-                               padding=1,
-                               bias=False)
+        self.conv2 = nn.Conv2d(
+            planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
         self.bn2 = bn(planes)
         self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
         self.bn3 = bn(planes * 4)
@@ -89,7 +87,8 @@ class BottleneckFinal(nn.Module):
 
     def forward(self, x):
         residual = x
-        if self.downsample is not None: residual = self.downsample(x)
+        if self.downsample is not None:
+            residual = self.downsample(x)
 
         out = self.conv1(x)
         out = self.bn1(out)
@@ -113,12 +112,8 @@ class BottleneckZero(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         self.bn1 = bn(planes)
-        self.conv2 = nn.Conv2d(planes,
-                               planes,
-                               kernel_size=3,
-                               stride=stride,
-                               padding=1,
-                               bias=False)
+        self.conv2 = nn.Conv2d(
+            planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
         self.bn2 = bn(planes)
         self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
         self.bn3 = bn(planes * 4, init_zero=True)
@@ -128,7 +123,8 @@ class BottleneckZero(nn.Module):
 
     def forward(self, x):
         residual = x
-        if self.downsample is not None: residual = self.downsample(x)
+        if self.downsample is not None:
+            residual = self.downsample(x)
 
         out = self.conv1(x)
         out = self.bn1(out)
@@ -154,12 +150,8 @@ class Bottleneck(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
         self.bn1 = bn(planes)
-        self.conv2 = nn.Conv2d(planes,
-                               planes,
-                               kernel_size=3,
-                               stride=stride,
-                               padding=1,
-                               bias=False)
+        self.conv2 = nn.Conv2d(
+            planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
         self.bn2 = bn(planes)
         self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
         self.bn3 = bn(planes * 4)
@@ -169,7 +161,8 @@ class Bottleneck(nn.Module):
 
     def forward(self, x):
         residual = x
-        if self.downsample is not None: residual = self.downsample(x)
+        if self.downsample is not None:
+            residual = self.downsample(x)
 
         out = self.conv1(x)
         out = self.bn1(out)
@@ -189,6 +182,7 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
+
     def __init__(self, block, layers, num_classes=1000, k=1, vgg_head=False):
         super().__init__()
         self.inplanes = 64
@@ -237,11 +231,12 @@ class ResNet(nn.Module):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                nn.Conv2d(self.inplanes,
-                          planes * block.expansion,
-                          kernel_size=1,
-                          stride=stride,
-                          bias=False),
+                nn.Conv2d(
+                    self.inplanes,
+                    planes * block.expansion,
+                    kernel_size=1,
+                    stride=stride,
+                    bias=False),
                 bn(planes * block.expansion),
             )
 
@@ -259,8 +254,8 @@ class ResNet(nn.Module):
 def load(model, pretrained, name):
     if pretrained:
         model.load_state_dict(
-            updated_dict(model_zoo.load_url(model_urls[name]),
-                         model.state_dict()))
+            updated_dict(
+                model_zoo.load_url(model_urls[name]), model.state_dict()))
     return model
 
 
@@ -273,28 +268,28 @@ def updated_dict(pre_dict, current_dict):
 
 
 def fa_resnet18(pretrained=False, **kwargs):
-    return load(ResNet(BasicBlock, [2, 2, 2, 2], **kwargs), pretrained,
-                'resnet18')
+    return load(
+        ResNet(BasicBlock, [2, 2, 2, 2], **kwargs), pretrained, 'resnet18')
 
 
 def fa_resnet34(pretrained=False, **kwargs):
-    return load(ResNet(BasicBlock, [3, 4, 6, 3], **kwargs), pretrained,
-                'resnet34')
+    return load(
+        ResNet(BasicBlock, [3, 4, 6, 3], **kwargs), pretrained, 'resnet34')
 
 
 def fa_resnet50(pretrained=False, **kwargs):
-    return load(ResNet(Bottleneck, [3, 4, 6, 3], **kwargs), pretrained,
-                'resnet50')
+    return load(
+        ResNet(Bottleneck, [3, 4, 6, 3], **kwargs), pretrained, 'resnet50')
 
 
 def fa_resnet101(pretrained=False, **kwargs):
-    return load(ResNet(Bottleneck, [3, 4, 23, 3], **kwargs), pretrained,
-                'resnet101')
+    return load(
+        ResNet(Bottleneck, [3, 4, 23, 3], **kwargs), pretrained, 'resnet101')
 
 
 def fa_resnet152(pretrained=False, **kwargs):
-    return load(ResNet(Bottleneck, [3, 8, 36, 3], **kwargs), pretrained,
-                'resnet152')
+    return load(
+        ResNet(Bottleneck, [3, 8, 36, 3], **kwargs), pretrained, 'resnet152')
 
 
 def bnf_resnet50():

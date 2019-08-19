@@ -6,24 +6,27 @@ from ..layers import *
 
 
 class BasicBlock(nn.Module):
+
     def __init__(self, in_planes, out_planes, stride, dropRate=0.0):
         super().__init__()
         self.bn1 = nn.BatchNorm2d(in_planes)
         self.relu1 = nn.ReLU(inplace=True)
-        self.conv1 = nn.Conv2d(in_planes,
-                               out_planes,
-                               kernel_size=3,
-                               stride=stride,
-                               padding=1,
-                               bias=False)
+        self.conv1 = nn.Conv2d(
+            in_planes,
+            out_planes,
+            kernel_size=3,
+            stride=stride,
+            padding=1,
+            bias=False)
         self.bn2 = nn.BatchNorm2d(out_planes)
         self.relu2 = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv2d(out_planes,
-                               out_planes,
-                               kernel_size=3,
-                               stride=1,
-                               padding=1,
-                               bias=False)
+        self.conv2 = nn.Conv2d(
+            out_planes,
+            out_planes,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            bias=False)
         self.droprate = dropRate
         self.drop = DropBlock2D(dropRate, 5)
         self.equalInOut = (in_planes == out_planes)
@@ -49,6 +52,7 @@ class BasicBlock(nn.Module):
 
 
 class NetworkBlock(nn.Module):
+
     def __init__(self,
                  nb_layers,
                  in_planes,
@@ -74,6 +78,7 @@ class NetworkBlock(nn.Module):
 
 
 class WideResNet(nn.Module):
+
     def __init__(self, depth=22, num_classes=10, widen_factor=1, dropRate=0.3):
         super().__init__()
         nChannels = [
@@ -83,12 +88,8 @@ class WideResNet(nn.Module):
         n = (depth - 4) / 6
         block = BasicBlock
         # 1st conv before any network block
-        self.conv1 = nn.Conv2d(3,
-                               nChannels[0],
-                               kernel_size=3,
-                               stride=1,
-                               padding=1,
-                               bias=False)
+        self.conv1 = nn.Conv2d(
+            3, nChannels[0], kernel_size=3, stride=1, padding=1, bias=False)
         # 1st block
         self.block1 = NetworkBlock(n, nChannels[0], nChannels[1], block, 1,
                                    dropRate)

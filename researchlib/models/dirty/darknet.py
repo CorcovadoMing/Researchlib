@@ -9,12 +9,13 @@ class ConvBN(nn.Module):
 
     def __init__(self, ch_in, ch_out, kernel_size=3, stride=1, padding=0):
         super().__init__()
-        self.conv = nn.Conv2d(ch_in,
-                              ch_out,
-                              kernel_size=kernel_size,
-                              stride=stride,
-                              padding=padding,
-                              bias=False)
+        self.conv = nn.Conv2d(
+            ch_in,
+            ch_out,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            bias=False)
         self.bn = nn.BatchNorm2d(ch_out, momentum=0.01)
         self.relu = nn.LeakyReLU(0.1, inplace=True)
 
@@ -23,6 +24,7 @@ class ConvBN(nn.Module):
 
 
 class DarknetBlock(nn.Module):
+
     def __init__(self, ch_in):
         super().__init__()
         ch_hid = ch_in // 2
@@ -47,9 +49,7 @@ class Darknet(nn.Module):
         nf = start_nf
         layers = [ConvBN(3, nf, kernel_size=3, stride=1, padding=1)]
         for i, nb in enumerate(num_blocks):
-            layers += self.make_group_layer(nf,
-                                            nb,
-                                            stride=(1 if i == 1 else 2))
+            layers += self.make_group_layer(nf, nb, stride=(1 if i == 1 else 2))
             nf *= 2
         layers += [
             nn.AdaptiveAvgPool2d(1),

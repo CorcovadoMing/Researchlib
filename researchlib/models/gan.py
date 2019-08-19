@@ -5,6 +5,7 @@ import pickle
 
 
 class GANModel(nn.Module):
+
     def __init__(self,
                  generator,
                  discriminator,
@@ -40,7 +41,8 @@ class GANModel(nn.Module):
         return _vector, _condition
 
     def _parse_condition_data(self, condition_data, onehot, condition_vector):
-        if type(condition_data) == range: condition_data = list(condition_data)
+        if type(condition_data) == range:
+            condition_data = list(condition_data)
         if type(condition_data) == list or type(condition_data) == tuple:
             condition_data = torch.LongTensor(condition_data)
         device = condition_data.device
@@ -110,11 +112,12 @@ class GANModel(nn.Module):
         self.real_data = x
         self.real_data.requires_grad = True
         if self.g_condition:
-            self.fake_data = self.sample(x.size(0),
-                                         condition_data=self.condition_data,
-                                         inference=False,
-                                         requires_grad=True,
-                                         gpu=True)
+            self.fake_data = self.sample(
+                x.size(0),
+                condition_data=self.condition_data,
+                inference=False,
+                requires_grad=True,
+                gpu=True)
             self.fake_data_metrics = self.sample(
                 x.size(0),
                 condition_data=self.condition_data,
@@ -122,14 +125,10 @@ class GANModel(nn.Module):
                 gpu=True,
                 ema=self.ema)
         else:
-            self.fake_data = self.sample(x.size(0),
-                                         inference=False,
-                                         requires_grad=True,
-                                         gpu=True)
-            self.fake_data_metrics = self.sample(x.size(0),
-                                                 inference=True,
-                                                 gpu=True,
-                                                 ema=self.ema)
+            self.fake_data = self.sample(
+                x.size(0), inference=False, requires_grad=True, gpu=True)
+            self.fake_data_metrics = self.sample(
+                x.size(0), inference=True, gpu=True, ema=self.ema)
 
         if self.d_condition:
             self.fake = self.discriminator(

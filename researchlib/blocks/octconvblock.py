@@ -3,6 +3,7 @@ from ..layers import layer
 
 
 class _OctConvBlock2d(nn.Module):
+
     def __init__(self,
                  ch_in,
                  ch_out,
@@ -26,8 +27,8 @@ class _OctConvBlock2d(nn.Module):
         self.ch_out_hf = int((1 - self.alpha_out) * ch_out)
         self.ch_out_lf = ch_out - self.ch_out_hf
 
-        self.conv = layer.OctConv2d(ch_in, ch_out, kernel_size, stride,
-                                    padding, alphas)
+        self.conv = layer.OctConv2d(ch_in, ch_out, kernel_size, stride, padding,
+                                    alphas)
         self.norm_hf = norm(self.ch_out_hf)
         if self.ch_out_lf:
             self.norm_lf = norm(self.ch_out_lf)

@@ -5,6 +5,7 @@ from .interpreter import _Interpreter
 
 
 class _Vistool:
+
     def __init__(self):
         self.image = _Image()
         self.model = _Model()

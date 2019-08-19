@@ -65,14 +65,15 @@ else:
     _initialize_redis(r, 'progress', 0)
     _initialize_redis(r, 'desc', '')
     _initialize_redis(r, 'stage', 'stop')
-    _initialize_redis(r,
-                      'history', {
-                          'train_loss': [],
-                          'train_acc': [],
-                          'val_loss': [],
-                          'val_acc': []
-                      },
-                      need_encode=True)
+    _initialize_redis(
+        r,
+        'history', {
+            'train_loss': [],
+            'train_acc': [],
+            'val_loss': [],
+            'val_acc': []
+        },
+        need_encode=True)
     _initialize_redis(r, 'experiment', [], need_encode=True)
     del r
     dash = _Dashboard(verbose=False)

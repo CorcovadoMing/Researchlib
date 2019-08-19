@@ -23,6 +23,7 @@ class _DropBlock2d(nn.Module):
        https://arxiv.org/abs/1810.12890
 
     """
+
     def __init__(self, drop_prob, block_size, steps=1e-5):
         super().__init__()
         self.cur_prob = 0
@@ -67,11 +68,11 @@ class _DropBlock2d(nn.Module):
             return out
 
     def _compute_block_mask(self, mask):
-        block_mask = F.max_pool2d(input=mask[:, None, :, :],
-                                  kernel_size=(self.block_size,
-                                               self.block_size),
-                                  stride=(1, 1),
-                                  padding=self.block_size // 2)
+        block_mask = F.max_pool2d(
+            input=mask[:, None, :, :],
+            kernel_size=(self.block_size, self.block_size),
+            stride=(1, 1),
+            padding=self.block_size // 2)
 
         if self.block_size % 2 == 0:
             block_mask = block_mask[:, :, :-1, :-1]
@@ -104,6 +105,7 @@ class _DropBlock3d(_DropBlock2d):
        https://arxiv.org/abs/1810.12890
 
     """
+
     def __init__(self, drop_prob, block_size, steps=1e-5):
         super().__init__(drop_prob, block_size, steps)
 
@@ -140,12 +142,11 @@ class _DropBlock3d(_DropBlock2d):
             return out
 
     def _compute_block_mask(self, mask):
-        block_mask = F.max_pool3d(input=mask[:, None, :, :, :],
-                                  kernel_size=(self.block_size,
-                                               self.block_size,
-                                               self.block_size),
-                                  stride=(1, 1, 1),
-                                  padding=self.block_size // 2)
+        block_mask = F.max_pool3d(
+            input=mask[:, None, :, :, :],
+            kernel_size=(self.block_size, self.block_size, self.block_size),
+            stride=(1, 1, 1),
+            padding=self.block_size // 2)
 
         if self.block_size % 2 == 0:
             block_mask = block_mask[:, :, :-1, :-1, :-1]

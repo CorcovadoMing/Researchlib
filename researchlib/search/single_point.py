@@ -48,23 +48,19 @@ def sp_meta_heuristic_(x, objective, epoch, mode, accept, opt, opt_tune):
 
 
 def _IterativeImprovement(x, objective, epoch, mode=min):
-    return sp_meta_heuristic_(x,
-                              objective,
-                              epoch,
-                              mode,
-                              accept=best,
-                              opt={},
-                              opt_tune=identity)
+    return sp_meta_heuristic_(
+        x, objective, epoch, mode, accept=best, opt={}, opt_tune=identity)
 
 
 def _SimulatedAnnealing(x, objective, epoch, mode=min, t_max=100, t_rate=0.95):
-    return sp_meta_heuristic_(x,
-                              objective,
-                              epoch,
-                              mode,
-                              accept=boltzmann,
-                              opt={
-                                  't_cur': t_max,
-                                  'anneal_rate': t_rate
-                              },
-                              opt_tune=annealing)
+    return sp_meta_heuristic_(
+        x,
+        objective,
+        epoch,
+        mode,
+        accept=boltzmann,
+        opt={
+            't_cur': t_max,
+            'anneal_rate': t_rate
+        },
+        opt_tune=annealing)

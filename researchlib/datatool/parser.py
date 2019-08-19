@@ -13,6 +13,7 @@ import zarr
 
 
 class _Parser:
+
     def __init__(self):
         pass
 
@@ -56,12 +57,10 @@ class _Parser:
 
         # Deal with label mapping
         if label_mapping is not None:
-            mapping_df = pd.read_csv(os.path.join(path, label_mapping),
-                                     sep=sep,
-                                     header=None)
+            mapping_df = pd.read_csv(
+                os.path.join(path, label_mapping), sep=sep, header=None)
             mapping_dict = {
-                i: j
-                for i, j in zip(mapping_df[0].values, mapping_df[1].values)
+                i: j for i, j in zip(mapping_df[0].values, mapping_df[1].values)
             }
 
         data_path = []
@@ -85,6 +84,7 @@ class _Parser:
               batch_size: int = 1000,
               num_workers: int = os.cpu_count(),
               force: bool = False):
+
         def _task(*args):
             # TODO: shape needs to be passed from outside
             desc = args[0]
@@ -109,22 +109,16 @@ class _Parser:
 
             # Initialization
             root = zarr.open(os.path.join(name, 'db.zarr'), mode='w')
-            data_zarr = root.zeros('data',
-                                   shape=(1, *shape),
-                                   chunks=(1, *shape),
-                                   dtype='f')
-            label_zarr = root.zeros('label',
-                                    shape=(1, ),
-                                    chunks=(1, ),
-                                    dtype='i')
+            data_zarr = root.zeros(
+                'data', shape=(1, *shape), chunks=(1, *shape), dtype='f')
+            label_zarr = root.zeros('label', shape=(1,), chunks=(1,), dtype='i')
 
             # resize the storage in the first place
             data_zarr.resize(total_length, *shape)
-            label_zarr.resize(total_length, )
+            label_zarr.resize(total_length,)
 
-            executor = ParallelExecutor(_task,
-                                        max_job=batch_size,
-                                        num_workers=num_workers)
+            executor = ParallelExecutor(
+                _task, max_job=batch_size, num_workers=num_workers)
             executor.start(data_zarr, label_zarr)
 
             try:

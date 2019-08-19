@@ -9,6 +9,7 @@ import imageio
 
 
 class ReinforcementRunner:
+
     def __init__(self, env, net, estimator):
         self.env = env
         self.net = net.cuda()
@@ -24,7 +25,8 @@ class ReinforcementRunner:
     def _forward(self, prev_state=None, collect=True):
         if prev_state is None:
             prev_state = self.env.reset()
-        if collect: self.state_pool.append(prev_state)
+        if collect:
+            self.state_pool.append(prev_state)
         probs = self.net(torch.from_numpy(prev_state).float().cuda())
         distribution = Categorical(probs)
         action = distribution.sample()
@@ -45,8 +47,8 @@ class ReinforcementRunner:
         self.reward_pool = (self.reward_pool - self.reward_pool.mean()) / (
             self.reward_pool.std() + 1e-7)
 
-        baseline = self.estimator(
-            torch.Tensor(self.state_pool).float().cuda()).cpu().squeeze()
+        baseline = self.estimator(torch.Tensor(
+            self.state_pool).float().cuda()).cpu().squeeze()
         rewards = self.reward_pool - baseline
         rewards = rewards.detach()
 
@@ -89,8 +91,7 @@ class ReinforcementRunner:
         self.net.eval()
         state = None
         for iteration in count(1):
-            state, reward, _, action, done = self._forward(state,
-                                                           collect=False)
+            state, reward, _, action, done = self._forward(state, collect=False)
             self.env.render(
                 str(iteration) + ' ' + str(action) + ' ' + str(reward))
             if done:
@@ -101,8 +102,7 @@ class ReinforcementRunner:
         state = None
         buffer = []
         for iteration in count(1):
-            state, reward, _, action, done = self._forward(state,
-                                                           collect=False)
+            state, reward, _, action, done = self._forward(state, collect=False)
             buffer.append(self.env.render(None, return_cache=True))
             if done:
                 break

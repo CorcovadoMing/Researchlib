@@ -63,15 +63,16 @@ def fit(self,
         assert type(multisteps) == list
         self.multisteps = multisteps
 
-    self._fit(epochs,
-              lr,
-              mixup_alpha,
-              metrics,
-              callbacks,
-              _id,
-              self_iterative,
-              iterations=iterations,
-              policy=policy)
+    self._fit(
+        epochs,
+        lr,
+        mixup_alpha,
+        metrics,
+        callbacks,
+        _id,
+        self_iterative,
+        iterations=iterations,
+        policy=policy)
 
 
 @register_method
@@ -87,13 +88,14 @@ def _process_type(self, data_pack, inputs):
     if type(target) != list and type(target) != tuple:
         target = [target]
     if type(data[0]) != torch.Tensor:
-        data, target = [torch.from_numpy(i)
-                        for i in data], [torch.from_numpy(i) for i in target]
+        data, target = [torch.from_numpy(i) for i in data
+                       ], [torch.from_numpy(i) for i in target]
     return data, target
 
 
 @register_method
 def _process_data(self, data, target, mixup_alpha, inference):
+
     def mixup_loss_fn(loss_fn, x, y, y_res, lam):
         return lam * loss_fn(x, y) + (1 - lam) * loss_fn(x, y_res)
 
@@ -114,7 +116,8 @@ def _process_data(self, data, target, mixup_alpha, inference):
         index = torch.randperm(data[0].size(0))
         data[0] = lam * data[0] + (1 - lam) * data[0][index]
         target_res = [i[index] for i in target]
-        if self.is_cuda: target_res = [i.cuda() for i in target_res]
+        if self.is_cuda:
+            target_res = [i.cuda() for i in target_res]
         self.lam = lam
         self.mixup_loss_fn = mixup_loss_fn
     else:
@@ -143,8 +146,8 @@ def _list_avg(l):
 
 
 @register_method
-def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id,
-         self_iterative, iterations, policy):
+def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
+         iterations, policy):
 
     base_lr = lr
     set_lr(self.optimizer, base_lr)
@@ -177,15 +180,16 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id,
         train_prefetcher = BackgroundGenerator(
             self._iteration_pipeline(self.train_loader))
         if self.test_loader:
-            test_loader = self._iteration_pipeline(self.test_loader,
-                                                   inference=True)
+            test_loader = self._iteration_pipeline(
+                self.test_loader, inference=True)
 
         for epoch in range(1, epochs + 1):
             for callback_func in callbacks:
-                callback_func.on_epoch_begin(model=self.model,
-                                             train_loader=self.train_loader,
-                                             optimizer=self.optimizer,
-                                             epoch=self.epoch)
+                callback_func.on_epoch_begin(
+                    model=self.model,
+                    train_loader=self.train_loader,
+                    optimizer=self.optimizer,
+                    epoch=self.epoch)
 
             loss_history = []
             g_loss_history = []
@@ -206,26 +210,27 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id,
                     x, y = [i.cuda() for i in x], [i.cuda() for i in y]
 
                 self.model.train()
-                self.train_fn(train=True,
-                              model=self.model,
-                              data=x,
-                              target=y,
-                              target_res=None,
-                              optimizer=self.optimizer,
-                              loss_fn=self.loss_fn,
-                              mixup_loss_fn=None,
-                              reg_fn=self.reg_fn,
-                              reg_weights=self.reg_weights,
-                              epoch=self.epoch,
-                              mixup_alpha=mixup_alpha,
-                              callbacks=callbacks,
-                              metrics=metrics,
-                              loss_history=loss_history,
-                              g_loss_history=g_loss_history,
-                              d_loss_history=d_loss_history,
-                              norm=norm,
-                              matrix_records=matrix_records,
-                              bar=None)
+                self.train_fn(
+                    train=True,
+                    model=self.model,
+                    data=x,
+                    target=y,
+                    target_res=None,
+                    optimizer=self.optimizer,
+                    loss_fn=self.loss_fn,
+                    mixup_loss_fn=None,
+                    reg_fn=self.reg_fn,
+                    reg_weights=self.reg_weights,
+                    epoch=self.epoch,
+                    mixup_alpha=mixup_alpha,
+                    callbacks=callbacks,
+                    metrics=metrics,
+                    loss_history=loss_history,
+                    g_loss_history=g_loss_history,
+                    d_loss_history=d_loss_history,
+                    norm=norm,
+                    matrix_records=matrix_records,
+                    bar=None)
                 self.model.eval()
 
                 liveplot.update_loss_desc(self.epoch, g_loss_history,
@@ -249,8 +254,8 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id,
                                 _list_avg(d_loss_history))
             else:
                 liveplot.record(epoch, 'lr',
-                                [i['lr']
-                                 for i in self.optimizer.param_groups][-1])
+                                [i['lr'] for i in self.optimizer.param_groups
+                                ][-1])
                 liveplot.record(epoch, 'train_loss', _list_avg(loss_history))
 
             # Output metrics
@@ -282,17 +287,16 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id,
                                 self.history_.records['train_fid'][-1])
 
             for callback_func in callbacks:
-                callback_func.on_epoch_end(model=self.model,
-                                           train_loader=self.train_loader,
-                                           optimizer=self.optimizer,
-                                           epoch=epoch)
+                callback_func.on_epoch_end(
+                    model=self.model,
+                    train_loader=self.train_loader,
+                    optimizer=self.optimizer,
+                    epoch=epoch)
 
             if liveplot._gan:
                 ema = self.ema > 0 and self.epoch > self.ema_start
-                _gan_sample = self.model.sample(4,
-                                                inference=True,
-                                                gpu=True,
-                                                ema=ema)
+                _gan_sample = self.model.sample(
+                    4, inference=True, gpu=True, ema=ema)
                 _gan_sample = _gan_sample.detach().cpu().numpy().transpose(
                     (0, 2, 3, 1))
                 _grid = plot_montage(_gan_sample, 2, 2, False)
@@ -343,8 +347,8 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id,
                 self.checkpoint_path,
                 'checkpoint_' + _id + '_epoch_' + str(self.epoch))
             self.save(checkpoint_model_name)
-            if critic is not None and self.monitor_mode(
-                    critic, self.monitor) == critic:
+            if critic is not None and self.monitor_mode(critic,
+                                                        self.monitor) == critic:
                 self.monitor = critic
                 best_checkpoint_model_name = os.path.join(
                     self.checkpoint_path, 'best_' + _id)
@@ -370,8 +374,7 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id,
             # Self-interative
             if self_iterative:
                 with torch.no_grad():
-                    for i in tnrange(len(
-                            self.train_loader.dataset.tensors[0])):
+                    for i in tnrange(len(self.train_loader.dataset.tensors[0])):
                         self.train_loader.dataset.tensors[1][i] = \
                         self.model(self.train_loader.dataset.tensors[0][i].unsqueeze(0).cuda()).detach().cpu()[0]
                         torch.cuda.empty_cache()

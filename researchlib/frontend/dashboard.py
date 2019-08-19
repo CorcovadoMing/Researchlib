@@ -25,8 +25,8 @@ _app.layout = html.Div(
                 dbc.Row(
                     [
                         dbc.Col(
-                            dbc.NavbarBrand("Researchlib Dashboard",
-                                            className="ml-2")),
+                            dbc.NavbarBrand(
+                                "Researchlib Dashboard", className="ml-2")),
                     ],
                     align="left",
                     no_gutters=True,
@@ -39,31 +39,31 @@ _app.layout = html.Div(
         # Resource monitor
         dbc.Card(
             dbc.CardBody([
-                dcc.Graph(id='live-update-pie',
-                          config={'displayModeBar': False}),
+                dcc.Graph(
+                    id='live-update-pie', config={'displayModeBar': False}),
             ])),
 
         # Experiments choose (TODO)
         html.Div([
-            dcc.Tabs(id="tabs",
-                     value='tab-0',
-                     children=[
-                         dcc.Tab(label='Loading', value='tab-0'),
-                     ]),
+            dcc.Tabs(
+                id="tabs",
+                value='tab-0',
+                children=[
+                    dcc.Tab(label='Loading', value='tab-0'),
+                ]),
             dbc.Card(
                 dbc.CardBody([
                     html.Div(id='live-update-text'),
-                    dbc.Progress(id="progress",
-                                 value=0,
-                                 striped=True,
-                                 animated=True),
+                    dbc.Progress(
+                        id="progress", value=0, striped=True, animated=True),
                 ])),
             dbc.Card(
                 dbc.CardBody([
-                    dcc.Graph(id='live-update-loss',
-                              config={'displayModeBar': False}),
-                    dcc.Graph(id='live-update-acc',
-                              config={'displayModeBar': False}),
+                    dcc.Graph(
+                        id='live-update-loss',
+                        config={'displayModeBar': False}),
+                    dcc.Graph(
+                        id='live-update-acc', config={'displayModeBar': False}),
                 ])),
         ]),
         dcc.Interval(id='text-update', interval=1000, n_intervals=0),
@@ -139,8 +139,8 @@ def _get_gpu_monitor():
 
 
 # Multiple components can update everytime interval gets fired.
-@_app.callback(Output('live-update-pie', 'figure'),
-               [Input('pie-update', 'n_intervals')])
+@_app.callback(
+    Output('live-update-pie', 'figure'), [Input('pie-update', 'n_intervals')])
 def _update_pie_live(n):
     fig = plotly.subplots.make_subplots(
         rows=1,
@@ -169,25 +169,22 @@ def _update_pie_live(n):
 
     fig.update_layout(autosize=True, showlegend=False, height=150)
     fig = _add_pie(fig, [cpu_mem_used, cpu_mem_free], 'CPU Memory', 1, 1)
-    fig = _add_pie(fig, [cpu_util_used, cpu_util_free], 'CPU Utilization', 1,
-                   2)
+    fig = _add_pie(fig, [cpu_util_used, cpu_util_free], 'CPU Utilization', 1, 2)
     fig = _add_pie(fig, [gpu_mem_used, gpu_mem_free], 'GPU Memory', 1, 3)
-    fig = _add_pie(fig, [gpu_util_used, gpu_util_free], 'GPU Utilization', 1,
-                   4)
+    fig = _add_pie(fig, [gpu_util_used, gpu_util_free], 'GPU Utilization', 1, 4)
 
     return fig
 
 
 # Multiple components can update everytime interval gets fired.
-@_app.callback(Output('live-update-loss', 'figure'),
-               [Input('loss-update', 'n_intervals')])
+@_app.callback(
+    Output('live-update-loss', 'figure'), [Input('loss-update', 'n_intervals')])
 def _update_loss_live(n):
     r = redis.Redis()
     data = pickle.loads(r.get('history'))
 
-    fig = plotly.subplots.make_subplots(rows=1,
-                                        cols=1,
-                                        subplot_titles=('Loss', ))
+    fig = plotly.subplots.make_subplots(
+        rows=1, cols=1, subplot_titles=('Loss',))
 
     fig['layout']['margin'] = {'l': 20, 'r': 20, 'b': 20, 't': 20}
 
@@ -199,15 +196,14 @@ def _update_loss_live(n):
     return fig
 
 
-@_app.callback(Output('live-update-acc', 'figure'),
-               [Input('acc-update', 'n_intervals')])
+@_app.callback(
+    Output('live-update-acc', 'figure'), [Input('acc-update', 'n_intervals')])
 def _update_acc_live(n):
     r = redis.Redis()
     data = pickle.loads(r.get('history'))
 
-    fig = plotly.subplots.make_subplots(rows=1,
-                                        cols=1,
-                                        subplot_titles=('Accuracy', ))
+    fig = plotly.subplots.make_subplots(
+        rows=1, cols=1, subplot_titles=('Accuracy',))
 
     fig['layout']['margin'] = {'l': 20, 'r': 20, 'b': 20, 't': 20}
 
@@ -221,17 +217,18 @@ def _update_acc_live(n):
 
 
 class _Dashboard:
+
     def __init__(self, verbose=False):
         self.log = logging.getLogger('werkzeug')
         self.log.disabled = not verbose
 
     def start(self):
         os.environ['WERKZEUG_RUN_MAIN'] = 'true'
-        self.flask_process = Process(target=_app.run_server,
-                                     kwargs={
-                                         'debug': False,
-                                         'host': '0.0.0.0'
-                                     })
+        self.flask_process = Process(
+            target=_app.run_server, kwargs={
+                'debug': False,
+                'host': '0.0.0.0'
+            })
         self.flask_process.start()
 
     def stop(self):

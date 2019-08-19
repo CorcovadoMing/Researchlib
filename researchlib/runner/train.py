@@ -58,8 +58,7 @@ def train_fn(self, train=True, **kwargs):
         model = self.model.discriminator
         model_ffn = self.model.forward_d
         loss_ffn = [
-            i.forward_d if isinstance(i, nn.Module) else i
-            for i in self.loss_fn
+            i.forward_d if isinstance(i, nn.Module) else i for i in self.loss_fn
         ]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
                                         self.optimizer[0], self.scheduler,
@@ -83,8 +82,7 @@ def train_fn(self, train=True, **kwargs):
         model = self.model.generator
         model_ffn = functools.partial(self.model.forward_g)
         loss_ffn = [
-            i.forward_g if isinstance(i, nn.Module) else i
-            for i in self.loss_fn
+            i.forward_g if isinstance(i, nn.Module) else i for i in self.loss_fn
         ]
         _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
                                         self.optimizer[1], self.scheduler,
@@ -100,9 +98,10 @@ def train_fn(self, train=True, **kwargs):
         g_loss_avg = sum(kwargs['g_loss_history']) / len(
             kwargs['g_loss_history'])
         if kwargs['bar']:
-            kwargs['bar'].set_postfix(d_loss="{:.4f}".format(d_loss_avg),
-                                      g_loss="{:.4f}".format(g_loss_avg),
-                                      refresh=False)
+            kwargs['bar'].set_postfix(
+                d_loss="{:.4f}".format(d_loss_avg),
+                g_loss="{:.4f}".format(g_loss_avg),
+                refresh=False)
 
     else:
         if ema:
@@ -129,8 +128,8 @@ def train_fn(self, train=True, **kwargs):
         kwargs['cur_loss'] = _loss
         loss_avg = sum(kwargs['loss_history']) / len(kwargs['loss_history'])
         if kwargs['bar']:
-            kwargs['bar'].set_postfix(loss="{:.4f}".format(loss_avg),
-                                      refresh=False)
+            kwargs['bar'].set_postfix(
+                loss="{:.4f}".format(loss_avg), refresh=False)
 
     # Callback: on_iteration_end
     for callback_func in kwargs['callbacks']:
@@ -216,7 +215,8 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler,
     # Backward
     #     with amp.scale_loss(loss, optim) as scaled_loss:
     #         if train: scaled_loss.backward(retain_graph=retain_graph)
-    if train: loss.backward(retain_graph=retain_graph)
+    if train:
+        loss.backward(retain_graph=retain_graph)
 
     for callback_func in kwargs['callbacks']:
         kwargs = callback_func.on_update_begin(**kwargs)

@@ -4,6 +4,7 @@ import copy
 
 
 class Bidirectional(nn.Module):
+
     def __init__(self, f):
         super().__init__()
         self.forward_f = f

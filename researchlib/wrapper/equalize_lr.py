@@ -2,6 +2,7 @@ from torch import nn
 
 
 class _EqualizeLrHelper:
+
     def __init__(self, name):
         self.name = name
 

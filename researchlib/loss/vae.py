@@ -4,6 +4,7 @@ import torch.nn.functional as F
 
 
 class VAELoss(nn.Module):
+
     def __init__(self, arch='vanilla'):
         super().__init__()
         self.arch = arch

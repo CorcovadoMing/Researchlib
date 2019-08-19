@@ -13,6 +13,7 @@ class CHDataset(Dataset):
     max_in_seq_len :  maximum input sequence length
     max_out_seq_len : maximum output sequence length
     """
+
     def __init__(self, filename):
         super().__init__()
         self.max_in_seq_len = 0

@@ -2,6 +2,7 @@ import torch
 
 
 class ImbalancedSampler(torch.utils.data.sampler.Sampler):
+
     def __init__(self, dataset, indices=None, num_samples=None):
         # if indices is not provided,
         # all elements in the dataset will be considered

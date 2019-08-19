@@ -14,12 +14,13 @@ def _wgan_gp_d_loss(real, fake, *args):
         pred_hat = model.discriminator((x_hat, model.condition_data))
     else:
         pred_hat = model.discriminator(x_hat)
-    gradients = grad(outputs=pred_hat,
-                     inputs=x_hat,
-                     grad_outputs=torch.ones(pred_hat.size()).cuda(),
-                     create_graph=True,
-                     retain_graph=True,
-                     only_inputs=True)[0]
+    gradients = grad(
+        outputs=pred_hat,
+        inputs=x_hat,
+        grad_outputs=torch.ones(pred_hat.size()).cuda(),
+        create_graph=True,
+        retain_graph=True,
+        only_inputs=True)[0]
     gradient_penalty = 10 * (
         (gradients.view(gradients.size()[0], -1).norm(2, 1) - 1)**2)
     return fake.mean() - real.mean() + gradient_penalty.mean()
@@ -66,9 +67,8 @@ def _wgan_r1_g_loss(fake, *args):
 def _wgan_r1_d_loss(real, fake, *args):
     model = args[1]
     l1 = fake.mean() - real.mean()
-    penalty = grad(outputs=real.sum(),
-                   inputs=model.real_data,
-                   create_graph=True)[0]
+    penalty = grad(
+        outputs=real.sum(), inputs=model.real_data, create_graph=True)[0]
     penalty = (penalty.view(penalty.size(0), -1).norm(2, dim=1)**2).mean()
     penalty = 10 / 2 * penalty
     return l1 + penalty
@@ -81,17 +81,17 @@ def _r1_g_loss(fake, *args):
 def _r1_d_loss(real, fake, *args):
     model = args[1]
     l1 = F.softplus(-real).mean() + F.softplus(fake).mean()
-    penalty = grad(outputs=real.sum(),
-                   inputs=model.real_data,
-                   create_graph=True)[0]
+    penalty = grad(
+        outputs=real.sum(), inputs=model.real_data, create_graph=True)[0]
     penalty = (penalty.view(penalty.size(0), -1).norm(2, dim=1)**2).mean()
     penalty = 10 / 2 * penalty
     return l1 + penalty
 
 
 def _vanilla_g_loss(fake, *args):
-    return F.binary_cross_entropy(torch.sigmoid(fake),
-                                  torch.ones_like(fake).cuda())
+    return F.binary_cross_entropy(
+        torch.sigmoid(fake),
+        torch.ones_like(fake).cuda())
 
 
 def _lsgan_d_loss(real, fake, *args):
@@ -117,26 +117,23 @@ def _relative_vanilla_d_loss(real, fake, *args):
     rel = (real - fake)
     # Cache
     args[0].append(real)
-    return F.binary_cross_entropy_with_logits(
-        rel,
-        torch.ones(rel.size(0), 1).cuda())
+    return F.binary_cross_entropy_with_logits(rel,
+                                              torch.ones(rel.size(0), 1).cuda())
 
 
 def _relative_vanilla_g_loss(fake, *args):
     # Get cache from d_loss
     real = args[0].pop()
     rel = (fake - real)
-    return F.binary_cross_entropy_with_logits(
-        rel,
-        torch.ones(rel.size(0), 1).cuda())
+    return F.binary_cross_entropy_with_logits(rel,
+                                              torch.ones(rel.size(0), 1).cuda())
 
 
 def _relative_averaged_vanilla_d_loss(real, fake, *args):
     l1 = F.binary_cross_entropy_with_logits((real - fake.mean(0)),
                                             torch.ones(real.size(0), 1).cuda())
     l2 = F.binary_cross_entropy_with_logits((fake - real.mean(0)),
-                                            torch.zeros(real.size(0),
-                                                        1).cuda())
+                                            torch.zeros(real.size(0), 1).cuda())
     # Cache
     args[0].append(real)
     return (l1 + l2) / 2
@@ -146,8 +143,7 @@ def _relative_averaged_vanilla_g_loss(fake, *args):
     # Get cache from d_loss
     real = args[0].pop()
     l1 = F.binary_cross_entropy_with_logits((real - fake.mean(0)),
-                                            torch.zeros(real.size(0),
-                                                        1).cuda())
+                                            torch.zeros(real.size(0), 1).cuda())
     l2 = F.binary_cross_entropy_with_logits((fake - real.mean(0)),
                                             torch.ones(real.size(0), 1).cuda())
     return (l1 + l2) / 2
@@ -190,8 +186,7 @@ def _relative_centered_vanilla_d_loss(real, fake, *args):
     l1 = F.binary_cross_entropy_with_logits((real - full_mean),
                                             torch.ones(real.size(0), 1).cuda())
     l2 = F.binary_cross_entropy_with_logits((fake - full_mean),
-                                            torch.zeros(real.size(0),
-                                                        1).cuda())
+                                            torch.zeros(real.size(0), 1).cuda())
     # Cache
     args[0].append(real)
     return (l1 + l2) / 2
@@ -202,8 +197,7 @@ def _relative_centered_vanilla_g_loss(fake, *args):
     real = args[0].pop()
     full_mean = (fake.mean(0) + real.mean(0)) / 2
     l1 = F.binary_cross_entropy_with_logits((real - full_mean),
-                                            torch.zeros(real.size(0),
-                                                        1).cuda())
+                                            torch.zeros(real.size(0), 1).cuda())
     l2 = F.binary_cross_entropy_with_logits((fake - full_mean),
                                             torch.ones(real.size(0), 1).cuda())
     return (l1 + l2) / 2
@@ -250,9 +244,8 @@ def _relative_paired_vanilla_d_loss(real, fake, *args):
     subst = (grid_x - grid_y)
     # Cache
     args[0].append(real)
-    return 2 * F.binary_cross_entropy_with_logits(
-        subst,
-        torch.ones_like(subst).cuda())
+    return 2 * F.binary_cross_entropy_with_logits(subst,
+                                                  torch.ones_like(subst).cuda())
 
 
 def _relative_paired_vanilla_g_loss(fake, *args):
@@ -301,6 +294,7 @@ def _noop_extra_step(model, *args):
 
 
 class GANLoss(nn.Module):
+
     def __init__(self, arch='vanilla', aux_loss=None):
         super().__init__()
         self.extra_step = _noop_extra_step

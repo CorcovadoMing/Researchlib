@@ -32,6 +32,7 @@ class LARC(object):
         clip: Decides between clipping or scaling mode of LARC. If `clip=True` the learning rate is set to `min(optimizer_lr, local_lr)` for each parameter. If `clip=False` the learning rate is set to `local_lr*optimizer_lr`.
         eps: epsilon kludge to help with numerical stability while calculating adaptive_lr
     """
+
     def __init__(self, optimizer, trust_coefficient=0.02, clip=True, eps=1e-8):
         self.param_groups = optimizer.param_groups
         self.optim = optimizer

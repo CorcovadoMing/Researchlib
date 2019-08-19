@@ -3,6 +3,7 @@ from torch import nn
 
 
 class _Swish(nn.Module):
+
     def __init__(self):
         super().__init__()
 

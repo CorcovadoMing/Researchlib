@@ -2,6 +2,7 @@ from torch import nn
 
 
 class _Regularize(nn.Module):
+
     def __init__(self, f, group, get='weight'):
         super().__init__()
         self.f = f

@@ -12,10 +12,8 @@ from utils import AverageMeter, RecorderMeter, time_string, convert_secs2time
 parser = argparse.ArgumentParser(
     description='Trains ResNeXt on CIFAR or ImageNet',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--data_path',
-                    default='./data',
-                    type=str,
-                    help='Path to dataset')
+parser.add_argument(
+    '--data_path', default='./data', type=str, help='Path to dataset')
 parser.add_argument(
     '--dataset',
     default='cifar10',
@@ -23,89 +21,90 @@ parser.add_argument(
     choices=['cifar10', 'cifar100', 'imagenet', 'svhn', 'stl10'],
     help='Choose between Cifar10/100 and ImageNet.')
 # Optimization options
-parser.add_argument('--epochs',
-                    type=int,
-                    default=300,
-                    help='Number of epochs to train.')
+parser.add_argument(
+    '--epochs', type=int, default=300, help='Number of epochs to train.')
 parser.add_argument('--batch_size', type=int, default=64, help='Batch size.')
-parser.add_argument('--learning_rate',
-                    type=float,
-                    default=0.05,
-                    help='The Learning Rate.')
+parser.add_argument(
+    '--learning_rate', type=float, default=0.05, help='The Learning Rate.')
 parser.add_argument('--momentum', type=float, default=0.9, help='Momentum.')
-parser.add_argument('--decay',
-                    type=float,
-                    default=0.0005,
-                    help='Weight decay (L2 penalty).')
-parser.add_argument('--schedule',
-                    type=int,
-                    nargs='+',
-                    default=[150, 225],
-                    help='Decrease learning rate at these epochs.')
+parser.add_argument(
+    '--decay', type=float, default=0.0005, help='Weight decay (L2 penalty).')
+parser.add_argument(
+    '--schedule',
+    type=int,
+    nargs='+',
+    default=[150, 225],
+    help='Decrease learning rate at these epochs.')
 parser.add_argument(
     '--gammas',
     type=float,
     nargs='+',
     default=[0.1, 0.1],
-    help=
-    'LR is multiplied by gamma on schedule, number of gammas should be equal to schedule'
+    help='LR is multiplied by gamma on schedule, number of gammas should be equal to schedule'
 )
 # Checkpoints
-parser.add_argument('--print_freq',
-                    default=200,
-                    type=int,
-                    metavar='N',
-                    help='print frequency (default: 200)')
-parser.add_argument('--save_path',
-                    type=str,
-                    default='./',
-                    help='Folder to save checkpoints and log.')
-parser.add_argument('--resume',
-                    default='',
-                    type=str,
-                    metavar='PATH',
-                    help='path to latest checkpoint (default: none)')
-parser.add_argument('--start_epoch',
-                    default=0,
-                    type=int,
-                    metavar='N',
-                    help='manual epoch number (useful on restarts)')
-parser.add_argument('--evaluate',
-                    dest='evaluate',
-                    action='store_true',
-                    help='evaluate model on validation set')
+parser.add_argument(
+    '--print_freq',
+    default=200,
+    type=int,
+    metavar='N',
+    help='print frequency (default: 200)')
+parser.add_argument(
+    '--save_path',
+    type=str,
+    default='./',
+    help='Folder to save checkpoints and log.')
+parser.add_argument(
+    '--resume',
+    default='',
+    type=str,
+    metavar='PATH',
+    help='path to latest checkpoint (default: none)')
+parser.add_argument(
+    '--start_epoch',
+    default=0,
+    type=int,
+    metavar='N',
+    help='manual epoch number (useful on restarts)')
+parser.add_argument(
+    '--evaluate',
+    dest='evaluate',
+    action='store_true',
+    help='evaluate model on validation set')
 # Acceleration
-parser.add_argument('--workers',
-                    type=int,
-                    default=2,
-                    help='number of data loading workers (default: 2)')
+parser.add_argument(
+    '--workers',
+    type=int,
+    default=2,
+    help='number of data loading workers (default: 2)')
 # random seed
 parser.add_argument('--manualSeed', type=int, help='manual seed')
 args = parser.parse_args()
 args.use_cuda = torch.cuda.is_available()
 torch.cuda.set_device(0)
 
-if args.manualSeed is None: args.manualSeed = random.randint(1, 10000)
+if args.manualSeed is None:
+    args.manualSeed = random.randint(1, 10000)
 random.seed(args.manualSeed)
 torch.manual_seed(args.manualSeed)
-if args.use_cuda: torch.cuda.manual_seed_all(args.manualSeed)
+if args.use_cuda:
+    torch.cuda.manual_seed_all(args.manualSeed)
 cudnn.benchmark = True
 
 
 def main():
-    if not os.path.isdir(args.save_path): os.makedirs(args.save_path)
+    if not os.path.isdir(args.save_path):
+        os.makedirs(args.save_path)
     log = open(
-        os.path.join(args.save_path,
-                     'log_seed_{}.txt'.format(args.manualSeed)), 'w')
+        os.path.join(args.save_path, 'log_seed_{}.txt'.format(args.manualSeed)),
+        'w')
     print_log('save path : {}'.format(args.save_path), log)
     state = {k: v for k, v in args._get_kwargs()}
     print_log(state, log)
     print_log("Random Seed: {}".format(args.manualSeed), log)
-    print_log("python version : {}".format(sys.version.replace('\n', ' ')),
-              log)
+    print_log("python version : {}".format(sys.version.replace('\n', ' ')), log)
     print_log("torch  version : {}".format(torch.__version__), log)
-    print_log("cudnn  version : {}".format(torch.backends.cudnn.version()),
-              log)
+    print_log("cudnn  version : {}".format(torch.backends.cudnn.version()), log)
 
     # Init dataset
     if not os.path.isdir(args.data_path):
@@ -131,60 +130,70 @@ def main():
          transforms.Normalize(mean, std)])
 
     if args.dataset == 'cifar10':
-        train_data = dset.CIFAR10(args.data_path,
-                                  train=True,
-                                  transform=train_transform,
-                                  download=True)
-        test_data = dset.CIFAR10(args.data_path,
-                                 train=False,
-                                 transform=test_transform,
-                                 download=True)
+        train_data = dset.CIFAR10(
+            args.data_path,
+            train=True,
+            transform=train_transform,
+            download=True)
+        test_data = dset.CIFAR10(
+            args.data_path,
+            train=False,
+            transform=test_transform,
+            download=True)
         num_classes = 10
     elif args.dataset == 'cifar100':
-        train_data = dset.CIFAR100(args.data_path,
-                                   train=True,
-                                   transform=train_transform,
-                                   download=True)
-        test_data = dset.CIFAR100(args.data_path,
-                                  train=False,
-                                  transform=test_transform,
-                                  download=True)
+        train_data = dset.CIFAR100(
+            args.data_path,
+            train=True,
+            transform=train_transform,
+            download=True)
+        test_data = dset.CIFAR100(
+            args.data_path,
+            train=False,
+            transform=test_transform,
+            download=True)
         num_classes = 100
     elif args.dataset == 'svhn':
-        train_data = dset.SVHN(args.data_path,
-                               split='train',
-                               transform=train_transform,
-                               download=True)
-        test_data = dset.SVHN(args.data_path,
-                              split='test',
-                              transform=test_transform,
-                              download=True)
+        train_data = dset.SVHN(
+            args.data_path,
+            split='train',
+            transform=train_transform,
+            download=True)
+        test_data = dset.SVHN(
+            args.data_path,
+            split='test',
+            transform=test_transform,
+            download=True)
         num_classes = 10
     elif args.dataset == 'stl10':
-        train_data = dset.STL10(args.data_path,
-                                split='train',
-                                transform=train_transform,
-                                download=True)
-        test_data = dset.STL10(args.data_path,
-                               split='test',
-                               transform=test_transform,
-                               download=True)
+        train_data = dset.STL10(
+            args.data_path,
+            split='train',
+            transform=train_transform,
+            download=True)
+        test_data = dset.STL10(
+            args.data_path,
+            split='test',
+            transform=test_transform,
+            download=True)
         num_classes = 10
     elif args.dataset == 'imagenet':
         assert False, 'Do not finish imagenet code'
     else:
         assert False, 'Do not support dataset : {}'.format(args.dataset)
 
-    train_loader = torch.utils.data.DataLoader(train_data,
-                                               batch_size=args.batch_size,
-                                               shuffle=True,
-                                               num_workers=args.workers,
-                                               pin_memory=True)
-    test_loader = torch.utils.data.DataLoader(test_data,
-                                              batch_size=args.batch_size,
-                                              shuffle=False,
-                                              num_workers=args.workers,
-                                              pin_memory=True)
+    train_loader = torch.utils.data.DataLoader(
+        train_data,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=args.workers,
+        pin_memory=True)
+    test_loader = torch.utils.data.DataLoader(
+        test_data,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.workers,
+        pin_memory=True)
 
     # Init model, criterion, and optimizer
     #net = models.__dict__[args.arch](num_classes).cuda()
@@ -192,13 +201,15 @@ def main():
 
     # define loss function (criterion) and optimizer
     criterion = F.nll_loss
-    optimizer = torch.optim.SGD(net.parameters(),
-                                state['learning_rate'],
-                                momentum=state['momentum'],
-                                weight_decay=state['decay'],
-                                nesterov=True)
+    optimizer = torch.optim.SGD(
+        net.parameters(),
+        state['learning_rate'],
+        momentum=state['momentum'],
+        weight_decay=state['decay'],
+        nesterov=True)
 
-    if args.use_cuda: net.cuda()
+    if args.use_cuda:
+        net.cuda()
 
     recorder = RecorderMeter(args.epochs)
     # optionally resume from a checkpoint
@@ -214,8 +225,7 @@ def main():
                 "=> loaded checkpoint '{}' (epoch {})".format(
                     args.resume, checkpoint['epoch']), log)
         else:
-            print_log("=> no checkpoint found at '{}'".format(args.resume),
-                      log)
+            print_log("=> no checkpoint found at '{}'".format(args.resume), log)
     else:
         print_log("=> do not use any checkpoint for model", log)
 
@@ -228,8 +238,7 @@ def main():
     epoch_time = AverageMeter()
     for epoch in range(args.start_epoch, args.epochs):
         current_learning_rate = adjust_learning_rate(optimizer, epoch,
-                                                     args.gammas,
-                                                     args.schedule)
+                                                     args.gammas, args.schedule)
 
         need_hour, need_mins, need_secs = convert_secs2time(
             epoch_time.avg * (args.epochs - epoch))
@@ -245,8 +254,7 @@ def main():
 
         # evaluate on validation set
         val_acc, val_los = validate(test_loader, net, criterion, log)
-        is_best = recorder.update(epoch, train_los, train_acc, val_los,
-                                  val_acc)
+        is_best = recorder.update(epoch, train_los, train_acc, val_los, val_acc)
 
         save_checkpoint(
             {
@@ -383,7 +391,7 @@ def adjust_learning_rate(optimizer, epoch, gammas, schedule):
     return lr
 
 
-def accuracy(output, target, topk=(1, )):
+def accuracy(output, target, topk=(1,)):
     """Computes the precision@k for the specified values of k"""
     maxk = max(topk)
     batch_size = target.size(0)

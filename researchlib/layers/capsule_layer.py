@@ -16,11 +16,12 @@ def _squash(s, dim=-1):
 		Squashed vector
 	'''
     squared_norm = torch.sum(s**2, dim=dim, keepdim=True)
-    return squared_norm / (1 + squared_norm) * s / (torch.sqrt(squared_norm) +
-                                                    1e-8)
+    return squared_norm / (1 + squared_norm) * s / (
+        torch.sqrt(squared_norm) + 1e-8)
 
 
 class _PrimaryCapsules(nn.Module):
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -40,21 +41,24 @@ class _PrimaryCapsules(nn.Module):
         super().__init__()
         self.dim_caps = dim_caps
         self._caps_channel = int(out_channels / dim_caps)
-        self.conv = nn.Conv2d(in_channels,
-                              out_channels,
-                              kernel_size=kernel_size,
-                              stride=stride,
-                              padding=padding)
+        self.conv = nn.Conv2d(
+            in_channels,
+            out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding)
 
     def forward(self, x):
         out = self.conv(x)
-        out = out.view(out.size(0), self._caps_channel, out.size(2),
-                       out.size(3), self.dim_caps)
+        out = out.view(
+            out.size(0), self._caps_channel, out.size(2), out.size(3),
+            self.dim_caps)
         out = out.view(out.size(0), -1, self.dim_caps)
         return _squash(out)
 
 
 class _RoutingCapsules(nn.Module):
+
     def __init__(self, in_dim, in_caps, num_caps, dim_caps, num_routing):
         """
 		Initialize the layer.
@@ -132,6 +136,7 @@ class _RoutingCapsules(nn.Module):
 
 
 class _CapsuleMasked(nn.Module):
+
     def __init__(self):
         super().__init__()
 

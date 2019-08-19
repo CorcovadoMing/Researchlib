@@ -9,6 +9,7 @@ class ResNeXtBottleneck(nn.Module):
     """
   RexNeXt bottleneck type C (https://github.com/facebookresearch/ResNeXt/blob/master/models/resnext.lua)
   """
+
     def __init__(self,
                  inplanes,
                  planes,
@@ -21,28 +22,21 @@ class ResNeXtBottleneck(nn.Module):
 
         D = int(math.floor(planes * (base_width / 64.0)))
         C = cardinality
-        self.conv_reduce = nn.Conv2d(inplanes,
-                                     D * C,
-                                     kernel_size=1,
-                                     stride=1,
-                                     padding=0,
-                                     bias=False)
+        self.conv_reduce = nn.Conv2d(
+            inplanes, D * C, kernel_size=1, stride=1, padding=0, bias=False)
         self.bn_reduce = nn.BatchNorm2d(D * C)
 
-        self.conv_conv = nn.Conv2d(D * C,
-                                   D * C,
-                                   kernel_size=3,
-                                   stride=stride,
-                                   padding=1,
-                                   groups=cardinality,
-                                   bias=False)
+        self.conv_conv = nn.Conv2d(
+            D * C,
+            D * C,
+            kernel_size=3,
+            stride=stride,
+            padding=1,
+            groups=cardinality,
+            bias=False)
         self.bn = nn.BatchNorm2d(D * C)
-        self.conv_expand = nn.Conv2d(D * C,
-                                     planes * 4,
-                                     kernel_size=1,
-                                     stride=1,
-                                     padding=0,
-                                     bias=False)
+        self.conv_expand = nn.Conv2d(
+            D * C, planes * 4, kernel_size=1, stride=1, padding=0, bias=False)
         self.bn_expand = nn.BatchNorm2d(planes * 4)
 
     def forward(self, x):
@@ -57,7 +51,8 @@ class ResNeXtBottleneck(nn.Module):
         bottleneck = self.conv_expand(bottleneck)
         bottleneck = self.bn_expand(bottleneck)
 
-        if self.downsample is not None: residual = self.downsample(x)
+        if self.downsample is not None:
+            residual = self.downsample(x)
         return F.relu(residual + bottleneck, inplace=True)
 
 
@@ -66,6 +61,7 @@ class CifarResNeXt(nn.Module):
   ResNext optimized for the Cifar dataset, as specified in
   https://arxiv.org/pdf/1611.05431.pdf
   """
+
     def __init__(self, block, depth, cardinality, base_width, num_classes):
         super(CifarResNeXt, self).__init__()
 
@@ -102,18 +98,19 @@ class CifarResNeXt(nn.Module):
         exp_planes = planes * self.block.expansion
         if stride != 1 or self.inplanes != exp_planes:
             downsample = nn.Sequential(
-                nn.Conv2d(self.inplanes,
-                          exp_planes,
-                          kernel_size=1,
-                          stride=stride,
-                          bias=False),
+                nn.Conv2d(
+                    self.inplanes,
+                    exp_planes,
+                    kernel_size=1,
+                    stride=stride,
+                    bias=False),
                 nn.BatchNorm2d(exp_planes),
             )
 
         layers = []
         layers.append(
-            self.block(self.inplanes, planes, self.cardinality,
-                       self.base_width, stride, downsample))
+            self.block(self.inplanes, planes, self.cardinality, self.base_width,
+                       stride, downsample))
         self.inplanes = exp_planes
         for i in range(1, self.layer_blocks):
             layers.append(

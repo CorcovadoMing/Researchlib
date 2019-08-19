@@ -4,6 +4,7 @@ from ...utils import *
 
 
 class FocalLoss(nn.Module):
+
     def __init__(self, gamma=2, alpha=2):
         super().__init__()
         self.gamma = gamma
@@ -21,6 +22,7 @@ class FocalLoss(nn.Module):
 
 
 class AdaptiveFocalLoss(nn.Module):
+
     def __init__(self, classes, gamma=2):
         super().__init__()
         self.gamma = gamma

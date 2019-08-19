@@ -2,6 +2,7 @@ import torch
 
 
 class Pipe:
+
     def __init__(self, runners, process_type: str = 'chain'):
         self.runners = runners
         self.process_type = process_type

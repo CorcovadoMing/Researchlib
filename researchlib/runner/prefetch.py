@@ -9,6 +9,7 @@ else:
 
 
 class BackgroundGenerator(threading.Thread):
+
     def __init__(self, generator, max_prefetch=1):
         """
         This function transforms generator into a background-thead generator.

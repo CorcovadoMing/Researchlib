@@ -14,6 +14,7 @@ from functools import reduce
 
 
 class LambdaBase(nn.Sequential):
+
     def __init__(self, fn, *args):
         super(LambdaBase, self).__init__(*args)
         self.lambda_func = fn
@@ -26,27 +27,34 @@ class LambdaBase(nn.Sequential):
 
 
 class Lambda(LambdaBase):
+
     def forward(self, input):
         return self.lambda_func(self.forward_prepare(input))
 
 
 class LambdaMap(LambdaBase):
+
     def forward(self, input):
         # result is Variables list [Variable1, Variable2, ...]
         return list(map(self.lambda_func, self.forward_prepare(input)))
 
 
 class LambdaReduce(LambdaBase):
+
     def forward(self, input):
         # result is a Variable
         return reduce(self.lambda_func, self.forward_prepare(input))
 
 
 def copy_param(m, n):
-    if m.weight is not None: n.weight.data.copy_(m.weight)
-    if m.bias is not None: n.bias.data.copy_(m.bias)
-    if hasattr(n, 'running_mean'): n.running_mean.copy_(m.running_mean)
-    if hasattr(n, 'running_var'): n.running_var.copy_(m.running_var)
+    if m.weight is not None:
+        n.weight.data.copy_(m.weight)
+    if m.bias is not None:
+        n.bias.data.copy_(m.bias)
+    if hasattr(n, 'running_mean'):
+        n.running_mean.copy_(m.running_mean)
+    if hasattr(n, 'running_var'):
+        n.running_var.copy_(m.running_var)
 
 
 def add_submodule(seq, *args):
@@ -63,18 +71,19 @@ def lua_recursive_model(module, seq):
             m = m._obj
 
         if name == 'SpatialConvolution':
-            if not hasattr(m, 'groups'): m.groups = 1
-            n = nn.Conv2d(m.nInputPlane,
-                          m.nOutputPlane, (m.kW, m.kH), (m.dW, m.dH),
-                          (m.padW, m.padH),
-                          1,
-                          m.groups,
-                          bias=(m.bias is not None))
+            if not hasattr(m, 'groups'):
+                m.groups = 1
+            n = nn.Conv2d(
+                m.nInputPlane,
+                m.nOutputPlane, (m.kW, m.kH), (m.dW, m.dH), (m.padW, m.padH),
+                1,
+                m.groups,
+                bias=(m.bias is not None))
             copy_param(m, n)
             add_submodule(seq, n)
         elif name == 'SpatialBatchNormalization':
-            n = nn.BatchNorm2d(m.running_mean.size(0), m.eps, m.momentum,
-                               m.affine)
+            n = nn.BatchNorm2d(
+                m.running_mean.size(0), m.eps, m.momentum, m.affine)
             copy_param(m, n)
             add_submodule(seq, n)
         elif name == 'ReLU':
@@ -97,9 +106,8 @@ def lua_recursive_model(module, seq):
         elif name == 'Linear':
             # Linear in pytorch only accept 2D input
             n1 = Lambda(lambda x: x.view(1, -1) if 1 == len(x.size()) else x)
-            n2 = nn.Linear(m.weight.size(1),
-                           m.weight.size(0),
-                           bias=(m.bias is not None))
+            n2 = nn.Linear(
+                m.weight.size(1), m.weight.size(0), bias=(m.bias is not None))
             copy_param(m, n2)
             n = nn.Sequential(n1, n2)
             add_submodule(seq, n)
@@ -127,8 +135,8 @@ def lua_recursive_model(module, seq):
             n = Lambda(lambda x: x)  # do nothing
             add_submodule(seq, n)
         elif name == 'Narrow':
-            n = Lambda(lambda x, a=
-                       (m.dimension, m.index, m.length): x.narrow(*a))
+            n = Lambda(
+                lambda x, a=(m.dimension, m.index, m.length): x.narrow(*a))
             add_submodule(seq, n)
         elif name == 'SpatialCrossMapLRN':
             lrn = torch.legacy.nn.SpatialCrossMapLRN(m.size, m.alpha, m.beta,
@@ -167,7 +175,8 @@ def lua_recursive_source(module):
             m = m._obj
 
         if name == 'SpatialConvolution':
-            if not hasattr(m, 'groups'): m.groups = 1
+            if not hasattr(m, 'groups'):
+                m.groups = 1
             s += [
                 'nn.Conv2d({},{},{},{},{},{},{},bias={}),#Conv2d'.format(
                     m.nInputPlane, m.nOutputPlane, (m.kW, m.kH), (m.dW, m.dH),
@@ -192,16 +201,14 @@ def lua_recursive_source(module):
             ]
         elif name == 'SpatialUpSamplingNearest':
             s += [
-                'nn.UpsamplingNearest2d(scale_factor={})'.format(
-                    m.scale_factor)
+                'nn.UpsamplingNearest2d(scale_factor={})'.format(m.scale_factor)
             ]
         elif name == 'View':
             s += ['Lambda(lambda x: x.view(x.size(0),-1)), # View']
         elif name == 'Linear':
             s1 = 'Lambda(lambda x: x.view(1,-1) if 1==len(x.size()) else x )'
-            s2 = 'nn.Linear({},{},bias={})'.format(m.weight.size(1),
-                                                   m.weight.size(0),
-                                                   (m.bias is not None))
+            s2 = 'nn.Linear({},{},bias={})'.format(
+                m.weight.size(1), m.weight.size(0), (m.bias is not None))
             s += ['nn.Sequential({},{}),#Linear'.format(s1, s2)]
         elif name == 'Dropout':
             s += ['nn.Dropout({})'.format(m.p)]
@@ -236,8 +243,8 @@ def lua_recursive_source(module):
             lrn = 'torch.legacy.nn.SpatialCrossMapLRN(*{})'.format(
                 (m.size, m.alpha, m.beta, m.k))
             s += [
-                'Lambda(lambda x,lrn={}: Variable(lrn.forward(x.data)))'.
-                format(lrn)
+                'Lambda(lambda x,lrn={}: Variable(lrn.forward(x.data)))'.format(
+                    lrn)
             ]
 
         elif name == 'Sequential':
@@ -289,7 +296,8 @@ def simplify_source(s):
 
 def torch_to_pytorch(t7_filename, outputname=None):
     model = load_lua(t7_filename, unknown_classes=True)
-    if type(model).__name__ == 'hashable_uniq_dict': model = model.model
+    if type(model).__name__ == 'hashable_uniq_dict':
+        model = model.model
     model.gradInput = None
     slist = lua_recursive_source(torch.legacy.nn.Sequential().add(model))
     s = simplify_source(slist)
@@ -322,11 +330,11 @@ class LambdaReduce(LambdaBase):
     def forward(self, input):
         return reduce(self.lambda_func,self.forward_prepare(input))
 '''
-    varname = t7_filename.replace('.t7', '').replace('.',
-                                                     '_').replace('-', '_')
+    varname = t7_filename.replace('.t7', '').replace('.', '_').replace('-', '_')
     s = '{}\n\n{} = {}'.format(header, varname, s[:-2])
 
-    if outputname is None: outputname = varname
+    if outputname is None:
+        outputname = varname
     with open(outputname + '.py', "w") as pyfile:
         pyfile.write(s)
 
@@ -337,16 +345,18 @@ class LambdaReduce(LambdaBase):
 
 parser = argparse.ArgumentParser(
     description='Convert torch t7 model to pytorch')
-parser.add_argument('--model',
-                    '-m',
-                    type=str,
-                    required=True,
-                    help='torch model file in t7 format')
-parser.add_argument('--output',
-                    '-o',
-                    type=str,
-                    default=None,
-                    help='output file name prefix, xxx.py xxx.pth')
+parser.add_argument(
+    '--model',
+    '-m',
+    type=str,
+    required=True,
+    help='torch model file in t7 format')
+parser.add_argument(
+    '--output',
+    '-o',
+    type=str,
+    default=None,
+    help='output file name prefix, xxx.py xxx.pth')
 args = parser.parse_args()
 
 torch_to_pytorch(args.model, args.output)

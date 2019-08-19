@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 
 class NumpyAugmentation(object):
+
     def __init__(self):
         self.prob = None
         self.mag = None
@@ -20,11 +21,11 @@ class NumpyAugmentation(object):
             x, y = [i.numpy().copy() for i in x], [i.numpy().copy() for i in y]
             x, y = self.forward_batch(x, y, mag)
             try:
-                x, y = [torch.from_numpy(i)
-                        for i in x], [torch.from_numpy(i) for i in y]
+                x, y = [torch.from_numpy(i) for i in x
+                       ], [torch.from_numpy(i) for i in y]
             except:
-                x, y = [torch.from_numpy(i.copy())
-                        for i in x], [torch.from_numpy(i.copy()) for i in y]
+                x, y = [torch.from_numpy(i.copy()) for i in x
+                       ], [torch.from_numpy(i.copy()) for i in y]
         return x, y
 
     def forward_batch(self, x, y, mag):
@@ -44,6 +45,7 @@ class NumpyAugmentation(object):
 
 
 class TorchAugmentation(object):
+
     def __init__(self):
         self.prob = None
         self.mag = None

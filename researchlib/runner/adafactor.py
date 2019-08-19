@@ -29,6 +29,7 @@ class Adafactor(torch.optim.Optimizer):
             warmup_init (bool): time-dependent learning rate computation depends on
                 whether warm-up initialization is being used (default: False)
     """
+
     def __init__(self,
                  params,
                  lr=None,
@@ -40,15 +41,16 @@ class Adafactor(torch.optim.Optimizer):
                  scale_parameter=True,
                  relative_step=True,
                  warmup_init=False):
-        defaults = dict(lr=lr,
-                        eps=eps,
-                        clip_threshold=clip_threshold,
-                        decay_rate=decay_rate,
-                        beta1=beta1,
-                        weight_decay=weight_decay,
-                        scale_parameter=scale_parameter,
-                        relative_step=relative_step,
-                        warmup_init=warmup_init)
+        defaults = dict(
+            lr=lr,
+            eps=eps,
+            clip_threshold=clip_threshold,
+            decay_rate=decay_rate,
+            beta1=beta1,
+            weight_decay=weight_decay,
+            scale_parameter=scale_parameter,
+            relative_step=relative_step,
+            warmup_init=warmup_init)
         super().__init__(params, defaults)
 
     def _get_lr(self, param_group, param_state):
@@ -146,8 +148,7 @@ class Adafactor(torch.optim.Optimizer):
                                                      update.mean(dim=-2))
 
                     # Approximation of exponential moving average of square of gradient
-                    self._approx_sq_grad(exp_avg_sq_row, exp_avg_sq_col,
-                                         update)
+                    self._approx_sq_grad(exp_avg_sq_row, exp_avg_sq_col, update)
                     update.mul_(grad)
                 else:
                     exp_avg_sq = state['exp_avg_sq']

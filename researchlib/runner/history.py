@@ -1,4 +1,5 @@
 class History:
+
     def __init__(self, records=None):
         self.records = {}
         if records:

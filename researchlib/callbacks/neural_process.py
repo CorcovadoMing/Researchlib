@@ -5,6 +5,7 @@ from torchvision.utils import save_image
 
 
 class NeuralProcessCallback(Callback):
+
     def __init__(self):
         super().__init__()
 
@@ -43,20 +44,18 @@ class NeuralProcessCallback(Callback):
                 y_hat, _, _ = kwargs['model'](x_context, y_context)
                 recons.append(y_hat[:num_examples])
 
-            recons = torch.cat(recons).view(-1, 1, 28,
-                                            28).expand(-1, 3, -1, -1)
+            recons = torch.cat(recons).view(-1, 1, 28, 28).expand(-1, 3, -1, -1)
             background = torch.tensor([0., 0., 1.]).cuda()
-            background = background.view(1, -1,
-                                         1).expand(num_examples, 3,
-                                                   784).contiguous()
+            background = background.view(1, -1, 1).expand(num_examples, 3,
+                                                          784).contiguous()
             context_pixels = data[:num_examples].view(num_examples, 1,
                                                       -1)[:, :, context_idx]
             context_pixels = context_pixels.expand(num_examples, 3, -1)
             background[:, :, context_idx] = context_pixels
             comparison = torch.cat([background.view(-1, 3, 28, 28), recons])
-            save_image(comparison.cpu(),
-                       'ep_' + str(kwargs['epoch']) + '_cps_' + str(N) +
-                       '.png',
-                       nrow=num_examples)
+            save_image(
+                comparison.cpu(),
+                'ep_' + str(kwargs['epoch']) + '_cps_' + str(N) + '.png',
+                nrow=num_examples)
 
         return kwargs

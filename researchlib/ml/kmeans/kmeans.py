@@ -25,8 +25,8 @@ def lloyd(X, n_clusters, tol=1e-4):
             initial_state[index] = selected.mean(dim=0)
 
         center_shift = torch.sum(
-            torch.sqrt(torch.sum((initial_state - initial_state_pre)**2,
-                                 dim=1)))
+            torch.sqrt(
+                torch.sum((initial_state - initial_state_pre)**2, dim=1)))
 
         if center_shift**2 < tol:
             break
@@ -35,6 +35,7 @@ def lloyd(X, n_clusters, tol=1e-4):
 
 
 class KMeans:
+
     def __init__(self, n_clusters):
         self.n_clusters = n_clusters
         self.labels_ = None

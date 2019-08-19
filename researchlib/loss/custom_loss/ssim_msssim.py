@@ -15,8 +15,7 @@ def gaussian(window_size, sigma):
 
 def create_window(window_size, channel=1):
     _1D_window = gaussian(window_size, 1.5).unsqueeze(1)
-    _2D_window = _1D_window.mm(
-        _1D_window.t()).float().unsqueeze(0).unsqueeze(0)
+    _2D_window = _1D_window.mm(_1D_window.t()).float().unsqueeze(0).unsqueeze(0)
     window = _2D_window.expand(channel, 1, window_size,
                                window_size).contiguous()
     return window
@@ -58,12 +57,12 @@ def ssim(img1,
     mu2_sq = mu2.pow(2)
     mu1_mu2 = mu1 * mu2
 
-    sigma1_sq = F.conv2d(img1 * img1, window, padding=padd,
-                         groups=channel) - mu1_sq
-    sigma2_sq = F.conv2d(img2 * img2, window, padding=padd,
-                         groups=channel) - mu2_sq
-    sigma12 = F.conv2d(img1 * img2, window, padding=padd,
-                       groups=channel) - mu1_mu2
+    sigma1_sq = F.conv2d(
+        img1 * img1, window, padding=padd, groups=channel) - mu1_sq
+    sigma2_sq = F.conv2d(
+        img2 * img2, window, padding=padd, groups=channel) - mu2_sq
+    sigma12 = F.conv2d(
+        img1 * img2, window, padding=padd, groups=channel) - mu1_mu2
 
     C1 = (0.01 * L)**2
     C2 = (0.03 * L)**2
@@ -97,12 +96,13 @@ def msssim(img1,
     mssim = []
     mcs = []
     for _ in range(levels):
-        sim, cs = ssim(img1,
-                       img2,
-                       window_size=window_size,
-                       size_average=size_average,
-                       full=True,
-                       val_range=val_range)
+        sim, cs = ssim(
+            img1,
+            img2,
+            window_size=window_size,
+            size_average=size_average,
+            full=True,
+            val_range=val_range)
         mssim.append(sim)
         mcs.append(cs)
 
@@ -126,6 +126,7 @@ def msssim(img1,
 
 # Classes to re-use window
 class SSIM(nn.Module):
+
     def __init__(self, window_size=11, size_average=True, val_range=None):
         super().__init__()
         self.window_size = window_size
@@ -147,14 +148,16 @@ class SSIM(nn.Module):
             self.window = window
             self.channel = channel
 
-        return ssim(img1,
-                    img2,
-                    window=window,
-                    window_size=self.window_size,
-                    size_average=self.size_average)
+        return ssim(
+            img1,
+            img2,
+            window=window,
+            window_size=self.window_size,
+            size_average=self.size_average)
 
 
 class MSSSIM(nn.Module):
+
     def __init__(self, window_size=11, size_average=True, channel=3):
         super().__init__()
         self.window_size = window_size
@@ -163,13 +166,15 @@ class MSSSIM(nn.Module):
 
     def forward(self, img1, img2):
         # TODO: store window between calls if possible
-        return msssim(img1,
-                      img2,
-                      window_size=self.window_size,
-                      size_average=self.size_average)
+        return msssim(
+            img1,
+            img2,
+            window_size=self.window_size,
+            size_average=self.size_average)
 
 
 class SSIMLoss(nn.Module):
+
     def __init__(self, window_size=11, size_average=True, val_range=None):
         super().__init__()
         self.ssim = SSIM(window_size, size_average, val_range)
@@ -179,6 +184,7 @@ class SSIMLoss(nn.Module):
 
 
 class MSSSIMLoss(nn.Module):
+
     def __init__(self, window_size=11, size_average=True, channel=3):
         super().__init__()
         self.msssim = MSSSIM(window_size, size_average, channel)

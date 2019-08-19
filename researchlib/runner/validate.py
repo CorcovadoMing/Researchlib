@@ -20,9 +20,8 @@ def validate_fn(self, **kwargs):
                 i.bn_update(self.train_loader, self.model, device='cuda')
         else:
             self.optimizer.swap_swa_sgd()
-            self.optimizer.bn_update(self.train_loader,
-                                     self.model,
-                                     device='cuda')
+            self.optimizer.bn_update(
+                self.train_loader, self.model, device='cuda')
 
     # Reset metrics
     for m in kwargs['metrics']:
@@ -48,9 +47,7 @@ def validate_fn(self, **kwargs):
 
             auxout = [i.view(i.size(0), -1) for i in auxout]
 
-            kwargs['target'] = [
-                i.view(i.size(0), -1) for i in kwargs['target']
-            ]
+            kwargs['target'] = [i.view(i.size(0), -1) for i in kwargs['target']]
             if len(kwargs['target']) > len(auxout):
                 kwargs['target'] = [kwargs['target']]
 

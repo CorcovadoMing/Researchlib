@@ -2,6 +2,7 @@ from torch import nn
 
 
 class MultiHeadAttention(nn.Module):
+
     def __init__(self, in_feature, out_feature, heads=8):
         super().__init__()
 

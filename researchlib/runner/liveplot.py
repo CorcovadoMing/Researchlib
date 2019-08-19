@@ -37,6 +37,7 @@ def _list_avg(l):
 
 
 class Liveplot:
+
     def __init__(self, model, total_iteration):
         self._gan = True if type(model) == GANModel else False
         self.history = hl.History()
@@ -87,20 +88,19 @@ class Liveplot:
         self.gpu_utils_monitor = Output()
         self.text_log = Output()
         display(
-            HBox([self.gpu_mem_monitor, self.gpu_utils_monitor,
-                  self.text_log]))
+            HBox([self.gpu_mem_monitor, self.gpu_utils_monitor, self.text_log]))
 
         with self.gpu_mem_monitor:
-            self.gpu_mem_monitor_bar = IntProgress(orientation='vertical',
-                                                   bar_style='success')
+            self.gpu_mem_monitor_bar = IntProgress(
+                orientation='vertical', bar_style='success')
             self.gpu_mem_monitor_bar.description = 'M: 0%'
             self.gpu_mem_monitor_bar.min = 0
             self.gpu_mem_monitor_bar.max = 100
             display(self.gpu_mem_monitor_bar)
 
         with self.gpu_utils_monitor:
-            self.gpu_utils_monitor_bar = IntProgress(orientation='vertical',
-                                                     bar_style='success')
+            self.gpu_utils_monitor_bar = IntProgress(
+                orientation='vertical', bar_style='success')
             self.gpu_utils_monitor_bar.description = 'U: 0%'
             self.gpu_utils_monitor_bar.min = 0
             self.gpu_utils_monitor_bar.max = 100
@@ -115,9 +115,9 @@ class Liveplot:
         # Start monitor thread
         global _STOP_GPU_MONITOR_
         _STOP_GPU_MONITOR_ = False
-        self.thread = threading.Thread(target=_gpu_monitor_worker,
-                                       args=(self.gpu_mem_monitor_bar,
-                                             self.gpu_utils_monitor_bar))
+        self.thread = threading.Thread(
+            target=_gpu_monitor_worker,
+            args=(self.gpu_mem_monitor_bar, self.gpu_utils_monitor_bar))
         self.thread.start()
 
     def update_progressbar(self, value):

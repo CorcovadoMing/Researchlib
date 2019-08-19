@@ -5,6 +5,7 @@ import time
 
 
 class ParallelExecutor:
+
     def __init__(self,
                  task,
                  max_job: int = 100,
@@ -46,7 +47,7 @@ class ParallelExecutor:
 
     def start(self, *args):
         for rank in range(self.num_workers):
-            p = mp.Process(target=self._worker, args=(*args, ))
+            p = mp.Process(target=self._worker, args=(*args,))
             p.start()
             self.worker_pool.append(p)
 

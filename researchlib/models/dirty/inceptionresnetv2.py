@@ -6,19 +6,21 @@ import sys
 
 model_urls = {
     'imagenet':
-    'http://data.lip6.fr/cadene/pretrainedmodels/inceptionresnetv2-520b38e4.pth'
+        'http://data.lip6.fr/cadene/pretrainedmodels/inceptionresnetv2-520b38e4.pth'
 }
 
 
 class BasicConv2d(nn.Module):
+
     def __init__(self, in_planes, out_planes, kernel_size, stride, padding=0):
         super(BasicConv2d, self).__init__()
-        self.conv = nn.Conv2d(in_planes,
-                              out_planes,
-                              kernel_size=kernel_size,
-                              stride=stride,
-                              padding=padding,
-                              bias=False)  # verify bias false
+        self.conv = nn.Conv2d(
+            in_planes,
+            out_planes,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            bias=False)  # verify bias false
         self.bn = nn.BatchNorm2d(
             out_planes,
             eps=0.001,  # value found in tensorflow
@@ -34,6 +36,7 @@ class BasicConv2d(nn.Module):
 
 
 class Mixed_5b(nn.Module):
+
     def __init__(self):
         super(Mixed_5b, self).__init__()
 
@@ -62,6 +65,7 @@ class Mixed_5b(nn.Module):
 
 
 class Block35(nn.Module):
+
     def __init__(self, scale=1.0):
         super(Block35, self).__init__()
 
@@ -93,6 +97,7 @@ class Block35(nn.Module):
 
 
 class Mixed_6a(nn.Module):
+
     def __init__(self):
         super(Mixed_6a, self).__init__()
 
@@ -114,6 +119,7 @@ class Mixed_6a(nn.Module):
 
 
 class Block17(nn.Module):
+
     def __init__(self, scale=1.0):
         super(Block17, self).__init__()
 
@@ -123,10 +129,8 @@ class Block17(nn.Module):
 
         self.branch1 = nn.Sequential(
             BasicConv2d(1088, 128, kernel_size=1, stride=1),
-            BasicConv2d(128, 160, kernel_size=(1, 7), stride=1,
-                        padding=(0, 3)),
-            BasicConv2d(160, 192, kernel_size=(7, 1), stride=1,
-                        padding=(3, 0)))
+            BasicConv2d(128, 160, kernel_size=(1, 7), stride=1, padding=(0, 3)),
+            BasicConv2d(160, 192, kernel_size=(7, 1), stride=1, padding=(3, 0)))
 
         self.conv2d = nn.Conv2d(384, 1088, kernel_size=1, stride=1)
         self.relu = nn.ReLU(inplace=False)
@@ -142,6 +146,7 @@ class Block17(nn.Module):
 
 
 class Mixed_7a(nn.Module):
+
     def __init__(self):
         super(Mixed_7a, self).__init__()
 
@@ -170,6 +175,7 @@ class Mixed_7a(nn.Module):
 
 
 class Block8(nn.Module):
+
     def __init__(self, scale=1.0, noReLU=False):
         super(Block8, self).__init__()
 
@@ -180,10 +186,8 @@ class Block8(nn.Module):
 
         self.branch1 = nn.Sequential(
             BasicConv2d(2080, 192, kernel_size=1, stride=1),
-            BasicConv2d(192, 224, kernel_size=(1, 3), stride=1,
-                        padding=(0, 1)),
-            BasicConv2d(224, 256, kernel_size=(3, 1), stride=1,
-                        padding=(1, 0)))
+            BasicConv2d(192, 224, kernel_size=(1, 3), stride=1, padding=(0, 1)),
+            BasicConv2d(224, 256, kernel_size=(3, 1), stride=1, padding=(1, 0)))
 
         self.conv2d = nn.Conv2d(448, 2080, kernel_size=1, stride=1)
         if not self.noReLU:
@@ -201,6 +205,7 @@ class Block8(nn.Module):
 
 
 class InceptionResnetV2(nn.Module):
+
     def __init__(self, num_classes=1001):
         super(InceptionResnetV2, self).__init__()
         # Special attributs
@@ -211,38 +216,31 @@ class InceptionResnetV2(nn.Module):
         # Modules
         self.conv2d_1a = BasicConv2d(3, 32, kernel_size=3, stride=2)
         self.conv2d_2a = BasicConv2d(32, 32, kernel_size=3, stride=1)
-        self.conv2d_2b = BasicConv2d(32,
-                                     64,
-                                     kernel_size=3,
-                                     stride=1,
-                                     padding=1)
+        self.conv2d_2b = BasicConv2d(32, 64, kernel_size=3, stride=1, padding=1)
         self.maxpool_3a = nn.MaxPool2d(3, stride=2)
         self.conv2d_3b = BasicConv2d(64, 80, kernel_size=1, stride=1)
         self.conv2d_4a = BasicConv2d(80, 192, kernel_size=3, stride=1)
         self.maxpool_5a = nn.MaxPool2d(3, stride=2)
         self.mixed_5b = Mixed_5b()
-        self.repeat = nn.Sequential(Block35(scale=0.17), Block35(scale=0.17),
-                                    Block35(scale=0.17), Block35(scale=0.17),
-                                    Block35(scale=0.17), Block35(scale=0.17),
-                                    Block35(scale=0.17), Block35(scale=0.17),
-                                    Block35(scale=0.17), Block35(scale=0.17))
+        self.repeat = nn.Sequential(
+            Block35(scale=0.17), Block35(scale=0.17), Block35(scale=0.17),
+            Block35(scale=0.17), Block35(scale=0.17), Block35(scale=0.17),
+            Block35(scale=0.17), Block35(scale=0.17), Block35(scale=0.17),
+            Block35(scale=0.17))
         self.mixed_6a = Mixed_6a()
-        self.repeat_1 = nn.Sequential(Block17(scale=0.10), Block17(scale=0.10),
-                                      Block17(scale=0.10), Block17(scale=0.10),
-                                      Block17(scale=0.10), Block17(scale=0.10),
-                                      Block17(scale=0.10), Block17(scale=0.10),
-                                      Block17(scale=0.10), Block17(scale=0.10),
-                                      Block17(scale=0.10), Block17(scale=0.10),
-                                      Block17(scale=0.10), Block17(scale=0.10),
-                                      Block17(scale=0.10), Block17(scale=0.10),
-                                      Block17(scale=0.10), Block17(scale=0.10),
-                                      Block17(scale=0.10), Block17(scale=0.10))
+        self.repeat_1 = nn.Sequential(
+            Block17(scale=0.10), Block17(scale=0.10), Block17(scale=0.10),
+            Block17(scale=0.10), Block17(scale=0.10), Block17(scale=0.10),
+            Block17(scale=0.10), Block17(scale=0.10), Block17(scale=0.10),
+            Block17(scale=0.10), Block17(scale=0.10), Block17(scale=0.10),
+            Block17(scale=0.10), Block17(scale=0.10), Block17(scale=0.10),
+            Block17(scale=0.10), Block17(scale=0.10), Block17(scale=0.10),
+            Block17(scale=0.10), Block17(scale=0.10))
         self.mixed_7a = Mixed_7a()
-        self.repeat_2 = nn.Sequential(Block8(scale=0.20), Block8(scale=0.20),
-                                      Block8(scale=0.20), Block8(scale=0.20),
-                                      Block8(scale=0.20), Block8(scale=0.20),
-                                      Block8(scale=0.20), Block8(scale=0.20),
-                                      Block8(scale=0.20))
+        self.repeat_2 = nn.Sequential(
+            Block8(scale=0.20), Block8(scale=0.20), Block8(scale=0.20),
+            Block8(scale=0.20), Block8(scale=0.20), Block8(scale=0.20),
+            Block8(scale=0.20), Block8(scale=0.20), Block8(scale=0.20))
         self.block8 = Block8(noReLU=True)
         self.conv2d_7b = BasicConv2d(2080, 1536, kernel_size=1, stride=1)
         self.avgpool_1a = nn.AvgPool2d(8, count_include_pad=False)
@@ -322,8 +320,7 @@ if __name__ == '__main__':
     print('success')
     assert inceptionresnetv2(num_classes=1000, pretrained='imagenet')
     print('success')
-    assert inceptionresnetv2(num_classes=1001,
-                             pretrained='imagenet+background')
+    assert inceptionresnetv2(num_classes=1001, pretrained='imagenet+background')
     print('success')
 
     # fail

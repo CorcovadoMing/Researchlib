@@ -7,6 +7,7 @@ from ..models import builder
 
 
 class _DenseBlock2d(nn.Module):
+
     def __init__(self,
                  in_dim,
                  out_dim,
@@ -25,20 +26,22 @@ class _DenseBlock2d(nn.Module):
         for i in range(6):
             self.branch.append(
                 builder([
-                    _ConvBlock2d(inner_in,
-                                 inner_out,
-                                 kernel_size=1,
-                                 norm=norm,
-                                 activator=activator,
-                                 pooling=False,
-                                 preact=preact),
-                    _ConvBlock2d(inner_out,
-                                 inner_out,
-                                 kernel_size=3,
-                                 norm=norm,
-                                 activator=activator,
-                                 pooling=False,
-                                 preact=preact)
+                    _ConvBlock2d(
+                        inner_in,
+                        inner_out,
+                        kernel_size=1,
+                        norm=norm,
+                        activator=activator,
+                        pooling=False,
+                        preact=preact),
+                    _ConvBlock2d(
+                        inner_out,
+                        inner_out,
+                        kernel_size=3,
+                        norm=norm,
+                        activator=activator,
+                        pooling=False,
+                        preact=preact)
                 ]))
             inner_in += inner_out
         self.branch = nn.ModuleList(self.branch)
@@ -59,11 +62,13 @@ class _DenseBlock2d(nn.Module):
             x = self.branch[i](global_feature)
             global_feature = torch.cat([global_feature, x], dim=1)
         x = self.transition(global_feature)
-        if self.pooling: x = self.pooling_f(x)
+        if self.pooling:
+            x = self.pooling_f(x)
         return x
 
 
 class _DenseTransposeBlock2d(_DenseBlock2d):
+
     def __init__(self,
                  in_dim,
                  out_dim,
@@ -77,5 +82,5 @@ class _DenseTransposeBlock2d(_DenseBlock2d):
         super().__init__(in_dim, out_dim, norm, activator, pooling,
                          pooling_type, pooling_factor, preact, se)
         if pooling:
-            self.pooling_f = get_up_sampling_fn(out_dim, pooling_factor,
-                                                preact, pooling_type)
+            self.pooling_f = get_up_sampling_fn(out_dim, pooling_factor, preact,
+                                                pooling_type)

@@ -34,7 +34,7 @@ def iou_binary(preds, labels, EMPTY=1., ignore=None, per_image=True):
     binary: 1 foreground, 0 background
     """
     if not per_image:
-        preds, labels = (preds, ), (labels, )
+        preds, labels = (preds,), (labels,)
     ious = []
     for pred, label in zip(preds, labels):
         intersection = ((label == 1) & (pred == 1)).sum()
@@ -53,15 +53,14 @@ def iou(preds, labels, C, EMPTY=1., ignore=None, per_image=False):
     Array of IoU for each (non ignored) class
     """
     if not per_image:
-        preds, labels = (preds, ), (labels, )
+        preds, labels = (preds,), (labels,)
     ious = []
     for pred, label in zip(preds, labels):
         iou = []
         for i in range(C):
             if i != ignore:  # The ignored label is sometimes among predicted classes (ENet - CityScapes)
                 intersection = ((label == i) & (pred == i)).sum()
-                union = ((label == i) | ((pred == i) &
-                                         (label != ignore))).sum()
+                union = ((label == i) | ((pred == i) & (label != ignore))).sum()
                 if not union:
                     iou.append(EMPTY)
                 else:
@@ -84,12 +83,11 @@ def lovasz_hinge(logits, labels, per_image=True, ignore=None):
     """
     if per_image:
         loss = mean(
-            lovasz_hinge_flat(*flatten_binary_scores(log.unsqueeze(0),
-                                                     lab.unsqueeze(0), ignore))
+            lovasz_hinge_flat(*flatten_binary_scores(
+                log.unsqueeze(0), lab.unsqueeze(0), ignore))
             for log, lab in zip(logits, labels))
     else:
-        loss = lovasz_hinge_flat(
-            *flatten_binary_scores(logits, labels, ignore))
+        loss = lovasz_hinge_flat(*flatten_binary_scores(logits, labels, ignore))
     return loss
 
 
@@ -129,6 +127,7 @@ def flatten_binary_scores(scores, labels, ignore=None):
 
 
 class StableBCELoss(torch.nn.modules.Module):
+
     def __init__(self):
         super(StableBCELoss, self).__init__()
 
@@ -170,11 +169,10 @@ def lovasz_softmax(probas,
         loss = mean(
             lovasz_softmax_flat(
                 *flatten_probas(prob.unsqueeze(0), lab.unsqueeze(0), ignore),
-                only_present=only_present)
-            for prob, lab in zip(probas, labels))
+                only_present=only_present) for prob, lab in zip(probas, labels))
     else:
-        loss = lovasz_softmax_flat(*flatten_probas(probas, labels, ignore),
-                                   only_present=only_present)
+        loss = lovasz_softmax_flat(
+            *flatten_probas(probas, labels, ignore), only_present=only_present)
     return loss
 
 

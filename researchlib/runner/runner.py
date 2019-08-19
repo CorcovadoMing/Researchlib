@@ -156,15 +156,18 @@ class Runner:
             self.loss_fn[0].set_model(self.model)
             self.default_metrics = [InceptionScore(), FID()]
 
-        if self.multigpu: self.model = DataParallel(self.model)
+        if self.multigpu:
+            self.model = DataParallel(self.model)
 
-        if optimizer is not None: self.set_optimizer(optimizer)
+        if optimizer is not None:
+            self.set_optimizer(optimizer)
 
         cudnn.benchmark = True
 
     # ===================================================================================================
     # ===================================================================================================
     def set_optimizer(self, optimizer):
+
         def _assign_optim(model, optimizer, larc, swa):
             # if there are learnable loss parameters
             loss_params = []
@@ -175,34 +178,37 @@ class Runner:
                     pass
 
             if optimizer == 'adam':
-                optimizer = Adam(list(model.parameters()) + loss_params,
-                                 betas=(0.9, 0.999))
+                optimizer = Adam(
+                    list(model.parameters()) + loss_params, betas=(0.9, 0.999))
             elif optimizer == 'adamw':
-                optimizer = AdamW(list(model.parameters()) + loss_params,
-                                 betas=(0.9, 0.999))
+                optimizer = AdamW(
+                    list(model.parameters()) + loss_params, betas=(0.9, 0.999))
             elif optimizer == 'adam_gan':
-                optimizer = Adam(list(model.parameters()) + loss_params,
-                                 betas=(0., 0.999))
+                optimizer = Adam(
+                    list(model.parameters()) + loss_params, betas=(0., 0.999))
             elif optimizer == 'sgd':
-                optimizer = SGD(list(model.parameters()) + loss_params,
-                                lr=1e-1,
-                                momentum=0.9)
+                optimizer = SGD(
+                    list(model.parameters()) + loss_params,
+                    lr=1e-1,
+                    momentum=0.9)
             elif optimizer == 'nesterov':
-                optimizer = SGD(list(model.parameters()) + loss_params,
-                                lr=1e-2,
-                                momentum=0.9,
-                                nesterov=True)
+                optimizer = SGD(
+                    list(model.parameters()) + loss_params,
+                    lr=1e-2,
+                    momentum=0.9,
+                    nesterov=True)
             elif optimizer == 'rmsprop':
                 optimizer = RMSprop(list(model.parameters()) + loss_params)
             elif optimizer == 'adabound':
-                optimizer = AdaBound(list(model.parameters()) + loss_params,
-                                     lr=1e-3,
-                                     final_lr=0.1)
+                optimizer = AdaBound(
+                    list(model.parameters()) + loss_params,
+                    lr=1e-3,
+                    final_lr=0.1)
             elif optimizer == 'adagrad':
                 optimizer = Adagrad(list(model.parameters()) + loss_params)
             elif optimizer == 'adafactor':
-                optimizer = Adafactor(list(model.parameters()) + loss_params,
-                                      lr=1e-3)
+                optimizer = Adafactor(
+                    list(model.parameters()) + loss_params, lr=1e-3)
             if larc:
                 optimizer = LARC(optimizer)
             if swa:
@@ -214,8 +220,8 @@ class Runner:
                 self.optimizer = [
                     _assign_optim(self.model.discriminator, optimizer[1],
                                   self.larc, self.swa),
-                    _assign_optim(self.model.generator, optimizer[0],
-                                  self.larc, self.swa)
+                    _assign_optim(self.model.generator, optimizer[0], self.larc,
+                                  self.swa)
                 ]
             else:
                 self.optimizer = [
@@ -354,6 +360,7 @@ class Runner:
         return self
 
     def describe(self):
+
         def _describe_model(model_dict):
             query = {}
             keys = [
@@ -382,8 +389,7 @@ class Runner:
 
         keys = [
             'ema', 'ema_start', 'swa', 'swa_start', 'larc', 'fp16',
-            'augmentation_list', 'preprocessing_list', 'loss_fn',
-            'train_loader'
+            'augmentation_list', 'preprocessing_list', 'loss_fn', 'train_loader'
         ]
         query = {}
         for key, value in self.__dict__.items():
@@ -406,8 +412,7 @@ class Runner:
         except:
             pass
 
-        query['train_loader'] = query[
-            'train_loader'].dataset.__class__.__name__
+        query['train_loader'] = query['train_loader'].dataset.__class__.__name__
 
         query['optimizer'] = self.__class__.__runner_settings__['optimizer']
         query['monitor_state'] = self.__class__.__runner_settings__[

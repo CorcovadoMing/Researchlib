@@ -28,6 +28,7 @@ class QRNNLayer_(nn.Module):
         - output (seq_len, batch, hidden_size): tensor containing the output of the QRNN for each timestep.
         - h_n (batch, hidden_size): tensor containing the hidden state for t=seq_len
     """
+
     def __init__(self,
                  input_size,
                  hidden_size=None,
@@ -94,9 +95,9 @@ class QRNNLayer_(nn.Module):
         # If an element of F is zero, that means the corresponding neuron keeps the old value
         if self.zoneout:
             if self.training:
-                mask = Variable(F.data.new(*F.size()).bernoulli_(1 -
-                                                                 self.zoneout),
-                                requires_grad=False)
+                mask = Variable(
+                    F.data.new(*F.size()).bernoulli_(1 - self.zoneout),
+                    requires_grad=False)
                 F = F * mask
             else:
                 F *= 1 - self.zoneout
@@ -146,6 +147,7 @@ class QRNN(torch.nn.Module):
         - output (seq_len, batch, hidden_size): tensor containing the output of the QRNN for each timestep.
         - h_n (layers, batch, hidden_size): tensor containing the hidden state for t=seq_len
     """
+
     def __init__(self,
                  input_size,
                  hidden_size,
@@ -188,10 +190,11 @@ class QRNN(torch.nn.Module):
             next_hidden.append(hn)
 
             if self.dropout != 0 and i < len(self.layers) - 1:
-                input = torch.nn.functional.dropout(input,
-                                                    p=self.dropout,
-                                                    training=self.training,
-                                                    inplace=False)
+                input = torch.nn.functional.dropout(
+                    input,
+                    p=self.dropout,
+                    training=self.training,
+                    inplace=False)
 
         next_hidden = torch.cat(next_hidden,
                                 0).view(self.num_layers,

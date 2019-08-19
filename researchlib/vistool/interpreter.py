@@ -11,6 +11,7 @@ import types
 
 
 class EBLinear(Function):
+
     @staticmethod
     def forward(ctx, inp, weight, bias=None):
         ctx.save_for_backward(inp, weight, bias)
@@ -45,15 +46,16 @@ def _output_size(inp, weight, pad, dilation, stride):
     for d in range(inp.dim() - 2):
         in_size = inp.size(d + 2)
         kernel = dilation * (weight.size(d + 2) - 1) + 1
-        output_size += ((in_size + (2 * pad) - kernel) // stride + 1, )
+        output_size += ((in_size + (2 * pad) - kernel) // stride + 1,)
     if not all(map(lambda s: s > 0, output_size)):
         raise ValueError(
-            "convolution inp is too small (output would be {})".format(
-                'x'.join(map(str, output_size))))
+            "convolution inp is too small (output would be {})".format('x'.join(
+                map(str, output_size))))
     return output_size
 
 
 class EBConv2d(Function):
+
     @staticmethod
     def forward(ctx, inp, weight, bias, stride, padding, dilation, groups):
         ctx.save_for_backward(inp, weight, bias)
@@ -111,6 +113,7 @@ class EBConv2d(Function):
 
 
 class EBAvgPool2d(Function):
+
     @staticmethod
     def forward(ctx,
                 inp,
@@ -159,6 +162,7 @@ class EBAvgPool2d(Function):
 
 
 class _Interpreter:
+
     def __init__(self):
         pass
 
@@ -394,6 +398,7 @@ class _Interpreter:
             Contrstive: P_0 * (P_1 - P_~1) * P-2 * ... * P_{N-1} where P_~1 is with the negative weight of P_1
 
         '''
+
         def new_linear(self, x):
             return EBLinear.apply(x, self.weight, self.bias)
 
@@ -440,27 +445,22 @@ class _Interpreter:
 
         if contrastive:
             model.nnlist[-1].weight.data *= -1.0
-            neg_map = grad(output,
-                           hook_forward_buffer[-1],
-                           grad_out,
-                           create_graph=True)[0]
+            neg_map = grad(
+                output, hook_forward_buffer[-1], grad_out, create_graph=True)[0]
 
             model.nnlist[-1].weight.data *= -1.0
-            pos_map = grad(output,
-                           hook_forward_buffer[-1],
-                           grad_out,
-                           create_graph=True)[0]
+            pos_map = grad(
+                output, hook_forward_buffer[-1], grad_out, create_graph=True)[0]
 
             diff = pos_map - neg_map
-            attmap = grad(hook_forward_buffer[-1],
-                          hook_forward_buffer[0],
-                          diff,
-                          create_graph=True)[0]
+            attmap = grad(
+                hook_forward_buffer[-1],
+                hook_forward_buffer[0],
+                diff,
+                create_graph=True)[0]
         else:
-            attmap = grad(output,
-                          hook_forward_buffer[0],
-                          grad_out,
-                          create_graph=True)[0]
+            attmap = grad(
+                output, hook_forward_buffer[0], grad_out, create_graph=True)[0]
 
         attmap = attmap.sum(1).squeeze()
         attmap -= attmap.min()

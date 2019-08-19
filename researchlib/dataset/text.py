@@ -12,14 +12,14 @@ def _AGNews(train=True):
     ]
 
     # Creating Field for data
-    TEXT = torchtext.data.Field(sequential=True,
-                                tokenize=tokenizer,
-                                lower=True,
-                                fix_length=60,
-                                batch_first=True)
-    LABEL = torchtext.data.Field(sequential=False,
-                                 use_vocab=False,
-                                 batch_first=True)
+    TEXT = torchtext.data.Field(
+        sequential=True,
+        tokenize=tokenizer,
+        lower=True,
+        fix_length=60,
+        batch_first=True)
+    LABEL = torchtext.data.Field(
+        sequential=False, use_vocab=False, batch_first=True)
     datafields = [("text", TEXT), ("label", LABEL)]
 
     if train:

@@ -5,6 +5,7 @@ from torch2trt import torch2trt
 
 
 class _Export:
+
     def __init__(self, runner):
         self.runner = runner
 

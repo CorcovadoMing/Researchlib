@@ -2,6 +2,7 @@ from torch import nn
 
 
 class _LSTM(nn.Module):
+
     def __init__(self,
                  in_dim,
                  out_dim,

@@ -3,6 +3,7 @@ from torch import nn
 
 
 class ACTCell(nn.Module):
+
     def __init__(self,
                  base_cell,
                  in_dim,
@@ -36,8 +37,8 @@ class ACTCell(nn.Module):
             if ponder_count == 1:
                 binary_flag = 1 - binary_flag
 
-            hx, cx = self.base_cell(torch.cat((x, binary_flag), dim=1),
-                                    (hx, cx))
+            hx, cx = self.base_cell(
+                torch.cat((x, binary_flag), dim=1), (hx, cx))
 
             # Gates
             gx = torch.sigmoid(self.ponder_linear(hx))
@@ -57,6 +58,7 @@ class ACTCell(nn.Module):
 
 
 class ACT(nn.Module):
+
     def __init__(self, in_dim, hidden_dim, out_dim):
         super().__init__()
         self.cell = ACTCell(nn.LSTMCell, in_dim, hidden_dim, out_dim)

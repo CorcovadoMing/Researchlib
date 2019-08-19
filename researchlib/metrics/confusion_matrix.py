@@ -6,6 +6,7 @@ import torch
 
 
 class ConfusionMatrix(Matrix):
+
     def __init__(self, classes, plot=False):
         super().__init__()
         self.classes = classes
@@ -24,12 +25,13 @@ class ConfusionMatrix(Matrix):
             plt.imshow(self.m, cmap='gray')
             for i in range(self.classes):
                 for j in range(self.classes):
-                    plt.text(j,
-                             i,
-                             self.m[i, j],
-                             horizontalalignment='center',
-                             verticalalignment='center',
-                             color='gray')
+                    plt.text(
+                        j,
+                        i,
+                        self.m[i, j],
+                        horizontalalignment='center',
+                        verticalalignment='center',
+                        color='gray')
             plt.ylabel('Predicted')
             plt.yticks(range(self.classes))
             plt.xlabel('Actual')

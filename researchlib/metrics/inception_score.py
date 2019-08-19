@@ -11,22 +11,23 @@ from .matrix import Matrix
 
 
 class WrapInception(nn.Module):
+
     def __init__(self, net):
         super().__init__()
         self.net = net
-        self.mean = P(torch.tensor([0.485, 0.456, 0.406]).view(1, -1, 1, 1),
-                      requires_grad=False)
-        self.std = P(torch.tensor([0.229, 0.224, 0.225]).view(1, -1, 1, 1),
-                     requires_grad=False)
+        self.mean = P(
+            torch.tensor([0.485, 0.456, 0.406]).view(1, -1, 1, 1),
+            requires_grad=False)
+        self.std = P(
+            torch.tensor([0.229, 0.224, 0.225]).view(1, -1, 1, 1),
+            requires_grad=False)
 
     def forward(self, x):
         x = (x + 1.) / 2.0
         x = (x - self.mean) / self.std
         if x.shape[2] != 299 or x.shape[3] != 299:
-            x = F.interpolate(x,
-                              size=(299, 299),
-                              mode='bilinear',
-                              align_corners=True)
+            x = F.interpolate(
+                x, size=(299, 299), mode='bilinear', align_corners=True)
         x = self.net.Conv2d_1a_3x3(x)
         x = self.net.Conv2d_2a_3x3(x)
         x = self.net.Conv2d_2b_3x3(x)
@@ -61,13 +62,14 @@ class _InceptionModelV3:
     @staticmethod
     def lazy_load():
         if _InceptionModelV3._model is None:
-            _InceptionModelV3._model = inception_v3(pretrained=True,
-                                                    transform_input=False)
+            _InceptionModelV3._model = inception_v3(
+                pretrained=True, transform_input=False)
             _InceptionModelV3._model = WrapInception(
                 inception_model.eval()).cuda()
 
 
 class InceptionScore(Matrix):
+
     def __init__(self):
         super().__init__()
         self.data = None
@@ -99,7 +101,8 @@ class InceptionScore(Matrix):
 
 def sqrt_newton_schulz(A, numIters, dtype=None):
     with torch.no_grad():
-        if dtype is None: dtype = A.type()
+        if dtype is None:
+            dtype = A.type()
         batchSize = A.shape[0]
         dim = A.shape[1]
         normA = A.mul(A).sum(dim=1).sum(dim=1).sqrt()
@@ -117,9 +120,12 @@ def sqrt_newton_schulz(A, numIters, dtype=None):
 
 
 def torch_cov(m, rowvar=False):
-    if m.dim() > 2: raise ValueError('m has more than 2 dimensions')
-    if m.dim() < 2: m = m.view(1, -1)
-    if not rowvar and m.size(0) != 1: m = m.t()
+    if m.dim() > 2:
+        raise ValueError('m has more than 2 dimensions')
+    if m.dim() < 2:
+        m = m.view(1, -1)
+    if not rowvar and m.size(0) != 1:
+        m = m.t()
     fact = 1.0 / (m.size(1) - 1)
     m -= torch.mean(m, dim=1, keepdim=True)
     mt = m.t()
@@ -135,8 +141,9 @@ def torch_calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
     diff = mu1 - mu2
     # Run 50 itrs of newton-schulz to get the matrix sqrt of sigma1 dot sigma2
     covmean = sqrt_newton_schulz(sigma1.mm(sigma2).unsqueeze(0), 50).squeeze()
-    out = (diff.dot(diff) + torch.trace(sigma1) + torch.trace(sigma2) -
-           2 * torch.trace(covmean))
+    out = (
+        diff.dot(diff) + torch.trace(sigma1) + torch.trace(sigma2) -
+        2 * torch.trace(covmean))
     return out
 
 
@@ -174,6 +181,7 @@ def calc_fid(mn1, cov1, mn2, cov2, eps=1e-6):
 
 
 class FID(Matrix):
+
     def __init__(self):
         super().__init__()
         self.fake_pool = None
@@ -198,12 +206,10 @@ class FID(Matrix):
                 self.fake_pool = torch.cat([self.fake_pool, fake_pool], dim=0)
 
     def output(self):
-        real_mu, real_sigma = torch.mean(self.real_pool,
-                                         0), torch_cov(self.real_pool,
-                                                       rowvar=False)
-        fake_mu, fake_sigma = torch.mean(self.fake_pool,
-                                         0), torch_cov(self.fake_pool,
-                                                       rowvar=False)
+        real_mu, real_sigma = torch.mean(self.real_pool, 0), torch_cov(
+            self.real_pool, rowvar=False)
+        fake_mu, fake_sigma = torch.mean(self.fake_pool, 0), torch_cov(
+            self.fake_pool, rowvar=False)
         #fid = torch_calculate_frechet_distance(fake_mu, fake_sigma, real_mu, real_sigma).numpy()
         fid = calc_fid(fake_mu.numpy(), fake_sigma.numpy(), real_mu.numpy(),
                        real_sigma.numpy())

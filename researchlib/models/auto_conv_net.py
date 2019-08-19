@@ -92,17 +92,19 @@ def AutoConvNet(op,
         print(in_dim, out_dim)
 
         layers.append(
-            _op_type(op,
-                     in_dim,
-                     out_dim,
-                     do_pool=do_pool,
-                     do_norm=do_norm,
-                     preact=preact,
-                     id=id,
-                     total_blocks=total_blocks,
-                     **kwargs))
+            _op_type(
+                op,
+                in_dim,
+                out_dim,
+                do_pool=do_pool,
+                do_norm=do_norm,
+                preact=preact,
+                id=id,
+                total_blocks=total_blocks,
+                **kwargs))
 
         in_dim = out_dim
 
-    if flatten: layers.append(layer.Flatten())
+    if flatten:
+        layers.append(layer.Flatten())
     return builder(layers)

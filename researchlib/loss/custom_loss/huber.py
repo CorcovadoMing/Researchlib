@@ -3,6 +3,7 @@ import torch
 
 
 class HuberLoss(nn.Module):
+
     def __init__(self, delta=1):
         super().__init__()
         self.delta = delta

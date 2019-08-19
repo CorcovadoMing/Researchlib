@@ -6,19 +6,21 @@ import sys
 
 model_urls = {
     'imagenet':
-    'https://s3.amazonaws.com/pytorch/models/inceptionv4-58153ba9.pth'
+        'https://s3.amazonaws.com/pytorch/models/inceptionv4-58153ba9.pth'
 }
 
 
 class BasicConv2d(nn.Module):
+
     def __init__(self, in_planes, out_planes, kernel_size, stride, padding=0):
         super(BasicConv2d, self).__init__()
-        self.conv = nn.Conv2d(in_planes,
-                              out_planes,
-                              kernel_size=kernel_size,
-                              stride=stride,
-                              padding=padding,
-                              bias=False)  # verify bias false
+        self.conv = nn.Conv2d(
+            in_planes,
+            out_planes,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            bias=False)  # verify bias false
         self.bn = nn.BatchNorm2d(out_planes)
         self.relu = nn.ReLU(inplace=True)
 
@@ -30,6 +32,7 @@ class BasicConv2d(nn.Module):
 
 
 class Mixed_3a(nn.Module):
+
     def __init__(self):
         super(Mixed_3a, self).__init__()
         self.maxpool = nn.MaxPool2d(3, stride=2)
@@ -43,6 +46,7 @@ class Mixed_3a(nn.Module):
 
 
 class Mixed_4a(nn.Module):
+
     def __init__(self):
         super(Mixed_4a, self).__init__()
 
@@ -64,6 +68,7 @@ class Mixed_4a(nn.Module):
 
 
 class Mixed_5a(nn.Module):
+
     def __init__(self):
         super(Mixed_5a, self).__init__()
         self.conv = BasicConv2d(192, 192, kernel_size=3, stride=2)
@@ -77,6 +82,7 @@ class Mixed_5a(nn.Module):
 
 
 class Inception_A(nn.Module):
+
     def __init__(self):
         super(Inception_A, self).__init__()
         self.block0 = BasicConv2d(384, 96, kernel_size=1, stride=1)
@@ -104,6 +110,7 @@ class Inception_A(nn.Module):
 
 
 class Reduction_A(nn.Module):
+
     def __init__(self):
         super(Reduction_A, self).__init__()
         self.block0 = BasicConv2d(384, 384, kernel_size=3, stride=2)
@@ -124,27 +131,22 @@ class Reduction_A(nn.Module):
 
 
 class Inception_B(nn.Module):
+
     def __init__(self):
         super(Inception_B, self).__init__()
         self.block0 = BasicConv2d(1024, 384, kernel_size=1, stride=1)
 
         self.block1 = nn.Sequential(
             BasicConv2d(1024, 192, kernel_size=1, stride=1),
-            BasicConv2d(192, 224, kernel_size=(1, 7), stride=1,
-                        padding=(0, 3)),
-            BasicConv2d(224, 256, kernel_size=(7, 1), stride=1,
-                        padding=(3, 0)))
+            BasicConv2d(192, 224, kernel_size=(1, 7), stride=1, padding=(0, 3)),
+            BasicConv2d(224, 256, kernel_size=(7, 1), stride=1, padding=(3, 0)))
 
         self.block2 = nn.Sequential(
             BasicConv2d(1024, 192, kernel_size=1, stride=1),
-            BasicConv2d(192, 192, kernel_size=(7, 1), stride=1,
-                        padding=(3, 0)),
-            BasicConv2d(192, 224, kernel_size=(1, 7), stride=1,
-                        padding=(0, 3)),
-            BasicConv2d(224, 224, kernel_size=(7, 1), stride=1,
-                        padding=(3, 0)),
-            BasicConv2d(224, 256, kernel_size=(1, 7), stride=1,
-                        padding=(0, 3)))
+            BasicConv2d(192, 192, kernel_size=(7, 1), stride=1, padding=(3, 0)),
+            BasicConv2d(192, 224, kernel_size=(1, 7), stride=1, padding=(0, 3)),
+            BasicConv2d(224, 224, kernel_size=(7, 1), stride=1, padding=(3, 0)),
+            BasicConv2d(224, 256, kernel_size=(1, 7), stride=1, padding=(0, 3)))
 
         self.block3 = nn.Sequential(
             nn.AvgPool2d(3, stride=1, padding=1, count_include_pad=False),
@@ -160,6 +162,7 @@ class Inception_B(nn.Module):
 
 
 class Reduction_B(nn.Module):
+
     def __init__(self):
         super(Reduction_B, self).__init__()
 
@@ -169,10 +172,8 @@ class Reduction_B(nn.Module):
 
         self.block1 = nn.Sequential(
             BasicConv2d(1024, 256, kernel_size=1, stride=1),
-            BasicConv2d(256, 256, kernel_size=(1, 7), stride=1,
-                        padding=(0, 3)),
-            BasicConv2d(256, 320, kernel_size=(7, 1), stride=1,
-                        padding=(3, 0)),
+            BasicConv2d(256, 256, kernel_size=(1, 7), stride=1, padding=(0, 3)),
+            BasicConv2d(256, 320, kernel_size=(7, 1), stride=1, padding=(3, 0)),
             BasicConv2d(320, 320, kernel_size=3, stride=2))
 
         self.block2 = nn.MaxPool2d(3, stride=2)
@@ -186,43 +187,26 @@ class Reduction_B(nn.Module):
 
 
 class Inception_C(nn.Module):
+
     def __init__(self):
         super(Inception_C, self).__init__()
         self.block0 = BasicConv2d(1536, 256, kernel_size=1, stride=1)
 
         self.block1_0 = BasicConv2d(1536, 384, kernel_size=1, stride=1)
-        self.block1_1a = BasicConv2d(384,
-                                     256,
-                                     kernel_size=(1, 3),
-                                     stride=1,
-                                     padding=(0, 1))
-        self.block1_1b = BasicConv2d(384,
-                                     256,
-                                     kernel_size=(3, 1),
-                                     stride=1,
-                                     padding=(1, 0))
+        self.block1_1a = BasicConv2d(
+            384, 256, kernel_size=(1, 3), stride=1, padding=(0, 1))
+        self.block1_1b = BasicConv2d(
+            384, 256, kernel_size=(3, 1), stride=1, padding=(1, 0))
 
         self.block2_0 = BasicConv2d(1536, 384, kernel_size=1, stride=1)
-        self.block2_1 = BasicConv2d(384,
-                                    448,
-                                    kernel_size=(3, 1),
-                                    stride=1,
-                                    padding=(1, 0))
-        self.block2_2 = BasicConv2d(448,
-                                    512,
-                                    kernel_size=(1, 3),
-                                    stride=1,
-                                    padding=(0, 1))
-        self.block2_3a = BasicConv2d(512,
-                                     256,
-                                     kernel_size=(1, 3),
-                                     stride=1,
-                                     padding=(0, 1))
-        self.block2_3b = BasicConv2d(512,
-                                     256,
-                                     kernel_size=(3, 1),
-                                     stride=1,
-                                     padding=(1, 0))
+        self.block2_1 = BasicConv2d(
+            384, 448, kernel_size=(3, 1), stride=1, padding=(1, 0))
+        self.block2_2 = BasicConv2d(
+            448, 512, kernel_size=(1, 3), stride=1, padding=(0, 1))
+        self.block2_3a = BasicConv2d(
+            512, 256, kernel_size=(1, 3), stride=1, padding=(0, 1))
+        self.block2_3b = BasicConv2d(
+            512, 256, kernel_size=(3, 1), stride=1, padding=(1, 0))
 
         self.block3 = nn.Sequential(
             nn.AvgPool2d(3, stride=1, padding=1, count_include_pad=False),
@@ -250,6 +234,7 @@ class Inception_C(nn.Module):
 
 
 class InceptionV4(nn.Module):
+
     def __init__(self, num_classes=1001):
         super(InceptionV4, self).__init__()
         self.features = nn.Sequential(
@@ -408,33 +393,39 @@ def load():
     load_conv2d(state_dict, name_pth='features.1', name_tf='Conv2d_2a_3x3')
     load_conv2d(state_dict, name_pth='features.2', name_tf='Conv2d_2b_3x3')
 
-    load_conv2d(state_dict,
-                name_pth='features.3.conv',
-                name_tf='Mixed_3a/Branch_1/Conv2d_0a_3x3')
+    load_conv2d(
+        state_dict,
+        name_pth='features.3.conv',
+        name_tf='Mixed_3a/Branch_1/Conv2d_0a_3x3')
 
     load_mixed_4a_7a(state_dict, name_pth='features.4', name_tf='Mixed_4a')
 
-    load_conv2d(state_dict,
-                name_pth='features.5.conv',
-                name_tf='Mixed_5a/Branch_0/Conv2d_1a_3x3')
+    load_conv2d(
+        state_dict,
+        name_pth='features.5.conv',
+        name_tf='Mixed_5a/Branch_0/Conv2d_1a_3x3')
 
     load_mixed_5(state_dict, name_pth='features.6', name_tf='Mixed_5b')
     load_mixed_5(state_dict, name_pth='features.7', name_tf='Mixed_5c')
     load_mixed_5(state_dict, name_pth='features.8', name_tf='Mixed_5d')
     load_mixed_5(state_dict, name_pth='features.9', name_tf='Mixed_5e')
 
-    load_conv2d(state_dict,
-                name_pth='features.10.branch0',
-                name_tf='Mixed_6a/Branch_0/Conv2d_1a_3x3')
-    load_conv2d(state_dict,
-                name_pth='features.10.branch1.0',
-                name_tf='Mixed_6a/Branch_1/Conv2d_0a_1x1')
-    load_conv2d(state_dict,
-                name_pth='features.10.branch1.1',
-                name_tf='Mixed_6a/Branch_1/Conv2d_0b_3x3')
-    load_conv2d(state_dict,
-                name_pth='features.10.branch1.2',
-                name_tf='Mixed_6a/Branch_1/Conv2d_1a_3x3')
+    load_conv2d(
+        state_dict,
+        name_pth='features.10.branch0',
+        name_tf='Mixed_6a/Branch_0/Conv2d_1a_3x3')
+    load_conv2d(
+        state_dict,
+        name_pth='features.10.branch1.0',
+        name_tf='Mixed_6a/Branch_1/Conv2d_0a_1x1')
+    load_conv2d(
+        state_dict,
+        name_pth='features.10.branch1.1',
+        name_tf='Mixed_6a/Branch_1/Conv2d_0b_3x3')
+    load_conv2d(
+        state_dict,
+        name_pth='features.10.branch1.2',
+        name_tf='Mixed_6a/Branch_1/Conv2d_1a_3x3')
 
     load_mixed_6(state_dict, name_pth='features.11', name_tf='Mixed_6b')
     load_mixed_6(state_dict, name_pth='features.12', name_tf='Mixed_6c')

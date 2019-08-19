@@ -4,6 +4,7 @@ from sklearn.metrics import roc_auc_score
 
 
 class AUROC(Matrix):
+
     def __init__(self):
         super().__init__()
         self.pred = None

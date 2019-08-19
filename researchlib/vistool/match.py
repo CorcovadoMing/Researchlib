@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 
 class _Match:
+
     def __init__(self):
         pass
 
@@ -28,13 +29,7 @@ class _Match:
             dsum += i.distance
 
         if plot:
-            img3 = cv2.drawMatches(img1,
-                                   kp1,
-                                   img2,
-                                   kp2,
-                                   matches,
-                                   None,
-                                   flags=2)
+            img3 = cv2.drawMatches(img1, kp1, img2, kp2, matches, None, flags=2)
             plt.imshow(img3), plt.show()
 
         return dsum

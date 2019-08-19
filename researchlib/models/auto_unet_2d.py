@@ -55,10 +55,8 @@ def AutoUNet2d(input_dim,
         size_queue.append(out_dim)
         layers.append(
             MultiscaleOutput(
-                block.ConvBlock2d(in_dim,
-                                  out_dim,
-                                  pooling=False,
-                                  activator=activator)))
+                block.ConvBlock2d(
+                    in_dim, out_dim, pooling=False, activator=activator)))
 
     for i in range(block_num):
         in_dim = out_dim
@@ -69,74 +67,80 @@ def AutoUNet2d(input_dim,
             if attention:
                 layers.append(
                     MultiscaleOutput(
-                        block.AttentionBlock2d(_op_type,
-                                               _op_transpose_type,
-                                               in_dim,
-                                               out_dim,
-                                               norm=norm,
-                                               activator=activator,
-                                               pooling_type=down_pooling_type,
-                                               pooling_factor=pooling_factor,
-                                               preact=preact,
-                                               se=se)))
+                        block.AttentionBlock2d(
+                            _op_type,
+                            _op_transpose_type,
+                            in_dim,
+                            out_dim,
+                            norm=norm,
+                            activator=activator,
+                            pooling_type=down_pooling_type,
+                            pooling_factor=pooling_factor,
+                            preact=preact,
+                            se=se)))
             else:
                 layers.append(
                     MultiscaleOutput(
-                        _op_type(in_dim,
-                                 out_dim,
-                                 norm=norm,
-                                 activator=activator,
-                                 pooling_type=down_pooling_type,
-                                 pooling_factor=pooling_factor,
-                                 preact=preact,
-                                 se=se)))
+                        _op_type(
+                            in_dim,
+                            out_dim,
+                            norm=norm,
+                            activator=activator,
+                            pooling_type=down_pooling_type,
+                            pooling_factor=pooling_factor,
+                            preact=preact,
+                            se=se)))
             count = 0
             size_queue.append(out_dim)
         else:
             if attention:
                 layers.append(
-                    block.AttentionBlock2d(_op_type,
-                                           _op_transpose_type,
-                                           in_dim,
-                                           out_dim,
-                                           norm=norm,
-                                           activator=activator,
-                                           pooling=False,
-                                           preact=preact,
-                                           se=se))
+                    block.AttentionBlock2d(
+                        _op_type,
+                        _op_transpose_type,
+                        in_dim,
+                        out_dim,
+                        norm=norm,
+                        activator=activator,
+                        pooling=False,
+                        preact=preact,
+                        se=se))
             else:
                 layers.append(
-                    _op_type(in_dim,
-                             out_dim,
-                             norm=norm,
-                             activator=activator,
-                             pooling=False,
-                             preact=preact,
-                             se=se))
+                    _op_type(
+                        in_dim,
+                        out_dim,
+                        norm=norm,
+                        activator=activator,
+                        pooling=False,
+                        preact=preact,
+                        se=se))
         print(in_dim, out_dim)
 
     # Body
     print(in_dim, in_dim)
     if attention:
         layers.append(
-            block.AttentionBlock2d(_op_type,
-                                   _op_transpose_type,
-                                   in_dim,
-                                   in_dim,
-                                   norm=norm,
-                                   activator=activator,
-                                   pooling=False,
-                                   preact=preact,
-                                   se=se))
+            block.AttentionBlock2d(
+                _op_type,
+                _op_transpose_type,
+                in_dim,
+                in_dim,
+                norm=norm,
+                activator=activator,
+                pooling=False,
+                preact=preact,
+                se=se))
     else:
         layers.append(
-            _op_type(in_dim,
-                     in_dim,
-                     norm=norm,
-                     activator=activator,
-                     pooling=False,
-                     preact=preact,
-                     se=se))
+            _op_type(
+                in_dim,
+                in_dim,
+                norm=norm,
+                activator=activator,
+                pooling=False,
+                preact=preact,
+                se=se))
 
     downpath = builder(layers)
 
@@ -170,38 +174,41 @@ def AutoUNet2d(input_dim,
             else:
                 layers.append(
                     MultiscaleInput(
-                        _op_transpose_type(concat_in_dim,
-                                           out_dim,
-                                           norm=norm,
-                                           activator=activator,
-                                           pooling_type=up_pooling_type,
-                                           pooling_factor=pooling_factor,
-                                           preact=preact,
-                                           se=se)))
+                        _op_transpose_type(
+                            concat_in_dim,
+                            out_dim,
+                            norm=norm,
+                            activator=activator,
+                            pooling_type=up_pooling_type,
+                            pooling_factor=pooling_factor,
+                            preact=preact,
+                            se=se)))
             count = 0
             in_dim = out_dim
         else:
             print(in_dim, out_dim)
             if attention:
                 layers.append(
-                    block.AttentionTransposeBlock2d(_op_type,
-                                                    _op_transpose_type,
-                                                    in_dim,
-                                                    out_dim,
-                                                    norm=norm,
-                                                    activator=activator,
-                                                    pooling=False,
-                                                    preact=preact,
-                                                    se=se))
+                    block.AttentionTransposeBlock2d(
+                        _op_type,
+                        _op_transpose_type,
+                        in_dim,
+                        out_dim,
+                        norm=norm,
+                        activator=activator,
+                        pooling=False,
+                        preact=preact,
+                        se=se))
             else:
                 layers.append(
-                    _op_transpose_type(in_dim,
-                                       out_dim,
-                                       norm=norm,
-                                       activator=activator,
-                                       pooling=False,
-                                       preact=preact,
-                                       se=se))
+                    _op_transpose_type(
+                        in_dim,
+                        out_dim,
+                        norm=norm,
+                        activator=activator,
+                        pooling=False,
+                        preact=preact,
+                        se=se))
 
     # final
     in_dim = out_dim
@@ -210,25 +217,27 @@ def AutoUNet2d(input_dim,
     if attention:
         layers.append(
             MultiscaleInput(
-                block.AttentionBlock2d(_op_type,
-                                       _op_transpose_type,
-                                       concat_in_dim,
-                                       out_dim,
-                                       norm=norm,
-                                       activator=activator,
-                                       pooling=False,
-                                       preact=preact,
-                                       se=se)))
+                block.AttentionBlock2d(
+                    _op_type,
+                    _op_transpose_type,
+                    concat_in_dim,
+                    out_dim,
+                    norm=norm,
+                    activator=activator,
+                    pooling=False,
+                    preact=preact,
+                    se=se)))
     else:
         layers.append(
             MultiscaleInput(
-                _op_type(concat_in_dim,
-                         out_dim,
-                         norm=norm,
-                         activator=activator,
-                         pooling=False,
-                         preact=preact,
-                         se=se)))
+                _op_type(
+                    concat_in_dim,
+                    out_dim,
+                    norm=norm,
+                    activator=activator,
+                    pooling=False,
+                    preact=preact,
+                    se=se)))
 
     uppath = builder(layers)
 

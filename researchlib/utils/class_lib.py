@@ -1,4 +1,5 @@
 def _add_methods_from(*modules):
+
     def decorator(Class):
         for module in modules:
             for method in getattr(module, "__methods__"):
@@ -9,6 +10,7 @@ def _add_methods_from(*modules):
 
 
 def _register_method(methods):
+
     def register_method(method):
         methods.append(method)
         return method  # Unchanged

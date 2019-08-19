@@ -4,6 +4,7 @@ import numpy as np
 
 
 class AdaptiveRobustLoss(nn.Module):
+
     def __init__(self, num_dims):
         super().__init__()
         self.adaptive_loss = robust_loss_pytorch.adaptive.AdaptiveLossFunction(

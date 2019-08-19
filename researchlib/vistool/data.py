@@ -5,14 +5,17 @@ import numpy as np
 
 
 class _Image:
+
     def __init__(self):
         pass
 
     def _browser_ui(self, index=0):
         data = self.data[index].numpy()
         gray = False
-        if data.ndim < 3: gray = True
-        else: data = data.transpose(1, 2, 0)
+        if data.ndim < 3:
+            gray = True
+        else:
+            data = data.transpose(1, 2, 0)
 
         print('Mean', data.mean())
         print('Std', data.std())
@@ -42,11 +45,13 @@ class _Image:
         plt.show()
 
     def viewer(self, loader):
-        if type(loader) == tuple: loader = loader[0]
+        if type(loader) == tuple:
+            loader = loader[0]
         if type(loader.dataset) == torch.utils.data.dataset.TensorDataset:
             self.data = loader.dataset.tensors[0]
         else:
             self.data = loader.dataset.data
-        _ = interact(self._browser_ui,
-                     index=range(min(100, len(self.data))),
-                     continuous_update=False)
+        _ = interact(
+            self._browser_ui,
+            index=range(min(100, len(self.data))),
+            continuous_update=False)

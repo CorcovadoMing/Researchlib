@@ -5,6 +5,7 @@ import os
 
 
 class _ZarrDataset(utils.Dataset):
+
     def __init__(self, name):
         root = zarr.open(os.path.join(name, 'db.zarr'), mode='r')
         self.data = root.data
@@ -18,6 +19,7 @@ class _ZarrDataset(utils.Dataset):
 
 
 class _Loader:
+
     def __init__(self):
         pass
 
@@ -32,12 +34,13 @@ class _Loader:
                 drop_last=False):
 
         _dataset = _ZarrDataset(name)
-        _dataset_loader = utils.DataLoader(_dataset,
-                                           batch_size=batch_size,
-                                           shuffle=shuffle,
-                                           sampler=sampler,
-                                           batch_sampler=batch_sampler,
-                                           num_workers=num_workers,
-                                           pin_memory=False,
-                                           drop_last=drop_last)
+        _dataset_loader = utils.DataLoader(
+            _dataset,
+            batch_size=batch_size,
+            shuffle=shuffle,
+            sampler=sampler,
+            batch_sampler=batch_sampler,
+            num_workers=num_workers,
+            pin_memory=False,
+            drop_last=drop_last)
         return _dataset_loader, inputs

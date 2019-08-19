@@ -9,6 +9,7 @@ import hiddenlayer as hl
 
 
 class _Model:
+
     def __init__(self):
         pass
 
@@ -24,12 +25,13 @@ class _Model:
                 require grad (TODO: make optional)
         """
         param_map = {id(v): k for k, v in params.items()}
-        node_attr = dict(style='filled',
-                         shape='box',
-                         align='left',
-                         fontsize='12',
-                         ranksep='0.1',
-                         height='0.2')
+        node_attr = dict(
+            style='filled',
+            shape='box',
+            align='left',
+            fontsize='12',
+            ranksep='0.1',
+            height='0.2')
 
         dot = Digraph(node_attr=node_attr, graph_attr=dict(size="200,200"))
         seen = set()
@@ -40,17 +42,19 @@ class _Model:
         def add_nodes(var):
             if var not in seen:
                 if torch.is_tensor(var):
-                    dot.node(str(id(var)),
-                             size_to_str(var.size()),
-                             fillcolor='orange')
+                    dot.node(
+                        str(id(var)),
+                        size_to_str(var.size()),
+                        fillcolor='orange')
                 elif hasattr(var, 'variable'):
                     u = var.variable
                     node_name = '%s\n %s' % (param_map.get(
                         id(u)), size_to_str(u.size()))
                     dot.node(str(id(var)), node_name, fillcolor='lightblue')
                 else:
-                    dot.node(str(id(var)),
-                             str(type(var).__name__).replace('Backward', ''))
+                    dot.node(
+                        str(id(var)),
+                        str(type(var).__name__).replace('Backward', ''))
                 seen.add(var)
                 if hasattr(var, 'next_functions'):
                     for u in var.next_functions:

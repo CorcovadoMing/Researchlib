@@ -4,6 +4,7 @@ import torch.nn.functional as F
 
 
 class MarginLoss(nn.Module):
+
     def __init__(self, size_average=True, loss_lambda=0.5):
         '''
         Margin loss for digit existence

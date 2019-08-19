@@ -24,6 +24,7 @@ def pairwise(data):
 
 
 class VTSNE(nn.Module):
+
     def __init__(self, n_points, n_topics):
         super().__init__()
         self.n_points = n_points
@@ -114,6 +115,7 @@ def chunks(n, *args):
 
 
 class Wrapper():
+
     def __init__(self, model, cuda=True):
         self.cuda = cuda
         self.model = model
@@ -137,6 +139,7 @@ class Wrapper():
 
 
 class TSNE:
+
     def __init__(self, x):
         pij2d = preprocess(x)
         i, j = np.indices(pij2d.shape)

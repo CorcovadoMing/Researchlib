@@ -2,6 +2,7 @@ from ..template import template
 
 
 class PreprocessingDebugger(template.TorchPreprocessing):
+
     def __init__(self):
         super().__init__()
 

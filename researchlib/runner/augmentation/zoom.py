@@ -5,6 +5,7 @@ import cv2
 
 
 class Zoom(template.NumpyAugmentation):
+
     def __init__(self, prob=None, mag=None, include_y=False):
         super().__init__()
         self.include_y = include_y
@@ -28,8 +29,8 @@ class Zoom(template.NumpyAugmentation):
         else:
             padding_h = (new_img.shape[1] - img.shape[1]) // 2
             padding_w = (new_img.shape[2] - img.shape[2]) // 2
-            new_img[:, padding_h:padding_h +
-                    img.shape[1], padding_w:padding_w + img.shape[2]] = img
+            new_img[:, padding_h:padding_h + img.shape[1], padding_w:padding_w +
+                    img.shape[2]] = img
 
         return new_img
 

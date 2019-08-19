@@ -6,6 +6,7 @@ from .basic_components import get_down_sampling_fn, get_up_sampling_fn
 
 
 class _Mask(nn.Module):
+
     def __init__(self,
                  down_unit,
                  up_unit,
@@ -18,9 +19,8 @@ class _Mask(nn.Module):
                  preact=True,
                  se=False):
         super().__init__()
-        self.down_unit = down_unit(in_dim, out_dim, kenel_size, norm,
-                                   activator, True, 'maxpool', pooling_factor,
-                                   preact, se)
+        self.down_unit = down_unit(in_dim, out_dim, kenel_size, norm, activator,
+                                   True, 'maxpool', pooling_factor, preact, se)
         self.up_unit = up_unit(out_dim, out_dim, kenel_size, norm, activator,
                                True, 'interpolate', pooling_factor, preact, se)
         self.red = nn.Conv2d(in_dim, out_dim, 1)
@@ -34,6 +34,7 @@ class _Mask(nn.Module):
 
 
 class _AttentionBlock2d(nn.Module):
+
     def __init__(self,
                  down_unit,
                  up_unit,
@@ -50,8 +51,8 @@ class _AttentionBlock2d(nn.Module):
         self.trunk_branch = builder([
             down_unit(in_dim, out_dim, 3, norm, activator, False, pooling_type,
                       pooling_factor, preact, se),
-            down_unit(out_dim, out_dim, 3, norm, activator, False,
-                      pooling_type, pooling_factor, preact, se)
+            down_unit(out_dim, out_dim, 3, norm, activator, False, pooling_type,
+                      pooling_factor, preact, se)
         ])
         self.mask_branch = _Mask(down_unit, up_unit, in_dim, out_dim, 3, norm,
                                  activator, pooling_factor, preact, se)
@@ -64,11 +65,13 @@ class _AttentionBlock2d(nn.Module):
         mask = self.mask_branch(x)
         trunk = self.trunk_branch(x)
         x = (1 + mask) * trunk
-        if self.pooling: x = self.pooling_f(x)
+        if self.pooling:
+            x = self.pooling_f(x)
         return x
 
 
 class _AttentionTransposeBlock2d(_AttentionBlock2d):
+
     def __init__(self,
                  down_unit,
                  up_unit,
@@ -84,5 +87,5 @@ class _AttentionTransposeBlock2d(_AttentionBlock2d):
         super().__init__(down_unit, up_unit, in_dim, out_dim, norm, activator,
                          pooling, pooling_type, pooling_factor, preact, se)
         if pooling:
-            self.pooling_f = get_up_sampling_fn(out_dim, pooling_factor,
-                                                preact, pooling_type)
+            self.pooling_f = get_up_sampling_fn(out_dim, pooling_factor, preact,
+                                                pooling_type)

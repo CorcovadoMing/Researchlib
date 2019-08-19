@@ -7,6 +7,7 @@ import copy
 
 
 class _padding_shortcut(nn.Module):
+
     def __init__(self, in_dim, out_dim, pool_layer):
         super().__init__()
         self.in_dim = in_dim
@@ -30,6 +31,7 @@ class ResBlock(_Block):
         Deep Residual Learning for Image Recognition
         https://arxiv.org/abs/1512.03385
     '''
+
     def __postinit__(self):
         is_transpose = self._is_transpose()
 
@@ -38,8 +40,7 @@ class ResBlock(_Block):
         activator_layer = self._get_activator_layer(
             activator_type
         ) if not erased_activator and not self.preact else None
-        self.merge_layer = nn.Sequential(
-            *list(filter(None, [activator_layer])))
+        self.merge_layer = nn.Sequential(*list(filter(None, [activator_layer])))
 
         norm_type = self._get_param('norm_type', 'BatchNorm')
         preact_final_norm_layer = self._get_norm_layer(
@@ -58,33 +59,25 @@ class ResBlock(_Block):
                 'kernel_size', 3)
             first_custom_kwargs = self._get_custom_kwargs({
                 'kernel_size':
-                1,
+                    1,
                 'stride':
-                1,
+                    1,
                 'padding':
-                0,
+                    0,
                 'erased_activator':
-                True if self.preact and erased_activator else False
+                    True if self.preact and erased_activator else False
             })
             second_custom_kwargs = self._get_custom_kwargs({
-                'kenel_size':
-                kernel_size,
-                'stride':
-                stride,
-                'padding':
-                padding,
-                'erased_activator':
-                False
+                'kenel_size': kernel_size,
+                'stride': stride,
+                'padding': padding,
+                'erased_activator': False
             })
             third_custom_kwargs = self._get_custom_kwargs({
-                'kernel_size':
-                1,
-                'stride':
-                1,
-                'padding':
-                0,
-                'erased_activator':
-                True if not self.preact else False
+                'kernel_size': 1,
+                'stride': 1,
+                'padding': 0,
+                'erased_activator': True if not self.preact else False
             })
             conv_layers = [
                 ConvBlock(self.op, self.in_dim, hidden_size, False,
@@ -103,13 +96,13 @@ class ResBlock(_Block):
                 'kernel_size', 3)
             first_custom_kwargs = self._get_custom_kwargs({
                 'kenel_size':
-                kernel_size,
+                    kernel_size,
                 'stride':
-                stride,
+                    stride,
                 'padding':
-                padding,
+                    padding,
                 'erased_activator':
-                True if self.preact and erased_activator else False
+                    True if self.preact and erased_activator else False
             })
             second_custom_kwargs = self._get_custom_kwargs(
                 {'erased_activator': True if not self.preact else False})
@@ -132,10 +125,11 @@ class ResBlock(_Block):
                     'kenel_size': shortcut_kernel_size,
                     'stride': stride
                 })
-                reduction_op = self.op(self.in_dim,
-                                       self.out_dim,
-                                       kernel_size=shortcut_kernel_size,
-                                       stride=stride)
+                reduction_op = self.op(
+                    self.in_dim,
+                    self.out_dim,
+                    kernel_size=shortcut_kernel_size,
+                    stride=stride)
             else:
                 reduction_op = None
         elif shortcut_type == 'padding':
@@ -152,8 +146,7 @@ class ResBlock(_Block):
         self.se = self._get_param('se', True)
         self.se_branch = nn.Sequential(
             layer.__dict__['AdaptiveMaxPool' + self._get_dim_type()](1),
-            self.op(self.out_dim, self.out_dim // 16,
-                    kernel_size=1), nn.ReLU(),
+            self.op(self.out_dim, self.out_dim // 16, kernel_size=1), nn.ReLU(),
             self.op(self.out_dim // 16, self.out_dim, kernel_size=1),
             nn.Sigmoid())
 
@@ -162,15 +155,16 @@ class ResBlock(_Block):
         if self.sd:
             self.block_idx = self._get_param('id', required=True)
             self.block_num = self._get_param('total_blocks', required=True)
-            self.alpha_range = self._get_param('alpha_range',
-                                               init_value=[-1, 1])
+            self.alpha_range = self._get_param(
+                'alpha_range', init_value=[-1, 1])
             self.beta_range = self._get_param('beta_range', init_value=[0, 1])
-            self.shakedrop = layer.ShakeDrop(self.block_idx,
-                                             self.block_num,
-                                             p=0.5,
-                                             alpha_range=self.alpha_range,
-                                             beta_range=self.beta_range,
-                                             p_L=0.5)
+            self.shakedrop = layer.ShakeDrop(
+                self.block_idx,
+                self.block_num,
+                p=0.5,
+                alpha_range=self.alpha_range,
+                beta_range=self.beta_range,
+                p_L=0.5)
 
     def forward(self, x):
         _x = self.conv(x)

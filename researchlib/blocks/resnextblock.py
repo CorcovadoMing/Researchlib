@@ -8,6 +8,7 @@ from .resblock import _ResBlock2d
 
 
 class _ResNextBlock2d(_ResBlock2d):
+
     def __init__(self,
                  in_dim,
                  out_dim,
@@ -22,47 +23,54 @@ class _ResNextBlock2d(_ResBlock2d):
                          pooling_type, pooling_factor, preact, se)
         groups = max(int(out_dim / 4), 64)
         self.pooling = pooling
-        if self.pooling: _pooling_factor = pooling_factor
-        else: _pooling_factor = 1
+        if self.pooling:
+            _pooling_factor = pooling_factor
+        else:
+            _pooling_factor = 1
         self.branch = builder([
-            _ConvBlock2d(in_dim,
-                         out_dim,
-                         kernel_size=1,
-                         norm=norm,
-                         activator=activator,
-                         pooling=False,
-                         preact=preact),
-            _ConvBlock2d(out_dim,
-                         out_dim,
-                         kernel_size=3,
-                         norm=norm,
-                         activator=activator,
-                         pooling=False,
-                         preact=preact,
-                         stride=_pooling_factor,
-                         groups=groups),
-            _ConvBlock2d(out_dim,
-                         out_dim,
-                         kernel_size=1,
-                         norm=norm,
-                         activator=activator,
-                         pooling=False,
-                         preact=preact),
-            _ConvBlock2d(out_dim,
-                         out_dim,
-                         kernel_size=3,
-                         norm=norm,
-                         activator=activator,
-                         pooling=False,
-                         preact=preact,
-                         groups=groups),
-            _ConvBlock2d(out_dim,
-                         out_dim,
-                         kernel_size=1,
-                         norm=norm,
-                         activator=activator,
-                         pooling=False,
-                         preact=preact),
+            _ConvBlock2d(
+                in_dim,
+                out_dim,
+                kernel_size=1,
+                norm=norm,
+                activator=activator,
+                pooling=False,
+                preact=preact),
+            _ConvBlock2d(
+                out_dim,
+                out_dim,
+                kernel_size=3,
+                norm=norm,
+                activator=activator,
+                pooling=False,
+                preact=preact,
+                stride=_pooling_factor,
+                groups=groups),
+            _ConvBlock2d(
+                out_dim,
+                out_dim,
+                kernel_size=1,
+                norm=norm,
+                activator=activator,
+                pooling=False,
+                preact=preact),
+            _ConvBlock2d(
+                out_dim,
+                out_dim,
+                kernel_size=3,
+                norm=norm,
+                activator=activator,
+                pooling=False,
+                preact=preact,
+                groups=groups),
+            _ConvBlock2d(
+                out_dim,
+                out_dim,
+                kernel_size=1,
+                norm=norm,
+                activator=activator,
+                pooling=False,
+                preact=preact),
         ])
 
 
@@ -106,6 +114,7 @@ class _ResNextBlock2d(_ResBlock2d):
 
 
 class _ResNextTransposeBlock2d(_ResNextBlock2d):
+
     def __init__(self,
                  in_dim,
                  out_dim,
@@ -119,5 +128,5 @@ class _ResNextTransposeBlock2d(_ResNextBlock2d):
         super().__init__(in_dim, out_dim, norm, activator, pooling,
                          pooling_type, pooling_factor, preact, se)
         if pooling:
-            self.pooling_f = get_up_sampling_fn(out_dim, pooling_factor,
-                                                preact, pooling_type)
+            self.pooling_f = get_up_sampling_fn(out_dim, pooling_factor, preact,
+                                                pooling_type)

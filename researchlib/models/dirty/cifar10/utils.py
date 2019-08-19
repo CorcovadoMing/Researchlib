@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
+
     def __init__(self):
         self.reset()
 
@@ -25,6 +26,7 @@ class AverageMeter(object):
 
 class RecorderMeter(object):
     """Computes and stores the minimum loss value and its epoch index"""
+
     def __init__(self, total_epoch):
         self.reset(total_epoch)
 
@@ -51,9 +53,12 @@ class RecorderMeter(object):
         return self.max_accuracy(False) == val_acc
 
     def max_accuracy(self, istrain):
-        if self.current_epoch <= 0: return 0
-        if istrain: return self.epoch_accuracy[:self.current_epoch, 0].max()
-        else: return self.epoch_accuracy[:self.current_epoch, 1].max()
+        if self.current_epoch <= 0:
+            return 0
+        if istrain:
+            return self.epoch_accuracy[:self.current_epoch, 0].max()
+        else:
+            return self.epoch_accuracy[:self.current_epoch, 1].max()
 
     def plot_curve(self, save_path):
         title = 'the accuracy/loss curve of train/val'
@@ -79,39 +84,43 @@ class RecorderMeter(object):
         plt.ylabel('accuracy', fontsize=16)
 
         y_axis[:] = self.epoch_accuracy[:, 0]
-        plt.plot(x_axis,
-                 y_axis,
-                 color='g',
-                 linestyle='-',
-                 label='train-accuracy',
-                 lw=2)
+        plt.plot(
+            x_axis,
+            y_axis,
+            color='g',
+            linestyle='-',
+            label='train-accuracy',
+            lw=2)
         plt.legend(loc=4, fontsize=legend_fontsize)
 
         y_axis[:] = self.epoch_accuracy[:, 1]
-        plt.plot(x_axis,
-                 y_axis,
-                 color='y',
-                 linestyle='-',
-                 label='valid-accuracy',
-                 lw=2)
+        plt.plot(
+            x_axis,
+            y_axis,
+            color='y',
+            linestyle='-',
+            label='valid-accuracy',
+            lw=2)
         plt.legend(loc=4, fontsize=legend_fontsize)
 
         y_axis[:] = self.epoch_losses[:, 0]
-        plt.plot(x_axis,
-                 y_axis * 50,
-                 color='g',
-                 linestyle=':',
-                 label='train-loss-x50',
-                 lw=2)
+        plt.plot(
+            x_axis,
+            y_axis * 50,
+            color='g',
+            linestyle=':',
+            label='train-loss-x50',
+            lw=2)
         plt.legend(loc=4, fontsize=legend_fontsize)
 
         y_axis[:] = self.epoch_losses[:, 1]
-        plt.plot(x_axis,
-                 y_axis * 50,
-                 color='y',
-                 linestyle=':',
-                 label='valid-loss-x50',
-                 lw=2)
+        plt.plot(
+            x_axis,
+            y_axis * 50,
+            color='y',
+            linestyle=':',
+            label='valid-loss-x50',
+            lw=2)
         plt.legend(loc=4, fontsize=legend_fontsize)
 
         if save_path is not None:
@@ -136,6 +145,5 @@ def convert_secs2time(epoch_time):
 
 def time_file_str():
     ISOTIMEFORMAT = '%Y-%m-%d'
-    string = '{}'.format(time.strftime(ISOTIMEFORMAT,
-                                       time.gmtime(time.time())))
+    string = '{}'.format(time.strftime(ISOTIMEFORMAT, time.gmtime(time.time())))
     return string + '-{}'.format(random.randint(1, 10000))

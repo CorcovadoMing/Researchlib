@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 
 class GymEnv(Env):
+
     def __init__(self, name):
         super().__init__()
         self.env = gym.make(name)

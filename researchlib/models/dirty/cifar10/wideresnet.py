@@ -8,12 +8,8 @@ from ...layers import *
 
 
 def conv_2d(ni, nf, ks, stride):
-    return nn.Conv2d(ni,
-                     nf,
-                     kernel_size=ks,
-                     stride=stride,
-                     padding=ks // 2,
-                     bias=False)
+    return nn.Conv2d(
+        ni, nf, kernel_size=ks, stride=stride, padding=ks // 2, bias=False)
 
 
 def bn(ni, init_zero=False):
@@ -34,6 +30,7 @@ def noop(x):
 
 
 class BasicBlock(nn.Module):
+
     def __init__(self, ni, nf, stride, drop_p=0.0):
         super().__init__()
         self.bn = nn.BatchNorm2d(ni)
@@ -46,7 +43,8 @@ class BasicBlock(nn.Module):
         x2 = F.relu(self.bn(x), inplace=True)
         r = self.shortcut(x2)
         x = self.conv1(x2)
-        if self.drop: x = self.drop(x)
+        if self.drop:
+            x = self.drop(x)
         x = self.conv2(x) * 0.2
         return x.add_(r)
 
@@ -59,12 +57,8 @@ def _make_group(N, ni, nf, block, stride, drop_p):
 
 
 class WideResNet(nn.Module):
-    def __init__(self,
-                 num_groups,
-                 N,
-                 num_classes,
-                 k=1,
-                 drop_p=0.0,
+
+    def __init__(self, num_groups, N, num_classes, k=1, drop_p=0.0,
                  start_nf=16):
         super().__init__()
         n_channels = [start_nf]
