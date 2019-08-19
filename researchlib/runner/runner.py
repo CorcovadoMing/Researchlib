@@ -19,8 +19,6 @@ import torchcontrib
 import os
 import copy
 import pandas as pd
-import datetime as dt
-from pytz import timezone
 from adabound import AdaBound
 from .larc import LARC
 
@@ -88,9 +86,8 @@ class Runner:
         self.fp16 = fp16
 
         # for benchmark date_id
-        self._date_id = dt.datetime.now(
-            timezone('Asia/Taipei')).strftime('%Y/%m/%d %H:%M:%S')
         self.bencher = benchmark()
+        self._date_id = self.bencher.get_date()
 
         self.default_callbacks = []
 

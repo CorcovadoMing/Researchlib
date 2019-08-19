@@ -53,12 +53,19 @@ class Res2Block(_Block):
         if total_blocks > 15:
             hidden_size = self.out_dim // 4
             stride = self._get_param('pool_factor', 2) if self.do_pool else 1
-            padding = 0 if is_transpose and self.do_pool else self._get_param('padding', 1)
-            kernel_size = 2 if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
-            first_custom_kwargs = self._get_custom_kwargs({'kernel_size': 1,
-                'stride': 1,
-                'padding': 0,
-                'erased_activator': True if self.preact and erased_activator else False
+            padding = 0 if is_transpose and self.do_pool else self._get_param(
+                'padding', 1)
+            kernel_size = 2 if is_transpose and self.do_pool else self._get_param(
+                'kernel_size', 3)
+            first_custom_kwargs = self._get_custom_kwargs({
+                'kernel_size':
+                    1,
+                'stride':
+                    1,
+                'padding':
+                    0,
+                'erased_activator':
+                    True if self.preact and erased_activator else False
             })
             second_custom_kwargs = self._get_custom_kwargs({
                 'kenel_size': kernel_size,
@@ -83,15 +90,22 @@ class Res2Block(_Block):
             ]
         else:
             stride = self._get_param('pool_factor', 2) if self.do_pool else 1
-            padding = 0 if is_transpose and self.do_pool else self._get_param('padding', 1)
-            kernel_size = 2 if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
+            padding = 0 if is_transpose and self.do_pool else self._get_param(
+                'padding', 1)
+            kernel_size = 2 if is_transpose and self.do_pool else self._get_param(
+                'kernel_size', 3)
             first_custom_kwargs = self._get_custom_kwargs({
-                'kenel_size': kernel_size,
-                'stride': stride,
-                'padding': padding,
-                'erased_activator': True if self.preact and erased_activator else False
+                'kenel_size':
+                    kernel_size,
+                'stride':
+                    stride,
+                'padding':
+                    padding,
+                'erased_activator':
+                    True if self.preact and erased_activator else False
             })
-            second_custom_kwargs = self._get_custom_kwargs({'erased_activator': True if not self.preact else False})
+            second_custom_kwargs = self._get_custom_kwargs(
+                {'erased_activator': True if not self.preact else False})
             conv_layers = [
                 ConvBlock(self.op, self.in_dim, self.out_dim, False,
                           self.do_norm, self.preact, **first_custom_kwargs),
