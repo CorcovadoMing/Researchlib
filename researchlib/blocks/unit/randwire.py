@@ -9,17 +9,23 @@ import torch.nn.utils.spectral_norm as sn
 import collections
 from .conv import _conv
 
-__NodeTemplate__ = collections.namedtuple('__NodeTemplate__', ['id', 'inputs', 'type'])
+__NodeTemplate__ = collections.namedtuple('__NodeTemplate__',
+                                          ['id', 'inputs', 'type'])
+
 
 class _randwire(_Block):
+
     def __postinit__(self):
         # Parameters
-        pool_factor = self._get_param('pool_factor', 2) if self.do_pool else self._get_param('stride', 1)
+        pool_factor = self._get_param(
+            'pool_factor', 2) if self.do_pool else self._get_param('stride', 1)
         conv_kwargs = self._get_conv_kwargs()
-        
+
         # Layers
         if conv_kwargs['kernel_size'] == 1:
-            self.layers = _conv(self.op, self.in_dim, self.out_dim, self.do_pool, self.do_norm, self.preact, **conv_kwargs)
+            self.layers = _conv(self.op, self.in_dim, self.out_dim,
+                                self.do_pool, self.do_norm, self.preact,
+                                **conv_kwargs)
         else:
             self.layers = _stage_block(self.in_dim, self.out_dim, pool_factor)
 
@@ -46,13 +52,16 @@ def _get_graph_info(graph):
 
 
 def _build_graph(nodes):
-    return networkx.generators.random_graphs.connected_watts_strogatz_graph(nodes, 4, 0.75, tries=200, seed=None)
+    return networkx.generators.random_graphs.connected_watts_strogatz_graph(
+        nodes, 4, 0.75, tries=200, seed=None)
 
 
 class _depthwise_separable_conv_3x3(nn.Module):
+
     def __init__(self, nin, nout, stride):
         super().__init__()
-        self.depthwise = nn.Conv2d(nin, nin, kernel_size=3, stride=stride, padding=1, groups=nin)
+        self.depthwise = nn.Conv2d(
+            nin, nin, kernel_size=3, stride=stride, padding=1, groups=nin)
         self.pointwise = nn.Conv2d(nin, nout, kernel_size=1)
 
     def forward(self, x):
@@ -62,6 +71,7 @@ class _depthwise_separable_conv_3x3(nn.Module):
 
 
 class _triplet_unit(nn.Module):
+
     def __init__(self, inplanes, outplanes, stride=1):
         super().__init__()
         self.relu = nn.ReLU()
@@ -76,6 +86,7 @@ class _triplet_unit(nn.Module):
 
 
 class _node_op(nn.Module):
+
     def __init__(self, node, in_dim, out_dim, stride):
         super().__init__()
         self.input_nums = len(node.inputs)
@@ -99,11 +110,12 @@ class _node_op(nn.Module):
 
 
 class _stage_block(nn.Module):
+
     def __init__(self, inplanes, outplanes, stride):
         super().__init__()
         graph = _build_graph(16)
         self.nodes, self.input_nodes, self.output_nodes = _get_graph_info(graph)
-        self.nodeop  = nn.ModuleList()
+        self.nodeop = nn.ModuleList()
         for node in self.nodes:
             self.nodeop.append(_node_op(node, inplanes, outplanes, stride))
 
@@ -113,7 +125,8 @@ class _stage_block(nn.Module):
             results[id] = self.nodeop[id](x)
         for id, node in enumerate(self.nodes):
             if id not in self.input_nodes:
-                results[id] = self.nodeop[id](*[results[_id] for _id in node.inputs])
+                results[id] = self.nodeop[id](
+                    *[results[_id] for _id in node.inputs])
         result = results[self.output_nodes[0]]
         for idx, id in enumerate(self.output_nodes):
             if idx > 0:
