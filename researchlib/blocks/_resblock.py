@@ -141,37 +141,21 @@ class ResBlock(_Block):
                 pool_type, pool_factor) if self.do_pool else None
             reduction_op = _padding_shortcut(self.in_dim, self.out_dim,
                                              pool_layer)
+            
         self.shortcut = nn.Sequential(*list(filter(None, [reduction_op])))
 
-        # Se
         self.se = self._get_param('se', True)
-        self.se_branch = nn.Sequential(
-            layer.__dict__['AdaptiveMaxPool' + self._get_dim_type()](1),
-            self.op(self.out_dim, self.out_dim // 16, kernel_size=1), nn.ReLU(),
-            self.op(self.out_dim // 16, self.out_dim, kernel_size=1),
-            nn.Sigmoid())
-
-        # shakedrop (sd)
-        self.sd = self._get_param('sd', False)
-        if self.sd:
-            self.block_idx = self._get_param('id', required=True)
-            self.block_num = self._get_param('total_blocks', required=True)
-            self.alpha_range = self._get_param(
-                'alpha_range', init_value=[-1, 1])
-            self.beta_range = self._get_param('beta_range', init_value=[0, 1])
-            self.shakedrop = layer.ShakeDrop(
-                self.block_idx,
-                self.block_num,
-                p=0.5,
-                alpha_range=self.alpha_range,
-                beta_range=self.beta_range,
-                p_L=0.5)
+        if self.se:
+            self.se_branch = self._get_se_branch()
+        self.shakedrop = self._get_param('shakeDrop', False)
+        if self.shakedrop:
+            self.shakedrop_branch = self._get_shake_drop_branch()
 
     def forward(self, x):
         _x = self.conv(x)
         if self.se:
             _x = _x * self.se_branch(_x)
-        if self.sd:
-            _x = self.shakedrop(_x)
+        if self.shakedrop:
+            _x = self.shakedrop_branch(_x)
         x = self.shortcut(x)
         return self.merge_layer(x + _x)
