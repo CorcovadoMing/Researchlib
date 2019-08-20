@@ -6,6 +6,7 @@ from ..loss import loss_mapping, loss_ensemble
 from .history import History
 from ..models import GANModel
 from .adafactor import Adafactor
+from .radam import PlainRAdam, RAdam
 from .validate import validate_fn
 from .preprocessing import PreprocessingDebugger
 from .export import _Export
@@ -177,10 +178,16 @@ class Runner:
             if optimizer == 'adam':
                 optimizer = Adam(
                     list(model.parameters()) + loss_params, betas=(0.9, 0.999))
+            elif optimizer == 'radam-plain':
+                optimizer = PlainRAdam(
+                    list(model.parameters()) + loss_params, betas=(0.9, 0.999))
+            elif optimizer == 'radam':
+                optimizer = RAdam(
+                    list(model.parameters()) + loss_params, betas=(0.9, 0.999))
             elif optimizer == 'adamw':
                 optimizer = AdamW(
                     list(model.parameters()) + loss_params, betas=(0.9, 0.999))
-            elif optimizer == 'adam_gan':
+            elif optimizer == 'adam-gan':
                 optimizer = Adam(
                     list(model.parameters()) + loss_params, betas=(0., 0.999))
             elif optimizer == 'sgd':
