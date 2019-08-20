@@ -5,9 +5,7 @@ from ..layers import layer
 from ..blocks import block
 from .builder import builder
 
-from ..blocks._convblock import ConvBlock as cb
 from ..blocks._resblock import ResBlock as rb
-from ..blocks._res2block import Res2Block as r2b
 
 # =============================================================
 
@@ -21,12 +19,8 @@ def _get_param(kwargs, key, init_value):
 
 
 def _get_op_type(type):
-    if type == 'vgg':
-        _op_type = cb
-    elif type == 'resblock':
+    if type == 'residual':
         _op_type = rb
-    elif type == 'res2block':
-        _op_type = r2b
     return _op_type
 
 
@@ -48,6 +42,7 @@ def _filter_policy(base_dim, block_group, cur_dim, total_blocks, policy):
 
 
 def AutoConvNet(op,
+                unit,
                 input_dim,
                 total_blocks,
                 type='vgg',
@@ -59,8 +54,7 @@ def AutoConvNet(op,
                 do_norm=True,
                 **kwargs):
 
-    Runner.__model_settings__[
-        f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
+    Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
 
     _op_type = _get_op_type(type)
     base_dim, max_dim = filters
@@ -73,9 +67,7 @@ def AutoConvNet(op,
 
     if preact:
         print(in_dim, out_dim)
-        layers.append(layer.__dict__['Conv' + _get_dim_type(op)](
-            in_dim, out_dim, 3, 1,
-            1))  # Preact first layer is simply a hardcore transform
+        layers.append(layer.__dict__['Conv' + _get_dim_type(op)](in_dim, out_dim, 3, 1, 1))  # Preact first layer is simply a hardcore transform
         in_dim = out_dim
 
     for i in range(total_blocks):
@@ -104,6 +96,7 @@ def AutoConvNet(op,
                 preact=preact,
                 id=id,
                 total_blocks=total_blocks,
+                unit=unit,
                 **kwargs))
 
         in_dim = out_dim

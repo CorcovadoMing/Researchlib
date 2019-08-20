@@ -2,7 +2,7 @@ from .template.block import _Block
 from ..layers import layer
 from torch import nn
 import torch
-from ._convblock import ConvBlock
+from .unit import unit
 import copy
 
 
@@ -34,7 +34,8 @@ class ResBlock(_Block):
 
     def __postinit__(self):
         is_transpose = self._is_transpose()
-
+        
+        unit_fn = self._get_param('unit', unit.conv)
         erased_activator = self._get_param('erased_activator', False)
         activator_type = self._get_param('actvator_type', 'ReLU')
         activator_layer = self._get_activator_layer(
@@ -47,7 +48,7 @@ class ResBlock(_Block):
             norm_type, self.out_dim) if self.do_norm and self.preact else None
 
         # Layers
-        total_blocks = self._get_param('total_blocks', required=True)
+        total_blocks = self._get_param('total_blocks', 1)
         # 16-resblocks equals to resnet 34, however, replace each 2-conv block with 3-conv block results in boost performance
         # Here replace the block design if using more than 15 resblocks, which means we don't have resnet-34, use resnet-50 instead in same total blocks.
         if total_blocks > 15:
@@ -73,11 +74,11 @@ class ResBlock(_Block):
                 'erased_activator': True if not self.preact else False
             })
             conv_layers = [
-                ConvBlock(self.op, self.in_dim, hidden_size, False,
+                unit_fn(self.op, self.in_dim, hidden_size, False,
                           self.do_norm, self.preact, **first_custom_kwargs),
-                ConvBlock(self.op, hidden_size, hidden_size, False,
+                unit_fn(self.op, hidden_size, hidden_size, False,
                           self.do_norm, self.preact, **second_custom_kwargs),
-                ConvBlock(self.op, hidden_size, self.out_dim, False,
+                unit_fn(self.op, hidden_size, self.out_dim, False,
                           self.do_norm, self.preact, **third_custom_kwargs),
                 preact_final_norm_layer
             ]
@@ -93,9 +94,9 @@ class ResBlock(_Block):
             })
             second_custom_kwargs = self._get_custom_kwargs({'erased_activator': True if not self.preact else False})
             conv_layers = [
-                ConvBlock(self.op, self.in_dim, self.out_dim, False,
+                unit_fn(self.op, self.in_dim, self.out_dim, False,
                           self.do_norm, self.preact, **first_custom_kwargs),
-                ConvBlock(self.op, self.out_dim, self.out_dim, False,
+                unit_fn(self.op, self.out_dim, self.out_dim, False,
                           self.do_norm, self.preact, **second_custom_kwargs),
                 preact_final_norm_layer
             ]

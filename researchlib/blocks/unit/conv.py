@@ -1,10 +1,10 @@
-from .template.block import _Block
-from ..layers import layer
+from ..template.block import _Block
+from ...layers import layer
 from torch import nn
 import torch.nn.utils.spectral_norm as sn
 
 
-class ConvBlock(_Block):
+class _conv(_Block):
     '''
         EraseReLU: A Simple Way to Ease the Training of Deep Convolution Neural Networks
         https://arxiv.org/pdf/1709.07634
