@@ -1,4 +1,7 @@
 import os
+import json
+import datetime as dt
+from pytz import timezone
 import pygsheets
 
 from .class_lib import _register_method
@@ -10,6 +13,8 @@ client_secret_path = os.path.join(
     module_path,
     '../.credential/client_secret_855251407115-slk3rv4qfi6b6narp2hapov9lv6iipjt.apps.googleusercontent.com.json'
 )
+sheetnames2ids_path = os.path.join(module_path,
+                                   '../.credential/sheetnames2ids.json')
 
 
 class Singleton:
@@ -30,55 +35,116 @@ class benchmark(object):
     
     Attrs:
         self.gc (object): google api controller
-        self.categories (list): list of all benchmarks
+        self.sheetnames2ids (dict): a mappting table mapping sheets' names to ids.
+            (safer to use id than name because google drive allow duplicate names)
         self._team_id (str): (private), team folder id, please don't change
         self._folder_id (str): (private), team folder id, please don't change
         self._client_secret_path (str): (private), path to Google API credentials, please don't change
     """
 
-    def __init__(self, client_secret_path=client_secret_path):
+    def __init__(self,
+                 client_secret_path=client_secret_path,
+                 sheetnames2ids_path=sheetnames2ids_path):
+        ## 1. benchmark settings ##
         self._client_secret_path = client_secret_path
-        self.categories = [
-            'Classification', 'Segmentation', 'GAN', 'AnomalyDetection'
-        ]
+        self.sheetnames2ids_path = sheetnames2ids_path
         self.gc = pygsheets.authorize(client_secret=self._client_secret_path)
-        # open enable TeamDrive support
         self._team_id = '0ALUbsGKbWAJaUk9PVA'
         self._folder_id = '1ISC98c-oCxi-O-6cIOnQNSEhdcSXWk9K'
-        self.gc.drive.enable_team_drive(self._team_id)
+        self._backup_folder_id = '1nzOMdps9s-nD_YNKCcCwW79mhIdg_AM2'
+        self._back_up_postfix = '_backup'
+        self.gc.drive.enable_team_drive(self._team_id)  # enable TeamDrive
         self._worksheet_name = 'default'
         self._primary_keys = [
             'time_id',
         ]
+        self._date_format = '%Y/%m/%d %H:%M:%S'
+        self._date_timezone = 'Asia/Taipei'
+        # benchmark sheets
+        self.sheetnames = [
+            'Classification', 'Segmentation', 'GAN', 'AnomalyDetection'
+        ]
 
-    def verify_name(self, name):
-        if name not in self.categories:
+        ## 2. sheets settings ##
+        try:
+            with open(self.sheetnames2ids_path, 'r') as f:
+                self.sheetnames2ids = json.load(f)
+        except:
+            print('creating sheetnames2ids.json(first time only), save at:\n{}'
+                  .format(self.sheetnames2ids_path))
+            self.sheetnames2ids = {}
+            for sheetname in self.sheetnames:
+                self.sheetnames2ids[sheetname] = ''
+            self.genesis(self.sheetnames2ids.keys())
+            with open(self.sheetnames2ids_path, 'w') as f:
+                json.dump(self.sheetnames2ids, f)
+
+        ## 3. others ##
+        try:
+            self.daily_backup()
+        except:
+            print('Daily backup failed!!')
+
+    def get_date(self):
+        return dt.datetime.now(timezone(self._date_timezone)).strftime(
+            self._date_format)
+
+    def daily_backup(self):
+        for sheetname in self.sheetnames2ids:
+            try:
+                sh = self.gc.open(sheetname + self._back_up_postfix)
+                wks = sh.worksheet_by_title(self._worksheet_name)
+                time_id_list = wks.get_col(
+                    col=1, returnas='matrix', include_tailing_empty=False)
+                if len(time_id_list) > 0:
+                    time_id_list = time_id_list[1:]  # exclude header
+                    last_modified_date = dt.datetime.strptime(
+                        time_id_list[0], self._date_format)
+                    if dt.datetime.now(timezone(self._date_timezone)).date(
+                    ) > last_modified_date.date():
+                        self.backup(sheetname)
+                    else:
+                        print('{} benchmark is backed up to today.'.format(
+                            sheetname))
+            except:
+                self.backup(sheetname)
+
+    def backup(self, sheetname):
+        print('backing up {} benchmark'.format(sheetname))
+        self.gc.drive.copy_file(
+            file_id=self.sheetnames2ids[sheetname],
+            title=sheetname + self._back_up_postfix,
+            folder=self._backup_folder_id)
+
+    def verify_sheetname(self, sheetname):
+        if sheetname not in self.sheetnames2ids:
             raise ValueError('{} is not in the {}'.format(
-                name, self.categories))
+                sheetname, self.sheetnames2ids.keys()))
 
-    def genesis(self, categories):
+    def genesis(self, sheetnames):
         """ delete sheet if exist, then create new one.  
         Args:
-            categories (list): spreadsheets' name
+            sheetnames (list): spreadsheets' name
         """
-        for cat in categories:
-            self.verify_name(cat)
+        for sheetname in sheetnames:
+            self.verify_sheetname(sheetname)
 
         ans = input(
-            'Are you sure reset these benchmarks: {}? [y/n]'.format(categories))
+            'Are you sure reset these benchmarks: {}? [y/n]'.format(sheetnames))
         if ans in ['y', 'Y']:
-            for cat in categories:
+            for sheetname in sheetnames:
                 # delete if not exist
                 try:
-                    sh = self.gc.open(cat)
+                    sh = self.gc.open(sheetname)
                     sh.delete()
-                    print('Delete {}'.format(cat))
+                    print('Delete {}'.format(sheetname))
                 except:
                     print(
                         'Failed to delete {}, because it is not exist.'.format(
-                            cat))
+                            sheetname))
                 # create new
-                sh = self.gc.create(cat, folder=self._folder_id)
+                sh = self.gc.create(sheetname, folder=self._folder_id)
+                self.sheetnames2ids[sheetname] = sh.id
                 wks = sh.worksheet('index', 0)
                 wks.title = self._worksheet_name
                 wks.rows = 2
@@ -86,18 +152,18 @@ class benchmark(object):
                 #                 wks = sh.add_worksheet(self._worksheet_name, rows=1, cols=2)
                 wks.frozen_rows = 1
                 wks.frozen_cols = 1
-                print('Create {}'.format(cat))
+                print('Create {}'.format(sheetname))
         else:
             print('Okay, no one get hurt.')
 
-    def update_from_runner(self, category, time_id, description):
-        """ update row(description) by primary key(time_id) in spreadsheet(category)
+    def update_from_runner(self, sheetname, time_id, description):
+        """ update row(description) by primary key(time_id) in spreadsheet(sheetname)
         Args:
             time_id (str): primary key, use the creation timestamp of the runner.
-            category (str): name of the google spreadsheet
+            sheetname (str): sheetname of the google spreadsheet
             description (dict): config of runner
         """
-        sh = self.gc.open(category)
+        sh = self.gc.open_by_key(self.sheetnames2ids[sheetname])
         wks = sh.worksheet_by_title(self._worksheet_name)
         worksheet_cols = wks.get_row(
             row=1, returnas='matrix', include_tailing_empty=False)
