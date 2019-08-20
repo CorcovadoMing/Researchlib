@@ -51,7 +51,7 @@ class _res2(_Block):
 
         # Layers
         if conv_kwargs['kernel_size'] == 1:
-            conv_layer = self.op(self.in_dim, self.out_dim, **conv_kwargs)
+            conv_layer = _conv(self.op, self.in_dim, self.out_dim, self.do_pool, self.do_norm, self.preact, **conv_kwargs)
         else:
             scales = self._get_param('scales', 4)
             test_case = torch.chunk(torch.randn(self.in_dim), scales)

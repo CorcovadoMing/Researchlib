@@ -7,6 +7,7 @@ import os
 import networkx
 import torch.nn.utils.spectral_norm as sn
 import collections
+from .conv import _conv
 
 __NodeTemplate__ = collections.namedtuple('__NodeTemplate__', ['id', 'inputs', 'type'])
 
@@ -14,9 +15,13 @@ class _randwire(_Block):
     def __postinit__(self):
         # Parameters
         pool_factor = self._get_param('pool_factor', 2) if self.do_pool else self._get_param('stride', 1)
+        conv_kwargs = self._get_conv_kwargs()
         
-        # Layers        
-        self.layers = _stage_block(self.in_dim, self.out_dim, pool_factor)
+        # Layers
+        if conv_kwargs['kernel_size'] == 1:
+            self.layers = _conv(self.op, self.in_dim, self.out_dim, self.do_pool, self.do_norm, self.preact, **conv_kwargs)
+        else:
+            self.layers = _stage_block(self.in_dim, self.out_dim, pool_factor)
 
     def forward(self, x):
         return self.layers(x)

@@ -33,12 +33,13 @@ def _get_dim_type(op):
 # =============================================================
 
 
-def _filter_policy(base_dim, block_group, cur_dim, total_blocks, policy):
+def _filter_policy(base_dim, block_group, cur_dim, total_blocks, policy, kwargs):
     if policy == 'default':
         return base_dim * (2**(block_group - 1))
     elif policy == 'pyramid':
+        pyramid_alpha = _get_param(kwargs, 'pyramid_alpha', 48)
         N = (total_blocks / 2) if total_blocks < 16 else (total_blocks / 3)
-        return math.floor(cur_dim + 200 / N)
+        return math.floor(cur_dim + pyramid_alpha / N)
 
 
 def AutoConvNet(op,
@@ -83,7 +84,7 @@ def AutoConvNet(op,
             out_dim = base_dim
         else:
             out_dim = _filter_policy(base_dim, block_group, in_dim,
-                                     total_blocks, filter_policy)
+                                     total_blocks, filter_policy, kwargs)
         print(in_dim, out_dim)
 
         layers.append(
