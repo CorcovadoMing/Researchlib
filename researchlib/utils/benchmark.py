@@ -44,16 +44,15 @@ class benchmark(object):
 
     def __init__(self,
                  client_secret_path=client_secret_path,
-                 sheetnames2ids_path=sheetnames2ids_path):
+                 sheetnames2ids_path=sheetnames2ids_path,
+                 daily_backup=False):
         ## 1. benchmark settings ##
         self._client_secret_path = client_secret_path
         self.sheetnames2ids_path = sheetnames2ids_path
-        self.gc = pygsheets.authorize(client_secret=self._client_secret_path)
         self._team_id = '0ALUbsGKbWAJaUk9PVA'
         self._folder_id = '1ISC98c-oCxi-O-6cIOnQNSEhdcSXWk9K'
         self._backup_folder_id = '1nzOMdps9s-nD_YNKCcCwW79mhIdg_AM2'
         self._back_up_postfix = '_backup'
-        self.gc.drive.enable_team_drive(self._team_id)  # enable TeamDrive
         self._worksheet_name = 'default'
         self._primary_keys = [
             'time_id',
@@ -64,6 +63,8 @@ class benchmark(object):
         self.sheetnames = [
             'Classification', 'Segmentation', 'GAN', 'AnomalyDetection'
         ]
+        # for auth
+        self.gc = None
 
         ## 2. sheets settings ##
         try:
@@ -80,17 +81,29 @@ class benchmark(object):
                 json.dump(self.sheetnames2ids, f)
 
         ## 3. others ##
-        try:
-            self.daily_backup()
-        except:
-            print('Daily backup failed!!')
+        if daily_backup:
+            try:
+                self.daily_backup()
+            except:
+                print('Daily backup failed!!')
 
     def get_date(self):
         return dt.datetime.now(timezone(self._date_timezone)).strftime(
             self._date_format)
 
+    def get_auth(self):
+        try:
+            self.gc = pygsheets.authorize(
+                client_secret=self._client_secret_path)
+            self.gc.drive.enable_team_drive(self._team_id)  # enable TeamDrive
+            print('Google API Auth Successfully!')
+        except:
+            print('authendication failed, no internet connection?')
+
+
     def daily_backup(self):
         for sheetname in self.sheetnames2ids:
+            self.verify(sheetname)
             try:
                 sh = self.gc.open(sheetname + self._back_up_postfix)
                 wks = sh.worksheet_by_title(self._worksheet_name)
@@ -110,13 +123,18 @@ class benchmark(object):
                 self.backup(sheetname)
 
     def backup(self, sheetname):
+        self.verify(sheetname)
         print('backing up {} benchmark'.format(sheetname))
         self.gc.drive.copy_file(
             file_id=self.sheetnames2ids[sheetname],
             title=sheetname + self._back_up_postfix,
             folder=self._backup_folder_id)
 
-    def verify_sheetname(self, sheetname):
+    def verify(self, sheetname):
+        """ make sure the auth exists and sheetname following the rule!
+        """
+        if self.gc is None:
+            self.get_auth()
         if sheetname not in self.sheetnames2ids:
             raise ValueError('{} is not in the {}'.format(
                 sheetname, self.sheetnames2ids.keys()))
@@ -127,7 +145,7 @@ class benchmark(object):
             sheetnames (list): spreadsheets' name
         """
         for sheetname in sheetnames:
-            self.verify_sheetname(sheetname)
+            self.verify(sheetname)
 
         ans = input(
             'Are you sure reset these benchmarks: {}? [y/n]'.format(sheetnames))
@@ -156,13 +174,15 @@ class benchmark(object):
         else:
             print('Okay, no one get hurt.')
 
-    def update_from_runner(self, sheetname, time_id, description):
+    def update_from_runner(self, sheetname, time_id, description, backup=False):
         """ update row(description) by primary key(time_id) in spreadsheet(sheetname)
         Args:
             time_id (str): primary key, use the creation timestamp of the runner.
             sheetname (str): sheetname of the google spreadsheet
             description (dict): config of runner
         """
+        self.verify(sheetname)
+        
         sh = self.gc.open_by_key(self.sheetnames2ids[sheetname])
         wks = sh.worksheet_by_title(self._worksheet_name)
         worksheet_cols = wks.get_row(
@@ -203,3 +223,6 @@ class benchmark(object):
             # always insert at the top of worksheet
             wks.insert_rows(
                 wks.frozen_rows, number=1, values=insert_values, inherit=True)
+
+        if backup:
+            self.backup(sheetname)
