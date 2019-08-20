@@ -33,7 +33,8 @@ def _get_dim_type(op):
 # =============================================================
 
 
-def _filter_policy(base_dim, block_group, cur_dim, total_blocks, policy, kwargs):
+def _filter_policy(base_dim, block_group, cur_dim, total_blocks, policy,
+                   kwargs):
     if policy == 'default':
         return base_dim * (2**(block_group - 1))
     elif policy == 'pyramid':
@@ -55,7 +56,8 @@ def AutoConvNet(op,
                 do_norm=True,
                 **kwargs):
 
-    Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
+    Runner.__model_settings__[
+        f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
 
     _op_type = _get_op_type(type)
     base_dim, max_dim = filters
@@ -68,7 +70,9 @@ def AutoConvNet(op,
 
     if preact:
         print(in_dim, out_dim)
-        layers.append(layer.__dict__['Conv' + _get_dim_type(op)](in_dim, out_dim, 3, 1, 1))  # Preact first layer is simply a hardcore transform
+        layers.append(layer.__dict__['Conv' + _get_dim_type(op)](
+            in_dim, out_dim, 3, 1,
+            1))  # Preact first layer is simply a hardcore transform
         in_dim = out_dim
 
     for i in range(total_blocks):

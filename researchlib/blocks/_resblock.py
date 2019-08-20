@@ -34,7 +34,7 @@ class ResBlock(_Block):
 
     def __postinit__(self):
         is_transpose = self._is_transpose()
-        
+
         unit_fn = self._get_param('unit', unit.conv)
         erased_activator = self._get_param('erased_activator', False)
         activator_type = self._get_param('actvator_type', 'ReLU')
@@ -81,12 +81,12 @@ class ResBlock(_Block):
                 'erased_activator': True if not self.preact else False
             })
             conv_layers = [
-                unit_fn(self.op, self.in_dim, hidden_size, False,
-                          self.do_norm, self.preact, **first_custom_kwargs),
-                unit_fn(self.op, hidden_size, hidden_size, False,
-                          self.do_norm, self.preact, **second_custom_kwargs),
-                unit_fn(self.op, hidden_size, self.out_dim, False,
-                          self.do_norm, self.preact, **third_custom_kwargs),
+                unit_fn(self.op, self.in_dim, hidden_size, False, self.do_norm,
+                        self.preact, **first_custom_kwargs),
+                unit_fn(self.op, hidden_size, hidden_size, False, self.do_norm,
+                        self.preact, **second_custom_kwargs),
+                unit_fn(self.op, hidden_size, self.out_dim, False, self.do_norm,
+                        self.preact, **third_custom_kwargs),
                 preact_final_norm_layer
             ]
         else:
@@ -108,10 +108,10 @@ class ResBlock(_Block):
             second_custom_kwargs = self._get_custom_kwargs(
                 {'erased_activator': True if not self.preact else False})
             conv_layers = [
-                unit_fn(self.op, self.in_dim, self.out_dim, False,
-                          self.do_norm, self.preact, **first_custom_kwargs),
+                unit_fn(self.op, self.in_dim, self.out_dim, False, self.do_norm,
+                        self.preact, **first_custom_kwargs),
                 unit_fn(self.op, self.out_dim, self.out_dim, False,
-                          self.do_norm, self.preact, **second_custom_kwargs),
+                        self.do_norm, self.preact, **second_custom_kwargs),
                 preact_final_norm_layer
             ]
         self.conv = nn.Sequential(*list(filter(None, conv_layers)))

@@ -431,6 +431,6 @@ class Runner:
             query['fit'][i] = _describe_fit(j)
         return query
 
-    def submit_benchmark(self, category):
-        self.bencher.update_from_runner(category, self._date_id,
-                                        self.describe())
+    def submit_benchmark(self, category, backup=False):
+        self.bencher.update_from_runner(
+            category, self._date_id, self.describe(), backup=backup)
