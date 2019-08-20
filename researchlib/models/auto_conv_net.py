@@ -87,19 +87,19 @@ def AutoConvNet(op,
     for i in range(total_blocks):
         id = i + 1
 
-        if id % pool_freq == 0:
-            do_pool = True
-            block_group += 1
-        else:
-            do_pool = False
-
         if not preact and id == 1:
             out_dim = wide_scale * base_dim
         else:
             out_dim = wide_scale * _filter_policy(base_dim, block_group, in_dim,
                                      total_blocks, filter_policy, kwargs)
+        
+        if id % pool_freq == 0:
+            do_pool = True
+            block_group += 1
+        else:
+            do_pool = False
+        
         print(in_dim, out_dim)
-
         layers.append(
             _op_type(
                 op,
