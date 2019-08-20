@@ -6,6 +6,8 @@ from ..blocks import block
 from .builder import builder
 
 from ..blocks._resblock import ResBlock as rb
+from ..blocks._resblock_bottleneck import ResBottleneckBlock as rbb
+from ..blocks._wide_resblock import WideResBlock as wrb
 
 # =============================================================
 
@@ -19,8 +21,14 @@ def _get_param(kwargs, key, init_value):
 
 
 def _get_op_type(type):
+    if type not in ['residual', 'residual-bottleneck', 'wide-residual']:
+        raise('Type is not supperted')
     if type == 'residual':
         _op_type = rb
+    elif type == 'residual-bottleneck':
+        _op_type = rbb
+    elif type == 'wide-residual':
+        _op_type = wrb
     return _op_type
 
 
@@ -47,7 +55,7 @@ def AutoConvNet(op,
                 unit,
                 input_dim,
                 total_blocks,
-                type='vgg',
+                type='residual',
                 filters=(128, 1024),
                 filter_policy='default',
                 flatten=False,
@@ -65,8 +73,9 @@ def AutoConvNet(op,
 
     layers = []
 
+    wide_scale = _get_param(kwargs, 'wide_scale', 10) if type == 'wide-residual' and filter_policy != 'pyramid' else 1
     in_dim = input_dim
-    out_dim = base_dim
+    out_dim = wide_scale * base_dim
 
     if preact:
         print(in_dim, out_dim)
@@ -85,9 +94,9 @@ def AutoConvNet(op,
             do_pool = False
 
         if not preact and id == 1:
-            out_dim = base_dim
+            out_dim = wide_scale * base_dim
         else:
-            out_dim = _filter_policy(base_dim, block_group, in_dim,
+            out_dim = wide_scale * _filter_policy(base_dim, block_group, in_dim,
                                      total_blocks, filter_policy, kwargs)
         print(in_dim, out_dim)
 
