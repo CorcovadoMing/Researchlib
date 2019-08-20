@@ -20,6 +20,7 @@ class _randwire(_Block):
         pool_factor = self._get_param(
             'pool_factor', 2) if self.do_pool else self._get_param('stride', 1)
         conv_kwargs = self._get_conv_kwargs()
+        num_nodes = self._get_param('num_nodes', 32)
 
         # Layers
         if conv_kwargs['kernel_size'] == 1:
@@ -27,7 +28,7 @@ class _randwire(_Block):
                                 self.do_pool, self.do_norm, self.preact,
                                 **conv_kwargs)
         else:
-            self.layers = _stage_block(self.in_dim, self.out_dim, pool_factor)
+            self.layers = _stage_block(self.in_dim, self.out_dim, num_nodes, pool_factor)
 
     def forward(self, x):
         return self.layers(x)
@@ -111,9 +112,9 @@ class _node_op(nn.Module):
 
 class _stage_block(nn.Module):
 
-    def __init__(self, inplanes, outplanes, stride):
+    def __init__(self, inplanes, outplanes, num_nodes, stride):
         super().__init__()
-        graph = _build_graph(16)
+        graph = _build_graph(num_nodes)
         self.nodes, self.input_nodes, self.output_nodes = _get_graph_info(graph)
         self.nodeop = nn.ModuleList()
         for node in self.nodes:
