@@ -82,10 +82,9 @@ class ResBottleneckBlock(_Block):
             unit_fn(self.op, hidden_size, hidden_size, False, self.do_norm,
                     self.preact, **second_custom_kwargs),
             unit_fn(self.op, hidden_size, self.out_dim, False, self.do_norm,
-                    self.preact, **third_custom_kwargs),
-            preact_final_norm_layer
+                    self.preact, **third_custom_kwargs), preact_final_norm_layer
         ]
-        
+
         self.conv = nn.Sequential(*list(filter(None, conv_layers)))
 
         shortcut_type = self._get_param('shortcut', 'projection')
@@ -113,7 +112,7 @@ class ResBottleneckBlock(_Block):
                 pool_type, pool_factor) if self.do_pool else None
             reduction_op = _padding_shortcut(self.in_dim, self.out_dim,
                                              pool_layer)
-            
+
         self.shortcut = nn.Sequential(*list(filter(None, [reduction_op])))
 
         self.se = self._get_param('se', True)
