@@ -8,6 +8,7 @@ from .builder import builder
 from ..blocks._resblock import ResBlock as rb
 from ..blocks._resblock_bottleneck import ResBottleneckBlock as rbb
 from ..blocks._wide_resblock import WideResBlock as wrb
+from ..blocks._vggblock import VGGBlock as vb
 
 # =============================================================
 
@@ -21,9 +22,11 @@ def _get_param(kwargs, key, init_value):
 
 
 def _get_op_type(type):
-    if type not in ['residual', 'residual-bottleneck', 'wide-residual']:
+    if type not in ['vgg', 'residual', 'residual-bottleneck', 'wide-residual']:
         raise ('Type is not supperted')
-    if type == 'residual':
+    if type == 'vgg':
+        _op_type = vb
+    elif type == 'residual':
         _op_type = rb
     elif type == 'residual-bottleneck':
         _op_type = rbb
@@ -114,7 +117,7 @@ def AutoConvNet(
                 preact=preact,
                 id=id,
                 total_blocks=total_blocks,
-                #                 unit=unit,
+                unit=unit,
                 **kwargs))
 
         in_dim = out_dim
