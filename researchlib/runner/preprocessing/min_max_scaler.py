@@ -1,7 +1,7 @@
 from ..template import template
 
 
-class Scaler(template.TorchPreprocessing):
+class MinMaxScaler(template.TorchPreprocessing):
 
     def __init__(self, target_range=[-1, 1], include_y=False):
         super().__init__()

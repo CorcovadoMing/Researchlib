@@ -1,2 +1,3 @@
 from .debugger import PreprocessingDebugger
-from .scaler import Scaler
+from .min_max_scaler import MinMaxScaler
+from .normalizer import Normalizer
