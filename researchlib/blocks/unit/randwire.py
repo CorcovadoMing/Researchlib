@@ -28,7 +28,8 @@ class _randwire(_Block):
                                 self.do_pool, self.do_norm, self.preact,
                                 **conv_kwargs)
         else:
-            self.layers = _stage_block(self.in_dim, self.out_dim, num_nodes, pool_factor)
+            self.layers = _stage_block(self.in_dim, self.out_dim, num_nodes,
+                                       pool_factor)
 
     def forward(self, x):
         return self.layers(x)

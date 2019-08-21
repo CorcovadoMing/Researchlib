@@ -5,6 +5,7 @@ from .resnextblock import _ResNextBlock2d, _ResNextTransposeBlock2d
 from .attentionblock import _AttentionBlock2d, _AttentionTransposeBlock2d
 from .denseblock import _DenseBlock2d, _DenseTransposeBlock2d
 from .basic_components import _CombinedDownSampling, _MaxPoolDownSampling, _InterpolateUpSampling, _ConvTransposeUpSampling
+from .template.block import _Block
 
 
 class downsampling(object):
@@ -31,3 +32,4 @@ class block(object):
     DenseTransposeBlock2d = _DenseTransposeBlock2d
     AttentionBlock2d = _AttentionBlock2d
     AttentionTransposeBlock2d = _AttentionTransposeBlock2d
+    Block = _Block

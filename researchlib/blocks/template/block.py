@@ -6,6 +6,7 @@ from ...layers import layer
 
 
 class _Block(nn.Module):
+    keys_white_list = []
 
     def __init__(self, op, in_dim, out_dim, do_pool, do_norm, preact, **kwargs):
         super().__init__()
@@ -45,7 +46,20 @@ class _Block(nn.Module):
             _new[key] = value
         return _new
 
+    @classmethod
+    def verify_kwargs(cls, **kwargs):
+        """must call this after all keys get registered
+        """
+        for key in kwargs:
+            if key not in _Block.keys_white_list:
+                raise ValueError(
+                    "'{}' is not allowed. White list for keys: {}".format(
+                        key, _Block.keys_white_list))
+
     def _get_param(self, key, init_value=None, required=False):
+        # register key
+        if key not in _Block.keys_white_list:
+            _Block.keys_white_list.append(key)
         if required and key not in self.kwargs:
             raise ValueError("{} is required in **kwargs".format(key))
         try:
@@ -115,15 +129,15 @@ class _Block(nn.Module):
                                                             self.out_dim, 1)
             return _Combined([max_pool_op, avg_pool_op, conv_pool_op],
                              reduction_op, self.preact)
-    
-    
+
     def _get_se_branch(self, divide_ratio=16):
         return nn.Sequential(
             layer.__dict__['AdaptiveMaxPool' + self._get_dim_type()](1),
-            self.op(self.out_dim, self.out_dim // divide_ratio, kernel_size=1), nn.ReLU(),
+            self.op(self.out_dim, self.out_dim // divide_ratio, kernel_size=1),
+            nn.ReLU(),
             self.op(self.out_dim // divide_ratio, self.out_dim, kernel_size=1),
             nn.Sigmoid())
-    
+
     def _get_shake_drop_branch(self):
         id = self._get_param('id', required=True)
         total_blocks = self._get_param('total_blocks', required=True)

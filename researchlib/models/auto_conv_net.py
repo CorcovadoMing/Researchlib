@@ -22,7 +22,7 @@ def _get_param(kwargs, key, init_value):
 
 def _get_op_type(type):
     if type not in ['residual', 'residual-bottleneck', 'wide-residual']:
-        raise('Type is not supperted')
+        raise ('Type is not supperted')
     if type == 'residual':
         _op_type = rb
     elif type == 'residual-bottleneck':
@@ -51,18 +51,19 @@ def _filter_policy(base_dim, block_group, cur_dim, total_blocks, policy,
         return math.floor(cur_dim + pyramid_alpha / N)
 
 
-def AutoConvNet(op,
-                unit,
-                input_dim,
-                total_blocks,
-                type='residual',
-                filters=(128, 1024),
-                filter_policy='default',
-                flatten=False,
-                preact=True,
-                pool_freq=1,
-                do_norm=True,
-                **kwargs):
+def AutoConvNet(
+        op,
+        #                 unit,
+        input_dim,
+        total_blocks,
+        type='residual',
+        filters=(128, 1024),
+        filter_policy='default',
+        flatten=False,
+        preact=True,
+        pool_freq=1,
+        do_norm=True,
+        **kwargs):
 
     Runner.__model_settings__[
         f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
@@ -73,7 +74,9 @@ def AutoConvNet(op,
 
     layers = []
 
-    wide_scale = _get_param(kwargs, 'wide_scale', 10) if type == 'wide-residual' and filter_policy != 'pyramid' else 1
+    wide_scale = _get_param(
+        kwargs, 'wide_scale',
+        10) if type == 'wide-residual' and filter_policy != 'pyramid' else 1
     in_dim = input_dim
     out_dim = wide_scale * base_dim
 
@@ -91,14 +94,15 @@ def AutoConvNet(op,
             out_dim = wide_scale * base_dim
         else:
             out_dim = wide_scale * _filter_policy(base_dim, block_group, in_dim,
-                                     total_blocks, filter_policy, kwargs)
-        
+                                                  total_blocks, filter_policy,
+                                                  kwargs)
+
         if id % pool_freq == 0:
             do_pool = True
             block_group += 1
         else:
             do_pool = False
-        
+
         print(in_dim, out_dim)
         layers.append(
             _op_type(
@@ -110,11 +114,15 @@ def AutoConvNet(op,
                 preact=preact,
                 id=id,
                 total_blocks=total_blocks,
-                unit=unit,
+                #                 unit=unit,
                 **kwargs))
 
         in_dim = out_dim
 
     if flatten:
         layers.append(layer.Flatten())
+
+    # must verify after all keys get registered
+    block.Block.verify_kwargs(**kwargs)
+
     return builder(layers)
