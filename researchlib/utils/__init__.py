@@ -15,3 +15,4 @@ from .check_ports import _is_port_in_use
 from .mapping import mapping
 from .timer import Timer
 from .benchmark import benchmark
+from .decorator import Singleton

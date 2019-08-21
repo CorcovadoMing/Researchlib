@@ -2,6 +2,7 @@ import os
 import json
 import datetime as dt
 from pytz import timezone
+from .decorator import Singleton
 import pygsheets
 
 from .class_lib import _register_method
@@ -15,18 +16,6 @@ client_secret_path = os.path.join(
 )
 sheetnames2ids_path = os.path.join(module_path,
                                    '../.credential/sheetnames2ids.json')
-
-
-class Singleton:
-
-    def __init__(self, klass):
-        self.klass = klass
-        self.instance = None
-
-    def __call__(self, *args, **kwds):
-        if self.instance == None:
-            self.instance = self.klass(*args, **kwds)
-        return self.instance
 
 
 @Singleton
@@ -99,7 +88,6 @@ class benchmark(object):
             print('Google API Auth Successfully!')
         except:
             print('authendication failed, no internet connection?')
-
 
     def daily_backup(self):
         for sheetname in self.sheetnames2ids:
@@ -182,7 +170,7 @@ class benchmark(object):
             description (dict): config of runner
         """
         self.verify(sheetname)
-        
+
         sh = self.gc.open_by_key(self.sheetnames2ids[sheetname])
         wks = sh.worksheet_by_title(self._worksheet_name)
         worksheet_cols = wks.get_row(
