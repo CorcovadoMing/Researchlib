@@ -53,7 +53,7 @@ def _filter_policy(base_dim, block_group, cur_dim, total_blocks, policy,
 
 def AutoConvNet(
         op,
-        #                 unit,
+        unit,
         input_dim,
         total_blocks,
         type='residual',

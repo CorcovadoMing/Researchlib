@@ -369,7 +369,7 @@ class Runner:
             query = {}
             keys = [
                 'do_norm', 'pool_freq', 'preact', 'filter_policy', 'filters',
-                'type', 'total_blocks', 'op'
+                'type', 'total_blocks', 'op', 'unit'
             ]
             for key, value in model_dict.items():
                 if key in keys:
