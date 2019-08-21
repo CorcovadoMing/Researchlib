@@ -65,7 +65,7 @@ class _Block(nn.Module):
 
     def _get_activator_layer(self, activator_type):
         if activator_type not in [
-                'ReLU', 'ELU', 'PReLU', 'LeakyReLU', 'SELU', 'Swish', 'GeLU'
+                'ReLU', 'ELU', 'PReLU', 'LeakyReLU', 'SELU', 'Swish', 'GeLU', 'CELU'
         ]:
             raise ('Unknown activator type')
         return layer.__dict__[activator_type]()
@@ -132,7 +132,6 @@ class _Block(nn.Module):
         return layer.ShakeDrop(
             id,
             total_blocks,
-            p=0.5,
             alpha_range=alpha_range,
             beta_range=beta_range,
             p_L=0.5)

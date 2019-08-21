@@ -95,12 +95,11 @@ class _ShakeDrop(nn.Module):
     def __init__(self,
                  block_idx,
                  block_num,
-                 p=0.5,
                  alpha_range=[-1, 1],
                  beta_range=[0, 1],
                  p_L=0.5):
         """ Apply linear decay rule to compute p value for each block.
-        Then p=0 for input, p=p_L for last block
+        Then p=1 for input, p=p_L for last block
         
         Note: please make sure go _ShakeDrop after BatchNorm (i.e. preact resnet will diverge easily.)
     
@@ -115,8 +114,8 @@ class _ShakeDrop(nn.Module):
         .. _linear decay rule\: Deep Networks with Stochastic Depth:
             https://arxiv.org/abs/1603.09382
         """
-        super(_ShakeDrop, self).__init__()
-        self.p = 1. - block_idx / block_num * (1. - p_L)
+        super().__init__()
+        self.p = 1. - ((block_idx / block_num) * (1. - p_L))
         self.alpha_range = alpha_range
         self.beta_range = beta_range
 
