@@ -11,3 +11,4 @@ from .invert import Invert
 from .equalize import Equalize
 from .solarize import Solarize
 from .posterize import Posterize
+from .crop import Crop2d
