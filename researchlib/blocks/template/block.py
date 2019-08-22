@@ -112,12 +112,14 @@ class _Block(nn.Module):
             return _Combined([max_pool_op, avg_pool_op, conv_pool_op],
                              reduction_op, self.preact)
 
-    def _get_se_branch(self, divide_ratio=16):
+    def _get_se_branch(self, divide_ratio=16, dim=None):
+        if dim is None:
+            dim = self.out_dim
         return nn.Sequential(
             layer.__dict__['AdaptiveMaxPool' + self._get_dim_type()](1),
-            self.op(self.out_dim, self.out_dim // divide_ratio, kernel_size=1),
+            self.op(dim, dim // divide_ratio, kernel_size=1),
             nn.ReLU(),
-            self.op(self.out_dim // divide_ratio, self.out_dim, kernel_size=1),
+            self.op(dim // divide_ratio, dim, kernel_size=1),
             nn.Sigmoid())
 
     def _get_shake_drop_branch(self):

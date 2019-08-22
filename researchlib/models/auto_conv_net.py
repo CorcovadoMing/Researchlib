@@ -9,12 +9,13 @@ from ..blocks._resblock import ResBlock as rb
 from ..blocks._resblock_bottleneck import ResBottleneckBlock as rbb
 from ..blocks._wide_resblock import WideResBlock as wrb
 from ..blocks._vggblock import VGGBlock as vb
+from ..blocks._inverted_bottleneck import InvertedBottleneckBlock as ibb
 
 # =============================================================
 
 
 def _get_op_type(type):
-    if type not in ['vgg', 'residual', 'residual-bottleneck', 'wide-residual']:
+    if type not in ['vgg', 'residual', 'residual-bottleneck', 'wide-residual', 'inverted-bottleneck']:
         raise ('Type is not supperted')
     if type == 'vgg':
         _op_type = vb
@@ -24,6 +25,8 @@ def _get_op_type(type):
         _op_type = rbb
     elif type == 'wide-residual':
         _op_type = wrb
+    elif type == 'inverted-bottleneck':
+        _op_type = ibb
     return _op_type
 
 
@@ -39,7 +42,7 @@ def _get_dim_type(op):
 def _filter_policy(type, base_dim, block_group, cur_dim, total_blocks, policy,
                    parameter_manager):
     if policy == 'default':
-        return base_dim * (2**(block_group - 1))
+        return base_dim * (2**(block_group))
     elif policy == 'pyramid':
         if type == 'residual-bottleneck':
             ratio = 4
@@ -78,23 +81,16 @@ def AutoConvNet(op,
     in_dim = input_dim
     out_dim = wide_scale * base_dim
 
-    if preact:
-        print(in_dim, out_dim)
-        layers.append(layer.__dict__['Conv' + _get_dim_type(op)](
-            in_dim, out_dim, 3, 1,
-            1))  # Preact first layer is simply a hardcore transform
-        layers.append(layer.__dict__['BatchNorm' + _get_dim_type(op)](out_dim))
-        in_dim = out_dim
+    print(in_dim, out_dim)
+    layers.append(layer.__dict__['Conv' + _get_dim_type(op)](
+        in_dim, out_dim, 3, 1,
+        1))  # Preact first layer is simply a hardcore transform
+    layers.append(layer.__dict__['BatchNorm' + _get_dim_type(op)](out_dim))
+    in_dim = out_dim
 
     for i in range(total_blocks):
         id = i + 1
-
-        if not preact and id == 1:
-            out_dim = wide_scale * base_dim
-        else:
-            out_dim = wide_scale * _filter_policy(type, base_dim, block_group, in_dim,
-                                                  total_blocks, filter_policy,
-                                                  parameter_manager)
+        out_dim = wide_scale * _filter_policy(type, base_dim, block_group, in_dim, total_blocks, filter_policy, parameter_manager)
 
         if id % pool_freq == 0:
             do_pool = True
@@ -102,7 +98,7 @@ def AutoConvNet(op,
         else:
             do_pool = False
 
-        print(in_dim, out_dim)
+        print(in_dim, out_dim, do_pool)
         layers.append(
             _op_type(
                 op,
