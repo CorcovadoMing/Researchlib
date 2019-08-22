@@ -8,6 +8,7 @@ import networkx
 import torch.nn.utils.spectral_norm as sn
 import collections
 from .conv import _conv
+import random
 
 __NodeTemplate__ = collections.namedtuple('__NodeTemplate__',
                                           ['id', 'inputs', 'type'])
@@ -103,8 +104,13 @@ class _node_op(nn.Module):
     def forward(self, *input):
         if self.input_nums > 1:
             out = 0
+            already_dropped = False
             for i in range(self.input_nums):
-                out += self.sigmoid(self.mean_weight[i]) * input[i]
+                # As paper described drop path regularization
+                if random.random() > 0.1 or already_dropped:
+                    out += self.sigmoid(self.mean_weight[i]) * input[i]
+                else:
+                    already_dropped = True
         else:
             out = input[0]
         out = self.op(out)

@@ -49,9 +49,8 @@ def _filter_policy(base_dim, block_group, cur_dim, total_blocks, policy,
     if policy == 'default':
         return base_dim * (2**(block_group - 1))
     elif policy == 'pyramid':
-        pyramid_alpha = _get_param(kwargs, 'pyramid_alpha', 48)
-        N = (total_blocks / 2) if total_blocks < 16 else (total_blocks / 3)
-        return math.floor(cur_dim + pyramid_alpha / N)
+        pyramid_alpha = _get_param(kwargs, 'pyramid_alpha', 200)
+        return math.ceil(cur_dim + pyramid_alpha / total_blocks)
 
 
 def AutoConvNet(
@@ -88,6 +87,7 @@ def AutoConvNet(
         layers.append(layer.__dict__['Conv' + _get_dim_type(op)](
             in_dim, out_dim, 3, 1,
             1))  # Preact first layer is simply a hardcore transform
+        layers.append(layer.__dict__['BatchNorm' + _get_dim_type(op)](out_dim))
         in_dim = out_dim
 
     for i in range(total_blocks):

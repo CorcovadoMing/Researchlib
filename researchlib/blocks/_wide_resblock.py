@@ -21,9 +21,9 @@ class _padding_shortcut(nn.Module):
         else:
             return torch.cat(
                 (x,
-                 torch.zeros((x.size(0), self.out_dim - self.in_dim, x.size(2),
+                 torch.autograd.Variable(torch.zeros((x.size(0), self.out_dim - self.in_dim, x.size(2),
                               x.size(3)),
-                             device=x.device)), 1)
+                             device=x.device))), 1)
 
 
 class WideResBlock(_Block):
