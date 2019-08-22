@@ -36,13 +36,17 @@ def _get_dim_type(op):
 # =============================================================
 
 
-def _filter_policy(base_dim, block_group, cur_dim, total_blocks, policy,
+def _filter_policy(type, base_dim, block_group, cur_dim, total_blocks, policy,
                    parameter_manager):
     if policy == 'default':
         return base_dim * (2**(block_group - 1))
     elif policy == 'pyramid':
+        if style == 'residual-bottleneck':
+            ratio = 4
+        else:
+            ratio = 1
         pyramid_alpha = parameter_manager.get_param('pyramid_alpha', 200)
-        return math.ceil(cur_dim + pyramid_alpha / total_blocks)
+        return math.ceil(cur_dim + (pyramid_alpha / total_blocks) * ratio)
 
 
 def AutoConvNet(op,
@@ -88,7 +92,7 @@ def AutoConvNet(op,
         if not preact and id == 1:
             out_dim = wide_scale * base_dim
         else:
-            out_dim = wide_scale * _filter_policy(base_dim, block_group, in_dim,
+            out_dim = wide_scale * _filter_policy(type, base_dim, block_group, in_dim,
                                                   total_blocks, filter_policy,
                                                   parameter_manager)
 
