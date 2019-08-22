@@ -16,6 +16,8 @@ from .condition_projection import _ConditionProjection
 from .spatial_transform import _SpatialTransform
 from .permute import _Permute
 from .shakedrop import _ShakeDrop
+from .pixel_norm import _PixelNorm
+from .blur import _Blur2d
 
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
@@ -29,7 +31,7 @@ class layer(object):
     # Activator
     Swish = _Swish
     GeLU = _GeLU
-
+    
     # DropBlock
     DropBlock2d = _DropBlock2d
     DropBlock3d = _DropBlock3d
@@ -55,12 +57,15 @@ class layer(object):
     AdaptiveConcatPool2d = _AdaptiveConcatPool2d
     PositionEncoding = _PositionEncoding
     NoisyLinear = _NoisyLinear
+    PixelNorm=_PixelNorm
 
     Reshape = _Reshape
     Permute = _Permute
 
     ConditionProjection = _ConditionProjection
     SpatialTransform = _SpatialTransform
+    
+    Blur2d=_Blur2d
 
 
 # Merge nn and layer module if it didn't cause conflict
