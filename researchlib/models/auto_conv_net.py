@@ -41,7 +41,7 @@ def _filter_policy(type, base_dim, block_group, cur_dim, total_blocks, policy,
     if policy == 'default':
         return base_dim * (2**(block_group - 1))
     elif policy == 'pyramid':
-        if style == 'residual-bottleneck':
+        if type == 'residual-bottleneck':
             ratio = 4
         else:
             ratio = 1
