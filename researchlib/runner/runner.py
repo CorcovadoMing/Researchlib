@@ -309,6 +309,22 @@ class Runner:
             plt.show()
         else:
             return self.history_
+        
+    def eval(self):
+        self.model.eval()
+        if type(self.optimizer) == list:
+            for i in self.optimizer:
+                i.swap_swa_sgd()
+        else:
+            self.optimizer.swap_swa_sgd()
+    
+    def train(self):
+        self.model.train()
+        if type(self.optimizer) == list:
+            for i in self.optimizer:
+                i.swap_swa_sgd()
+        else:
+            self.optimizer.swap_swa_sgd()
 
     def validate(self, metrics=[], callbacks=[]):
         self.preload_gpu()
