@@ -3,11 +3,9 @@ import torch
 import copy
 from torch import nn
 from ...layers import layer
-
+from ...utils import ParameterManager
 
 class _Block(nn.Module):
-    keys_white_list = []
-
     def __init__(self, op, in_dim, out_dim, do_pool, do_norm, preact, **kwargs):
         super().__init__()
         self.op = op
@@ -16,7 +14,7 @@ class _Block(nn.Module):
         self.do_pool = do_pool
         self.do_norm = do_norm
         self.preact = preact
-        self.kwargs = kwargs
+        self.parameter_manager = ParameterManager(**kwargs)
 
         # Customize
         self.__postinit__()
@@ -41,32 +39,13 @@ class _Block(nn.Module):
         }
 
     def _get_custom_kwargs(self, custom_kwargs):
-        _new = copy.deepcopy(self.kwargs)
+        _new = copy.deepcopy(self.parameter_manager.kwargs)
         for key, value in custom_kwargs.items():
             _new[key] = value
         return _new
 
-    @classmethod
-    def verify_kwargs(cls, **kwargs):
-        """must call this after all keys get registered
-        """
-        for key in kwargs:
-            if key not in _Block.keys_white_list:
-                raise ValueError(
-                    "'{}' is not allowed. White list for keys: {}".format(
-                        key, _Block.keys_white_list))
-
     def _get_param(self, key, init_value=None, required=False):
-        # register key
-        if key not in _Block.keys_white_list:
-            _Block.keys_white_list.append(key)
-        if required and key not in self.kwargs:
-            raise ValueError("{} is required in **kwargs".format(key))
-        try:
-            query = self.kwargs[key]
-            return query
-        except:
-            return init_value
+        return self.parameter_manager.get_param(key, init_value, required)
 
     def _get_dim_type(self):
         match = re.search('\dd', str(self.op))

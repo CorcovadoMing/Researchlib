@@ -2,8 +2,8 @@ import re
 import math
 from ..runner import Runner
 from ..layers import layer
-from ..blocks import block
 from .builder import builder
+from ..utils import ParameterManager
 
 from ..blocks._resblock import ResBlock as rb
 from ..blocks._resblock_bottleneck import ResBottleneckBlock as rbb
@@ -11,15 +11,6 @@ from ..blocks._wide_resblock import WideResBlock as wrb
 from ..blocks._vggblock import VGGBlock as vb
 
 # =============================================================
-
-
-def _get_param(kwargs, key, init_value):
-    try:
-        query = kwargs[key]
-        return query
-    except:
-        return init_value
-
 
 def _get_op_type(type):
     if type not in ['vgg', 'residual', 'residual-bottleneck', 'wide-residual']:
@@ -45,11 +36,11 @@ def _get_dim_type(op):
 
 
 def _filter_policy(base_dim, block_group, cur_dim, total_blocks, policy,
-                   kwargs):
+                   parameter_manager):
     if policy == 'default':
         return base_dim * (2**(block_group - 1))
     elif policy == 'pyramid':
-        pyramid_alpha = _get_param(kwargs, 'pyramid_alpha', 200)
+        pyramid_alpha = parameter_manager.get_param('pyramid_alpha', 200)
         return math.ceil(cur_dim + pyramid_alpha / total_blocks)
 
 
@@ -69,6 +60,8 @@ def AutoConvNet(
 
     Runner.__model_settings__[
         f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
+    
+    parameter_manager = ParameterManager(**kwargs)
 
     _op_type = _get_op_type(type)
     base_dim, max_dim = filters
@@ -76,9 +69,7 @@ def AutoConvNet(
 
     layers = []
 
-    wide_scale = _get_param(
-        kwargs, 'wide_scale',
-        10) if type == 'wide-residual' and filter_policy != 'pyramid' else 1
+    wide_scale = parameter_manager.get_param('wide_scale', 10) if type == 'wide-residual' else 1
     in_dim = input_dim
     out_dim = wide_scale * base_dim
 
@@ -98,7 +89,7 @@ def AutoConvNet(
         else:
             out_dim = wide_scale * _filter_policy(base_dim, block_group, in_dim,
                                                   total_blocks, filter_policy,
-                                                  kwargs)
+                                                  parameter_manager)
 
         if id % pool_freq == 0:
             do_pool = True
@@ -126,6 +117,6 @@ def AutoConvNet(
         layers.append(layer.Flatten())
 
     # must verify after all keys get registered
-    block.Block.verify_kwargs(**kwargs)
+    ParameterManager.verify_kwargs(**kwargs)
 
     return builder(layers)
