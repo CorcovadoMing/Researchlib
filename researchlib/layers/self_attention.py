@@ -12,7 +12,7 @@ class _SelfAttention2d(nn.Module):
         self.g = nn.Conv2d(self.ch, self.ch // 2, kernel_size=1, padding=0, bias=False)
         self.o = nn.Conv2d(self.ch // 2, self.ch, kernel_size=1, padding=0, bias=False)
         # Learnable gain parameter
-        self.gamma = nn.Parameter(torch.empty(1).fill_(1), requires_grad=True)
+        self.gamma = nn.Parameter(torch.empty(1).fill_(0), requires_grad=True)
 
     def forward(self, x):
         theta = self.theta(x)
@@ -26,4 +26,4 @@ class _SelfAttention2d(nn.Module):
         beta = F.softmax(torch.bmm(theta.transpose(1, 2), phi), -1)
         # Attention map times g path
         o = self.o(torch.bmm(g, beta.transpose(1, 2)).view(-1, self.ch // 2, x.shape[2], x.shape[3]))
-        return self.gamma * o
+        return x + self.gamma * o
