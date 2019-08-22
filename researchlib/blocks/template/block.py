@@ -61,14 +61,14 @@ class _Block(nn.Module):
     def _get_activator_layer(self, activator_type):
         if activator_type not in [
                 'ReLU', 'ELU', 'PReLU', 'LeakyReLU', 'SELU', 'Swish', 'GeLU',
-                'CELU, DropReLU'
+                'CELU', 'DropReLU'
         ]:
-            raise ('Unknown activator type')
+            raise ValueError('Unknown activator type')
         return layer.__dict__[activator_type]()
 
     def _get_norm_layer(self, norm_type, dim=None):
         if norm_type not in ['BatchNorm', 'InstanceNorm', 'GroupNorm']:
-            raise ('Unknown norm type')
+            raise ValueError('Unknown norm type')
 
         if dim is None:
             if self.preact:
@@ -91,7 +91,7 @@ class _Block(nn.Module):
 
     def _get_pool_layer(self, pool_type, pool_factor):
         if pool_type not in ['MaxPool', 'AvgPool', 'Combined', 'Upsample']:
-            raise ('Unknown pool type')
+            raise ValueError('Unknown pool type')
 
         dim_str = self._get_dim_type()
         if pool_type is 'Upsample':

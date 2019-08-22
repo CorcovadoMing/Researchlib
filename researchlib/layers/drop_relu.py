@@ -1,7 +1,7 @@
 from torch import nn
 import torch
 
-class _DropRelu(nn.Module):
+class _DropReLU(nn.Module):
     '''
         Drop-Activation: Implicit Parameter Reduction and Harmonious Regularization
         https://arxiv.org/abs/1811.05850
@@ -10,7 +10,7 @@ class _DropRelu(nn.Module):
         '''
         :param keep_prob: the probability of retaining the ReLU activation
         '''
-        super(dropRelu, self).__init__()
+        super().__init__()
         self.keep_prob = keep_prob
         
     def forward(self, x):
