@@ -12,6 +12,7 @@ from ..blocks._vggblock import VGGBlock as vb
 
 # =============================================================
 
+
 def _get_op_type(type):
     if type not in ['vgg', 'residual', 'residual-bottleneck', 'wide-residual']:
         raise ('Type is not supperted')
@@ -44,23 +45,22 @@ def _filter_policy(base_dim, block_group, cur_dim, total_blocks, policy,
         return math.ceil(cur_dim + pyramid_alpha / total_blocks)
 
 
-def AutoConvNet(
-        op,
-        unit,
-        input_dim,
-        total_blocks,
-        type='residual',
-        filters=(128, 1024),
-        filter_policy='default',
-        flatten=False,
-        preact=True,
-        pool_freq=1,
-        do_norm=True,
-        **kwargs):
+def AutoConvNet(op,
+                unit,
+                input_dim,
+                total_blocks,
+                type='residual',
+                filters=(128, 1024),
+                filter_policy='default',
+                flatten=False,
+                preact=True,
+                pool_freq=1,
+                do_norm=True,
+                **kwargs):
 
     Runner.__model_settings__[
         f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
-    
+
     parameter_manager = ParameterManager(**kwargs)
 
     _op_type = _get_op_type(type)
@@ -69,7 +69,8 @@ def AutoConvNet(
 
     layers = []
 
-    wide_scale = parameter_manager.get_param('wide_scale', 10) if type == 'wide-residual' else 1
+    wide_scale = parameter_manager.get_param(
+        'wide_scale', 10) if type == 'wide-residual' else 1
     in_dim = input_dim
     out_dim = wide_scale * base_dim
 

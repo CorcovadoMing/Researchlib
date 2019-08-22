@@ -31,7 +31,7 @@ class layer(object):
     # Activator
     Swish = _Swish
     GeLU = _GeLU
-    
+
     # DropBlock
     DropBlock2d = _DropBlock2d
     DropBlock3d = _DropBlock3d
@@ -57,15 +57,15 @@ class layer(object):
     AdaptiveConcatPool2d = _AdaptiveConcatPool2d
     PositionEncoding = _PositionEncoding
     NoisyLinear = _NoisyLinear
-    PixelNorm=_PixelNorm
+    PixelNorm = _PixelNorm
 
     Reshape = _Reshape
     Permute = _Permute
 
     ConditionProjection = _ConditionProjection
     SpatialTransform = _SpatialTransform
-    
-    Blur2d=_Blur2d
+
+    Blur2d = _Blur2d
 
 
 # Merge nn and layer module if it didn't cause conflict

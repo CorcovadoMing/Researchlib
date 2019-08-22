@@ -1,6 +1,6 @@
 class ParameterManager:
     keys_whitelist = []
-    
+
     @classmethod
     def verify_kwargs(cls, **kwargs):
         """must call this after all keys get registered
@@ -10,7 +10,7 @@ class ParameterManager:
                 raise ValueError(
                     "'{}' is not allowed. Keys Whitelist: {}".format(
                         key, ParameterManager.keys_whitelist))
-    
+
     def __init__(self, **kwargs):
         self.kwargs = kwargs
 
@@ -18,7 +18,7 @@ class ParameterManager:
         # register key
         if key not in ParameterManager.keys_whitelist:
             ParameterManager.keys_whitelist.append(key)
-            
+
         if required and key not in self.kwargs:
             raise ValueError("{} is required in **kwargs".format(key))
         try:

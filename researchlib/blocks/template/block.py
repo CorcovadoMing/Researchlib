@@ -5,7 +5,9 @@ from torch import nn
 from ...layers import layer
 from ...utils import ParameterManager
 
+
 class _Block(nn.Module):
+
     def __init__(self, op, in_dim, out_dim, do_pool, do_norm, preact, **kwargs):
         super().__init__()
         self.op = op
@@ -58,7 +60,8 @@ class _Block(nn.Module):
 
     def _get_activator_layer(self, activator_type):
         if activator_type not in [
-                'ReLU', 'ELU', 'PReLU', 'LeakyReLU', 'SELU', 'Swish', 'GeLU', 'CELU'
+                'ReLU', 'ELU', 'PReLU', 'LeakyReLU', 'SELU', 'Swish', 'GeLU',
+                'CELU'
         ]:
             raise ('Unknown activator type')
         return layer.__dict__[activator_type]()
