@@ -18,6 +18,7 @@ from .permute import _Permute
 from .shakedrop import _ShakeDrop
 from .pixel_norm import _PixelNorm
 from .blur import _Blur2d
+from .drop_relu import _DropRelu
 
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
@@ -66,6 +67,7 @@ class layer(object):
     SpatialTransform = _SpatialTransform
 
     Blur2d = _Blur2d
+    DropRelu = _DropRelu
 
 
 # Merge nn and layer module if it didn't cause conflict
