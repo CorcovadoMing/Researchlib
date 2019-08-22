@@ -8,11 +8,11 @@ class ShakeDropFunction(torch.autograd.Function):
     @staticmethod
     def forward(ctx,
                 x,
-                training=True,
-                p=0.5,
-                alpha_range=[-1, 1],
-                beta_range=[0, 1],
-                mode=0):
+                training,
+                p,
+                alpha_range,
+                beta_range,
+                mode):
         '''
         Forward(Train): (gate + alpha - gate*alpha) * x
         Forward(Test):  E(gate + alpha - gate*alpha) * x
@@ -59,13 +59,13 @@ class ShakeDropFunction(torch.autograd.Function):
             ctx.save_for_backward(mode, gate, beta_range)
             if gate.item() == 0:
                 if type(alpha_range) == list:  # two-element list
-                    if mode == 0:
+                    if int(mode) == 0:
                         alpha = torch.FloatTensor(x.size(0)).to(x.device).uniform_(*alpha_range)
                         alpha = alpha.view(alpha.size(0), 1, 1, 1).expand_as(x)
-                    elif mode == 1:
+                    elif int(mode) == 1:
                         alpha = torch.FloatTensor(x.size(0), x.size(1)).to(x.device).uniform_(*alpha_range)
                         alpha = alpha.view(alpha.size(0), alpha.size(1), 1, 1).expand_as(x)
-                    elif mode == 2:
+                    elif int(mode) == 2:
                         alpha = torch.empty_like(x).to(x.device).uniform_(*alpha_range)
                 elif alpha_range == 0:
                     alpha = 0
@@ -83,20 +83,20 @@ class ShakeDropFunction(torch.autograd.Function):
         mode, gate, beta_range = ctx.saved_tensors
         if gate.item() == 0:
             if len(beta_range) == 2:  # two-element list
-                if mode == 0:
+                if int(mode) == 0:
                     beta = torch.FloatTensor(grad_output.size(0)).to(grad_output.device).uniform_(*beta_range)
                     beta = beta.view(beta.size(0), 1, 1, 1).expand_as(grad_output)
-                elif mode == 1:
+                elif int(mode) == 1:
                     beta = torch.FloatTensor(grad_output.size(0), grad_output.size(1)).to(grad_output.device).uniform_(*beta_range)
                     beta = beta.view(beta.size(0), beta.size(1), 1, 1).expand_as(grad_output)
-                elif mode == 2:
+                elif int(mode) == 2:
                     beta = torch.empty_like(grad_output).to(grad_output.device).uniform_(*beta_range)
                 beta = Variable(beta)
             elif beta_range == 0:
                 beta = 0
-            return beta * grad_output, None, None, None, None
+            return beta * grad_output, None, None, None, None, None
         else:
-            return grad_output, None, None, None, None
+            return grad_output, None, None, None, None, None
 
 
         
@@ -135,7 +135,7 @@ class _ShakeDrop(nn.Module):
         self.p = 1. - ((block_idx / block_num) * (1. - p_L))
         self.alpha_range = alpha_range
         self.beta_range = beta_range
-        self.mode = mode
+        self.mode = torch.empty(1).fill_(mode)
 
     def forward(self, x):
         return ShakeDropFunction.apply(x, self.training, self.p,

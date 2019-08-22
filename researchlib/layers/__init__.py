@@ -19,7 +19,7 @@ from .shakedrop import _ShakeDrop
 from .pixel_norm import _PixelNorm
 from .blur import _Blur2d
 from .drop_relu import _DropReLU
-
+from .self_attention import _SelfAttention2d
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
 
@@ -68,6 +68,7 @@ class layer(object):
 
     Blur2d = _Blur2d
     DropReLU = _DropReLU
+    SelfAttention2d = _SelfAttention2d
 
 
 # Merge nn and layer module if it didn't cause conflict

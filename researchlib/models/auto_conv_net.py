@@ -72,7 +72,7 @@ def AutoConvNet(op,
 
     _op_type = _get_op_type(type)
     base_dim, max_dim = filters
-    block_group = 1
+    block_group = 0
 
     layers = []
 
@@ -90,13 +90,14 @@ def AutoConvNet(op,
 
     for i in range(total_blocks):
         id = i + 1
-        out_dim = wide_scale * _filter_policy(type, base_dim, block_group, in_dim, total_blocks, filter_policy, parameter_manager)
-
+        
         if id % pool_freq == 0:
             do_pool = True
             block_group += 1
         else:
             do_pool = False
+            
+        out_dim = wide_scale * _filter_policy(type, base_dim, block_group, in_dim, total_blocks, filter_policy, parameter_manager)
 
         print(in_dim, out_dim, do_pool)
         layers.append(
