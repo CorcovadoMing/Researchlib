@@ -168,7 +168,8 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
         self.start_experiment('default')
 
     exist_experiments = pickle.loads(liveplot.redis.get('experiment'))
-    exist_experiments.append(self.experiment_name)
+    if self.experiment_name not in exist_experiments:
+        exist_experiments.append(self.experiment_name)
     liveplot.redis.set('experiment', pickle.dumps(exist_experiments))
 
     self.preload_gpu()
