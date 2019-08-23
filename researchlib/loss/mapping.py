@@ -5,6 +5,21 @@ from .custom_loss import *
 from ..metrics import Acc, BCEAcc, AUROC
 from .margin import MarginLoss
 
+from torch.autograd import Variable
+import numpy as np
+
+
+class smooth_nll_loss(nn.Module):
+    def __init__(self, smoothing=0.1):
+        super().__init__()
+        self.criterion = nn.KLDivLoss()
+        self.smoothing = smoothing
+
+    def forward(self, x, target):
+        smooth_dist = x.data.clone()
+        smooth_dist.fill_(self.smoothing / (x.size(1) - 1))
+        smooth_dist.scatter_(1, target.data, 1-self.smoothing)
+        return self.criterion(x, Variable(smooth_dist, requires_grad=False)) * x.size(1)
 
 def nl_loss(x, y):
     y = y.squeeze().long()
@@ -26,6 +41,10 @@ def loss_mapping(loss_fn):
         loss_fn = nl_loss
         default_metrics = [Acc()]
 
+    elif loss_fn == 'smooth_nll':
+        loss_fn = smooth_nll_loss(0.1)
+        default_metrics = [Acc()]
+        
     elif loss_fn == 'bce':
         loss_fn = F.binary_cross_entropy
         default_metrics = [BCEAcc(), AUROC()]
