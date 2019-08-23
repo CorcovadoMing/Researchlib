@@ -6,3 +6,4 @@ from .auroc import AUROC
 from .confusion_matrix import *
 from .acc import Acc
 from .bce_acc import BCEAcc
+from .kappa import Kappa

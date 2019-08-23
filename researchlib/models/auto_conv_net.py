@@ -39,18 +39,19 @@ def _get_dim_type(op):
 # =============================================================
 
 
-def _filter_policy(type, base_dim, block_group, cur_dim, total_blocks, policy,
+def _filter_policy(type, base_dim, max_dim, block_group, cur_dim, total_blocks, policy,
                    parameter_manager):
     if policy == 'default':
-        return base_dim * (2**(block_group))
+        result = base_dim * (2**(block_group))
     elif policy == 'pyramid':
         if type == 'residual-bottleneck':
             ratio = 4
         else:
             ratio = 1
         pyramid_alpha = parameter_manager.get_param('pyramid_alpha', 200)
-        return math.ceil(cur_dim + (pyramid_alpha / total_blocks) * ratio)
-
+        result = math.ceil(cur_dim + (pyramid_alpha / total_blocks) * ratio)
+    if max_dim != -1:
+        return min(max_dim, result)
 
 def AutoConvNet(op,
                 unit,
@@ -97,7 +98,7 @@ def AutoConvNet(op,
         else:
             do_pool = False
             
-        out_dim = wide_scale * _filter_policy(type, base_dim, block_group, in_dim, total_blocks, filter_policy, parameter_manager)
+        out_dim = wide_scale * _filter_policy(type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy, parameter_manager)
 
         print(in_dim, out_dim, do_pool)
         layers.append(
