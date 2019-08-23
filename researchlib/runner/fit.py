@@ -60,8 +60,11 @@ def fit(self,
         dash.start()
 
     if multisteps is not None:
-        assert type(multisteps) == list
-        self.multisteps = multisteps
+        if policy == 'cosine':
+            print('Cosine annealing is not suitable to combine with multisteps annealing, disable multisteps automatically.')
+        else:
+            assert type(multisteps) == list
+            self.multisteps = multisteps
 
     self._fit(
         epochs,
