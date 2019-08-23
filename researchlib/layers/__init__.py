@@ -20,11 +20,15 @@ from .pixel_norm import _PixelNorm
 from .blur import _Blur2d
 from .drop_relu import _DropReLU
 from .self_attention import _SelfAttention2d
+from .coord_conv import _CoordConvTranspose2d, _CoordConv2d
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
 
 
 class layer(object):
+    CoordConvTranspose2d = _CoordConvTranspose2d
+    CoordConv2d = _CoordConv2d
+    
     # Recurrent
     LSTM = _LSTM
     QRNN = _QRNN
