@@ -15,7 +15,7 @@ register_method = _register_method(__methods__)
 
 
 @register_method
-def set_policy(self, policy, lr):
+def set_policy(self, policy, lr, epochs):
     if policy == 'cyclical':
         try:
             self.scheduler = torch.optim.lr_scheduler.CyclicLR(
@@ -35,7 +35,7 @@ def set_policy(self, policy, lr):
                 cycle_momentum=False)
     elif policy == 'cosine':
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            self.optimizer, len(self.train_loader))
+            self.optimizer, epochs * len(self.train_loader))
 
 
 @register_method
@@ -151,7 +151,7 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
 
     base_lr = lr
     set_lr(self.optimizer, base_lr)
-    self.set_policy(policy, base_lr)
+    self.set_policy(policy, base_lr, epochs)
 
     if type(self.optimizer) == list:
         for i in self.optimizer:
