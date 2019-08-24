@@ -16,26 +16,29 @@ register_method = _register_method(__methods__)
 
 @register_method
 def set_policy(self, policy, lr, epochs):
-    if policy == 'cyclical':
-        try:
-            self.scheduler = torch.optim.lr_scheduler.CyclicLR(
-                self.optimizer,
-                base_lr=lr / 50,
-                max_lr=lr,
-                step_size_up=len(self.train_loader),
-                step_size_down=len(self.train_loader),
-                cycle_momentum=True)
-        except:  # No momentum
-            self.scheduler = torch.optim.lr_scheduler.CyclicLR(
-                self.optimizer,
-                base_lr=lr / 50.,
-                max_lr=lr,
-                step_size_up=len(self.train_loader),
-                step_size_down=len(self.train_loader),
-                cycle_momentum=False)
-    elif policy == 'cosine':
-        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            self.optimizer, epochs * len(self.train_loader))
+    if self.__class__.__runner_settings__['optimizer'] == 'cocob':
+        print('Optimizer cocob no need to set the learning rate, disabled any learning rate settings (lr, annealing, etc.,)')
+    else:
+        if policy == 'cyclical':
+            try:
+                self.scheduler = torch.optim.lr_scheduler.CyclicLR(
+                    self.optimizer,
+                    base_lr=lr / 50,
+                    max_lr=lr,
+                    step_size_up=len(self.train_loader),
+                    step_size_down=len(self.train_loader),
+                    cycle_momentum=True)
+            except:  # No momentum
+                self.scheduler = torch.optim.lr_scheduler.CyclicLR(
+                    self.optimizer,
+                    base_lr=lr / 50.,
+                    max_lr=lr,
+                    step_size_up=len(self.train_loader),
+                    step_size_down=len(self.train_loader),
+                    cycle_momentum=False)
+        elif policy == 'cosine':
+            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                self.optimizer, epochs * len(self.train_loader))
 
 
 @register_method

@@ -7,6 +7,7 @@ from .history import History
 from ..models import GANModel
 from .adafactor import Adafactor
 from .radam import PlainRAdam, RAdam
+from .cocob import Cocob
 from .validate import validate_fn
 from .preprocessing import PreprocessingDebugger
 from .export import _Export
@@ -178,6 +179,9 @@ class Runner:
             if optimizer == 'adam':
                 optimizer = Adam(
                     list(model.parameters()) + loss_params, betas=(0.9, 0.999))
+            elif optimizer == 'cocob':
+                optimizer = Cocob(
+                    list(model.parameters()) + loss_params)
             elif optimizer == 'radam-plain':
                 optimizer = PlainRAdam(
                     list(model.parameters()) + loss_params, betas=(0.9, 0.999))
