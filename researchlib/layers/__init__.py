@@ -21,11 +21,29 @@ from .blur import _Blur2d
 from .drop_relu import _DropReLU
 from .self_attention import _SelfAttention2d
 from .coord_conv import _CoordConvTranspose2d, _CoordConv2d
+from .non_local.concatenation import _ConcatNonLocalBlock1d, _ConcatNonLocalBlock2d, _ConcatNonLocalBlock3d
+from .non_local.dot_product import _DotNonLocalBlock1d, _DotNonLocalBlock2d, _DotNonLocalBlock3d
+from .non_local.embedded_gaussian import _EmbeddedGaussianNonLocalBlock1d, _EmbeddedGaussianNonLocalBlock2d, _EmbeddedGaussianNonLocalBlock3d
+from .non_local.gaussian import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _GaussianNonLocalBlock3d
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
 
 
 class layer(object):
+    # Non-Local
+    ConcatNonLocalBlock1d = _ConcatNonLocalBlock1d
+    ConcatNonLocalBlock2d = _ConcatNonLocalBlock2d
+    ConcatNonLocalBlock3d = _ConcatNonLocalBlock3d
+    DotNonLocalBlock1d = _DotNonLocalBlock1d
+    DotNonLocalBlock2d = _DotNonLocalBlock2d
+    DotNonLocalBlock3d = _DotNonLocalBlock3d
+    EmbeddedGaussianNonLocalBlock1d = _EmbeddedGaussianNonLocalBlock1d
+    EmbeddedGaussianNonLocalBlock2d = _EmbeddedGaussianNonLocalBlock2d
+    EmbeddedGaussianNonLocalBlock3d = _EmbeddedGaussianNonLocalBlock3d
+    GaussianNonLocalBlock1d = _GaussianNonLocalBlock1d
+    GaussianNonLocalBlock2d = _GaussianNonLocalBlock2d
+    GaussianNonLocalBlock3d = _GaussianNonLocalBlock3d
+    
     CoordConvTranspose2d = _CoordConvTranspose2d
     CoordConv2d = _CoordConv2d
     

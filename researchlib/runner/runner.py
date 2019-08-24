@@ -312,11 +312,14 @@ class Runner:
         
     def eval(self):
         self.model.eval()
-        if type(self.optimizer) == list:
-            for i in self.optimizer:
-                i.swap_swa_sgd()
-        else:
-            self.optimizer.swap_swa_sgd()
+        try:
+            if type(self.optimizer) == list:
+                for i in self.optimizer:
+                    i.swap_swa_sgd()
+            else:
+                self.optimizer.swap_swa_sgd()
+        except:
+            pass
     
     def train(self):
         self.model.train()
