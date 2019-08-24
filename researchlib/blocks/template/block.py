@@ -141,6 +141,17 @@ class _Block(nn.Module):
             beta_range=beta_range,
             p_L=0.5,
             mode=mode)
+    
+    def _drop_connect(self, x):
+        drop_connect_rate = self._get_param('drop_connect_rate', 0.2)
+        if not self.training:
+            return x
+        keep_prob = 1.0 - drop_connect_rate
+        batch_size = x.size(0)
+        random_tensor = keep_prob
+        random_tensor += torch.rand(batch_size, 1, 1, 1, device=x.device)
+        binary_tensor = random_tensor.floor()
+        return x.div(keep_prob) * binary_tensor
 
     def forward(self, x):
         pass

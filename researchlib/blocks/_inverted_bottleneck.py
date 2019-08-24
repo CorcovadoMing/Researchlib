@@ -64,6 +64,6 @@ class InvertedBottleneckBlock(_Block):
         if self.need_shortcut:
             if self.shakedrop:
                 _x = self.shakedrop_branch(_x)
-            return x + _x
+            return x + self._drop_connect(_x)
         else:
             return _x
