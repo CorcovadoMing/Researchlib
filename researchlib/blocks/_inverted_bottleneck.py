@@ -19,8 +19,8 @@ class InvertedBottleneckBlock(_Block):
         mb_factor = self._get_param('mb_factor', 5)
         hidden_size = self.out_dim * mb_factor
         stride = self._get_param('pool_factor', 2) if self.do_pool else 1
-        padding = 0 if is_transpose and self.do_pool else self._get_param('padding', 1)
         kernel_size = 2 if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
+        padding = 0 if is_transpose and self.do_pool else self._get_param('padding', int((kernel_size-1)/2))
         first_custom_kwargs = self._get_custom_kwargs({
             'kernel_size': 1,
             'stride': 1,
