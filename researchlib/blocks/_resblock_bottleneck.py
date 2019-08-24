@@ -38,7 +38,7 @@ class ResBottleneckBlock(_Block):
 
         unit_fn = self._get_param('unit', unit.conv)
         erased_activator = self._get_param('erased_activator', False)
-        activator_type = self._get_param('actvator_type', 'ReLU')
+        activator_type = self._get_param('activator_type', 'ReLU')
         activator_layer = self._get_activator_layer(
             activator_type
         ) if not erased_activator and not self.preact else None

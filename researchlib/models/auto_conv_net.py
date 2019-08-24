@@ -64,6 +64,7 @@ def AutoConvNet(op,
                 preact=True,
                 pool_freq=1,
                 do_norm=True,
+                non_local_start=1e8,
                 **kwargs):
 
     Runner.__model_settings__[
@@ -99,8 +100,9 @@ def AutoConvNet(op,
             do_pool = False
             
         out_dim = wide_scale * _filter_policy(type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy, parameter_manager)
-
+        
         print(in_dim, out_dim, do_pool)
+        kwargs['non_local'] = id>=non_local_start
         layers.append(
             _op_type(
                 op,

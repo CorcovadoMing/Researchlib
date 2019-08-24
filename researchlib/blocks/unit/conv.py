@@ -12,14 +12,18 @@ class _conv(_Block):
 
     def __postinit__(self):
         # Parameters
-        activator_type = self._get_param('actvator_type', 'ReLU')
+        activator_type = self._get_param('activator_type', 'ReLU')
         norm_type = self._get_param('norm_type', 'BatchNorm')
         pool_type = self._get_param('pool_type', 'MaxPool')
         pool_factor = self._get_param('pool_factor', 2)
+        non_local = self._get_param('non_local', False) and self._get_param('kernel_size', 3) != 1
+        non_local_type = self._get_param('non_local_type', 'EmbeddedGaussian')
+        non_local_layer = layer.__dict__[non_local_type + 'NonLocalBlock' + self._get_dim_type()](self.in_dim) if non_local else None
         conv_kwargs = self._get_conv_kwargs()
 
         spectral_norm = self._get_param('sn', False)
         erased_activator = self._get_param('erased_activator', False)
+        
 
         # Layers
         conv_layer = self.op(self.in_dim, self.out_dim, **conv_kwargs)
@@ -32,9 +36,9 @@ class _conv(_Block):
         norm_layer = self._get_norm_layer(norm_type) if self.do_norm else None
 
         if self.preact:
-            self.layers = [norm_layer, activator_layer, conv_layer, pool_layer]
+            self.layers = [norm_layer, activator_layer, non_local_layer, conv_layer, pool_layer]
         else:
-            self.layers = [conv_layer, norm_layer, activator_layer, pool_layer]
+            self.layers = [non_local_layer, conv_layer, norm_layer, activator_layer, pool_layer]
         self.layers = nn.Sequential(*list(filter(None, self.layers)))
 
     def forward(self, x):

@@ -49,7 +49,6 @@ class InvertedBottleneckBlock(_Block):
         self.need_shortcut = not self.do_pool and self.in_dim == self.out_dim
         
         self.se = self._get_param('se', True)
-        self.se_ratio = self._get_param('se_ratio', 0.25)
         if self.se:
             self.se_branch = self._get_se_branch(dim=hidden_size)
         self.shakedrop = self._get_param('shakeDrop', False)
@@ -59,7 +58,7 @@ class InvertedBottleneckBlock(_Block):
     def forward(self, x):
         _x = self.pre_conv(x)
         if self.se:
-            _x = _x * self.se_branch(_x) * self.se_ratio
+            _x = _x * self.se_branch(_x)
         _x = self.post_conv(_x)
         
         if self.need_shortcut:
