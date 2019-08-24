@@ -8,6 +8,7 @@ from ..models import GANModel
 from .adafactor import Adafactor
 from .radam import PlainRAdam, RAdam
 from .cocob import Cocob
+from .lookahead import Lookahead
 from .validate import validate_fn
 from .preprocessing import PreprocessingDebugger
 from .export import _Export
@@ -56,6 +57,7 @@ class Runner:
                  fp16=False,
                  multigpu=False,
                  larc=False,
+                 lookahead=False,
                  ema=-1,
                  ema_start=100,
                  swa=False,
@@ -67,6 +69,7 @@ class Runner:
         self.checkpoint_path = ''
         self.scheduler = None
         self.multisteps = []
+        self.lookahead = lookahead
         self.ema = ema
         self.ema_start = ema_start
         self.swa = swa
@@ -167,7 +170,7 @@ class Runner:
     # ===================================================================================================
     def set_optimizer(self, optimizer):
 
-        def _assign_optim(model, optimizer, larc, swa):
+        def _assign_optim(model, optimizer, larc, swa, lookahead):
             # if there are learnable loss parameters
             loss_params = []
             for i in self.loss_fn:
@@ -219,6 +222,8 @@ class Runner:
                     list(model.parameters()) + loss_params, lr=1e-3)
             if larc:
                 optimizer = LARC(optimizer)
+            if lookahead:
+                optimizer = Lookahead(optimizer)
             if swa:
                 optimizer = torchcontrib.optim.SWA(optimizer)
             return optimizer
@@ -227,20 +232,20 @@ class Runner:
             if type(optimizer) == list or type(optimizer) == tuple:
                 self.optimizer = [
                     _assign_optim(self.model.discriminator, optimizer[1],
-                                  self.larc, self.swa),
+                                  self.larc, self.swa, self.lookahead),
                     _assign_optim(self.model.generator, optimizer[0], self.larc,
-                                  self.swa)
+                                  self.swa, self.lookahead)
                 ]
             else:
                 self.optimizer = [
                     _assign_optim(self.model.discriminator, optimizer,
-                                  self.larc, self.swa),
+                                  self.larc, self.swa, self.lookahead),
                     _assign_optim(self.model.generator, optimizer, self.larc,
-                                  self.swa)
+                                  self.swa, self.lookahead)
                 ]
         else:
             self.optimizer = _assign_optim(self.model, optimizer, self.larc,
-                                           self.swa)
+                                           self.swa, self.lookahead)
 
 
 #         self.model, self.optimizer = amp.initialize(self.model,
