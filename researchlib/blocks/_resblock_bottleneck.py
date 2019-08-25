@@ -3,7 +3,6 @@ from ..layers import layer
 from torch import nn
 import torch
 from .unit import unit
-import copy
 
 
 class _padding_shortcut(nn.Module):
