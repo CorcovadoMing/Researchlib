@@ -48,8 +48,10 @@ class ResBlock(_Block):
             norm_type, self.out_dim) if self.do_norm and self.preact else None
 
         stride = self._get_param('pool_factor', 2) if self.do_pool else 1
-        kernel_size = 2 if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
-        padding = 0 if is_transpose and self.do_pool else self._get_param('padding', int((kernel_size-1)/2))
+        kernel_size = 2 if is_transpose and self.do_pool else self._get_param(
+            'kernel_size', 3)
+        padding = 0 if is_transpose and self.do_pool else self._get_param(
+            'padding', int((kernel_size - 1) / 2))
         first_custom_kwargs = self._get_custom_kwargs({
             'kenel_size':
                 kernel_size,

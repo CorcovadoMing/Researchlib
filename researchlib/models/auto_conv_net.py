@@ -15,7 +15,10 @@ from ..blocks._inverted_bottleneck import InvertedBottleneckBlock as ibb
 
 
 def _get_op_type(type):
-    if type not in ['vgg', 'residual', 'residual-bottleneck', 'wide-residual', 'inverted-bottleneck']:
+    if type not in [
+            'vgg', 'residual', 'residual-bottleneck', 'wide-residual',
+            'inverted-bottleneck'
+    ]:
         raise ('Type is not supperted')
     if type == 'vgg':
         _op_type = vb
@@ -39,8 +42,8 @@ def _get_dim_type(op):
 # =============================================================
 
 
-def _filter_policy(type, base_dim, max_dim, block_group, cur_dim, total_blocks, policy,
-                   parameter_manager):
+def _filter_policy(block_idx, type, base_dim, max_dim, block_group, cur_dim,
+                   total_blocks, policy, parameter_manager):
     if policy == 'default':
         result = base_dim * (2**(block_group))
     elif policy == 'pyramid':
@@ -49,9 +52,13 @@ def _filter_policy(type, base_dim, max_dim, block_group, cur_dim, total_blocks, 
         else:
             ratio = 1
         pyramid_alpha = parameter_manager.get_param('pyramid_alpha', 200)
-        result = math.ceil(cur_dim + (pyramid_alpha / total_blocks) * ratio)
+        result = math.floor(base_dim +
+                            pyramid_alpha * block_idx / total_blocks) * ratio
     if max_dim != -1:
         return min(max_dim, result)
+    else:
+        return result
+
 
 def AutoConvNet(op,
                 unit,
@@ -82,6 +89,7 @@ def AutoConvNet(op,
         'wide_scale', 10) if type == 'wide-residual' else 1
     in_dim = input_dim
     out_dim = wide_scale * base_dim
+    no_end_pool = parameter_manager.get_param('no_end_pool', False)
 
     print(in_dim, out_dim)
     layers.append(layer.__dict__['Conv' + _get_dim_type(op)](
@@ -92,17 +100,22 @@ def AutoConvNet(op,
 
     for i in range(total_blocks):
         id = i + 1
-        
+
         if id % pool_freq == 0:
-            do_pool = True
             block_group += 1
+            if id == total_blocks and no_end_pool:
+                do_pool = False
+            else:
+                do_pool = True
         else:
             do_pool = False
-            
-        out_dim = wide_scale * _filter_policy(type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy, parameter_manager)
-        
+
+        out_dim = wide_scale * _filter_policy(id, type, base_dim, max_dim,
+                                              block_group, in_dim, total_blocks,
+                                              filter_policy, parameter_manager)
+
         print(in_dim, out_dim, do_pool)
-        kwargs['non_local'] = id>=non_local_start
+        kwargs['non_local'] = id >= non_local_start
         layers.append(
             _op_type(
                 op,

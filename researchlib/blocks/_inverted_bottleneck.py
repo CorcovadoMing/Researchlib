@@ -18,8 +18,10 @@ class InvertedBottleneckBlock(_Block):
         mb_factor = self._get_param('mb_factor', 5)
         hidden_size = self.out_dim * mb_factor
         stride = self._get_param('pool_factor', 2) if self.do_pool else 1
-        kernel_size = 2 if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
-        padding = 0 if is_transpose and self.do_pool else self._get_param('padding', int((kernel_size-1)/2))
+        kernel_size = 2 if is_transpose and self.do_pool else self._get_param(
+            'kernel_size', 3)
+        padding = 0 if is_transpose and self.do_pool else self._get_param(
+            'padding', int((kernel_size - 1) / 2))
         first_custom_kwargs = self._get_custom_kwargs({
             'kernel_size': 1,
             'stride': 1,
@@ -35,18 +37,21 @@ class InvertedBottleneckBlock(_Block):
         })
         third_custom_kwargs = self._get_custom_kwargs({
             'kernel_size': 1,
-            'stride': 1, 
-            'padding': 0, 
+            'stride': 1,
+            'padding': 0,
             'erased_activator': True
         })
         pre_conv_layers = [
-            unit_fn(self.op, self.in_dim, hidden_size, False, self.do_norm, False, **first_custom_kwargs),
-            unit_fn(self.op, hidden_size, hidden_size, False, self.do_norm, False, **second_custom_kwargs),
+            unit_fn(self.op, self.in_dim, hidden_size, False, self.do_norm,
+                    False, **first_custom_kwargs),
+            unit_fn(self.op, hidden_size, hidden_size, False, self.do_norm,
+                    False, **second_custom_kwargs),
         ]
         self.pre_conv = nn.Sequential(*list(filter(None, pre_conv_layers)))
-        self.post_conv = unit_fn(self.op, hidden_size, self.out_dim, False, self.do_norm, False, **third_custom_kwargs)
+        self.post_conv = unit_fn(self.op, hidden_size, self.out_dim, False,
+                                 self.do_norm, False, **third_custom_kwargs)
         self.need_shortcut = not self.do_pool and self.in_dim == self.out_dim
-        
+
         self.se = self._get_param('se', True)
         if self.se:
             self.se_branch = self._get_se_branch(dim=hidden_size)
@@ -59,7 +64,7 @@ class InvertedBottleneckBlock(_Block):
         if self.se:
             _x = _x * self.se_branch(_x)
         _x = self.post_conv(_x)
-        
+
         if self.need_shortcut:
             if self.shakedrop:
                 _x = self.shakedrop_branch(_x)
