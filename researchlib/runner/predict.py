@@ -24,5 +24,5 @@ def predict(self, x, y=[], augmentor=None):
             raise
         finally:
             del x, y
-            self.unload_gpu(unload_data=False)
+            self.unload_gpu()
     return guess
