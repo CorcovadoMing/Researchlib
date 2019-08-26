@@ -12,7 +12,7 @@ def Heads(out_dim, **kwargs):
     layers = [
         layer.__dict__['BatchNorm'+str(dim_type)](last_dim),
         layer.ReLU(),
-        layer.__dict__['SelfAttention'+str(dim_type)](last_dim),
+        layer.__dict__['DotNonLocalBlock'+str(dim_type)](last_dim),
         unit.conv(layer.__dict__['Conv'+str(dim_type)], last_dim , last_dim , False, True, False),
         layer.__dict__['AdaptiveMaxPool'+str(dim_type)](1),
         layer.Flatten(),

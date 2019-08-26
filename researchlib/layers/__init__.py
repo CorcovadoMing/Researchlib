@@ -19,7 +19,6 @@ from .shakedrop import _ShakeDrop
 from .pixel_norm import _PixelNorm
 from .blur import _Blur2d
 from .drop_relu import _DropReLU
-from .self_attention import _SelfAttention2d
 from .coord_conv import _CoordConvTranspose2d, _CoordConv2d
 from .non_local.concatenation import _ConcatNonLocalBlock1d, _ConcatNonLocalBlock2d, _ConcatNonLocalBlock3d
 from .non_local.dot_product import _DotNonLocalBlock1d, _DotNonLocalBlock2d, _DotNonLocalBlock3d
@@ -90,7 +89,6 @@ class layer(object):
 
     Blur2d = _Blur2d
     DropReLU = _DropReLU
-    SelfAttention2d = _SelfAttention2d
 
 
 # Merge nn and layer module if it didn't cause conflict
