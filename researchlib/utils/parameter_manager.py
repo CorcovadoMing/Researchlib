@@ -1,5 +1,6 @@
 class ParameterManager:
     keys_whitelist = []
+    buffer = {}
 
     @classmethod
     def verify_kwargs(cls, **kwargs):
@@ -26,3 +27,14 @@ class ParameterManager:
             return query
         except:
             return init_value
+    
+    def save_buffer(self, key, value):
+        ParameterManager.buffer[key] = value
+    
+    def get_buffer(self, key, clear=True):
+        if key not in ParameterManager.buffer:
+            raise ValueError("Key {} is not in buffer".format(key))
+        result = ParameterManager.buffer[key]
+        if clear:
+            del ParameterManager.buffer[key]
+        return result

@@ -76,7 +76,6 @@ def AutoConvNet(op,
                 type='residual',
                 filters=(128, 1024),
                 filter_policy='default',
-                flatten=False,
                 preact=True,
                 pool_freq=1,
                 do_norm=True,
@@ -141,10 +140,10 @@ def AutoConvNet(op,
 
         in_dim = out_dim
 
-    if flatten:
-        layers.append(layer.Flatten())
-
     # must verify after all keys get registered
     ParameterManager.verify_kwargs(**kwargs)
+    
+    parameter_manager.save_buffer('last_dim', out_dim)
+    parameter_manager.save_buffer('dim_type', _get_dim_type(op))
 
     return builder(layers)
