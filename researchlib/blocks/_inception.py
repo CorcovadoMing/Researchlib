@@ -154,7 +154,7 @@ class InceptionD(_Block):
         self.branch3x3_2 = unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
                                  **self._get_custom_kwargs({'kernel_size': 3, 'stride': stride, 'padding': 1, 'erased_activator': False}))
         
-        self.branch7x7x3_1 = unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
+        self.branch7x7x3_1 = unit_fn(self.op, self.in_dim, hidden_dim, False, True, False,
                                  **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False}))
         self.branch7x7x3_2 = unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
                                  **self._get_custom_kwargs({'kernel_size': (1, 7), 'stride': 1, 'padding': (0, 3), 'erased_activator': False}))
