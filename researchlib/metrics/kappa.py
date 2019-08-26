@@ -2,6 +2,7 @@ from .matrix import Matrix
 import numpy as np
 from sklearn.metrics import cohen_kappa_score
 
+
 class Kappa(Matrix):
 
     def __init__(self):

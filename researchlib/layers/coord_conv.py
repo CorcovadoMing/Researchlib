@@ -44,20 +44,21 @@ class _AddCoordinates2d(object):
     def __call__(self, image):
         batch_size, _, image_height, image_width = image.size()
 
-        y_coords = 2.0 * torch.arange(image_height).unsqueeze(
-            1).expand(image_height, image_width) / (image_height - 1.0) - 1.0
-        x_coords = 2.0 * torch.arange(image_width).unsqueeze(
-            0).expand(image_height, image_width) / (image_width - 1.0) - 1.0
+        y_coords = 2.0 * torch.arange(image_height).unsqueeze(1).expand(
+            image_height, image_width) / (image_height - 1.0) - 1.0
+        x_coords = 2.0 * torch.arange(image_width).unsqueeze(0).expand(
+            image_height, image_width) / (image_width - 1.0) - 1.0
 
         coords = torch.stack((y_coords, x_coords), dim=0)
 
         if self.with_r:
-            rs = ((y_coords ** 2) + (x_coords ** 2)) ** 0.5
+            rs = ((y_coords**2) + (x_coords**2))**0.5
             rs = rs / torch.max(rs)
             rs = torch.unsqueeze(rs, dim=0)
             coords = torch.cat((coords, rs), dim=0)
 
-        coords = torch.unsqueeze(coords, dim=0).repeat(batch_size, 1, 1, 1).float()
+        coords = torch.unsqueeze(
+            coords, dim=0).repeat(batch_size, 1, 1, 1).float()
 
         image = torch.cat((coords.to(image.device), image), dim=1)
 
@@ -65,7 +66,6 @@ class _AddCoordinates2d(object):
 
 
 class _CoordConv2d(nn.Module):
-
     '''
     2D Convolution Module Using Extra Coordinate Information as defined
     in 'An Intriguing Failing of Convolutional Neural Networks and the
@@ -95,8 +95,15 @@ class _CoordConv2d(nn.Module):
         >>> output = coord_conv(input)
     '''
 
-    def __init__(self, in_channels, out_channels, kernel_size,
-                 stride=1, padding=0, dilation=1, groups=1, bias=True,
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size,
+                 stride=1,
+                 padding=0,
+                 dilation=1,
+                 groups=1,
+                 bias=True,
                  with_r=True):
         super().__init__()
 
@@ -104,10 +111,15 @@ class _CoordConv2d(nn.Module):
         if with_r:
             in_channels += 1
 
-        self.conv_layer = nn.Conv2d(in_channels, out_channels,
-                                    kernel_size, stride=stride,
-                                    padding=padding, dilation=dilation,
-                                    groups=groups, bias=bias)
+        self.conv_layer = nn.Conv2d(
+            in_channels,
+            out_channels,
+            kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            groups=groups,
+            bias=bias)
 
         self.coord_adder = _AddCoordinates2d(with_r)
 
@@ -119,7 +131,6 @@ class _CoordConv2d(nn.Module):
 
 
 class _CoordConvTranspose2d(nn.Module):
-
     '''
     2D Transposed Convolution Module Using Extra Coordinate Information
     as defined in 'An Intriguing Failing of Convolutional Neural Networks and
@@ -149,21 +160,33 @@ class _CoordConvTranspose2d(nn.Module):
         >>> output = coord_conv_tr(input)
     '''
 
-    def __init__(self, in_channels, out_channels, kernel_size,
-                 stride=1, padding=0, output_padding=0, groups=1, bias=True,
-                 dilation=1, with_r=True):
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size,
+                 stride=1,
+                 padding=0,
+                 output_padding=0,
+                 groups=1,
+                 bias=True,
+                 dilation=1,
+                 with_r=True):
         super().__init__()
 
         in_channels += 2
         if with_r:
             in_channels += 1
 
-        self.conv_tr_layer = nn.ConvTranspose2d(in_channels, out_channels,
-                                                kernel_size, stride=stride,
-                                                padding=padding,
-                                                output_padding=output_padding,
-                                                groups=groups, bias=bias,
-                                                dilation=dilation)
+        self.conv_tr_layer = nn.ConvTranspose2d(
+            in_channels,
+            out_channels,
+            kernel_size,
+            stride=stride,
+            padding=padding,
+            output_padding=output_padding,
+            groups=groups,
+            bias=bias,
+            dilation=dilation)
 
         self.coord_adder = _AddCoordinates2d(with_r)
 

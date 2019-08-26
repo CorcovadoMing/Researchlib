@@ -4,7 +4,9 @@ from torch.optim import Optimizer
 import torch
 import warnings
 
+
 class Lookahead(Optimizer):
+
     def __init__(self, optimizer, k=5, alpha=0.5):
         self.optimizer = optimizer
         self.k = k
@@ -14,7 +16,7 @@ class Lookahead(Optimizer):
         self.fast_state = self.optimizer.state
         for group in self.param_groups:
             group["counter"] = 0
-    
+
     def update(self, group):
         for fast in group["params"]:
             param_state = self.state[fast]
@@ -24,7 +26,7 @@ class Lookahead(Optimizer):
             slow = param_state["slow_param"]
             slow += (fast.data - slow) * self.alpha
             fast.data.copy_(slow)
-    
+
     def update_lookahead(self):
         for group in self.param_groups:
             self.update(group)
@@ -41,10 +43,8 @@ class Lookahead(Optimizer):
 
     def state_dict(self):
         fast_state_dict = self.optimizer.state_dict()
-        slow_state = {
-            (id(k) if isinstance(k, torch.Tensor) else k): v
-            for k, v in self.state.items()
-        }
+        slow_state = {(id(k) if isinstance(k, torch.Tensor) else k): v
+                      for k, v in self.state.items()}
         fast_state = fast_state_dict["state"]
         param_groups = fast_state_dict["param_groups"]
         return {

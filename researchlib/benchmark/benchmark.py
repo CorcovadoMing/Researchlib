@@ -2,10 +2,10 @@ import os
 import json
 import datetime as dt
 from pytz import timezone
-from .decorator import Singleton
+from ..utils.decorator import Singleton
 import pygsheets
 
-from .class_lib import _register_method
+from ..utils.class_lib import _register_method
 __methods__ = []
 register_method = _register_method(__methods__)
 
@@ -162,6 +162,16 @@ class benchmark(object):
         else:
             print('Okay, no one get hurt.')
 
+    def parse_model(self, dict_):
+        key_name = 'model'
+        copy_dict_ = dict_.copy()
+        v = dict_[key_name]
+        for kk, vv in v.items():
+            for kkk, vvv in vv.items():
+                copy_dict_[kkk] = vvv
+        copy_dict_[key_name] = list(v.keys())
+        return copy_dict_
+
     def update_from_runner(self, sheetname, time_id, description, backup=False):
         """ update row(description) by primary key(time_id) in spreadsheet(sheetname)
         Args:
@@ -169,6 +179,7 @@ class benchmark(object):
             sheetname (str): sheetname of the google spreadsheet
             description (dict): config of runner
         """
+        description = self.parse_model(description)
         self.verify(sheetname)
 
         sh = self.gc.open_by_key(self.sheetnames2ids[sheetname])
