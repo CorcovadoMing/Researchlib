@@ -16,7 +16,7 @@ def _load_state(state, device):
             except:
                 pass
 
-            
+
 def _switch_optimizer_state(optim, device, lookahead):
     if lookahead:
         fast_state = optim.state_dict()['fast_state']
@@ -30,7 +30,7 @@ def _switch_optimizer_state(optim, device, lookahead):
             state = optim.state_dict()['opt_state']
         _load_state(state, device)
 
-        
+
 @register_method
 def preload_gpu(self):
     if self.is_cuda:

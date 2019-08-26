@@ -12,7 +12,8 @@ from .lookahead import Lookahead
 from .validate import validate_fn
 from .preprocessing import PreprocessingDebugger
 from .export import _Export
-from ..utils import _add_methods_from, _get_iteration, benchmark
+from ..utils import _add_methods_from, _get_iteration
+from ..benchmark import benchmark
 from .save_load import _save_model, _save_optimizer, _load_model, _load_optimizer
 from torch.cuda import is_available
 from torch.nn import DataParallel
@@ -153,6 +154,7 @@ class Runner:
 
         # Model
         self.model = model
+        self.num_params = self.model.num_params()
         self.multigpu = multigpu
         if type(model) == GANModel:
             self.loss_fn[0].set_model(self.model)
@@ -183,8 +185,7 @@ class Runner:
                 optimizer = Adam(
                     list(model.parameters()) + loss_params, betas=(0.9, 0.999))
             elif optimizer == 'cocob':
-                optimizer = Cocob(
-                    list(model.parameters()) + loss_params)
+                optimizer = Cocob(list(model.parameters()) + loss_params)
             elif optimizer == 'radam-plain':
                 optimizer = PlainRAdam(
                     list(model.parameters()) + loss_params, betas=(0.9, 0.999))
@@ -318,7 +319,7 @@ class Runner:
             plt.show()
         else:
             return self.history_
-        
+
     def eval(self):
         self.model.eval()
         try:
@@ -329,7 +330,7 @@ class Runner:
                 self.optimizer.swap_swa_sgd()
         except:
             pass
-    
+
     def train(self):
         self.model.train()
         if type(self.optimizer) == list:
@@ -450,6 +451,8 @@ class Runner:
         query['monitor_state'] = self.__class__.__runner_settings__[
             'monitor_state']
 
+        query['num_params'] = self.num_params
+
         try:
             query['best_state'] = self.__dict__['monitor']
         except:
@@ -466,6 +469,13 @@ class Runner:
             query['fit'][i] = _describe_fit(j)
         return query
 
-    def submit_benchmark(self, category, backup=False):
+    def submit_benchmark(self, category, comments={}, backup=False):
+        if type(comments) != dict:
+            raise ValueError("Type Error")
+        dict_ = self.describe()
+        for k, v in comments.items():
+            if k in dict_.keys():
+                raise ValueError("key is overlapped: {}".forat(k))
+            dict_[k] = v
         self.bencher.update_from_runner(
-            category, self._date_id, self.describe(), backup=backup)
+            category, self._date_id, dict_, backup=backup)

@@ -14,6 +14,5 @@ from .parallel_executor import ParallelExecutor
 from .check_ports import _is_port_in_use
 from .mapping import mapping
 from .timer import Timer
-from .benchmark import benchmark
 from .decorator import Singleton
 from .parameter_manager import ParameterManager

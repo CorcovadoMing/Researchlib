@@ -7,4 +7,3 @@ class unit(object):
     conv = _conv
     res2 = _res2
     randwire = _randwire
-    

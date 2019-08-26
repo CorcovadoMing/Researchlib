@@ -43,10 +43,10 @@ class layer(object):
     GaussianNonLocalBlock1d = _GaussianNonLocalBlock1d
     GaussianNonLocalBlock2d = _GaussianNonLocalBlock2d
     GaussianNonLocalBlock3d = _GaussianNonLocalBlock3d
-    
+
     CoordConvTranspose2d = _CoordConvTranspose2d
     CoordConv2d = _CoordConv2d
-    
+
     # Recurrent
     LSTM = _LSTM
     QRNN = _QRNN

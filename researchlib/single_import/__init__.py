@@ -13,6 +13,7 @@ from ..pipeline import *
 from ..vistool import *
 from ..datatool import *
 from ..wrapper import *
+from ..benchmark import *
 from pynvml import *
 import seaborn as sns
 import subprocess

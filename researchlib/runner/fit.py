@@ -17,7 +17,9 @@ register_method = _register_method(__methods__)
 @register_method
 def set_policy(self, policy, lr, epochs):
     if self.__class__.__runner_settings__['optimizer'] == 'cocob':
-        print('Optimizer cocob no need to set the learning rate, disabled any learning rate settings (lr, annealing, etc.,)')
+        print(
+            'Optimizer cocob no need to set the learning rate, disabled any learning rate settings (lr, annealing, etc.,)'
+        )
     else:
         if policy == 'cyclical':
             try:
@@ -64,7 +66,9 @@ def fit(self,
 
     if multisteps is not None:
         if policy == 'cosine':
-            print('Cosine annealing is not suitable to combine with multisteps annealing, disable multisteps automatically.')
+            print(
+                'Cosine annealing is not suitable to combine with multisteps annealing, disable multisteps automatically.'
+            )
         else:
             assert type(multisteps) == list
             self.multisteps = multisteps
