@@ -15,16 +15,8 @@ from ..blocks._inception import InceptionA, InceptionB, InceptionC, InceptionD, 
 # =============================================================
 
 
-<<<<<<< HEAD
 def _get_op_type(type, cur_block, total_blocks):
     if type not in ['vgg', 'residual', 'residual-bottleneck', 'wide-residual', 'inverted-bottleneck', 'inception']:
-=======
-def _get_op_type(type):
-    if type not in [
-            'vgg', 'residual', 'residual-bottleneck', 'wide-residual',
-            'inverted-bottleneck'
-    ]:
->>>>>>> 50fa788a8b37271992340cb62fa4a16b62a82180
         raise ('Type is not supperted')
     if type == 'vgg':
         _op_type = vb
@@ -116,13 +108,9 @@ def AutoConvNet(op,
 
     for i in range(total_blocks):
         id = i + 1
-<<<<<<< HEAD
         
         _op_type = _get_op_type(type, id, total_blocks)
         
-=======
-
->>>>>>> 50fa788a8b37271992340cb62fa4a16b62a82180
         if id % pool_freq == 0:
             block_group += 1
             if id == total_blocks and no_end_pool:
