@@ -7,6 +7,7 @@ from .history import History
 from ..models import GANModel
 from .adafactor import Adafactor
 from .radam import PlainRAdam, RAdam
+from .adamw import AdamW
 from .cocob import Cocob
 from .lookahead import Lookahead
 from .validate import validate_fn
@@ -18,7 +19,7 @@ from .save_load import _save_model, _save_optimizer, _load_model, _load_optimize
 from torch.cuda import is_available
 from torch.nn import DataParallel
 import torch.backends.cudnn as cudnn
-# from apex import amp
+from apex import amp
 import torchcontrib
 import os
 import copy
@@ -254,11 +255,6 @@ class Runner:
             self.optimizer = _assign_optim(self.model, self.optimizer_choice,
                                            self.larc, self.swa, self.lookahead)
 
-
-#         self.model, self.optimizer = amp.initialize(self.model,
-#                                                     self.optimizer,
-#                                                     opt_level="O2",
-#                                                     enabled=self.fp16)
 
     def start_experiment(self, name):
         self.experiment_name = name

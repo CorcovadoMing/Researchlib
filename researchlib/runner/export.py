@@ -1,8 +1,6 @@
 import torch
 import onnxruntime
 import os
-from torch2trt import torch2trt
-
 
 class _Export:
 

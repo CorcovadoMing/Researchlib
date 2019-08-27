@@ -9,6 +9,8 @@ from .liveplot import Liveplot
 from .prefetch import *
 import pickle
 from ..frontend.dashboard import _Dashboard
+from apex import amp
+
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -60,6 +62,7 @@ def fit(self,
         f'epoch_{self.epoch}-{self.epoch+epochs}'] = locals()
 
     self.set_optimizer()
+    
 
     # Fix issue the dashboard is down while training is interrupted
     if not _is_port_in_use(8050):
@@ -185,6 +188,12 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
     liveplot.redis.set('experiment', pickle.dumps(exist_experiments))
 
     self.preload_gpu()
+    
+    self.model, self.optimizer = amp.initialize(self.model,
+                                                self.optimizer,
+                                                opt_level='O1',
+                                                enabled=self.fp16,
+                                                loss_scale=1)
 
     try:
         if len(self.default_metrics):

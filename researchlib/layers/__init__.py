@@ -25,6 +25,7 @@ from .non_local.dot_product import _DotNonLocalBlock1d, _DotNonLocalBlock2d, _Do
 from .non_local.embedded_gaussian import _EmbeddedGaussianNonLocalBlock1d, _EmbeddedGaussianNonLocalBlock2d, _EmbeddedGaussianNonLocalBlock3d
 from .non_local.gaussian import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _GaussianNonLocalBlock3d
 from .noise_injection import _NoiseInjection
+from .flatten import _Flatten
 
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
@@ -93,6 +94,7 @@ class layer(object):
     DropReLU = _DropReLU
     
     NoiseInjection = _NoiseInjection
+    Flatten = _Flatten
 
 
     
