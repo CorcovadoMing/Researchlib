@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/tensorrt:19.07-py3
+FROM nvcr.io/nvidia/pytorch:19.07-py3
 
 ARG ONNXRUNTIME_REPO=https://github.com/Microsoft/onnxruntime
 ARG ONNXRUNTIME_SERVER_BRANCH=master
@@ -15,38 +15,37 @@ COPY onnxruntime ./onnxruntime
 RUN /bin/sh onnxruntime/dockerfiles/install_common_deps.sh &&\
     cp onnxruntime/dockerfiles/LICENSE-IMAGE.txt /code/LICENSE-IMAGE.txt &&\
     cd onnxruntime &&\
-    /bin/sh ./build.sh --cuda_home /usr/local/cuda --cudnn_home /usr/lib/x86_64-linux-gnu/ --use_tensorrt --tensorrt_home /workspace/tensorrt --config Release --build_wheel --update --build --cmake_extra_defines ONNXRUNTIME_VERSION=$(cat ./VERSION_NUMBER) &&\
+    /bin/sh ./build.sh --cuda_home /usr/local/cuda --cudnn_home /usr/lib/x86_64-linux-gnu/ --use_tensorrt --tensorrt_home /usr/src/tensorrt --config Release --build_wheel --update --build --cmake_extra_defines ONNXRUNTIME_VERSION=$(cat ./VERSION_NUMBER) &&\
     pip install /code/onnxruntime/build/Linux/Release/dist/*.whl &&\
     cd .. &&\
     rm -rf onnxruntime cmake-3.14.3-Linux-x86_64.tar.gz cmake-3.14.3-Linux-x86_64
 
-# PyTorch
-RUN pip install -U torch torchvision
-RUN pip install -U torchtext spacy
+# Text
+RUN pip install torchtext spacy 
 
 # Basic images processing
-RUN pip install -U imageio numpy scipy opencv-python-headless scikit-image
+RUN pip install imageio numpy scipy opencv-python-headless scikit-image
 
 # Graph
-RUN pip install -U torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric
+RUN pip install torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric
 
 # QRNN
-RUN pip install -U cupy
+RUN pip install cupy
 RUN pip install git+https://github.com/CorcovadoMing/pynvrtc.git
 
 # DALI
 RUN pip install --extra-index-url https://developer.download.nvidia.com/compute/redist/cuda/10.0 nvidia-dali
 
 # RAPIDS
-RUN pip install -U cudf-cuda100
+RUN pip install cudf-cuda100
 RUN apt update && apt install -y libopenblas-base libomp-dev
-RUN pip install -U cuml-cuda100
-RUN pip install -U cugraph-cuda100
-RUN pip install -U nvstrings-cuda100
+RUN pip install cuml-cuda100
+RUN pip install cugraph-cuda100
+RUN pip install nvstrings-cuda100
 
 # Jupyter
-RUN pip install -U jupyterlab
-RUN pip install -U ipywidgets
+RUN pip install jupyterlab
+RUN pip install ipywidgets
 COPY jupyter /root/.jupyter
 RUN jupyter nbextension enable --py widgetsnbextension
 RUN curl -sL https://deb.nodesource.com/setup_11.x | bash -
@@ -55,7 +54,7 @@ RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
 
 # OpenAI gym
 RUN apt install -y python3-dev zlib1g-dev libjpeg-dev cmake swig python-pyglet python3-opengl libboost-all-dev libsdl2-dev libosmesa6-dev patchelf ffmpeg xvfb
-RUN pip install -U lockfile glfw
+RUN pip install lockfile glfw
 RUN mkdir /root/.mujoco && \
     cd /root/.mujoco  && \
     wget https://www.roboti.us/download/mjpro150_linux.zip  && \
@@ -72,19 +71,19 @@ RUN pip install 'gym[all]'
 COPY run.sh /
 
 # Visualization
-RUN pip install -U graphviz hiddenlayer nvidia-ml-py3 seaborn
+RUN pip install graphviz hiddenlayer nvidia-ml-py3 seaborn
 
 # Probability PyTorch
-RUN pip install -U pyro-ppl botorch gpytorch ax-platform
+RUN pip install pyro-ppl botorch gpytorch scikit-learn ax-platform --no-deps torch
 
-# QC (Ignore for now)
-# RUN pip install -U pennylane pennylane-forest bindsnet
+# QC
+RUN pip install pennylane pennylane-forest bindsnet
 
 # MISC
-RUN pip install -U adabound
-RUN pip install -U deepdish boxx 
+RUN pip install adabound
+RUN pip install deepdish boxx 
 
-RUN pip install -U pydicom
+RUN pip install pydicom
 
 # Julia
 COPY julia-1.1.1 /opt/julia
@@ -92,18 +91,18 @@ RUN ln -s /opt/julia/bin/julia /bin
 RUN julia -e 'using Pkg; Pkg.add("IJulia")'
 
 # Tests
-RUN pip install -U yapf pylint pytest
-RUN pip install -U zarr
+RUN pip install yapf pylint pytest
+RUN pip install zarr
 
 # Augmentation and preprocessing
-RUN pip install -U albumentations
+RUN pip install albumentations
 RUN pip install git+https://github.com/pytorch/contrib.git
-RUN pip install -U texttable
+RUN pip install texttable
 
 
 # Fontend
-RUN pip install -U dash dash-daq dash-bootstrap-components
-RUN pip install -U psutil
+RUN pip install dash dash-daq dash-bootstrap-components --no-deps PyYAML
+RUN pip install psutil
 
 # Adaptive robust loss
 RUN pip install git+https://github.com/jonbarron/robust_loss_pytorch
@@ -125,21 +124,12 @@ RUN \
   sed -i 's/^\(dir .*\)$/# \1\ndir \/data/' /etc/redis/redis.conf && \
   sed -i 's/^\(logfile .*\)$/# \1/' /etc/redis/redis.conf
 
-RUN pip install -U redis
+RUN pip install redis
+VOLUME ["/data"]
 
-# TensorRT
-COPY torch2trt ./torch2trt
-RUN cd torch2trt && sh install.sh
-RUN cp -r /usr/lib/python3.6/dist-packages/tensorrt /opt/miniconda/lib/python3.6/site-packages/torch2trt-0.0.0-py3.6.egg/tensorrt
-
-RUN pip install -U pytorch-nlp pygsheets
+RUN pip install pytorch-nlp pygsheets
 RUN apt update && apt install -y sox libsox-dev libsox-fmt-all
 RUN pip install http://download.pytorch.org/whl/torchaudio-0.2-cp36-cp36m-linux_x86_64.whl
-# Apex
-#RUN pip install -U pip
-#RUN git clone https://github.com/NVIDIA/apex apex_build
-#RUN cd apex_build && pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" .
-VOLUME ["/data"]
 
 # Version tag
 ENV _RESEARCHLIB_IMAGE_TAG 19.08.2
