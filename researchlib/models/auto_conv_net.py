@@ -10,13 +10,14 @@ from ..blocks._resblock_bottleneck import ResBottleneckBlock as rbb
 from ..blocks._wide_resblock import WideResBlock as wrb
 from ..blocks._vggblock import VGGBlock as vb
 from ..blocks._inverted_bottleneck import InvertedBottleneckBlock as ibb
-from ..blocks._inception import InceptionA, InceptionB, InceptionC, InceptionD, InceptionE
+from ..blocks._inception_v3 import InceptionV3A, InceptionV3B, InceptionV3C, InceptionV3D, InceptionV3E
+from ..blocks._inception_v4 import InceptionV4A, InceptionV4B, InceptionV4C, ReductionV4A, ReductionV4B
 
 # =============================================================
 
 
-def _get_op_type(type, cur_block, total_blocks):
-    if type not in ['vgg', 'residual', 'residual-bottleneck', 'wide-residual', 'inverted-bottleneck', 'inception']:
+def _get_op_type(type, cur_block, total_blocks, do_pool):
+    if type not in ['vgg', 'residual', 'residual-bottleneck', 'wide-residual', 'inverted-bottleneck', 'inceptionv3', 'inceptionv4']:
         raise ('Type is not supperted')
     if type == 'vgg':
         _op_type = vb
@@ -28,17 +29,25 @@ def _get_op_type(type, cur_block, total_blocks):
         _op_type = wrb
     elif type == 'inverted-bottleneck':
         _op_type = ibb
-    elif type == 'inception':
+    elif type == 'inceptionv3':
         if (cur_block / total_blocks) <= 0.2:
-            _op_type = InceptionA
+            _op_type = InceptionV3A
         elif (cur_block / total_blocks) <= 0.4:
-            _op_type = InceptionB
+            _op_type = InceptionV3B
         elif (cur_block / total_blocks) <= 0.6:
-            _op_type = InceptionC
+            _op_type = InceptionV3C
         elif (cur_block / total_blocks) <= 0.8:
-            _op_type = InceptionD
+            _op_type = InceptionV3D
         elif (cur_block / total_blocks) <= 1:
-            _op_type = InceptionE
+            _op_type = InceptionV3E
+    elif type == 'inceptionv4':
+        if (cur_block / total_blocks) <= (1/3):
+            _op_type = ReductionV4A if do_pool else InceptionV4A
+        elif (cur_block / total_blocks) <= (2/3):
+            _op_type = ReductionV4B if do_pool else InceptionV4B
+        elif (cur_block / total_blocks) <= 1:
+            # We don't have Reduction type C
+            _op_type = ReductionV4B if do_pool else InceptionV4C
     return _op_type
 
 
@@ -108,8 +117,6 @@ def AutoConvNet(op,
     for i in range(total_blocks):
         id = i + 1
         
-        _op_type = _get_op_type(type, id, total_blocks)
-        
         if id % pool_freq == 0:
             block_group += 1
             if id == total_blocks and no_end_pool:
@@ -123,6 +130,8 @@ def AutoConvNet(op,
                                               block_group, in_dim, total_blocks,
                                               filter_policy, parameter_manager)
 
+        _op_type = _get_op_type(type, id, total_blocks, do_pool)
+        
         print(in_dim, out_dim, do_pool)
         kwargs['non_local'] = id >= non_local_start
         layers.append(
