@@ -22,8 +22,8 @@ class L2(Matrix):
             self.total += 1
 
     def output(self):
-        mae = (self.value / float(self.total))
-        return {'mae': mae}
+        mse = (self.value / float(self.total))
+        return {'mse': mse}
 
     def reset(self):
         self.total = 0
