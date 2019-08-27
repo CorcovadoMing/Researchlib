@@ -14,7 +14,8 @@ class L2(Matrix):
             # mixup
             y_pred, y_true, y_true_res, lam = loss_input[0].cpu(
             ), loss_input[1].cpu(), loss_input[2].cpu(), loss_input[3]
-            self.value += (y_pred - (lam * y_true + (1 - lam) * y_true_res)).pow(2).mean()
+            self.value += (y_pred - (lam * y_true +
+                                     (1 - lam) * y_true_res)).pow(2).mean()
             self.total += 1
         else:
             y_pred, y_true = loss_input[0].cpu(), loss_input[1].cpu()

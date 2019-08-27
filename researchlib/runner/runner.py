@@ -171,8 +171,9 @@ class Runner:
 
     # ===================================================================================================
     # ===================================================================================================
-    
+
     def set_optimizer(self):
+
         def _assign_optim(model, optimizer, larc, swa, lookahead):
             # if there are learnable loss parameters
             loss_params = []
@@ -231,23 +232,27 @@ class Runner:
             return optimizer
 
         if type(self.model) == GANModel:
-            if type(self.optimizer_choice) == list or type(self.optimizer_choice) == tuple:
+            if type(self.optimizer_choice) == list or type(
+                    self.optimizer_choice) == tuple:
                 self.optimizer = [
-                    _assign_optim(self.model.discriminator, self.optimizer_choice[1],
-                                  self.larc, self.swa, self.lookahead),
-                    _assign_optim(self.model.generator, self.optimizer_choice[0], self.larc,
-                                  self.swa, self.lookahead)
+                    _assign_optim(self.model.discriminator,
+                                  self.optimizer_choice[1], self.larc, self.swa,
+                                  self.lookahead),
+                    _assign_optim(self.model.generator,
+                                  self.optimizer_choice[0], self.larc, self.swa,
+                                  self.lookahead)
                 ]
             else:
                 self.optimizer = [
-                    _assign_optim(self.model.discriminator, self.optimizer_choice,
-                                  self.larc, self.swa, self.lookahead),
-                    _assign_optim(self.model.generator, self.optimizer_choice, self.larc,
-                                  self.swa, self.lookahead)
+                    _assign_optim(self.model.discriminator,
+                                  self.optimizer_choice, self.larc, self.swa,
+                                  self.lookahead),
+                    _assign_optim(self.model.generator, self.optimizer_choice,
+                                  self.larc, self.swa, self.lookahead)
                 ]
         else:
-            self.optimizer = _assign_optim(self.model, self.optimizer_choice, self.larc,
-                                           self.swa, self.lookahead)
+            self.optimizer = _assign_optim(self.model, self.optimizer_choice,
+                                           self.larc, self.swa, self.lookahead)
 
 
 #         self.model, self.optimizer = amp.initialize(self.model,
@@ -274,7 +279,6 @@ class Runner:
             self.load_epoch(self.epoch)
         except:
             self.load_epoch(self.epoch - 1)
-
 
     def report(self):
         print('Experiment:', self.experiment_name)
@@ -319,7 +323,6 @@ class Runner:
         except:
             pass
 
-        
     def train(self):
         self.model.train()
         if type(self.optimizer) == list:
@@ -328,25 +331,25 @@ class Runner:
         else:
             self.optimizer.swap_swa_sgd()
 
-            
     def validate(self, metrics=[], callbacks=[]):
         test_loader = self._iteration_pipeline(self.test_loader, inference=True)
         self.preload_gpu()
         try:
-            if len(self.default_metrics): metrics = self.default_metrics + metrics
+            if len(self.default_metrics):
+                metrics = self.default_metrics + metrics
             loss_records, matrix_records = self.validate_fn(
-                    model=self.model,
-                    test_loader=test_loader,
-                    loss_fn=self.loss_fn,
-                    is_cuda=self.is_cuda,
-                    epoch=self.epoch,
-                    metrics=metrics,
-                    callbacks=callbacks,
-                    inputs=self.inputs)
-            
+                model=self.model,
+                test_loader=test_loader,
+                loss_fn=self.loss_fn,
+                is_cuda=self.is_cuda,
+                epoch=self.epoch,
+                metrics=metrics,
+                callbacks=callbacks,
+                inputs=self.inputs)
+
             for k, v in loss_records.items():
                 print(str(k) + ':', str(v))
-            
+
             if len(metrics) > 0:
                 for k, v in matrix_records.records.items():
                     print(str(k) + ':', str(v[-1]))
@@ -355,7 +358,6 @@ class Runner:
         finally:
             self.unload_gpu()
 
-            
     def save(self, path):
         # TODO: more efficient to save optimizer (save only the last/best?)
         _save_model(self.model, path)
@@ -363,7 +365,6 @@ class Runner:
 
     def load(self, path):
         self.model = _load_model(self.model, path, self.multigpu)
-
 
     def preprocessing(self, preprocessing_list, debug=False):
         self.preprocessing_list = preprocessing_list

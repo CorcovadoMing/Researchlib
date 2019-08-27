@@ -4,36 +4,77 @@ from torch import nn
 import torch
 from .unit import unit
 
+
 class InceptionV4A(_Block):
+
     def __postinit__(self):
         unit_fn = self._get_param('unit', unit.conv)
         hidden_dim = self.out_dim // 4
         remain_hidden = self.out_dim - (3 * hidden_dim)
-        
-        self.branch0 = unit_fn(self.op, self.in_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False}))
+
+        self.branch0 = unit_fn(
+            self.op, self.in_dim, hidden_dim, False, True, False,
+            **self._get_custom_kwargs({
+                'kernel_size': 1,
+                'stride': 1,
+                'padding': 0,
+                'erased_activator': False
+            }))
 
         self.branch1 = nn.Sequential(
-            unit_fn(self.op, self.in_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False})),
-            unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': 3, 'stride': 1, 'padding': 1, 'erased_activator': False}))
-        )
+            unit_fn(
+                self.op, self.in_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 1,
+                    'stride': 1,
+                    'padding': 0,
+                    'erased_activator': False
+                })),
+            unit_fn(
+                self.op, hidden_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 3,
+                    'stride': 1,
+                    'padding': 1,
+                    'erased_activator': False
+                })))
 
         self.branch2 = nn.Sequential(
-            unit_fn(self.op, self.in_dim, hidden_dim, False, True, False,
-                                **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False})),
-            unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': 3, 'stride': 1, 'padding': 1, 'erased_activator': False})),
-            unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': 3, 'stride': 1, 'padding': 1, 'erased_activator': False}))
-        )
+            unit_fn(
+                self.op, self.in_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 1,
+                    'stride': 1,
+                    'padding': 0,
+                    'erased_activator': False
+                })),
+            unit_fn(
+                self.op, hidden_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 3,
+                    'stride': 1,
+                    'padding': 1,
+                    'erased_activator': False
+                })),
+            unit_fn(
+                self.op, hidden_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 3,
+                    'stride': 1,
+                    'padding': 1,
+                    'erased_activator': False
+                })))
 
         self.branch3 = nn.Sequential(
             layer.__dict__['AvgPool' + self._get_dim_type()](3, 1, 1),
-            unit_fn(self.op, self.in_dim, remain_hidden, False, True, False,
-                                **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False}))
-        )
+            unit_fn(
+                self.op, self.in_dim, remain_hidden, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 1,
+                    'stride': 1,
+                    'padding': 0,
+                    'erased_activator': False
+                })))
 
     def forward(self, x):
         x0 = self.branch0(x)
@@ -45,29 +86,59 @@ class InceptionV4A(_Block):
 
 
 class ReductionV4A(_Block):
+
     def __postinit__(self):
         unit_fn = self._get_param('unit', unit.conv)
         hidden_dim = self.out_dim // 3
         remain_hidden = self.out_dim - (2 * hidden_dim)
         stride = self._get_param('pool_factor', 2) if self.do_pool else 1
-        
-        self.branch0 = unit_fn(self.op, self.in_dim, hidden_dim, False, True, False,
-                                **self._get_custom_kwargs({'kernel_size': 3, 'stride': stride, 'padding': 1, 'erased_activator': False}))
+
+        self.branch0 = unit_fn(
+            self.op, self.in_dim, hidden_dim, False, True, False,
+            **self._get_custom_kwargs({
+                'kernel_size': 3,
+                'stride': stride,
+                'padding': 1,
+                'erased_activator': False
+            }))
 
         self.branch1 = nn.Sequential(
-            unit_fn(self.op, self.in_dim, hidden_dim, False, True, False,
-                                **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False})),
-            unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                **self._get_custom_kwargs({'kernel_size': 3, 'stride': 1, 'padding': 1, 'erased_activator': False})),
-            unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                **self._get_custom_kwargs({'kernel_size': 3, 'stride': stride, 'padding': 1, 'erased_activator': False})),
+            unit_fn(
+                self.op, self.in_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 1,
+                    'stride': 1,
+                    'padding': 0,
+                    'erased_activator': False
+                })),
+            unit_fn(
+                self.op, hidden_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 3,
+                    'stride': 1,
+                    'padding': 1,
+                    'erased_activator': False
+                })),
+            unit_fn(
+                self.op, hidden_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 3,
+                    'stride': stride,
+                    'padding': 1,
+                    'erased_activator': False
+                })),
         )
 
         self.branch2 = nn.Sequential(
             layer.__dict__['MaxPool' + self._get_dim_type()](3, 2, 1),
-            unit_fn(self.op, self.in_dim, remain_hidden, False, True, False,
-                                **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False}))
-        )
+            unit_fn(
+                self.op, self.in_dim, remain_hidden, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 1,
+                    'stride': 1,
+                    'padding': 0,
+                    'erased_activator': False
+                })))
 
     def forward(self, x):
         x0 = self.branch0(x)
@@ -78,41 +149,99 @@ class ReductionV4A(_Block):
 
 
 class InceptionV4B(_Block):
+
     def __postinit__(self):
         unit_fn = self._get_param('unit', unit.conv)
         hidden_dim = self.out_dim // 4
         remain_hidden = self.out_dim - (3 * hidden_dim)
-        
-        self.branch0 = unit_fn(self.op, self.in_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False}))
+
+        self.branch0 = unit_fn(
+            self.op, self.in_dim, hidden_dim, False, True, False,
+            **self._get_custom_kwargs({
+                'kernel_size': 1,
+                'stride': 1,
+                'padding': 0,
+                'erased_activator': False
+            }))
 
         self.branch1 = nn.Sequential(
-            unit_fn(self.op, self.in_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False})),
-            unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': (1, 7), 'stride': 1, 'padding': (0, 3), 'erased_activator': False})),
-            unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': (7, 1), 'stride': 1, 'padding': (3, 0), 'erased_activator': False}))
-        )
+            unit_fn(
+                self.op, self.in_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 1,
+                    'stride': 1,
+                    'padding': 0,
+                    'erased_activator': False
+                })),
+            unit_fn(
+                self.op, hidden_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': (1, 7),
+                    'stride': 1,
+                    'padding': (0, 3),
+                    'erased_activator': False
+                })),
+            unit_fn(
+                self.op, hidden_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': (7, 1),
+                    'stride': 1,
+                    'padding': (3, 0),
+                    'erased_activator': False
+                })))
 
         self.branch2 = nn.Sequential(
-            unit_fn(self.op, self.in_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False})),
-            unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': (7, 1), 'stride': 1, 'padding': (3, 0), 'erased_activator': False})),
-            unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': (1, 7), 'stride': 1, 'padding': (0, 3), 'erased_activator': False})),
-            unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': (7, 1), 'stride': 1, 'padding': (3, 0), 'erased_activator': False})),
-            unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': (1, 7), 'stride': 1, 'padding': (0, 3), 'erased_activator': False}))
-        )
+            unit_fn(
+                self.op, self.in_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 1,
+                    'stride': 1,
+                    'padding': 0,
+                    'erased_activator': False
+                })),
+            unit_fn(
+                self.op, hidden_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': (7, 1),
+                    'stride': 1,
+                    'padding': (3, 0),
+                    'erased_activator': False
+                })),
+            unit_fn(
+                self.op, hidden_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': (1, 7),
+                    'stride': 1,
+                    'padding': (0, 3),
+                    'erased_activator': False
+                })),
+            unit_fn(
+                self.op, hidden_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': (7, 1),
+                    'stride': 1,
+                    'padding': (3, 0),
+                    'erased_activator': False
+                })),
+            unit_fn(
+                self.op, hidden_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': (1, 7),
+                    'stride': 1,
+                    'padding': (0, 3),
+                    'erased_activator': False
+                })))
 
         self.branch3 = nn.Sequential(
             layer.__dict__['AvgPool' + self._get_dim_type()](3, 1, 1),
-            unit_fn(self.op, self.in_dim, remain_hidden, False, True, False,
-                                **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False}))
-        )
+            unit_fn(
+                self.op, self.in_dim, remain_hidden, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 1,
+                    'stride': 1,
+                    'padding': 0,
+                    'erased_activator': False
+                })))
 
     def forward(self, x):
         x0 = self.branch0(x)
@@ -124,35 +253,75 @@ class InceptionV4B(_Block):
 
 
 class ReductionV4B(_Block):
+
     def __postinit__(self):
         unit_fn = self._get_param('unit', unit.conv)
         hidden_dim = self.out_dim // 3
         remain_hidden = self.out_dim - (2 * hidden_dim)
         stride = self._get_param('pool_factor', 2) if self.do_pool else 1
-        
+
         self.branch0 = nn.Sequential(
-            unit_fn(self.op, self.in_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False})),
-            unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': 3, 'stride': stride, 'padding': 1, 'erased_activator': False}))
-        )
+            unit_fn(
+                self.op, self.in_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 1,
+                    'stride': 1,
+                    'padding': 0,
+                    'erased_activator': False
+                })),
+            unit_fn(
+                self.op, hidden_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 3,
+                    'stride': stride,
+                    'padding': 1,
+                    'erased_activator': False
+                })))
 
         self.branch1 = nn.Sequential(
-            unit_fn(self.op, self.in_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False})),
-            unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': (1, 7), 'stride': 1, 'padding': (0, 3), 'erased_activator': False})),
-            unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': (7, 1), 'stride': 1, 'padding': (3, 0), 'erased_activator': False})),
-            unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': 3, 'stride': stride, 'padding': 1, 'erased_activator': False}))
-        )
+            unit_fn(
+                self.op, self.in_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 1,
+                    'stride': 1,
+                    'padding': 0,
+                    'erased_activator': False
+                })),
+            unit_fn(
+                self.op, hidden_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': (1, 7),
+                    'stride': 1,
+                    'padding': (0, 3),
+                    'erased_activator': False
+                })),
+            unit_fn(
+                self.op, hidden_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': (7, 1),
+                    'stride': 1,
+                    'padding': (3, 0),
+                    'erased_activator': False
+                })),
+            unit_fn(
+                self.op, hidden_dim, hidden_dim, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 3,
+                    'stride': stride,
+                    'padding': 1,
+                    'erased_activator': False
+                })))
 
         self.branch2 = nn.Sequential(
             layer.__dict__['MaxPool' + self._get_dim_type()](3, 2, 1),
-            unit_fn(self.op, self.in_dim, remain_hidden, False, True, False,
-                                **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False}))
-        )
+            unit_fn(
+                self.op, self.in_dim, remain_hidden, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 1,
+                    'stride': 1,
+                    'padding': 0,
+                    'erased_activator': False
+                })))
 
     def forward(self, x):
         x0 = self.branch0(x)
@@ -163,41 +332,101 @@ class ReductionV4B(_Block):
 
 
 class InceptionV4C(_Block):
+
     def __postinit__(self):
         unit_fn = self._get_param('unit', unit.conv)
         hidden_dim = self.out_dim // 4
         remain_hidden = self.out_dim - (3 * hidden_dim)
 
-        self.branch0 = unit_fn(self.op, self.in_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False}))
+        self.branch0 = unit_fn(
+            self.op, self.in_dim, hidden_dim, False, True, False,
+            **self._get_custom_kwargs({
+                'kernel_size': 1,
+                'stride': 1,
+                'padding': 0,
+                'erased_activator': False
+            }))
 
-        self.branch1_0 = unit_fn(self.op, self.in_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False}))
+        self.branch1_0 = unit_fn(
+            self.op, self.in_dim, hidden_dim, False, True, False,
+            **self._get_custom_kwargs({
+                'kernel_size': 1,
+                'stride': 1,
+                'padding': 0,
+                'erased_activator': False
+            }))
         hidden_dim_1a = hidden_dim // 2
         hidden_dim_1b = hidden_dim - hidden_dim_1a
-        self.branch1_1a = unit_fn(self.op, hidden_dim, hidden_dim_1a, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': (1, 3), 'stride': 1, 'padding': (0, 1), 'erased_activator': False}))
-        self.branch1_1b = unit_fn(self.op, hidden_dim, hidden_dim_1b, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': (3, 1), 'stride': 1, 'padding': (1, 0), 'erased_activator': False}))
+        self.branch1_1a = unit_fn(
+            self.op, hidden_dim, hidden_dim_1a, False, True, False,
+            **self._get_custom_kwargs({
+                'kernel_size': (1, 3),
+                'stride': 1,
+                'padding': (0, 1),
+                'erased_activator': False
+            }))
+        self.branch1_1b = unit_fn(
+            self.op, hidden_dim, hidden_dim_1b, False, True, False,
+            **self._get_custom_kwargs({
+                'kernel_size': (3, 1),
+                'stride': 1,
+                'padding': (1, 0),
+                'erased_activator': False
+            }))
 
-        self.branch2_0 = unit_fn(self.op, self.in_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False}))
-        self.branch2_1 = unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': (3, 1), 'stride': 1, 'padding': (1, 0), 'erased_activator': False}))
-        self.branch2_2 = unit_fn(self.op, hidden_dim, hidden_dim, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': (1, 3), 'stride': 1, 'padding': (0, 1), 'erased_activator': False}))
+        self.branch2_0 = unit_fn(
+            self.op, self.in_dim, hidden_dim, False, True, False,
+            **self._get_custom_kwargs({
+                'kernel_size': 1,
+                'stride': 1,
+                'padding': 0,
+                'erased_activator': False
+            }))
+        self.branch2_1 = unit_fn(
+            self.op, hidden_dim, hidden_dim, False, True, False,
+            **self._get_custom_kwargs({
+                'kernel_size': (3, 1),
+                'stride': 1,
+                'padding': (1, 0),
+                'erased_activator': False
+            }))
+        self.branch2_2 = unit_fn(
+            self.op, hidden_dim, hidden_dim, False, True, False,
+            **self._get_custom_kwargs({
+                'kernel_size': (1, 3),
+                'stride': 1,
+                'padding': (0, 1),
+                'erased_activator': False
+            }))
         hidden_dim_2a = hidden_dim // 2
         hidden_dim_2b = hidden_dim - hidden_dim_2a
-        self.branch2_3a = unit_fn(self.op, hidden_dim, hidden_dim_2a, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': (1, 3), 'stride': 1, 'padding': (0, 1), 'erased_activator': False}))
-        self.branch2_3b = unit_fn(self.op, hidden_dim, hidden_dim_2b, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': (3, 1), 'stride': 1, 'padding': (1, 0), 'erased_activator': False}))
+        self.branch2_3a = unit_fn(
+            self.op, hidden_dim, hidden_dim_2a, False, True, False,
+            **self._get_custom_kwargs({
+                'kernel_size': (1, 3),
+                'stride': 1,
+                'padding': (0, 1),
+                'erased_activator': False
+            }))
+        self.branch2_3b = unit_fn(
+            self.op, hidden_dim, hidden_dim_2b, False, True, False,
+            **self._get_custom_kwargs({
+                'kernel_size': (3, 1),
+                'stride': 1,
+                'padding': (1, 0),
+                'erased_activator': False
+            }))
 
         self.branch3 = nn.Sequential(
             layer.__dict__['AvgPool' + self._get_dim_type()](3, 1, 1),
-            unit_fn(self.op, self.in_dim, remain_hidden, False, True, False,
-                                 **self._get_custom_kwargs({'kernel_size': 1, 'stride': 1, 'padding': 0, 'erased_activator': False}))
-        )
+            unit_fn(
+                self.op, self.in_dim, remain_hidden, False, True, False,
+                **self._get_custom_kwargs({
+                    'kernel_size': 1,
+                    'stride': 1,
+                    'padding': 0,
+                    'erased_activator': False
+                })))
 
     def forward(self, x):
         x0 = self.branch0(x)
