@@ -71,6 +71,7 @@ class Runner:
         self.scheduler = None
         self.multisteps = []
         self.lookahead = lookahead
+        self.optimizer_choice = optimizer
         self.ema = ema
         self.ema_start = ema_start
         self.swa = swa
@@ -164,14 +165,14 @@ class Runner:
             self.model = DataParallel(self.model)
 
         if optimizer is not None:
-            self.set_optimizer(optimizer)
+            self.set_optimizer()
 
         cudnn.benchmark = True
 
     # ===================================================================================================
     # ===================================================================================================
-    def set_optimizer(self, optimizer):
-
+    
+    def set_optimizer(self):
         def _assign_optim(model, optimizer, larc, swa, lookahead):
             # if there are learnable loss parameters
             loss_params = []
@@ -230,22 +231,22 @@ class Runner:
             return optimizer
 
         if type(self.model) == GANModel:
-            if type(optimizer) == list or type(optimizer) == tuple:
+            if type(self.optimizer_choice) == list or type(self.optimizer_choice) == tuple:
                 self.optimizer = [
-                    _assign_optim(self.model.discriminator, optimizer[1],
+                    _assign_optim(self.model.discriminator, self.optimizer_choice[1],
                                   self.larc, self.swa, self.lookahead),
-                    _assign_optim(self.model.generator, optimizer[0], self.larc,
+                    _assign_optim(self.model.generator, self.optimizer_choice[0], self.larc,
                                   self.swa, self.lookahead)
                 ]
             else:
                 self.optimizer = [
-                    _assign_optim(self.model.discriminator, optimizer,
+                    _assign_optim(self.model.discriminator, self.optimizer_choice,
                                   self.larc, self.swa, self.lookahead),
-                    _assign_optim(self.model.generator, optimizer, self.larc,
+                    _assign_optim(self.model.generator, self.optimizer_choice, self.larc,
                                   self.swa, self.lookahead)
                 ]
         else:
-            self.optimizer = _assign_optim(self.model, optimizer, self.larc,
+            self.optimizer = _assign_optim(self.model, self.optimizer_choice, self.larc,
                                            self.swa, self.lookahead)
 
 
@@ -274,19 +275,6 @@ class Runner:
         except:
             self.load_epoch(self.epoch - 1)
 
-    def resume_best(self):
-        self.resume(os.path.join(self.checkpoint_path, 'best.h5'))
-
-    def resume_epoch(self, epoch, _id='none'):
-        self.resume(
-            os.path.join(self.checkpoint_path,
-                         'checkpoint_' + _id + '_epoch_' + str(epoch)))
-
-    def resume_last(self):
-        try:
-            self.resume_epoch(self.epoch)
-        except:
-            self.resume_epoch(self.epoch - 1)
 
     def report(self):
         print('Experiment:', self.experiment_name)
@@ -371,9 +359,6 @@ class Runner:
     def load(self, path):
         self.model = _load_model(self.model, path, self.multigpu)
 
-    def resume(self, path):
-        self.load(path)
-        _load_optimizer(self.optimizer, path)
 
     def preprocessing(self, preprocessing_list, debug=False):
         self.preprocessing_list = preprocessing_list

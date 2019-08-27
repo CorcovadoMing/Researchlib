@@ -58,6 +58,8 @@ def fit(self,
 
     self.__class__.__fit_settings__[
         f'epoch_{self.epoch}-{self.epoch+epochs}'] = locals()
+    
+    self.set_optimizer()
 
     # Fix issue the dashboard is down while training is interrupted
     if not _is_port_in_use(8050):
