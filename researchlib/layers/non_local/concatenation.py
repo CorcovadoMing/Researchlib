@@ -16,7 +16,7 @@ class _NonLocalBlockND(nn.Module):
         assert dimension in [1, 2, 3]
 
         self.gamma = nn.Parameter(torch.empty(1).fill_(0), requires_grad=True)
-        
+
         self.dimension = dimension
         self.sub_sample = sub_sample
 

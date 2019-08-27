@@ -18,7 +18,11 @@ from ..blocks._inception_residual_v2 import InceptionResidualV2A, InceptionResid
 
 
 def _get_op_type(type, cur_block, total_blocks, do_pool, do_expand):
-    if type not in ['vgg', 'residual', 'residual-bottleneck', 'wide-residual', 'inverted-bottleneck', 'inceptionv3', 'inceptionv4', 'inception-residualv2']:
+    if type not in [
+            'vgg', 'residual', 'residual-bottleneck', 'wide-residual',
+            'inverted-bottleneck', 'inceptionv3', 'inceptionv4',
+            'inception-residualv2'
+    ]:
         raise ('Type is not supperted')
     if type == 'vgg':
         _op_type = vb
@@ -42,17 +46,17 @@ def _get_op_type(type, cur_block, total_blocks, do_pool, do_expand):
         elif (cur_block / total_blocks) <= 1:
             _op_type = InceptionV3E
     elif type == 'inceptionv4':
-        if (cur_block / total_blocks) <= (1/3):
+        if (cur_block / total_blocks) <= (1 / 3):
             _op_type = ReductionV4A if do_pool else InceptionV4A
-        elif (cur_block / total_blocks) <= (2/3):
+        elif (cur_block / total_blocks) <= (2 / 3):
             _op_type = ReductionV4B if do_pool else InceptionV4B
         elif (cur_block / total_blocks) <= 1:
             # We don't have Reduction type C
             _op_type = ReductionV4B if do_pool else InceptionV4C
     elif type == 'inception-residualv2':
-        if (cur_block / total_blocks) <= (1/3):
+        if (cur_block / total_blocks) <= (1 / 3):
             _op_type = ReductionV2A if do_pool or do_expand else InceptionResidualV2A
-        elif (cur_block / total_blocks) <= (2/3):
+        elif (cur_block / total_blocks) <= (2 / 3):
             _op_type = ReductionV2B if do_pool or do_expand else InceptionResidualV2B
         elif (cur_block / total_blocks) <= 1:
             # We don't have Reduction type C
@@ -125,7 +129,7 @@ def AutoConvNet(op,
 
     for i in range(total_blocks):
         id = i + 1
-        
+
         if id % pool_freq == 0:
             block_group += 1
             if id == total_blocks and no_end_pool:
@@ -139,8 +143,9 @@ def AutoConvNet(op,
                                               block_group, in_dim, total_blocks,
                                               filter_policy, parameter_manager)
 
-        _op_type = _get_op_type(type, id, total_blocks, do_pool, in_dim == out_dim)
-        
+        _op_type = _get_op_type(type, id, total_blocks, do_pool,
+                                in_dim == out_dim)
+
         print(in_dim, out_dim, do_pool)
         kwargs['non_local'] = id >= non_local_start
         layers.append(
@@ -160,7 +165,7 @@ def AutoConvNet(op,
 
     # must verify after all keys get registered
     ParameterManager.verify_kwargs(**kwargs)
-    
+
     parameter_manager.save_buffer('last_dim', out_dim)
     parameter_manager.save_buffer('dim_type', _get_dim_type(op))
 
