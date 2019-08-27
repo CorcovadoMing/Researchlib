@@ -24,6 +24,8 @@ from .non_local.concatenation import _ConcatNonLocalBlock1d, _ConcatNonLocalBloc
 from .non_local.dot_product import _DotNonLocalBlock1d, _DotNonLocalBlock2d, _DotNonLocalBlock3d
 from .non_local.embedded_gaussian import _EmbeddedGaussianNonLocalBlock1d, _EmbeddedGaussianNonLocalBlock2d, _EmbeddedGaussianNonLocalBlock3d
 from .non_local.gaussian import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _GaussianNonLocalBlock3d
+from .noise_injection import _NoiseInjection
+
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
 
@@ -89,8 +91,11 @@ class layer(object):
 
     Blur2d = _Blur2d
     DropReLU = _DropReLU
+    
+    NoiseInjection = _NoiseInjection
 
 
+    
 # Merge nn and layer module if it didn't cause conflict
 from torch import nn
 for i, j in nn.__dict__.items():
