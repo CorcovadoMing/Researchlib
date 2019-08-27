@@ -349,7 +349,7 @@ class Runner:
         except:
             raise
         finally:
-            self.unload_gpu(unload_data=False)
+            self.unload_gpu()
 
     def save(self, path):
         # TODO: more efficient to save optimizer (save only the last/best?)

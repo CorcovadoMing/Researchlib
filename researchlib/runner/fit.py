@@ -327,9 +327,8 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
 
             if self.test_loader:
                 loss_records, matrix_records = self.validate_fn(
-                    test_pipe_generator=test_loader,
                     model=self.model,
-                    test_loader=self.test_loader,
+                    test_loader=test_loader,
                     loss_fn=self.loss_fn,
                     is_cuda=self.is_cuda,
                     epoch=self.epoch,

@@ -29,7 +29,7 @@ def validate_fn(self, **kwargs):
 
     total = len(self.test_loader)
     with torch.no_grad():
-        for batch_idx, (x, y) in enumerate(kwargs['test_pipe_generator']):
+        for batch_idx, (x, y) in enumerate(kwargs['test_loader']):
             kwargs['batch_idx'] = batch_idx
 
             if kwargs['is_cuda']:
