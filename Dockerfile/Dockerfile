@@ -101,7 +101,8 @@ RUN pip install texttable
 
 
 # Fontend
-RUN pip install dash dash-daq dash-bootstrap-components --no-deps PyYAML
+RUN conda remove -y PyYAML
+RUN pip install flask_compress pyyaml dash dash-daq dash-bootstrap-components pytz
 RUN pip install psutil
 
 # Adaptive robust loss
@@ -131,11 +132,6 @@ RUN pip install pytorch-nlp pygsheets
 RUN apt update && apt install -y sox libsox-dev libsox-fmt-all
 RUN pip install http://download.pytorch.org/whl/torchaudio-0.2-cp36-cp36m-linux_x86_64.whl
 
-
-# Hotfit (will be updated to newer version)
-RUN conda remove -y PyYAML
-RUN pip install flask_compress pyyaml dash dash-daq dash-bootstrap-components pytz psutil
- 
 # Version tag
 ENV _RESEARCHLIB_IMAGE_TAG 19.08.2
 

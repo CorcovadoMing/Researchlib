@@ -48,8 +48,8 @@ def set_policy(self, policy, lr, epochs):
 @register_method
 def fit(self,
         epochs,
-        lr=1e-1,
-        policy='cyclical',
+        lr=1e-3,
+        policy='cosine',
         mixup_alpha=0,
         metrics=[],
         callbacks=[],
