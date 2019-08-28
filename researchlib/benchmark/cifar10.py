@@ -68,7 +68,7 @@ class _cifar10:
             self.model,
             self.train_loader,
             self.test_loader,
-            'sgd',
+            'nesterov',
             'nll',
             multigpu=True,
             monitor_state='acc',

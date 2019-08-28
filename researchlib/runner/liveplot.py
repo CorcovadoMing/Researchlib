@@ -41,7 +41,7 @@ class Liveplot:
     def __init__(self, model, total_iteration):
         self._gan = True if type(model) == GANModel else False
         self.history = hl.History()
-        self.text_table = Texttable()
+        self.text_table = Texttable(max_width=0) #unlimited
         self.timer = Timer(total_iteration)
         self.redis = redis.Redis()
         self.redis.set('progress', 0)
@@ -175,6 +175,8 @@ class Liveplot:
             if epoch == 1:
                 self.text_table.add_row(['Epochs'] +
                                         list(history_.records.keys())[:-1])
+                self.text_table.set_cols_width(
+                    [6,]+ [len(format(i[-1], '.4f')) for i in list(history_.records.values())[:-1]])
             self.text_table.add_row([epoch_str] + [
                 format(i[-1], '.4f')
                 for i in list(history_.records.values())[:-1]
