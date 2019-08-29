@@ -38,7 +38,8 @@ def _list_avg(l):
 
 class Liveplot:
 
-    def __init__(self, model, total_iteration):
+    def __init__(self, model, total_iteration, _plot=False):
+        self._plot = _plot
         self._gan = True if type(model) == GANModel else False
         self.history = hl.History()
         self.text_table = Texttable(max_width=0) #unlimited
@@ -55,7 +56,7 @@ class Liveplot:
                 'val_loss': [],
                 'val_acc': []
             }))
-
+        
         # Label + Pregress
         self.progress = Output()
         self.progress_label = Output()
@@ -68,20 +69,27 @@ class Liveplot:
         with self.progress_label:
             self.progress_label_text = Label(value="Initialization")
             display(self.progress_label_text)
+        
+        if self._plot:
+            # 4 chartplots
+            self.loss_plot = Output()
+            self.matrix_plot = Output()
+            display(HBox([self.loss_plot, self.matrix_plot]))
+            self.lr_plot = Output()
+            self.norm_plot = Output()
+            display(HBox([self.lr_plot, self.norm_plot]))
 
-        # 4 chartplots
-        self.loss_plot = Output()
-        self.matrix_plot = Output()
-        display(HBox([self.loss_plot, self.matrix_plot]))
-        self.lr_plot = Output()
-        self.norm_plot = Output()
-        display(HBox([self.lr_plot, self.norm_plot]))
-
-        # GAN visualization
-        if self._gan:
-            self.gan_gallary = Output()
-            display(self.gan_gallary)
-            self.gan_canvas = hl.Canvas()
+            # GAN visualization
+            if self._gan:
+                self.gan_gallary = Output()
+                display(self.gan_gallary)
+                self.gan_canvas = hl.Canvas()
+            
+            # Canvas
+            self.loss_canvas = hl.Canvas()
+            self.matrix_canvas = hl.Canvas()
+            self.lr_canvas = hl.Canvas()
+            self.norm_canvas = hl.Canvas()
 
         # Memory and Log
         self.gpu_mem_monitor = Output()
@@ -105,12 +113,6 @@ class Liveplot:
             self.gpu_utils_monitor_bar.min = 0
             self.gpu_utils_monitor_bar.max = 100
             display(self.gpu_utils_monitor_bar)
-
-        # Canvas
-        self.loss_canvas = hl.Canvas()
-        self.matrix_canvas = hl.Canvas()
-        self.lr_canvas = hl.Canvas()
-        self.norm_canvas = hl.Canvas()
 
         # Start monitor thread
         global _STOP_GPU_MONITOR_
@@ -143,33 +145,37 @@ class Liveplot:
 
     def plot(self, epoch, history_, epoch_str):
         self.redis.set('history', pickle.dumps(history_.records))
-        if self._gan:
-            with self.gan_gallary:
-                self.gan_canvas.draw_image(self.history['image'])
+        if self._plot:
+            if self._gan:
+                with self.gan_gallary:
+                    self.gan_canvas.draw_image(self.history['image'])
 
-        with self.loss_plot:
-            if self._gan:
-                self.loss_canvas.draw_plot([
-                    self.history["train_g_loss"], self.history['train_d_loss']
-                ])
-            else:
-                self.loss_canvas.draw_plot(
-                    [self.history["train_loss"], self.history['val_loss']])
-        with self.matrix_plot:
-            if self._gan:
-                self.matrix_canvas.draw_plot(
-                    [self.history['inception_score'], self.history['fid']])
-            else:
-                self.matrix_canvas.draw_plot(
-                    [self.history['train_acc'], self.history['val_acc']])
-        with self.lr_plot:
-            if self._gan:
-                self.lr_canvas.draw_plot(
-                    [self.history['g_lr'], self.history['d_lr']])
-            else:
-                self.lr_canvas.draw_plot([self.history['lr']])
-        with self.norm_plot:
-            self.norm_canvas.draw_plot([self.history['norm']])
+            with self.loss_plot:
+                if self._gan:
+                    self.loss_canvas.draw_plot([
+                        self.history["train_g_loss"], self.history['train_d_loss']
+                    ])
+                else:
+                    self.loss_canvas.draw_plot(
+                        [self.history["train_loss"], self.history['val_loss']])
+            
+            with self.matrix_plot:
+                if self._gan:
+                    self.matrix_canvas.draw_plot(
+                        [self.history['inception_score'], self.history['fid']])
+                else:
+                    self.matrix_canvas.draw_plot(
+                        [self.history['train_acc'], self.history['val_acc']])
+            
+            with self.lr_plot:
+                if self._gan:
+                    self.lr_canvas.draw_plot(
+                        [self.history['g_lr'], self.history['d_lr']])
+                else:
+                    self.lr_canvas.draw_plot([self.history['lr']])
+            
+            with self.norm_plot:
+                self.norm_canvas.draw_plot([self.history['norm']])
 
         with self.text_log:
             if epoch == 1:

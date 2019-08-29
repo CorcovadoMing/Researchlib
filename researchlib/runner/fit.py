@@ -56,7 +56,8 @@ def fit(self,
         _id='none',
         self_iterative=False,
         iterations=0,
-        multisteps=None):
+        multisteps=None,
+        plot=False):
 
     self.__class__.__fit_settings__[
         f'epoch_{self.epoch}-{self.epoch+epochs}'] = locals()
@@ -87,7 +88,8 @@ def fit(self,
         _id,
         self_iterative,
         iterations=iterations,
-        policy=policy)
+        policy=policy,
+        plot=plot)
 
 
 @register_method
@@ -162,7 +164,7 @@ def _list_avg(l):
 
 @register_method
 def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
-         iterations, policy):
+         iterations, policy, plot):
 
     base_lr = lr
     set_lr(self.optimizer, base_lr)
@@ -174,7 +176,7 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
     else:
         self.optimizer.zero_grad()
 
-    liveplot = Liveplot(self.model, len(self.train_loader))
+    liveplot = Liveplot(self.model, len(self.train_loader), plot)
 
     if iterations == 0:
         iterations = len(self.train_loader)
