@@ -328,7 +328,7 @@ class Runner:
             self.optimizer.swap_swa_sgd()
 
     def validate(self, metrics=[], callbacks=[]):
-        test_loader = self._iteration_pipeline(self.test_loader, inference=True)
+        test_loader = self._iteration_pipeline(self.test_loader, 0, inference=True)
         self.preload_gpu()
         try:
             if len(self.default_metrics):
