@@ -112,10 +112,6 @@ def _process_type(self, data_pack, inputs):
 
 @register_method
 def _process_data(self, data, target, mixup_alpha, inference):
-
-    def mixup_loss_fn(loss_fn, x, y, y_res, lam):
-        return lam * loss_fn(x, y) + (1 - lam) * loss_fn(x, y_res)
-
     # On the flay preprocessing
     for preprocessing_fn in self.preprocessing_list:
         data, target = preprocessing_fn._forward(data, target)
