@@ -179,35 +179,20 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler,
     auxout = [i.view(i.size(0), -1) for i in auxout]
     if learning_type == 'supervise':
         kwargs['target'] = [i.view(i.size(0), -1) for i in kwargs['target']]
-        if kwargs['mixup_alpha'] != 0:
-            kwargs['target_res'] = [
-                i.view(i.size(0), -1) for i in kwargs['target_res']
-            ]
-        if len(kwargs['target']) > len(auxout):
-            kwargs['target'] = [kwargs['target']]
+        if kwargs['lam'] is not None: kwargs['target_res'] = [i.view(i.size(0), -1) for i in kwargs['target_res']]
+        if len(kwargs['target']) > len(auxout): kwargs['target'] = [kwargs['target']]
         for i in range(len(auxout)):
-            if kwargs['mixup_alpha'] != 0:
-                loss += kwargs['mixup_loss_fn'](loss_ffn[i], auxout[i],
-                                                kwargs['target'][i],
-                                                kwargs['target_res'][i],
-                                                kwargs['check'].lam)
+            if kwargs['lam'] is not None:
+                loss += kwargs['lam'] * loss_ffn[i](auxout[i], kwargs['target'][i])
+                loss += (1 - kwargs['lam']) * loss_ffn[i](auxout[i], kwargs['target_res'][i])
             else:
                 loss += loss_ffn[i](auxout[i], kwargs['target'][i])
     elif learning_type == 'self_supervise':
         for i in range(len(auxout)):
-            if kwargs['mixup_alpha'] != 0:
-                loss += kwargs['mixup_loss_fn'](loss_ffn[i], auxout[i],
-                                                kwargs['check'].lam,
-                                                *kwargs['data'])
-            else:
-                loss += loss_ffn[i](auxout[i], *kwargs['data'])
+            loss += loss_ffn[i](auxout[i], *kwargs['data'])
     elif learning_type == 'unsupervise':
         for i in range(len(auxout)):
-            if kwargs['mixup_alpha'] != 0:
-                loss += kwargs['mixup_loss_fn'](loss_ffn[i], auxout[i],
-                                                kwargs['check'].lam)
-            else:
-                loss += loss_ffn[i](auxout[i])
+            loss += loss_ffn[i](auxout[i])
 
     # Calculate Regularization
     loss += _cal_regularization(_model, **kwargs)
@@ -216,8 +201,6 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler,
     with amp.scale_loss(loss, optim) as scaled_loss:
         if train: 
             scaled_loss.backward(retain_graph=retain_graph)
-#     if train:
-#         loss.backward(retain_graph=retain_graph)
 
     for callback_func in kwargs['callbacks']:
         kwargs = callback_func.on_update_begin(**kwargs)

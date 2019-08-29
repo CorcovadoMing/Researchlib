@@ -128,28 +128,23 @@ def _process_data(self, data, target, mixup_alpha, inference):
                                                     random.random())
 
     # Mixup
-    if mixup_alpha > 0:
+    if mixup_alpha > 0 and not inference:
         lam = np.random.beta(mixup_alpha, mixup_alpha)
-        index = torch.randperm(data[0].size(0))
-        data[0] = lam * data[0] + (1 - lam) * data[0][index]
+        index = torch.randperm(data[i].size(0))
+        data = [lam * i + (1 - lam) * i[index] for i in data]
         target_res = [i[index] for i in target]
-        if self.is_cuda:
-            target_res = [i.cuda() for i in target_res]
-        self.lam = lam
-        self.mixup_loss_fn = mixup_loss_fn
     else:
-        self.lam = None
-        self.mixup_loss_fn = None
+        lam = None
         target_res = None
-    return data, target, target_res
+    return data, target, target_res, lam
 
 
 @register_method
 def _iteration_pipeline(self, loader, inference=False):
     for batch_idx, data_pack in cycle(enumerate(loader)):
         x, y = self._process_type(data_pack, self.inputs)
-        x, y, self.target_res = self._process_data(x, y, 0, inference)
-        yield x, y
+        x, y, y_res, lam = self._process_data(x, y, 0, inference)
+        yield x, y, y_res, lam
 
 
 #==================================================================================
@@ -228,10 +223,13 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
             iteration_break = iterations
             liveplot.redis.set('stage', 'train')
             liveplot.timer.clear()
-            for batch_idx, (x, y) in enumerate(train_prefetcher):
+            for batch_idx, (x, y, y_res, lam) in enumerate(train_prefetcher):
                 liveplot.update_progressbar(batch_idx + 1)
                 if self.is_cuda:
                     x, y = [i.cuda() for i in x], [i.cuda() for i in y]
+                    if lam is not None:
+                        # Mixup enabled
+                        y_res = [i.cuda() for i in y_res]
 
                 self.model.train()
                 self.train_fn(
@@ -239,14 +237,13 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
                     model=self.model,
                     data=x,
                     target=y,
-                    target_res=None,
+                    target_res=y_res,
+                    lam=lam,
                     optimizer=self.optimizer,
                     loss_fn=self.loss_fn,
-                    mixup_loss_fn=None,
                     reg_fn=self.reg_fn,
                     reg_weights=self.reg_weights,
                     epoch=self.epoch,
-                    mixup_alpha=mixup_alpha,
                     callbacks=callbacks,
                     metrics=metrics,
                     loss_history=loss_history,
