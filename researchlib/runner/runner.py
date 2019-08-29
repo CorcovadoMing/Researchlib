@@ -60,7 +60,7 @@ class Runner:
                  multigpu=False,
                  larc=False,
                  lookahead=False,
-                 ema=-1,
+                 ema=False,
                  ema_start=100,
                  swa=False,
                  swa_start=20):

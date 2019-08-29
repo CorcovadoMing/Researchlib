@@ -18,9 +18,9 @@ class L1(Matrix):
                                               (1 - lam) * y_true_res)).mean()
             self.total += 1
         else:
-            y_pred, y_true = loss_input[0].cpu(), loss_input[1].cpu()
-            self.value += torch.abs(y_pred - y_true).mean()
-            self.total += 1
+            y_pred, y_true = loss_input[0].detach().cpu(), loss_input[1].detach().cpu()
+            self.value += torch.abs(y_pred - y_true).sum()
+            self.total += y_true.size(0)
 
     def output(self):
         mae = (self.value / float(self.total))
