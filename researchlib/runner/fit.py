@@ -219,6 +219,7 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
             iteration_break = iterations
             liveplot.redis.set('stage', 'train')
             liveplot.timer.clear()
+            self.model.train()
             for batch_idx, (x, y, y_res, lam) in enumerate(train_prefetcher):
                 liveplot.update_progressbar(batch_idx + 1)
                 if self.is_cuda:
@@ -226,8 +227,7 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
                     if lam is not None:
                         # Mixup enabled
                         y_res = [i.cuda() for i in y_res]
-
-                self.model.train()
+                        
                 self.train_fn(
                     train=True,
                     model=self.model,
@@ -248,7 +248,6 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
                     norm=norm,
                     matrix_records=matrix_records,
                     bar=None)
-                self.model.eval()
 
                 liveplot.update_loss_desc(self.epoch, g_loss_history,
                                           d_loss_history, loss_history)
@@ -256,6 +255,8 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
                 iteration_break -= 1
                 if iteration_break == 0:
                     break
+            
+            self.model.eval()
 
             liveplot.record(epoch, 'norm', _list_avg(norm))
             if liveplot._gan:
