@@ -10,7 +10,7 @@ from .prefetch import *
 import pickle
 from ..frontend.dashboard import _Dashboard
 from apex import amp
-
+import numpy as np
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -126,9 +126,11 @@ def _process_data(self, data, target, mixup_alpha, inference):
     # Mixup
     if mixup_alpha > 0 and not inference:
         lam = np.random.beta(mixup_alpha, mixup_alpha)
-        index = torch.randperm(data[i].size(0))
-        data = [lam * i + (1 - lam) * i[index] for i in data]
-        target_res = [i[index] for i in target]
+        target_res = []
+        for i in range(len(data)):
+            index = torch.randperm(data[i].size(0))
+            data[i] = lam * data[i] + (1 - lam) * data[i][index]
+            target_res.append(target[i][index])
     else:
         lam = None
         target_res = None
@@ -136,10 +138,10 @@ def _process_data(self, data, target, mixup_alpha, inference):
 
 
 @register_method
-def _iteration_pipeline(self, loader, inference=False):
+def _iteration_pipeline(self, loader, mixup_alpha, inference=False):
     for batch_idx, data_pack in cycle(enumerate(loader)):
         x, y = self._process_type(data_pack, self.inputs)
-        x, y, y_res, lam = self._process_data(x, y, 0, inference)
+        x, y, y_res, lam = self._process_data(x, y, mixup_alpha, inference)
         yield x, y, y_res, lam
 
 
@@ -192,11 +194,9 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
         if len(self.default_metrics):
             metrics = self.default_metrics + metrics
 
-        train_prefetcher = BackgroundGenerator(
-            self._iteration_pipeline(self.train_loader))
+        train_prefetcher = BackgroundGenerator(self._iteration_pipeline(self.train_loader, mixup_alpha))
         if self.test_loader:
-            test_loader = self._iteration_pipeline(
-                self.test_loader, inference=True)
+            test_loader = self._iteration_pipeline(self.test_loader, mixup_alpha, inference=True)
 
         for epoch in range(1, epochs + 1):
             for callback_func in callbacks:
