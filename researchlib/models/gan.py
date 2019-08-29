@@ -59,20 +59,12 @@ class GANModel(nn.Module):
                inference=True,
                requires_grad=False,
                given_noise=None,
-               gpu=False,
-               ema=False):
+               gpu=False):
         # Multiplier to batch size, for mixed-regularization, .., etc.,
         bs = bs * self.multi_sample
 
-        # Exponential moving average
-        if ema:
-            ema_generator = pickle.loads(pickle.dumps(self.generator))
-            named_dict = dict(self.generator.named_parameters())
-            for name, p in ema_generator.named_parameters():
-                p.data.copy_(named_dict[name].ema.data)
-            _generator = ema_generator
-        else:
-            _generator = self.generator
+        # Exponential moving average (remove for improved ema)
+        _generator = self.generator
 
         # User-defined latent vector
         if given_noise is None:
@@ -122,13 +114,12 @@ class GANModel(nn.Module):
                 x.size(0),
                 condition_data=self.condition_data,
                 inference=True,
-                gpu=True,
-                ema=self.ema)
+                gpu=True)
         else:
             self.fake_data = self.sample(
                 x.size(0), inference=False, requires_grad=True, gpu=True)
             self.fake_data_metrics = self.sample(
-                x.size(0), inference=True, gpu=True, ema=self.ema)
+                x.size(0), inference=True, gpu=True)
 
         if self.d_condition:
             self.fake = self.discriminator(

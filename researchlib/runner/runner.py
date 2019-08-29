@@ -60,8 +60,6 @@ class Runner:
                  multigpu=False,
                  larc=False,
                  lookahead=False,
-                 ema=False,
-                 ema_start=100,
                  swa=False,
                  swa_start=20):
 
@@ -73,8 +71,6 @@ class Runner:
         self.multisteps = []
         self.lookahead = lookahead
         self.optimizer_choice = optimizer
-        self.ema = ema
-        self.ema_start = ema_start
         self.swa = swa
         self.swa_start = swa_start
         self.larc = larc
@@ -408,7 +404,7 @@ class Runner:
             return runner.histroy_.records['val_' + str(metrics)][index]
 
         keys = [
-            'ema', 'ema_start', 'swa', 'swa_start', 'larc', 'fp16',
+            'swa', 'swa_start', 'larc', 'fp16',
             'augmentation_list', 'preprocessing_list', 'loss_fn', 'train_loader'
         ]
         query = {}

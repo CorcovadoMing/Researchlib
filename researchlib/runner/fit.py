@@ -312,11 +312,8 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
                     epoch=epoch)
 
             if liveplot._gan:
-                ema = self.ema > 0 and self.epoch > self.ema_start
-                _gan_sample = self.model.sample(
-                    4, inference=True, gpu=True, ema=ema)
-                _gan_sample = _gan_sample.detach().cpu().numpy().transpose(
-                    (0, 2, 3, 1))
+                _gan_sample = self.model.sample(4, inference=True, gpu=True)
+                _gan_sample = _gan_sample.detach().cpu().numpy().transpose((0, 2, 3, 1))
                 _grid = plot_montage(_gan_sample, 2, 2, False)
                 liveplot.record(epoch, 'image', _grid)
 
