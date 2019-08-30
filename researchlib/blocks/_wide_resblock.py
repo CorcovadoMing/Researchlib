@@ -83,17 +83,17 @@ class WideResBlock(_Block):
 
         self.shortcut = nn.Sequential(*list(filter(None, [reduction_op])))
 
-        self.se = self._get_param('se', True)
-        if self.se:
-            self.se_branch = self._get_se_branch()
+        self.branch_attention = self._get_param('branch_attention')
+        if self.branch_attention:
+            self.attention_branch = self._get_attention_branch()
         self.shakedrop = self._get_param('shakeDrop', False)
         if self.shakedrop:
             self.shakedrop_branch = self._get_shake_drop_branch()
 
     def forward(self, x):
         _x = self.conv(x)
-        if self.se:
-            _x = _x * self.se_branch(_x)
+        if self.branch_attention:
+            _x = self.attention_branch(_x)
         if self.shakedrop:
             _x = self.shakedrop_branch(_x)
         x = self.shortcut(x)

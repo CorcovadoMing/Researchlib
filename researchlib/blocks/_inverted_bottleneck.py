@@ -52,22 +52,22 @@ class InvertedBottleneckBlock(_Block):
                                  self.do_norm, False, **third_custom_kwargs)
         self.need_shortcut = not self.do_pool and self.in_dim == self.out_dim
 
-        self.se = self._get_param('se', True)
-        if self.se:
-            self.se_branch = self._get_se_branch(dim=hidden_size)
+        self.branch_attention = self._get_param('branch_attention')
+        if self.branch_attention:
+            self.attention_branch = self._get_attention_branch(dim=hidden_size)
         self.shakedrop = self._get_param('shakeDrop', False)
         if self.shakedrop:
             self.shakedrop_branch = self._get_shake_drop_branch()
 
     def forward(self, x):
         _x = self.pre_conv(x)
-        if self.se:
-            _x = _x * self.se_branch(_x)
+        if self.branch_attention:
+            _x  = self.attention_branch(_x)
         _x = self.post_conv(_x)
 
         if self.need_shortcut:
             if self.shakedrop:
                 _x = self.shakedrop_branch(_x)
-            return x + self._drop_connect(_x)
+            return x + _x
         else:
             return _x

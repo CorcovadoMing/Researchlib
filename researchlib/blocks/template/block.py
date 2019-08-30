@@ -4,6 +4,7 @@ import copy
 from torch import nn
 from ...layers import layer
 from ...utils import ParameterManager
+from .attention import _SE_Attention, _CBAM_Attention
 
 
 class _Block(nn.Module):
@@ -112,13 +113,16 @@ class _Block(nn.Module):
             return _Combined([max_pool_op, avg_pool_op, conv_pool_op],
                              reduction_op, self.preact)
 
-    def _get_se_branch(self, divide_ratio=16, dim=None):
+    def _get_attention_branch(self, ratio=16, dim=None):
         if dim is None:
             dim = self.out_dim
-        return nn.Sequential(
-            layer.__dict__['AdaptiveMaxPool' + self._get_dim_type()](1),
-            self.op(dim, dim // divide_ratio, kernel_size=1), nn.ReLU(),
-            self.op(dim // divide_ratio, dim, kernel_size=1), nn.Sigmoid())
+        attention_type = self._get_param('branch_attention', required=True)
+        if attention_type == 'SE':
+            return _SE_Attention(dim, self._get_dim_type(), ratio)
+        elif attention_type == 'CBAM':
+            return _CBAM_Attention(dim, self._get_dim_type(), ratio)
+        else:
+            raise ValueError('Unknown branch attention type')
 
     def _get_shake_drop_branch(self):
         id = self._get_param('id', required=True)
@@ -135,17 +139,6 @@ class _Block(nn.Module):
             beta_range=beta_range,
             p_L=0.5,
             mode=mode)
-
-    def _drop_connect(self, x):
-        drop_connect_rate = self._get_param('drop_connect_rate', 0.2)
-        if not self.training:
-            return x
-        keep_prob = 1.0 - drop_connect_rate
-        batch_size = x.size(0)
-        random_tensor = keep_prob
-        random_tensor += torch.rand(batch_size, 1, 1, 1, device=x.device)
-        binary_tensor = random_tensor.floor()
-        return x.div(keep_prob) * binary_tensor
 
     def forward(self, x):
         pass
