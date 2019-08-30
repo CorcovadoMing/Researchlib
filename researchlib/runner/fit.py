@@ -1,6 +1,6 @@
 import os
 from tqdm import tnrange
-from ..utils import _register_method, plot_montage, _is_port_in_use, set_lr, inifinity_loop
+from ..utils import _register_method, plot_montage, _is_port_in_use, set_lr, inifinity_loop, Annealer
 from .history import History
 import torch
 import random
@@ -124,8 +124,9 @@ def _process_data(self, data, target, mixup_alpha, inference):
                                                     random.random())
 
     # Mixup
-    if mixup_alpha > 0 and not inference:
-        lam = np.random.beta(mixup_alpha, mixup_alpha)
+    _mixup_alpha = Annealer.get_trace('mixup_alpha') if mixup_alpha == Annealer else mixup_alpha
+    if _mixup_alpha > 0 and not inference:
+        lam = np.random.beta(_mixup_alpha, _mixup_alpha)
         target_res = []
         for i in range(len(data)):
             index = torch.randperm(data[i].size(0))
@@ -257,6 +258,9 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
 
                 liveplot.update_loss_desc(self.epoch, g_loss_history,
                                           d_loss_history, loss_history)
+                
+                # Global iteration annealling
+                Annealer._iteration_step()
 
                 iteration_break -= 1
                 if iteration_break == 0:
@@ -399,6 +403,9 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
                         self.train_loader.dataset.tensors[1][i] = \
                         self.model(self.train_loader.dataset.tensors[0][i].unsqueeze(0).cuda()).detach().cpu()[0]
                         torch.cuda.empty_cache()
+            
+            # Global epoch annealling
+            Annealer._epoch_step()
 
         liveplot.redis.set('stage', 'stop')
 
