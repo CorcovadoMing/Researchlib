@@ -17,3 +17,4 @@ from .timer import Timer
 from .decorator import Singleton
 from .parameter_manager import ParameterManager
 from .inifinity_loop import inifinity_loop
+from .annealer import Annealer
