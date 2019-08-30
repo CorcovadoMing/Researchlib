@@ -1,8 +1,7 @@
 import os
 from tqdm import tnrange
-from ..utils import _register_method, plot_montage, _is_port_in_use, set_lr
+from ..utils import _register_method, plot_montage, _is_port_in_use, set_lr, inifinity_loop
 from .history import History
-from itertools import cycle
 import torch
 import random
 from .liveplot import Liveplot
@@ -139,7 +138,7 @@ def _process_data(self, data, target, mixup_alpha, inference):
 
 @register_method
 def _iteration_pipeline(self, loader, mixup_alpha, inference=False):
-    for batch_idx, data_pack in cycle(enumerate(loader)):
+    for batch_idx, data_pack in inifinity_loop(loader):
         x, y = self._process_type(data_pack, self.inputs)
         x, y, y_res, lam = self._process_data(x, y, mixup_alpha, inference)
         yield x, y, y_res, lam
