@@ -13,11 +13,13 @@ def Heads(out_dim, attention=False, **kwargs):
     layers = [
         layer.__dict__['BatchNorm' + str(dim_type)](last_dim),
         layer.ReLU(),
-        layer.__dict__['DotNonLocalBlock' + str(dim_type)](last_dim) if attention else None,
-        unit.conv(layer.__dict__['Conv' + str(dim_type)], last_dim, last_dim, False, True, False) if attention else None,
+        layer.__dict__['DotNonLocalBlock' +
+                       str(dim_type)](last_dim) if attention else None,
+        unit.conv(layer.__dict__['Conv' + str(dim_type)], last_dim, last_dim,
+                  False, True, False) if attention else None,
         layer.__dict__['AdaptiveConcatPool' + str(dim_type)](1),
         layer.Flatten(),
-        layer.Linear(2*last_dim, out_dim)
+        layer.Linear(2 * last_dim, out_dim)
     ]
 
     layers = list(filter(None, layers))
