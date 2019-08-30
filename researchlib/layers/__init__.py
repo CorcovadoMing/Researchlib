@@ -94,12 +94,11 @@ class layer(object):
 
     Blur2d = _Blur2d
     DropReLU = _DropReLU
-    
+
     NoiseInjection = _NoiseInjection
     Flatten = _Flatten
 
 
-    
 # Merge nn and layer module if it didn't cause conflict
 from torch import nn
 for i, j in nn.__dict__.items():

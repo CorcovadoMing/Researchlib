@@ -42,7 +42,7 @@ class Liveplot:
         self._plot = _plot
         self._gan = True if type(model) == GANModel else False
         self.history = hl.History()
-        self.text_table = Texttable(max_width=0) #unlimited
+        self.text_table = Texttable(max_width=0)  #unlimited
         self.timer = Timer(total_iteration)
         self.redis = redis.Redis()
         self.redis.set('progress', 0)
@@ -56,7 +56,7 @@ class Liveplot:
                 'val_loss': [],
                 'val_acc': []
             }))
-        
+
         # Label + Pregress
         self.progress = Output()
         self.progress_label = Output()
@@ -69,7 +69,7 @@ class Liveplot:
         with self.progress_label:
             self.progress_label_text = Label(value="Initialization")
             display(self.progress_label_text)
-        
+
         if self._plot:
             # 4 chartplots
             self.loss_plot = Output()
@@ -84,7 +84,7 @@ class Liveplot:
                 self.gan_gallary = Output()
                 display(self.gan_gallary)
                 self.gan_canvas = hl.Canvas()
-            
+
             # Canvas
             self.loss_canvas = hl.Canvas()
             self.matrix_canvas = hl.Canvas()
@@ -153,12 +153,13 @@ class Liveplot:
             with self.loss_plot:
                 if self._gan:
                     self.loss_canvas.draw_plot([
-                        self.history["train_g_loss"], self.history['train_d_loss']
+                        self.history["train_g_loss"],
+                        self.history['train_d_loss']
                     ])
                 else:
                     self.loss_canvas.draw_plot(
                         [self.history["train_loss"], self.history['val_loss']])
-            
+
             with self.matrix_plot:
                 if self._gan:
                     self.matrix_canvas.draw_plot(
@@ -166,14 +167,14 @@ class Liveplot:
                 else:
                     self.matrix_canvas.draw_plot(
                         [self.history['train_acc'], self.history['val_acc']])
-            
+
             with self.lr_plot:
                 if self._gan:
                     self.lr_canvas.draw_plot(
                         [self.history['g_lr'], self.history['d_lr']])
                 else:
                     self.lr_canvas.draw_plot([self.history['lr']])
-            
+
             with self.norm_plot:
                 self.norm_canvas.draw_plot([self.history['norm']])
 
@@ -181,8 +182,12 @@ class Liveplot:
             if epoch == 1:
                 self.text_table.add_row(['Epochs'] +
                                         list(history_.records.keys())[:-1])
-                self.text_table.set_cols_width(
-                    [6,]+ [len(format(i[-1], '.4f')) for i in list(history_.records.values())[:-1]])
+                self.text_table.set_cols_width([
+                    6,
+                ] + [
+                    len(format(i[-1], '.4f'))
+                    for i in list(history_.records.values())[:-1]
+                ])
             self.text_table.add_row([epoch_str] + [
                 format(i[-1], '.4f')
                 for i in list(history_.records.values())[:-1]

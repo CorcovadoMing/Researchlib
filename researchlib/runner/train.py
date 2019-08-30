@@ -150,12 +150,18 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler,
     auxout = [i.view(i.size(0), -1) for i in auxout]
     if learning_type == 'supervise':
         kwargs['target'] = [i.view(i.size(0), -1) for i in kwargs['target']]
-        if kwargs['lam'] is not None: kwargs['target_res'] = [i.view(i.size(0), -1) for i in kwargs['target_res']]
-        if len(kwargs['target']) > len(auxout): kwargs['target'] = [kwargs['target']]
+        if kwargs['lam'] is not None:
+            kwargs['target_res'] = [
+                i.view(i.size(0), -1) for i in kwargs['target_res']
+            ]
+        if len(kwargs['target']) > len(auxout):
+            kwargs['target'] = [kwargs['target']]
         for i in range(len(auxout)):
             if kwargs['lam'] is not None:
-                loss += kwargs['lam'] * loss_ffn[i](auxout[i], kwargs['target'][i])
-                loss += (1 - kwargs['lam']) * loss_ffn[i](auxout[i], kwargs['target_res'][i])
+                loss += kwargs['lam'] * loss_ffn[i](auxout[i],
+                                                    kwargs['target'][i])
+                loss += (1 - kwargs['lam']) * loss_ffn[i](
+                    auxout[i], kwargs['target_res'][i])
             else:
                 loss += loss_ffn[i](auxout[i], kwargs['target'][i])
     elif learning_type == 'self_supervise':
@@ -170,7 +176,7 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler,
 
     # Backward
     with amp.scale_loss(loss, optim) as scaled_loss:
-        if train: 
+        if train:
             scaled_loss.backward(retain_graph=retain_graph)
 
     for callback_func in kwargs['callbacks']:
