@@ -18,8 +18,8 @@ class _AdaptiveConcatPool1d(nn.Module):
 
     def __init__(self, l):
         super().__init__()
-        self.ap = nn.AvgPool1d(l)
-        self.mp = nn.MaxPool1d(l)
+        self.ap = nn.AdaptiveAvgPool1d(l)
+        self.mp = nn.AdaptiveMaxPool1d(l)
 
     def forward(self, x):
         return torch.cat([self.mp(x), self.ap(x)], 1)
