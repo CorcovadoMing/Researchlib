@@ -63,7 +63,6 @@ def fit(self,
         f'epoch_{self.epoch}-{self.epoch+epochs}'] = locals()
 
     self.set_optimizer()
-    
 
     # Fix issue the dashboard is down while training is interrupted
     if not _is_port_in_use(8050):
@@ -183,26 +182,29 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
     liveplot.redis.set('experiment', pickle.dumps(exist_experiments))
 
     self.preload_gpu()
-    
-    self.model, self.optimizer = amp.initialize(self.model,
-                                                self.optimizer,
-                                                opt_level='O1',
-                                                enabled=self.fp16,
-                                                loss_scale=1)
+
+    self.model, self.optimizer = amp.initialize(
+        self.model,
+        self.optimizer,
+        opt_level='O1',
+        enabled=self.fp16,
+        loss_scale=1)
 
     try:
         if len(self.default_metrics):
             metrics = self.default_metrics + metrics
 
-        train_prefetcher = BackgroundGenerator(self._iteration_pipeline(self.train_loader, mixup_alpha))
+        train_prefetcher = BackgroundGenerator(
+            self._iteration_pipeline(self.train_loader, mixup_alpha))
         if self.test_loader:
-            test_loader = self._iteration_pipeline(self.test_loader, mixup_alpha, inference=True)
+            test_loader = self._iteration_pipeline(
+                self.test_loader, mixup_alpha, inference=True)
 
         for epoch in range(1, epochs + 1):
             # Flat warmup implementation
             if epoch == (warmup + 1):
                 self.set_policy(policy, base_lr, epochs - warmup)
-            
+
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(
                     model=self.model,
@@ -231,7 +233,7 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
                     if lam is not None:
                         # Mixup enabled
                         y_res = [i.cuda() for i in y_res]
-                        
+
                 self.train_fn(
                     train=True,
                     model=self.model,
@@ -259,7 +261,7 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
                 iteration_break -= 1
                 if iteration_break == 0:
                     break
-            
+
             self.model.eval()
 
             liveplot.record(epoch, 'norm', _list_avg(norm))
@@ -317,7 +319,8 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
 
             if liveplot._gan:
                 _gan_sample = self.model.sample(4, inference=True, gpu=True)
-                _gan_sample = _gan_sample.detach().cpu().numpy().transpose((0, 2, 3, 1))
+                _gan_sample = _gan_sample.detach().cpu().numpy().transpose(
+                    (0, 2, 3, 1))
                 _grid = plot_montage(_gan_sample, 2, 2, False)
                 liveplot.record(epoch, 'image', _grid)
 

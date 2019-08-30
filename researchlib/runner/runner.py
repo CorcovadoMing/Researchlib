@@ -251,7 +251,6 @@ class Runner:
             self.optimizer = _assign_optim(self.model, self.optimizer_choice,
                                            self.larc, self.swa, self.lookahead)
 
-
     def start_experiment(self, name):
         self.experiment_name = name
         self.checkpoint_path = os.path.join('.', 'checkpoint',
@@ -324,7 +323,8 @@ class Runner:
             self.optimizer.swap_swa_sgd()
 
     def validate(self, metrics=[], callbacks=[]):
-        test_loader = self._iteration_pipeline(self.test_loader, 0, inference=True)
+        test_loader = self._iteration_pipeline(
+            self.test_loader, 0, inference=True)
         self.preload_gpu()
         try:
             if len(self.default_metrics):
@@ -404,8 +404,8 @@ class Runner:
             return runner.histroy_.records['val_' + str(metrics)][index]
 
         keys = [
-            'swa', 'swa_start', 'larc', 'fp16',
-            'augmentation_list', 'preprocessing_list', 'loss_fn', 'train_loader'
+            'swa', 'swa_start', 'larc', 'fp16', 'augmentation_list',
+            'preprocessing_list', 'loss_fn', 'train_loader'
         ]
         query = {}
         for key, value in self.__dict__.items():
