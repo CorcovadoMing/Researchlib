@@ -49,6 +49,7 @@ def fit(self,
         epochs,
         lr=1e-3,
         policy='cosine',
+        warmup=5,
         mixup_alpha=0,
         metrics=[],
         callbacks=[],
@@ -88,7 +89,8 @@ def fit(self,
         self_iterative,
         iterations=iterations,
         policy=policy,
-        plot=plot)
+        plot=plot,
+        warmup=warmup)
 
 
 @register_method
@@ -156,11 +158,10 @@ def _list_avg(l):
 
 @register_method
 def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
-         iterations, policy, plot):
+         iterations, policy, warmup, plot):
 
     base_lr = lr
     set_lr(self.optimizer, base_lr)
-    self.set_policy(policy, base_lr, epochs)
 
     if type(self.optimizer) == list:
         for i in self.optimizer:
@@ -198,6 +199,10 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
             test_loader = self._iteration_pipeline(self.test_loader, mixup_alpha, inference=True)
 
         for epoch in range(1, epochs + 1):
+            # Flat warmup implementation
+            if epoch == (warmup + 1):
+                self.set_policy(policy, base_lr, epochs - warmup)
+            
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(
                     model=self.model,
