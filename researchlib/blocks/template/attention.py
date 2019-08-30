@@ -44,7 +44,7 @@ class _CBAM_Attention(nn.Module):
         )
     
     def forward(self, x):
-        channel_attention = x * F.sigmoid(self.cfn(self.max_pool(x)) + self.cfn(self.avg_pool(x)))
+        channel_attention = x * torch.sigmoid(self.cfn(self.max_pool(x)) + self.cfn(self.avg_pool(x)))
         spatial_attention = channel_attention * self.sfn(_channel_pool(channel_attention))
         return spatial_attention
         
