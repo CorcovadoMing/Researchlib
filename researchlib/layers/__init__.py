@@ -26,6 +26,7 @@ from .non_local.embedded_gaussian import _EmbeddedGaussianNonLocalBlock1d, _Embe
 from .non_local.gaussian import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _GaussianNonLocalBlock3d
 from .noise_injection import _NoiseInjection
 from .flatten import _Flatten
+from .mish import _Mish
 
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
@@ -56,6 +57,7 @@ class layer(object):
     # Activator
     Swish = _Swish
     GeLU = _GeLU
+    Mish = _Mish
 
     # DropBlock
     DropBlock2d = _DropBlock2d

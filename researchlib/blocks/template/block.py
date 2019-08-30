@@ -61,7 +61,7 @@ class _Block(nn.Module):
     def _get_activator_layer(self, activator_type):
         if activator_type not in [
                 'ReLU', 'ELU', 'PReLU', 'LeakyReLU', 'SELU', 'Swish', 'GeLU',
-                'CELU', 'DropReLU'
+                'CELU', 'DropReLU', 'Mish'
         ]:
             raise ValueError('Unknown activator type')
         return layer.__dict__[activator_type]()
