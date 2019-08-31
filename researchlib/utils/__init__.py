@@ -18,4 +18,4 @@ from .decorator import Singleton
 from .parameter_manager import ParameterManager
 from .inifinity_loop import inifinity_loop
 from .annealer import Annealer
-from .switch_optimizer import _switch_swa_mode
+from .switch_swa_mode import _switch_swa_mode
