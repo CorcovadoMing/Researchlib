@@ -191,29 +191,6 @@ class Runner:
         df.columns.name = 'Epoch'
         return df
 
-    def history(self, plot=True):
-        if plot:
-            import matplotlib.pyplot as plt
-            fig, ax = plt.subplots(1, 2, figsize=(24, 8))
-            legends = [[], []]
-            for key in self.history_.records:
-                if 'loss' in key:
-                    legends[0].append(key)
-                    ax[0].plot(self.history_.records[key])
-                else:
-                    legends[1].append(key)
-                    ax[1].plot(self.history_.records[key])
-            ax[0].set_title("Loss")
-            ax[0].set_xlabel("Epochs")
-            ax[0].set_ylabel("Loss")
-            ax[0].legend(legends[0])
-            ax[1].set_title("Accuracy")
-            ax[1].set_xlabel("Epochs")
-            ax[1].set_ylabel("Accuracy")
-            ax[1].legend(legends[1])
-            plt.show()
-        else:
-            return self.history_
 
     def eval(self):
         self.model.eval()
@@ -226,6 +203,7 @@ class Runner:
         except:
             pass
 
+        
     def train(self):
         self.model.train()
         if type(self.optimizer) == list:
@@ -234,6 +212,7 @@ class Runner:
         else:
             self.optimizer.swap_swa_sgd()
 
+            
     def validate(self, metrics=[], callbacks=[]):
         test_loader = self._iteration_pipeline(
             self.test_loader, 0, inference=True)
@@ -262,24 +241,29 @@ class Runner:
         finally:
             self.unload_gpu()
 
+            
     def save(self, path):
         # TODO: more efficient to save optimizer (save only the last/best?)
         _save_model(self.model, path)
         #_save_optimizer(self.optimizer, path)
 
+        
     def load(self, path):
         self.model = _load_model(self.model, path, self.multigpu)
 
+        
     def preprocessing(self, preprocessing_list, debug=False):
         self.preprocessing_list = preprocessing_list
         if debug:
             self.preprocessing_list.append(PreprocessingDebugger())
         return self
 
+    
     def postprocessing(self, postprocessing_list, debug=False):
         self.postprocessing_list = postprocessing_list
         return self
 
+    
     def augmentation(self, augmentation_list, debug=False):
         self.augmentation_list = augmentation_list
         if debug:
@@ -287,8 +271,8 @@ class Runner:
                 i._debug_flag = True
         return self
 
+    
     def describe(self):
-
         def _describe_model(model_dict):
             query = {}
             keys = [
