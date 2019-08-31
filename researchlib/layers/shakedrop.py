@@ -14,15 +14,7 @@ class ShakeDropFunction(torch.autograd.Function):
         gate is sampled from bernoulli.
         
         Args:
-            training (bool): the number of current block, for example k=1 for first block
-            p (int): total number of all blocks
-            alpha_range (0 or list): Default: [-1, 1]
-                if 0 -> drop the forward branch,
-                if list -> sampled from uniform distribution with alpha_range
-            beta_range (0 or list): Default: [0, 1]
-                if 0 -> drop the backward branch
-                if list -> sampled from uniform distribution with beta_range
-            mode: 0, 1, 2 for sample, channel, pixel mode
+            p (float): the percentages to be kept.
 
         .. math::
             E(gate) = p
@@ -55,6 +47,13 @@ class ShakeDropFunction(torch.autograd.Function):
             if gate.item() == 0:
                 if type(alpha_range) == list:  # two-element list
                     if int(mode) == 0:
+                        alpha = torch.FloatTensor(1).to(x.device).to(
+                            x.dtype).uniform_(*alpha_range)
+                        new_shape = []
+                        while len(new_shape) != x.dim():
+                            new_shape.append(1)
+                        alpha = alpha.view(*new_shape).expand_as(x)
+                    if int(mode) == 1:
                         alpha = torch.FloatTensor(x.size(0)).to(x.device).to(
                             x.dtype).uniform_(*alpha_range)
                         new_shape = [
@@ -63,14 +62,14 @@ class ShakeDropFunction(torch.autograd.Function):
                         while len(new_shape) != x.dim():
                             new_shape.append(1)
                         alpha = alpha.view(*new_shape).expand_as(x)
-                    elif int(mode) == 1:
+                    elif int(mode) == 2:
                         alpha = torch.FloatTensor(x.size(0), x.size(1)).to(
                             x.device).to(x.dtype).uniform_(*alpha_range)
                         new_shape = [alpha.size(0), alpha.size(1)]
                         while len(new_shape) != x.dim():
                             new_shape.append(1)
                         alpha = alpha.view(*new_shape).expand_as(x)
-                    elif int(mode) == 2:
+                    elif int(mode) == 3:
                         alpha = torch.empty_like(x).to(x.device).to(
                             x.dtype).uniform_(*alpha_range)
                 elif alpha_range == 0:
@@ -90,6 +89,14 @@ class ShakeDropFunction(torch.autograd.Function):
         if gate.item() == 0:
             if len(beta_range) == 2:  # two-element list
                 if int(mode) == 0:
+                    beta = torch.FloatTensor(1).to(
+                        grad_output.device).to(
+                            grad_output.dtype).uniform_(*beta_range)
+                    new_shape = []
+                    while len(new_shape) != grad_output.dim():
+                        new_shape.append(1)
+                    beta = beta.view(*new_shape).expand_as(grad_output)
+                if int(mode) == 1:
                     beta = torch.FloatTensor(grad_output.size(0)).to(
                         grad_output.device).to(
                             grad_output.dtype).uniform_(*beta_range)
@@ -99,7 +106,7 @@ class ShakeDropFunction(torch.autograd.Function):
                     while len(new_shape) != grad_output.dim():
                         new_shape.append(1)
                     beta = beta.view(*new_shape).expand_as(grad_output)
-                elif int(mode) == 1:
+                elif int(mode) == 2:
                     beta = torch.FloatTensor(
                         grad_output.size(0),
                         grad_output.size(1)).to(grad_output.device).to(
@@ -108,7 +115,7 @@ class ShakeDropFunction(torch.autograd.Function):
                     while len(new_shape) != grad_output.dim():
                         new_shape.append(1)
                     beta = beta.view(*new_shape).expand_as(grad_output)
-                elif int(mode) == 2:
+                elif int(mode) == 3:
                     beta = torch.empty_like(grad_output).to(
                         grad_output.device).to(
                             grad_output.dtype).uniform_(*beta_range)
@@ -131,8 +138,8 @@ class _ShakeDrop(nn.Module):
                  block_num,
                  alpha_range=[-1, 1],
                  beta_range=[0, 1],
-                 p_L=0.5,
-                 mode=0):
+                 shakedrop_prob=0.5,
+                 mode=3):
         '''
         Apply linear decay rule to compute p value for each block.
         Then p=1 for input, p=p_L for last block
@@ -142,7 +149,17 @@ class _ShakeDrop(nn.Module):
         Args:
             block_idx (int): the number of current block, for example k=1 for first block
             block_num (int): total number of all blocks
-            p_L (float): Default: 0.5 (recommended)
+            alpha_range (0 or list): Default: [-1, 1]
+                if 0 -> drop the forward branch,
+                if list -> sampled from uniform distribution with alpha_range
+            beta_range (0 or list): Default: [0, 1]
+                if 0 -> drop the backward branch
+                if list -> sampled from uniform distribution with beta_range
+            shakedrop_prob (float): Default: 0.5, represent (1. - p_L) in paper.
+                pL = 0.025, 0.05 recommended for small model (< 50 layers) on large dataset (Imagenet)
+                pL = 0.5 recommended for complex model (RandomDrop) and small dataset (Cifar)
+            mode: 0, 1, 2, 3 for batch, sample, channel, pixel mode
+                mode = 3, pixel level is recommended in paper
 
         .. math::
             p = 1. - block_idx / block_num * (1.-p_L)
@@ -152,7 +169,7 @@ class _ShakeDrop(nn.Module):
         '''
 
         super().__init__()
-        self.p = 1. - ((block_idx / block_num) * (1. - p_L))
+        self.p = 1. - ((block_idx / block_num) * shakedrop_prob)
         self.alpha_range = alpha_range
         self.beta_range = beta_range
         self.mode = torch.empty(1).fill_(mode)

@@ -129,15 +129,16 @@ class _Block(nn.Module):
         total_blocks = self._get_param('total_blocks', required=True)
         alpha_range = self._get_param('alpha_range', init_value=[-1, 1])
         beta_range = self._get_param('beta_range', init_value=[0, 1])
-        mode_mapping = {'batch': 0, 'channel': 1, 'pixel': 2}
-        mode = self._get_param('shakeDrop_mode', 'batch')
+        shakedrop_prob = self._get_param('shakedrop_prob', init_value=0.5)
+        mode_mapping = {'batch': 0, 'sample': 1, 'channel': 2, 'pixel': 3}
+        mode = self._get_param('shakeDrop_mode', 'pixel')
         mode = mode_mapping[mode]
         return layer.ShakeDrop(
             id,
             total_blocks,
             alpha_range=alpha_range,
             beta_range=beta_range,
-            p_L=0.5,
+            shakedrop_prob=shakedrop_prob,
             mode=mode)
 
     def forward(self, x):
