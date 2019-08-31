@@ -1,7 +1,6 @@
 import torch
-import torch.nn.functional as F
 from .history import *
-from ..utils import _register_method, get_aux_out, _switch_swa_mode
+from ..utils import _register_method, get_aux_out, _switch_swa_mode, ParameterManager
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -9,8 +8,14 @@ register_method = _register_method(__methods__)
 
 @register_method
 def validate_fn(self, **kwargs):
+    parameter_manager = ParameterManager(**kwargs)
+    
+    metrics = parameter_manager.get_param('metrics', [])
+    callbacks = parameter_manager.get_param('callbacks', [])
+    test_loader = parameter_manager.get_param('test_loader', required=True)
+    loss_fn = parameter_manager.get_param('loss_fn', required=True)
+    
     self.model.eval()
-    test_loss = 0
     matrix_records = History()
 
     if self.swa and self.epoch >= self.swa_start:
@@ -21,53 +26,46 @@ def validate_fn(self, **kwargs):
             self.optimizer.bn_update(self.train_loader, self.model, device='cuda')
 
     # Reset metrics
-    for m in kwargs['metrics']:
+    for m in metrics: 
         m.reset()
 
+    test_loss = 0
     total = len(self.test_loader)
     with torch.no_grad():
-        for batch_idx, (x, y, _, _) in enumerate(kwargs['test_loader']):
-            kwargs['batch_idx'] = batch_idx
+        for batch_idx, (x, y, _, _) in enumerate(test_loader):
+            if self.is_cuda: x, y = [i.cuda() for i in x], [i.cuda() for i in y]
 
-            if kwargs['is_cuda']:
-                x, y = [i.cuda() for i in x], [i.cuda() for i in y]
-            kwargs['data'], kwargs['target'] = x, y
-
-            for callback_func in kwargs['callbacks']:
+            for callback_func in callbacks:
                 kwargs = callback_func.on_iteration_begin(**kwargs)
 
             output = self.model(*x)
-
             auxout = get_aux_out(self.model)
             auxout.append(output)
-            kwargs['auxout'] = auxout
-
             auxout = [i.view(i.size(0), -1) for i in auxout]
 
-            kwargs['target'] = [i.view(i.size(0), -1) for i in kwargs['target']]
-            if len(kwargs['target']) > len(auxout):
-                kwargs['target'] = [kwargs['target']]
+            y = [i.view(i.size(0), -1) for i in y]
+            if len(y) > len(auxout):
+                y = [y]
 
             for i in range(len(auxout)):
-                test_loss += kwargs['loss_fn'][i](auxout[i],
-                                                  kwargs['target'][i]).item()
+                test_loss += loss_fn[i](auxout[i], y[i]).item()
 
-            for m in kwargs['metrics']:
-                m.forward([auxout[-1]] + [kwargs['target'][-1]])
+            for m in metrics:
+                m.forward([auxout[-1], y[-1]])
 
-            for callback_func in kwargs['callbacks']:
+            for callback_func in callbacks:
                 kwargs = callback_func.on_iteration_end(**kwargs)
 
             if batch_idx + 1 == total:
                 break
 
-    test_loss /= (kwargs['batch_idx'] + 1)
+    test_loss /= total
 
-    for callback_func in kwargs['callbacks']:
+    for callback_func in callbacks:
         kwargs = callback_func.on_validation_end(**kwargs)
 
     # Output metrics
-    for m in kwargs['metrics']:
+    for m in metrics:
         matrix_records.add(m.output(), prefix='val')
 
     if self.swa and self.epoch >= self.swa_start:

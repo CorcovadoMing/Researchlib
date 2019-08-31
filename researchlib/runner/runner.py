@@ -56,6 +56,7 @@ class Runner:
         self.experiment_name = ''
         self.checkpoint_path = ''
         self.scheduler = None
+        self.optimizer = None
         self.epoch = 1
         self.is_cuda = is_available()
         
@@ -158,10 +159,12 @@ class Runner:
 
         
     def load_best(self, _id='none'):
+        if len(self.experiment_name) == 0: self.start_experiment('default')
         self.load(os.path.join(self.checkpoint_path, 'best_' + _id))
 
         
     def load_epoch(self, epoch, _id='none'):
+        if len(self.experiment_name) == 0: self.start_experiment('default')
         self.load(os.path.join(self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(epoch)))
 
         
@@ -169,6 +172,7 @@ class Runner:
         try:
             self.load_epoch(self.epoch)
         except:
+            # The last epoch is not complete
             self.load_epoch(self.epoch - 1)
 
             

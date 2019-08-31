@@ -34,21 +34,23 @@ def _switch_optimizer_state(optim, device, lookahead):
 @register_method
 def preload_gpu(self):
     if self.is_cuda:
-        if type(self.optimizer) == tuple or type(self.optimizer) == list:
-            for optim in self.optimizer:
-                _switch_optimizer_state(optim, 'gpu', self.lookahead)
-        else:
-            _switch_optimizer_state(self.optimizer, 'gpu', self.lookahead)
+        if self.optimizer is not None:
+            if type(self.optimizer) == tuple or type(self.optimizer) == list:
+                for optim in self.optimizer:
+                    _switch_optimizer_state(optim, 'gpu', self.lookahead)
+            else:
+                _switch_optimizer_state(self.optimizer, 'gpu', self.lookahead)
         self.model.cuda()
 
 
 @register_method
 def unload_gpu(self):
     if self.is_cuda:
-        if type(self.optimizer) == tuple or type(self.optimizer) == list:
-            for optim in self.optimizer:
-                _switch_optimizer_state(optim, 'cpu', self.lookahead)
-        else:
-            _switch_optimizer_state(self.optimizer, 'cpu', self.lookahead)
+        if self.optimizer is not None:
+            if type(self.optimizer) == tuple or type(self.optimizer) == list:
+                for optim in self.optimizer:
+                    _switch_optimizer_state(optim, 'cpu', self.lookahead)
+            else:
+                _switch_optimizer_state(self.optimizer, 'cpu', self.lookahead)
         self.model.cpu()
         torch.cuda.empty_cache()
