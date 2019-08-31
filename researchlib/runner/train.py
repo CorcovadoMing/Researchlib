@@ -1,16 +1,12 @@
 from ..callbacks import *
-import numpy as np
 import torch
 from torch.nn.utils import *
-from ..utils import *
 from apex import amp
-import torchtext
 from torch import nn
 from ..models import GANModel, VAEModel
+from ..utils import *
 from ..utils import _register_method
-import copy
-import functools
-import math
+
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -36,7 +32,6 @@ def _restore_grad(model):
 
 @register_method
 def train_fn(self, train=True, **kwargs):
-    # Callback: on_iteration_begin
     for callback_func in kwargs['callbacks']:
         kwargs = callback_func.on_iteration_begin(**kwargs)
 
@@ -69,7 +64,7 @@ def train_fn(self, train=True, **kwargs):
         # Generator
         _backup_grad(self.model.discriminator)
         model = self.model.generator
-        model_ffn = functools.partial(self.model.forward_g)
+        model_ffn = self.model.forward_g
         loss_ffn = [
             i.forward_g if isinstance(i, nn.Module) else i for i in self.loss_fn
         ]
