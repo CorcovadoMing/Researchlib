@@ -1,14 +1,11 @@
-from ..utils import *
-
-# -------------------------------------------------------
-
 from ..loss import loss_mapping, loss_ensemble
 from .history import History
 from ..models import GANModel
 from .validate import validate_fn
 from .preprocessing import PreprocessingDebugger
 from .export import _Export
-from ..utils import _add_methods_from
+from ..utils import *
+from ..utils import _add_methods_from, ParameterManager
 from ..benchmark import benchmark
 from .save_load import _save_model, _save_optimizer, _load_model, _load_optimizer
 from torch.cuda import is_available
@@ -19,7 +16,6 @@ import os
 import copy
 import pandas as pd
 
-from ..utils import ParameterManager
 
 from . import init_model
 from . import fit
@@ -99,24 +95,15 @@ class Runner:
         self.augmentation_list = []
 
         
-        # --------------------------------------------------------------------------------------------------------------------------------
-        
         # Assign loss function
-        #
-        # self.loss_fn
-        # self.default_metrics
         self.loss_fn = []
         self.default_metrics = []
-
-        # --------------------------------------------------------------------------------------------------------------------------------
+        
         def _process_loss_fn(loss_fn):
-            if type(loss_fn) == type({}):
-                process_func = loss_ensemble
-            else:
-                process_func = loss_mapping
+            process_func = loss_ensemble if type(loss_fn) == dict else loss_mapping
             return process_func(loss_fn)
 
-        if type(loss_fn) == type([]):
+        if type(loss_fn) == list:
             for lf in loss_fn:
                 _loss_fn, _default_metrics = _process_loss_fn(lf)
                 self.loss_fn.append(_loss_fn)
@@ -125,32 +112,30 @@ class Runner:
             _loss_fn, _default_metrics = _process_loss_fn(loss_fn)
             self.loss_fn.append(_loss_fn)
             self.default_metrics += _default_metrics
-        # --------------------------------------------------------------------------------------------------------------------------------
 
+            
+            
         # Assign monitoring
-        #
-        # self.monitor_mode
-        # self.monitor_state
-        # self.monitor
         self.monitor_mode = monitor_mode
         self.monitor_state = monitor_state
         self.monitor = None
-        # --------------------------------------------------------------------------------------------------------------------------------
+        
         if monitor_mode == 'min':
             self.monitor = 1e9
             self.monitor_mode = min
         elif monitor_mode == 'max':
             self.monitor = -1e9
             self.monitor_mode = max
-        # --------------------------------------------------------------------------------------------------------------------------------
-
+        
+        
+        # Regulariation (Need to be check)
         self.reg_fn = reg_fn
+        self.reg_weights = reg_weights
         for key in self.reg_fn:
             if type(reg_fn[key]) == str:
-                fn, _, _, _, _ = loss_mapping(reg_fn[key])
+                fn, _, = loss_mapping(reg_fn[key])
                 reg_fn[key] = fn
 
-        self.reg_weights = reg_weights
 
         # Model
         if type(model) == GANModel:
@@ -160,34 +145,33 @@ class Runner:
         if self.multigpu:
             self.model = DataParallel(self.model)
 
-        if optimizer is not None:
-            self.set_optimizer()
-
+            
+        # Speedup
         cudnn.benchmark = True
 
-    # ===================================================================================================
-    # ===================================================================================================
+
 
     def start_experiment(self, name):
         self.experiment_name = name
-        self.checkpoint_path = os.path.join('.', 'checkpoint',
-                                            self.experiment_name)
+        self.checkpoint_path = os.path.join('.', 'checkpoint', self.experiment_name)
         os.makedirs(self.checkpoint_path, exist_ok=True)
 
+        
     def load_best(self, _id='none'):
         self.load(os.path.join(self.checkpoint_path, 'best_' + _id))
 
+        
     def load_epoch(self, epoch, _id='none'):
-        self.load(
-            os.path.join(self.checkpoint_path,
-                         'checkpoint_' + _id + '_epoch_' + str(epoch)))
+        self.load(os.path.join(self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(epoch)))
 
+        
     def load_last(self):
         try:
             self.load_epoch(self.epoch)
         except:
             self.load_epoch(self.epoch - 1)
 
+            
     def report(self):
         print('Experiment:', self.experiment_name)
         print('Checkpoints are saved in', self.checkpoint_path)
@@ -208,8 +192,7 @@ class Runner:
 
             
     def validate(self, metrics=[], callbacks=[]):
-        test_loader = self._iteration_pipeline(
-            self.test_loader, 0, inference=True)
+        test_loader = self._iteration_pipeline(self.test_loader, 0, inference=True)
         self.preload_gpu()
         try:
             if len(self.default_metrics):
@@ -237,8 +220,8 @@ class Runner:
 
             
     def save(self, path):
-        # TODO: more efficient to save optimizer (save only the last/best?)
         _save_model(self.model, path)
+        # TODO: more efficient to save optimizer (save only the last/best?)
         #_save_optimizer(self.optimizer, path)
 
         
@@ -265,7 +248,8 @@ class Runner:
                 i._debug_flag = True
         return self
 
-    
+    # =======================================================================================================
+    # following function need to be refined
     def describe(self):
         def _describe_model(model_dict):
             query = {}
@@ -342,6 +326,7 @@ class Runner:
             query['fit'][i] = _describe_fit(j)
         return query
 
+    
     def submit_benchmark(self, category, comments={}, backup=False):
         if type(comments) != dict:
             raise ValueError("Type Error")
