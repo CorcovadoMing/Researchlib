@@ -1,31 +1,24 @@
 from ..utils import *
-from torch.optim import *
 
 # -------------------------------------------------------
+
 from ..loss import loss_mapping, loss_ensemble
 from .history import History
 from ..models import GANModel
-from .adafactor import Adafactor
-from .radam import PlainRAdam, RAdam
-from .adamw import AdamW
-from .cocob import Cocob
-from .lookahead import Lookahead
 from .validate import validate_fn
 from .preprocessing import PreprocessingDebugger
 from .export import _Export
-from ..utils import _add_methods_from, _get_iteration
+from ..utils import _add_methods_from
 from ..benchmark import benchmark
 from .save_load import _save_model, _save_optimizer, _load_model, _load_optimizer
 from torch.cuda import is_available
 from torch.nn import DataParallel
 import torch.backends.cudnn as cudnn
 from apex import amp
-import torchcontrib
 import os
 import copy
 import pandas as pd
-from adabound import AdaBound
-from .larc import LARC
+
 
 from . import init_model
 from . import fit
@@ -33,8 +26,9 @@ from . import train
 from . import validate
 from . import gpu_resource_management
 from . import predict
+from . import set_optimizer
 
-
+@_add_methods_from(set_optimizer)
 @_add_methods_from(gpu_resource_management)
 @_add_methods_from(init_model)
 @_add_methods_from(fit)
@@ -168,88 +162,6 @@ class Runner:
 
     # ===================================================================================================
     # ===================================================================================================
-
-    def set_optimizer(self):
-
-        def _assign_optim(model, optimizer, larc, swa, lookahead):
-            # if there are learnable loss parameters
-            loss_params = []
-            for i in self.loss_fn:
-                try:
-                    loss_params += i.parameters()
-                except:
-                    pass
-
-            if optimizer == 'adam':
-                optimizer = Adam(
-                    list(model.parameters()) + loss_params, betas=(0.9, 0.999))
-            elif optimizer == 'cocob':
-                optimizer = Cocob(list(model.parameters()) + loss_params)
-            elif optimizer == 'radam-plain':
-                optimizer = PlainRAdam(
-                    list(model.parameters()) + loss_params, betas=(0.9, 0.999))
-            elif optimizer == 'radam':
-                optimizer = RAdam(
-                    list(model.parameters()) + loss_params, betas=(0.9, 0.999))
-            elif optimizer == 'adamw':
-                optimizer = AdamW(
-                    list(model.parameters()) + loss_params, betas=(0.9, 0.999))
-            elif optimizer == 'adam-gan':
-                optimizer = Adam(
-                    list(model.parameters()) + loss_params, betas=(0., 0.999))
-            elif optimizer == 'sgd':
-                optimizer = SGD(
-                    list(model.parameters()) + loss_params,
-                    lr=1e-1,
-                    momentum=0.9)
-            elif optimizer == 'nesterov':
-                optimizer = SGD(
-                    list(model.parameters()) + loss_params,
-                    lr=1e-2,
-                    momentum=0.9,
-                    nesterov=True)
-            elif optimizer == 'rmsprop':
-                optimizer = RMSprop(list(model.parameters()) + loss_params)
-            elif optimizer == 'adabound':
-                optimizer = AdaBound(
-                    list(model.parameters()) + loss_params,
-                    lr=1e-3,
-                    final_lr=0.1)
-            elif optimizer == 'adagrad':
-                optimizer = Adagrad(list(model.parameters()) + loss_params)
-            elif optimizer == 'adafactor':
-                optimizer = Adafactor(
-                    list(model.parameters()) + loss_params, lr=1e-3)
-            if larc:
-                optimizer = LARC(optimizer)
-            if lookahead:
-                optimizer = Lookahead(optimizer)
-            if swa:
-                optimizer = torchcontrib.optim.SWA(optimizer)
-            return optimizer
-
-        if type(self.model) == GANModel:
-            if type(self.optimizer_choice) == list or type(
-                    self.optimizer_choice) == tuple:
-                self.optimizer = [
-                    _assign_optim(self.model.discriminator,
-                                  self.optimizer_choice[1], self.larc, self.swa,
-                                  self.lookahead),
-                    _assign_optim(self.model.generator,
-                                  self.optimizer_choice[0], self.larc, self.swa,
-                                  self.lookahead)
-                ]
-            else:
-                self.optimizer = [
-                    _assign_optim(self.model.discriminator,
-                                  self.optimizer_choice, self.larc, self.swa,
-                                  self.lookahead),
-                    _assign_optim(self.model.generator, self.optimizer_choice,
-                                  self.larc, self.swa, self.lookahead)
-                ]
-        else:
-            self.optimizer = _assign_optim(self.model, self.optimizer_choice,
-                                           self.larc, self.swa, self.lookahead)
 
     def start_experiment(self, name):
         self.experiment_name = name
