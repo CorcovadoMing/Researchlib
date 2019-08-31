@@ -57,6 +57,7 @@ def fit(self,
         self_iterative=False,
         iterations=0,
         multisteps=None,
+        prefetch=False,
         plot=False):
 
     self.__class__.__fit_settings__[
@@ -89,6 +90,7 @@ def fit(self,
         iterations=iterations,
         policy=policy,
         plot=plot,
+        prefetch=prefetch,
         warmup=warmup)
 
 
@@ -158,7 +160,7 @@ def _list_avg(l):
 
 @register_method
 def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
-         iterations, policy, warmup, plot):
+         iterations, policy, warmup, prefetch, plot):
 
     base_lr = lr
     set_lr(self.optimizer, base_lr)
@@ -194,9 +196,10 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
     try:
         if len(self.default_metrics):
             metrics = self.default_metrics + metrics
-
-        train_prefetcher = BackgroundGenerator(
-            self._iteration_pipeline(self.train_loader, mixup_alpha))
+            
+        train_prefetcher = self._iteration_pipeline(self.train_loader, mixup_alpha)
+        if prefetch:
+            train_prefetcher = BackgroundGenerator(train_prefetcher)
         if self.test_loader:
             test_loader = self._iteration_pipeline(
                 self.test_loader, mixup_alpha, inference=True)
