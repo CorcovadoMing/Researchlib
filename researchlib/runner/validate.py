@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from .history import *
-from ..utils import _register_method, get_aux_out
+from ..utils import _register_method, get_aux_out, _switch_swa_mode
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -14,14 +14,11 @@ def validate_fn(self, **kwargs):
     matrix_records = History()
 
     if self.swa and self.epoch >= self.swa_start:
+        _switch_swa_mode(self.optimzier)
         if type(self.optimizer) == list:
-            for i in self.optimizer:
-                i.swap_swa_sgd()
-                i.bn_update(self.train_loader, self.model, device='cuda')
+            i.bn_update(self.train_loader, self.model, device='cuda')
         else:
-            self.optimizer.swap_swa_sgd()
-            self.optimizer.bn_update(
-                self.train_loader, self.model, device='cuda')
+            self.optimizer.bn_update(self.train_loader, self.model, device='cuda')
 
     # Reset metrics
     for m in kwargs['metrics']:
@@ -74,10 +71,6 @@ def validate_fn(self, **kwargs):
         matrix_records.add(m.output(), prefix='val')
 
     if self.swa and self.epoch >= self.swa_start:
-        if type(self.optimizer) == list:
-            for i in self.optimizer:
-                i.swap_swa_sgd()
-        else:
-            self.optimizer.swap_swa_sgd()
+        _switch_swa_mode(self.optimzier)
 
     return {'loss': test_loss}, matrix_records

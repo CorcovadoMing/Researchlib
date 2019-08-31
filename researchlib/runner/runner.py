@@ -194,23 +194,12 @@ class Runner:
 
     def eval(self):
         self.model.eval()
-        try:
-            if type(self.optimizer) == list:
-                for i in self.optimizer:
-                    i.swap_swa_sgd()
-            else:
-                self.optimizer.swap_swa_sgd()
-        except:
-            pass
+        _switch_swa_mode(self.optimzier)
 
         
     def train(self):
         self.model.train()
-        if type(self.optimizer) == list:
-            for i in self.optimizer:
-                i.swap_swa_sgd()
-        else:
-            self.optimizer.swap_swa_sgd()
+        _switch_swa_mode(self.optimzier)
 
             
     def validate(self, metrics=[], callbacks=[]):

@@ -25,45 +25,30 @@ def set_optimizer(self):
                 pass
 
         if optimizer == 'adam':
-            optimizer = Adam(
-                list(model.parameters()) + loss_params, betas=(0.9, 0.999))
+            optimizer = Adam(list(model.parameters()) + loss_params, betas=(0.9, 0.999))
         elif optimizer == 'cocob':
             optimizer = Cocob(list(model.parameters()) + loss_params)
         elif optimizer == 'radam-plain':
-            optimizer = PlainRAdam(
-                list(model.parameters()) + loss_params, betas=(0.9, 0.999))
+            optimizer = PlainRAdam(list(model.parameters()) + loss_params, betas=(0.9, 0.999))
         elif optimizer == 'radam':
-            optimizer = RAdam(
-                list(model.parameters()) + loss_params, betas=(0.9, 0.999))
+            optimizer = RAdam(list(model.parameters()) + loss_params, betas=(0.9, 0.999))
         elif optimizer == 'adamw':
-            optimizer = AdamW(
-                list(model.parameters()) + loss_params, betas=(0.9, 0.999))
+            optimizer = AdamW(list(model.parameters()) + loss_params, betas=(0.9, 0.999))
         elif optimizer == 'adam-gan':
-            optimizer = Adam(
-                list(model.parameters()) + loss_params, betas=(0., 0.999))
+            optimizer = Adam(list(model.parameters()) + loss_params, betas=(0., 0.999))
         elif optimizer == 'sgd':
-            optimizer = SGD(
-                list(model.parameters()) + loss_params,
-                lr=1e-1,
-                momentum=0.9)
+            optimizer = SGD(list(model.parameters()) + loss_params, lr=1e-1, momentum=0.9)
         elif optimizer == 'nesterov':
-            optimizer = SGD(
-                list(model.parameters()) + loss_params,
-                lr=1e-2,
-                momentum=0.9,
-                nesterov=True)
+            optimizer = SGD(list(model.parameters()) + loss_params, lr=1e-2, momentum=0.9, nesterov=True)
         elif optimizer == 'rmsprop':
             optimizer = RMSprop(list(model.parameters()) + loss_params)
         elif optimizer == 'adabound':
-            optimizer = AdaBound(
-                list(model.parameters()) + loss_params,
-                lr=1e-3,
-                final_lr=0.1)
+            optimizer = AdaBound(list(model.parameters()) + loss_params, lr=1e-3, final_lr=0.1)
         elif optimizer == 'adagrad':
             optimizer = Adagrad(list(model.parameters()) + loss_params)
         elif optimizer == 'adafactor':
-            optimizer = Adafactor(
-                list(model.parameters()) + loss_params, lr=1e-3)
+            optimizer = Adafactor(list(model.parameters()) + loss_params, lr=1e-3)
+            
         if larc:
             optimizer = LARC(optimizer)
         if lookahead:
@@ -73,21 +58,17 @@ def set_optimizer(self):
         return optimizer
 
     if type(self.model) == GANModel:
-        if type(self.optimizer_choice) == list or type(
-                self.optimizer_choice) == tuple:
+        if type(self.optimizer_choice) == list or type(self.optimizer_choice) == tuple:
             self.optimizer = [
-                _assign_optim(self.model.discriminator,
-                              self.optimizer_choice[1], self.larc, self.swa,
-                              self.lookahead),
-                _assign_optim(self.model.generator,
-                              self.optimizer_choice[0], self.larc, self.swa,
-                              self.lookahead)
+                _assign_optim(self.model.discriminator, self.optimizer_choice[1], 
+                              self.larc, self.swa, self.lookahead),
+                _assign_optim(self.model.generator, self.optimizer_choice[0], 
+                              self.larc, self.swa, self.lookahead)
             ]
         else:
             self.optimizer = [
-                _assign_optim(self.model.discriminator,
-                              self.optimizer_choice, self.larc, self.swa,
-                              self.lookahead),
+                _assign_optim(self.model.discriminator, self.optimizer_choice, 
+                              self.larc, self.swa,self.lookahead),
                 _assign_optim(self.model.generator, self.optimizer_choice,
                               self.larc, self.swa, self.lookahead)
             ]
