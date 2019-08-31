@@ -16,10 +16,15 @@ class DAWNBlock(_Block):
         self.stem = unit_fn(self.op, self.in_dim, self.out_dim, self.do_pool, self.do_norm, False)
         self.res1 = unit_fn(self.op, self.out_dim, self.out_dim, False, self.do_norm, False)
         self.res2 = unit_fn(self.op, self.out_dim, self.out_dim, False, self.do_norm, False)
+        self.branch_attention = self._get_param('branch_attention')
+        if self.branch_attention:
+            self.attention_branch = self._get_attention_branch()
         
     def forward(self, x):
         x = self.stem(x)
         _x = self.res1(x)
         _x = self.res2(_x)
+        if self.branch_attention:
+            _x = self.attention_branch(_x)
         return x + _x
 
