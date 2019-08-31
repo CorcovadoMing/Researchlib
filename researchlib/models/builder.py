@@ -20,7 +20,3 @@ class builder(nn.Module):
             else:
                 x = self.nnlist[i](x)
         return x
-
-    def num_params(self):
-        return sum(
-            p.numel() for p in self.nnlist.parameters() if p.requires_grad)

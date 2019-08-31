@@ -56,7 +56,7 @@ def fit(self,
         _id='none',
         self_iterative=False,
         iterations=0,
-        multisteps=None,
+        multisteps=[],
         prefetch=False,
         plot=False):
 
@@ -64,20 +64,12 @@ def fit(self,
         f'epoch_{self.epoch}-{self.epoch+epochs}'] = locals()
 
     self.set_optimizer()
-
+    self.multisteps = multisteps
+    
     # Fix issue the dashboard is down while training is interrupted
     if not _is_port_in_use(8050):
         dash = _Dashboard(verbose=False)
         dash.start()
-
-    if multisteps is not None:
-        if policy == 'cosine':
-            print(
-                'Cosine annealing is not suitable to combine with multisteps annealing, disable multisteps automatically.'
-            )
-        else:
-            assert type(multisteps) == list
-            self.multisteps = multisteps
 
     self._fit(
         epochs,

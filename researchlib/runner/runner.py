@@ -19,6 +19,7 @@ import os
 import copy
 import pandas as pd
 
+from ..utils import ParameterManager
 
 from . import init_model
 from . import fit
@@ -41,36 +42,37 @@ class Runner:
     __runner_settings__ = None
 
     def __init__(self,
-                 model=None,
-                 train_loader=None,
+                 # Required
+                 model,
+                 train_loader,
+                 # Optional with defualt values
                  test_loader=None,
                  optimizer=None,
                  loss_fn=None,
-                 reg_fn={},
-                 reg_weights={},
                  monitor_mode='min',
                  monitor_state='loss',
-                 fp16=False,
-                 multigpu=False,
-                 larc=False,
-                 lookahead=False,
-                 swa=False,
-                 swa_start=20):
+                 reg_fn={},
+                 reg_weights={},
+                 **kwargs):
 
         self.__class__.__runner_settings__ = locals()
 
         self.experiment_name = ''
         self.checkpoint_path = ''
         self.scheduler = None
-        self.multisteps = []
-        self.lookahead = lookahead
-        self.optimizer_choice = optimizer
-        self.swa = swa
-        self.swa_start = swa_start
-        self.larc = larc
-        self.export = _Export(self)
         self.epoch = 1
         self.is_cuda = is_available()
+        
+        self.optimizer_choice = optimizer
+        self.export = _Export(self)
+        self.history_ = History()
+        self.bencher = benchmark()
+        self._date_id = self.bencher.get_date()
+        
+        self.model = model
+        self.num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        
+        
         self.train_loader = train_loader
         self.test_loader = test_loader
         self.inputs = 1
@@ -80,19 +82,25 @@ class Runner:
         if type(test_loader) == tuple:
             self.test_loader = test_loader[0]
             self.inputs = test_loader[1]
-        self.history_ = History()
-        self.fp16 = fp16
-
-        # for benchmark date_id
-        self.bencher = benchmark()
-        self._date_id = self.bencher.get_date()
+        
+        parameter_manager = ParameterManager(**kwargs)
+        
+        self.lookahead = parameter_manager.get_param('lookahead', False)
+        self.swa = parameter_manager.get_param('swa', False)
+        self.swa_start = parameter_manager.get_param('swa_start', -1)
+        self.larc = parameter_manager.get_param('larc', False)
+        self.fp16 = parameter_manager.get_param('fp16', False)
+        self.multigpu = parameter_manager.get_param('multigpu', False)
+        
 
         self.default_callbacks = []
-
         self.preprocessing_list = []
         self.postprocessing_list = []
         self.augmentation_list = []
 
+        
+        # --------------------------------------------------------------------------------------------------------------------------------
+        
         # Assign loss function
         #
         # self.loss_fn
@@ -145,9 +153,6 @@ class Runner:
         self.reg_weights = reg_weights
 
         # Model
-        self.model = model
-        self.num_params = self.model.num_params()
-        self.multigpu = multigpu
         if type(model) == GANModel:
             self.loss_fn[0].set_model(self.model)
             self.default_metrics = [InceptionScore(), FID()]
