@@ -86,7 +86,7 @@ class WideResBlock(_Block):
         self.branch_attention = self._get_param('branch_attention')
         if self.branch_attention:
             self.attention_branch = self._get_attention_branch()
-        self.shakedrop = self._get_param('shakeDrop', False)
+        self.shakedrop = self._get_param('shakedrop', False)
         if self.shakedrop:
             self.shakedrop_branch = self._get_shake_drop_branch()
 
