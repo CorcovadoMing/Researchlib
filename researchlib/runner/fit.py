@@ -394,7 +394,12 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
                     set_lr(self.optimizer, base_lr / 50, 'initial_lr')
                 else:
                     set_lr(self.optimizer, base_lr)
-                self.set_policy(policy, base_lr)
+                step_idx = self.multisteps.index(self.epoch)
+                if (step_idx+1)==len(self.multisteps):
+                    step_epoch = epochs-self.epoch
+                else:
+                    step_epoch = self.multisteps[step_idx+1] - self.multisteps[step_idx]
+                self.set_policy(policy, base_lr, step_epoch)
 
             # Self-interative
             if self_iterative:
