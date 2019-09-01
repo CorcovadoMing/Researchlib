@@ -15,7 +15,7 @@ class Crop2d(template.TorchAugmentation):
         if padding == 0:
             return img
         else:
-            new_img = torch.randn(
+            new_img = torch.zeros(
                 img.size(0),
                 img.size(1) + 2 * padding,
                 img.size(2) + 2 * padding)

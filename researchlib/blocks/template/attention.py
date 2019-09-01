@@ -9,7 +9,7 @@ class _SE_Attention(nn.Module):
         self.fn = nn.Sequential(
             layer.__dict__['AdaptiveAvgPool' + dim_type](1),
             layer.__dict__['Conv' + dim_type](dim, dim // ratio, kernel_size=1), 
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             layer.__dict__['Conv' + dim_type](dim // ratio, dim, kernel_size=1), 
             nn.Sigmoid()
         )
@@ -32,7 +32,7 @@ class _CBAM_Attention(nn.Module):
         
         self.cfn = nn.Sequential(
             layer.__dict__['Conv' + dim_type](dim, dim // ratio, kernel_size=1), 
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             layer.__dict__['Conv' + dim_type](dim // ratio, dim, kernel_size=1) 
         )
         
