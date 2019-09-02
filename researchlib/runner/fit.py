@@ -181,12 +181,16 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
         for epoch in range(1, epochs + 1):
             # Switch point
             if epoch == (warmup + 1):
-                if policy == 'cosine':
-                    anneal_policy = Annealer.Cosine
-                elif policy == 'linear':
-                    anneal_policy = Annealer.Linear
-                regular_lr = Annealer.set_trace('regular_lr', (epochs-warmup) * iterations, [lr, 0], 'iteration', anneal_policy)
-                Annealer._iteration_step(key='regular_lr')
+                try:
+                    if policy == 'cosine':
+                        anneal_policy = Annealer.Cosine
+                    elif policy == 'linear':
+                        anneal_policy = Annealer.Linear
+                    regular_lr = Annealer.set_trace('regular_lr', (epochs-warmup) * iterations, [lr, 0], 'iteration', anneal_policy)
+                    Annealer._iteration_step(key='regular_lr')
+                except:
+                    # Fixed policy
+                    set_lr(self.optimizer, lr)
 
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(
@@ -214,8 +218,12 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
                     warmup_lr = Annealer.get_trace('warmup_lr')
                     set_lr(self.optimizer, warmup_lr)
                 else:
-                    regular_lr = Annealer.get_trace('regular_lr')
-                    set_lr(self.optimizer, regular_lr)
+                    try:
+                        regular_lr = Annealer.get_trace('regular_lr')
+                        set_lr(self.optimizer, regular_lr)
+                    except:
+                        # Fixed policy
+                        set_lr(self.optimizer, lr)
                     
                 liveplot.update_progressbar(batch_idx + 1)
                 if self.is_cuda:
