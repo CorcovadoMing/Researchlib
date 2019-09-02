@@ -34,7 +34,7 @@ def fit(self,
         init_optim=True):
 
     self.__class__.__fit_settings__[
-        f'epoch_{self.epoch}-{self.epoch+epochs}'] = locals()
+        f'epoch_{self.epoch}-{self.epoch+epochs-1}'] = locals()
 
     if init_optim:
         self.set_optimizer()
