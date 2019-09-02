@@ -27,6 +27,7 @@ from .non_local.gaussian import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock
 from .noise_injection import _NoiseInjection
 from .flatten import _Flatten
 from .mish import _Mish
+from .multiply import _Multiply
 
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
@@ -50,6 +51,8 @@ class layer(object):
     CoordConvTranspose2d = _CoordConvTranspose2d
     CoordConv2d = _CoordConv2d
 
+    Multiply = _Multiply
+    
     # Recurrent
     LSTM = _LSTM
     QRNN = _QRNN

@@ -49,7 +49,8 @@ def fit(self,
         epochs,
         lr=1e-3,
         policy='cosine',
-        warmup=5,
+        warmup=0,
+        warmup_policy='linear',
         mixup_alpha=0,
         metrics=[],
         callbacks=[],
@@ -86,7 +87,8 @@ def fit(self,
         policy=policy,
         plot=plot,
         prefetch=prefetch,
-        warmup=warmup)
+        warmup=max(0, warmup),
+        warmup_policy=warmup_policy)
 
 
 @register_method
@@ -116,9 +118,7 @@ def _process_data(self, data, target, mixup_alpha, inference):
     # On the fly augmentation
     if not inference:
         for augmentation_fn in self.augmentation_list:
-            data, target = augmentation_fn._forward(data, target,
-                                                    random.random(),
-                                                    random.random())
+            data, target = augmentation_fn._forward(data, target, 0.5, random.random())
 
     # Mixup
     _mixup_alpha = Annealer.get_trace('mixup_alpha') if mixup_alpha == Annealer else mixup_alpha
@@ -155,10 +155,20 @@ def _list_avg(l):
 
 @register_method
 def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
-         iterations, policy, warmup, prefetch, plot):
-
-    base_lr = lr
-    set_lr(self.optimizer, base_lr)
+         iterations, policy, warmup, warmup_policy, prefetch, plot):
+         
+    
+    if iterations == 0:
+        iterations = len(self.train_loader)
+    
+    if warmup > 0:
+        if warmup_policy == 'cosine':
+            anneal_policy = Annealer.Cosine
+        elif warmup_policy == 'linear':
+            anneal_policy = Annealer.Linear
+        Annealer.set_trace('warmup_lr', warmup * iterations, [0, lr], 'iteration', anneal_policy)
+        Annealer._iteration_step(key='warmup_lr')
+        
 
     if type(self.optimizer) == list:
         for i in self.optimizer:
@@ -168,8 +178,6 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
 
     liveplot = Liveplot(self.model, len(self.train_loader), plot)
 
-    if iterations == 0:
-        iterations = len(self.train_loader)
 
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
@@ -200,9 +208,14 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
                 self.test_loader, mixup_alpha, inference=True)
 
         for epoch in range(1, epochs + 1):
-            # Flat warmup implementation
+            # Switch point
             if epoch == (warmup + 1):
-                self.set_policy(policy, base_lr, epochs - warmup)
+                if policy == 'cosine':
+                    anneal_policy = Annealer.Cosine
+                elif policy == 'linear':
+                    anneal_policy = Annealer.Linear
+                regular_lr = Annealer.set_trace('regular_lr', (epochs-warmup) * iterations, [lr, 0], 'iteration', anneal_policy)
+                Annealer._iteration_step(key='regular_lr')
 
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(
@@ -226,6 +239,13 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
             liveplot.timer.clear()
             self.model.train()
             for batch_idx, (x, y, y_res, lam) in enumerate(train_prefetcher):
+                if epoch <= warmup:
+                    warmup_lr = Annealer.get_trace('warmup_lr')
+                    set_lr(self.optimizer, warmup_lr)
+                else:
+                    regular_lr = Annealer.get_trace('regular_lr')
+                    set_lr(self.optimizer, regular_lr)
+                    
                 liveplot.update_progressbar(batch_idx + 1)
                 if self.is_cuda:
                     x, y = [i.cuda() for i in x], [i.cuda() for i in y]

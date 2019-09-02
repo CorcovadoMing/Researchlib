@@ -15,6 +15,12 @@ def _CosineTwoWay(tcur, srange, tmax, split_ratio=0.333):
     else:
         return _Cosine(tcur - split_epoch, srange[::-1], tmax - split_epoch)
     
+def _Linear(tcur, srange, tmax):
+    start, end = srange
+    if tcur <= tmax:
+        return start + (end - start) * (tcur / tmax)
+    else:
+        return end
 
         
 class Annealer:
@@ -22,6 +28,7 @@ class Annealer:
     
     Cosine = _Cosine
     CosineTwoWay = _CosineTwoWay
+    Linear = _Linear
     
     @classmethod
     def set_trace(cls, name, max_step, srange=[0, 1], anneal_when='iteration', anneal_fn=lambda x: x):
@@ -33,15 +40,25 @@ class Annealer:
         return cls.tracker[name]['value']
     
     @classmethod
-    def _iteration_step(cls):
-        for key in cls.tracker:
+    def _iteration_step(cls, key=None):
+        if key is not None:
             if cls.tracker[key]['anneal_when'] == 'iteration':
                 cls.tracker[key]['cur_step'] += 1
                 cls.tracker[key]['value'] = cls.tracker[key]['anneal_fn'](cls.tracker[key]['cur_step'], cls.tracker[key]['srange'], cls.tracker[key]['max_step'])
+        else:
+            for _key in cls.tracker:
+                if cls.tracker[_key]['anneal_when'] == 'iteration':
+                    cls.tracker[_key]['cur_step'] += 1
+                    cls.tracker[_key]['value'] = cls.tracker[_key]['anneal_fn'](cls.tracker[_key]['cur_step'], cls.tracker[_key]['srange'], cls.tracker[_key]['max_step'])
 
     @classmethod
-    def _epoch_step(cls):
-        for key in cls.tracker:
+    def _epoch_step(cls, key=None):
+        if key is not None:
             if cls.tracker[key]['anneal_when'] == 'epoch':
                 cls.tracker[key]['cur_step'] += 1
                 cls.tracker[key]['value'] = cls.tracker[key]['anneal_fn'](cls.tracker[key]['cur_step'], cls.tracker[key]['srange'], cls.tracker[key]['max_step'])
+        else:
+            for _key in cls.tracker:
+                if cls.tracker[_key]['anneal_when'] == 'epoch':
+                    cls.tracker[_key]['cur_step'] += 1
+                    cls.tracker[_key]['value'] = cls.tracker[_key]['anneal_fn'](cls.tracker[_key]['cur_step'], cls.tracker[_key]['srange'], cls.tracker[_key]['max_step'])
