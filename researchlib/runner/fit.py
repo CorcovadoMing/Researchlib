@@ -16,35 +16,6 @@ register_method = _register_method(__methods__)
 
 
 @register_method
-def set_policy(self, policy, lr, epochs):
-    if self.__class__.__runner_settings__['optimizer'] == 'cocob':
-        print(
-            'Optimizer cocob no need to set the learning rate, disabled any learning rate settings (lr, annealing, etc.,)'
-        )
-    else:
-        if policy == 'cyclical':
-            try:
-                self.scheduler = torch.optim.lr_scheduler.CyclicLR(
-                    self.optimizer,
-                    base_lr=lr / 50,
-                    max_lr=lr,
-                    step_size_up=len(self.train_loader),
-                    step_size_down=len(self.train_loader),
-                    cycle_momentum=True)
-            except:  # No momentum
-                self.scheduler = torch.optim.lr_scheduler.CyclicLR(
-                    self.optimizer,
-                    base_lr=lr / 50.,
-                    max_lr=lr,
-                    step_size_up=len(self.train_loader),
-                    step_size_down=len(self.train_loader),
-                    cycle_momentum=False)
-        elif policy == 'cosine':
-            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-                self.optimizer, epochs * len(self.train_loader))
-
-
-@register_method
 def fit(self,
         epochs,
         lr=1e-3,
@@ -405,20 +376,11 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
             self.epoch += 1
 
             # Steps Anneling
+            # This is only works fixed LR scheduler
             if self.epoch in self.multisteps:
-                base_lr *= 0.1
-                if policy == 'cyclical':
-                    # Strange trick, don't change this line for cyclical
-                    set_lr(self.optimizer, base_lr / 50, 'initial_lr')
-                else:
-                    set_lr(self.optimizer, base_lr)
-                step_idx = self.multisteps.index(self.epoch)
-                if (step_idx+1)==len(self.multisteps):
-                    step_epoch = epochs-self.epoch
-                else:
-                    step_epoch = self.multisteps[step_idx+1] - self.multisteps[step_idx]
-                self.set_policy(policy, base_lr, step_epoch)
-
+                lr *= 0.1
+                set_lr(self.optimizer, lr)
+                
             # Self-interative
             if self_iterative:
                 with torch.no_grad():
