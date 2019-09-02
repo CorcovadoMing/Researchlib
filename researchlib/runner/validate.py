@@ -48,7 +48,13 @@ def validate_fn(self, **kwargs):
                 y = [y]
 
             for i in range(len(auxout)):
-                test_loss += loss_fn[i](auxout[i], y[i]).item()
+                if i == 0:
+                    loss_i = i
+                    target_i = i
+                else:
+                    loss_i = i if len(loss_fn) > i else loss_i
+                    target_i = i if len(y) > i else target_i
+                test_loss += loss_fn[loss_i](auxout[i], y[target_i]).item()
 
             for m in metrics:
                 m.forward([auxout[-1], y[-1]])

@@ -1,7 +1,9 @@
 import re
 import math
+from .heads import Heads
 from ..runner import Runner
 from ..layers import layer
+from ..wrapper import wrapper
 from .builder import builder
 from ..utils import ParameterManager
 
@@ -114,16 +116,15 @@ def AutoConvNet(op,
 
     layers = []
 
-    wide_scale = parameter_manager.get_param(
-        'wide_scale', 10) if type == 'wide-residual' else 1
-    in_dim = input_dim
-    out_dim = wide_scale * base_dim
+    wide_scale = parameter_manager.get_param('wide_scale', 10) if type == 'wide-residual' else 1
     no_end_pool = parameter_manager.get_param('no_end_pool', False)
+    auxiliary_classifier = parameter_manager.get_param('auxiliary_classifier', None)
+    
+    in_dim = input_dim
+    out_dim = wide_scale * base_dim  
 
     print(in_dim, out_dim)
-    layers.append(layer.__dict__['Conv' + _get_dim_type(op)](
-        in_dim, out_dim, 3, 1,
-        1))  # Preact first layer is simply a hardcore transform
+    layers.append(layer.__dict__['Conv' + _get_dim_type(op)](in_dim, out_dim, 3, 1,1))  # Preact first layer is simply a hardcore transform
     layers.append(layer.__dict__['BatchNorm' + _get_dim_type(op)](out_dim))
     in_dim = out_dim
 
@@ -132,10 +133,7 @@ def AutoConvNet(op,
 
         if id % pool_freq == 0:
             block_group += 1
-            if id == total_blocks and no_end_pool:
-                do_pool = False
-            else:
-                do_pool = True
+            do_pool = False if id == total_blocks and no_end_pool else True
         else:
             do_pool = False
 
@@ -147,6 +145,16 @@ def AutoConvNet(op,
                                 in_dim == out_dim)
 
         print(in_dim, out_dim, do_pool)
+        if do_pool and auxiliary_classifier is not None:
+            parameter_manager.save_buffer('dim_type', _get_dim_type(op))
+            parameter_manager.save_buffer('last_dim', in_dim)
+            layers.append(
+                wrapper.Auxiliary(
+                    builder([
+                        Heads(auxiliary_classifier),
+                        layer.LogSoftmax(-1) # TODO (Ming): if not classification? if using softmax not logsoftmax?
+                    ])
+                ))
         kwargs['non_local'] = id >= non_local_start
         layers.append(
             _op_type(
@@ -165,8 +173,6 @@ def AutoConvNet(op,
 
     # must verify after all keys get registered
     ParameterManager.verify_kwargs(**kwargs)
-
-    parameter_manager.save_buffer('last_dim', out_dim)
     parameter_manager.save_buffer('dim_type', _get_dim_type(op))
-
+    parameter_manager.save_buffer('last_dim', out_dim)
     return builder(layers)
