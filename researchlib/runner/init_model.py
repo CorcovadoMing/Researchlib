@@ -19,7 +19,7 @@ def init_model(self,
         init_distribution = 'orthogonal'
     else:
         init_distribution = init_algorithm
-
+        
     hook = []
 
     def hook_fn(module, input, output):
