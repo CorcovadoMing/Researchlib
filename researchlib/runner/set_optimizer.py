@@ -7,7 +7,7 @@ from .optimizer.lookahead import Lookahead
 from .optimizer.larc import LARC
 from adabound import AdaBound
 from ..models import GANModel
-from ..utils import _register_method
+from ..utils import _register_method, update_optim
 import torchcontrib
 
 __methods__ = []
@@ -15,7 +15,7 @@ register_method = _register_method(__methods__)
 
 @register_method
 def set_optimizer(self):
-    def _assign_optim(model, optimizer, larc, swa, lookahead):
+    def _assign_optim(model, optimizer, larc, swa, lookahead, weight_decay):
         # if there are learnable loss parameters
         loss_params = []
         for i in self.loss_fn:
@@ -49,6 +49,9 @@ def set_optimizer(self):
         elif optimizer == 'adafactor':
             optimizer = Adafactor(list(model.parameters()) + loss_params, lr=1e-3)
             
+        if weight_decay is not None:
+            update_optim(optimizer, weight_decay, key='weight_decay')
+            
         if larc:
             optimizer = LARC(optimizer)
         if lookahead:
@@ -61,17 +64,17 @@ def set_optimizer(self):
         if type(self.optimizer_choice) == list or type(self.optimizer_choice) == tuple:
             self.optimizer = [
                 _assign_optim(self.model.discriminator, self.optimizer_choice[1], 
-                              self.larc, self.swa, self.lookahead),
+                              self.larc, self.swa, self.lookahead, self.weight_decay),
                 _assign_optim(self.model.generator, self.optimizer_choice[0], 
-                              self.larc, self.swa, self.lookahead)
+                              self.larc, self.swa, self.lookahead, self.weight_decay)
             ]
         else:
             self.optimizer = [
                 _assign_optim(self.model.discriminator, self.optimizer_choice, 
-                              self.larc, self.swa,self.lookahead),
+                              self.larc, self.swa,self.lookahead, self.weight_decay),
                 _assign_optim(self.model.generator, self.optimizer_choice,
-                              self.larc, self.swa, self.lookahead)
+                              self.larc, self.swa, self.lookahead, self.weight_decay)
             ]
     else:
         self.optimizer = _assign_optim(self.model, self.optimizer_choice,
-                                       self.larc, self.swa, self.lookahead)
+                                       self.larc, self.swa, self.lookahead, self.weight_decay)

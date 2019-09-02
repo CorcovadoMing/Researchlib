@@ -58,12 +58,15 @@ def fit(self,
         iterations=0,
         multisteps=[],
         prefetch=False,
-        plot=False):
+        plot=False,
+        init_optim=True):
 
     self.__class__.__fit_settings__[
         f'epoch_{self.epoch}-{self.epoch+epochs}'] = locals()
 
-    self.set_optimizer()
+    if init_optim:
+        self.set_optimizer()
+        
     self.multisteps = multisteps
     
     # Fix issue the dashboard is down while training is interrupted

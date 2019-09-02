@@ -89,6 +89,7 @@ class Runner:
         self.larc = parameter_manager.get_param('larc', False)
         self.fp16 = parameter_manager.get_param('fp16', False)
         self.multigpu = parameter_manager.get_param('multigpu', False)
+        self.weight_decay = parameter_manager.get_param('weight_decay', None)
         
 
         self.default_callbacks = []
@@ -294,7 +295,7 @@ class Runner:
             return runner.histroy_.records['val_' + str(metrics)][index]
 
         keys = [
-            'swa', 'swa_start', 'larc', 'fp16', 'augmentation_list',
+            'swa', 'swa_start', 'larc', 'fp16', 'augmentation_list', 'weight_decay',
             'preprocessing_list', 'loss_fn', 'train_loader'
         ]
         query = {}
