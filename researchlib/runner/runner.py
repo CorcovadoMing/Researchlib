@@ -10,6 +10,7 @@ from ..benchmark import benchmark
 from .save_load import _save_model, _save_optimizer, _load_model, _load_optimizer
 from torch.cuda import is_available
 from torch.nn import DataParallel
+from torchvision import transforms
 import torch.backends.cudnn as cudnn
 from apex import amp
 import os
@@ -235,6 +236,17 @@ class Runner:
         
     def preprocessing(self, preprocessing_list, debug=False):
         self.preprocessing_list = preprocessing_list
+        for i in self.preprocessing_list:
+            try:
+                if i.static_auto:
+                    print('Calculated statistics in dataset')
+                    mean = self.train_loader.dataset.data.mean((0, 1, 2))/255.
+                    std = self.train_loader.dataset.data.std((0, 1, 2))/255.
+                    print('Mean:', mean)
+                    print('Std:', std)
+                    i.static_normalizer = transforms.Normalize(mean=mean, std=std)
+            except:
+                pass
         if debug:
             self.preprocessing_list.append(PreprocessingDebugger())
         return self
