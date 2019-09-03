@@ -1,6 +1,6 @@
 import os
 from tqdm import tnrange
-from ..utils import _register_method, plot_montage, _is_port_in_use, set_lr, inifinity_loop, Annealer
+from ..utils import _register_method, plot_montage, _is_port_in_use, set_lr, inifinity_loop, Annealer, ParameterManager, update_optim
 from .history import History
 import torch
 import random
@@ -18,9 +18,9 @@ register_method = _register_method(__methods__)
 @register_method
 def fit(self,
         epochs,
-        lr=1e-3,
-        policy='cosine',
-        warmup=0,
+        lr=1e-2,
+        policy='linear',
+        warmup=5,
         warmup_policy='linear',
         mixup_alpha=0,
         metrics=[],
@@ -31,7 +31,8 @@ def fit(self,
         multisteps=[],
         prefetch=False,
         plot=False,
-        init_optim=True):
+        init_optim=True,
+        **kwargs):
 
     self.__class__.__fit_settings__[
         f'epoch_{self.epoch}-{self.epoch+epochs-1}'] = locals()
@@ -59,7 +60,8 @@ def fit(self,
         plot=plot,
         prefetch=prefetch,
         warmup=max(0, warmup),
-        warmup_policy=warmup_policy)
+        warmup_policy=warmup_policy,
+        **kwargs)
 
 
 @register_method
@@ -123,21 +125,30 @@ def _list_avg(l):
 
 #==================================================================================
 
+def _anneal_policy(anneal_type):
+    if anneal_type == 'cosine':
+        anneal_policy = Annealer.Cosine
+    elif anneal_type == 'linear':
+        anneal_policy = Annealer.Linear
+    return anneal_policy
+
 
 @register_method
 def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
-         iterations, policy, warmup, warmup_policy, prefetch, plot):
-         
+         iterations, policy, warmup, warmup_policy, prefetch, plot, **kwargs):
+    
+    parameter_manager = ParameterManager(**kwargs)
     
     if iterations == 0:
         iterations = len(self.train_loader)
     
+    weight_decay = parameter_manager.get_param('weight_decay', 1)
+    if weight_decay > 0:
+        weight_decay_policy = parameter_manager.get_param('weight_decay_policy', 'cosine')
+        Annealer.set_trace('weight_decay', epochs * iterations, [0, 1], 'iteration', _anneal_policy(weight_decay_policy))
+    
     if warmup > 0:
-        if warmup_policy == 'cosine':
-            anneal_policy = Annealer.Cosine
-        elif warmup_policy == 'linear':
-            anneal_policy = Annealer.Linear
-        Annealer.set_trace('warmup_lr', warmup * iterations, [0, lr], 'iteration', anneal_policy)
+        Annealer.set_trace('warmup_lr', warmup * iterations, [0, lr], 'iteration', _anneal_policy(warmup_policy))
         Annealer._iteration_step(key='warmup_lr')
         
 
@@ -182,11 +193,7 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
             # Switch point
             if epoch == (warmup + 1):
                 try:
-                    if policy == 'cosine':
-                        anneal_policy = Annealer.Cosine
-                    elif policy == 'linear':
-                        anneal_policy = Annealer.Linear
-                    regular_lr = Annealer.set_trace('regular_lr', (epochs-warmup) * iterations, [lr, 0], 'iteration', anneal_policy)
+                    regular_lr = Annealer.set_trace('regular_lr', (epochs-warmup) * iterations, [lr, 0], 'iteration', _anneal_policy(policy))
                     Annealer._iteration_step(key='regular_lr')
                 except:
                     # Fixed policy
@@ -224,6 +231,10 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
                     except:
                         # Fixed policy
                         set_lr(self.optimizer, lr)
+                
+                # weight decay
+                weight_decay = Annealer.get_trace('weight_decay')
+                update_optim(self.optimizer, weight_decay, key='weight_decay')
                     
                 liveplot.update_progressbar(batch_idx + 1)
                 if self.is_cuda:

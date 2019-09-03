@@ -89,7 +89,6 @@ class Runner:
         self.larc = parameter_manager.get_param('larc', False)
         self.fp16 = parameter_manager.get_param('fp16', False)
         self.multigpu = parameter_manager.get_param('multigpu', False)
-        self.weight_decay = parameter_manager.get_param('weight_decay', None)
         
 
         self.default_callbacks = []
