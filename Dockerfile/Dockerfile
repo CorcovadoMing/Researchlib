@@ -132,6 +132,11 @@ RUN pip install pytorch-nlp pygsheets
 RUN apt update && apt install -y sox libsox-dev libsox-fmt-all
 RUN pip install http://download.pytorch.org/whl/torchaudio-0.2-cp36-cp36m-linux_x86_64.whl
 
+RUN pip install mmcv
+RUN git clone https://github.com/open-mmlab/mmdetection.git
+RUN cd mmdetection && pip install -v -e .
+RUN pip install hyperopt
+
 # Version tag
-ENV _RESEARCHLIB_IMAGE_TAG 19.08.2
+ENV _RESEARCHLIB_IMAGE_TAG 19.08.3
 
