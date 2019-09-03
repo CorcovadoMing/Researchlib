@@ -16,6 +16,7 @@ from apex import amp
 import os
 import copy
 import pandas as pd
+import pickle
 
 
 from . import init_model
@@ -228,12 +229,17 @@ class Runner:
             
     def save(self, path):
         _save_model(self.model, path)
+        with open(path + '_preprocessing.pkl', 'wb') as f:
+            pickle.dump(self.preprocessing_list, f)
         # TODO: more efficient to save optimizer (save only the last/best?)
         #_save_optimizer(self.optimizer, path)
 
         
     def load(self, path):
         self.model = _load_model(self.model, path, self.multigpu)
+        with open(path + '_preprocessing.pkl', 'rb') as f:
+            self.preprocessing_list = pickle.load(f)
+        self.preprocessing(self.preprocessing_list)
 
         
     def preprocessing(self, preprocessing_list, debug=False):
