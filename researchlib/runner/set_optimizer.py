@@ -50,12 +50,12 @@ def set_optimizer(self):
         elif optimizer == 'adafactor':
             optimizer = Adafactor(list(model.parameters()) + loss_params, lr=1e-3)
             
-        if larc:
-            optimizer = LARC(optimizer)
         if lookahead:
             optimizer = Lookahead(optimizer)
         if swa:
             optimizer = torchcontrib.optim.SWA(optimizer)
+        if larc:
+            optimizer = LARC(optimizer)
         return optimizer
 
     _assign_optim_fn = partial(_assign_optim, larc=self.larc, swa=self.swa, lookahead=self.lookahead)
