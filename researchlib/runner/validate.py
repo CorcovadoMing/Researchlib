@@ -1,6 +1,8 @@
 import torch
 from .history import *
 from ..utils import _register_method, get_aux_out, _switch_swa_mode, ParameterManager
+from functools import reduce
+
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -14,6 +16,7 @@ def validate_fn(self, **kwargs):
     callbacks = parameter_manager.get_param('callbacks', [])
     test_loader = parameter_manager.get_param('test_loader', required=True)
     loss_fn = parameter_manager.get_param('loss_fn', required=True)
+    auxiliary_ensemble = parameter_manager.get_param('auxiliary_ensemble', False)
     
     self.model.eval()
     matrix_records = History()
@@ -56,8 +59,13 @@ def validate_fn(self, **kwargs):
                     target_i = i if len(y) > i else target_i
                 test_loss += loss_fn[loss_i](auxout[i], y[target_i]).item()
 
+            if auxiliary_ensemble:
+                output = reduce(lambda a,b: a+b, auxout)
+            else:
+                output = auxout[-1]
+                
             for m in metrics:
-                m.forward([auxout[-1], y[-1]])
+                m.forward([output, y[-1]])
 
             for callback_func in callbacks:
                 kwargs = callback_func.on_iteration_end(**kwargs)

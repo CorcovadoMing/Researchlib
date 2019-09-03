@@ -197,12 +197,13 @@ class Runner:
         _switch_swa_mode(self.optimzier)
 
             
-    def validate(self, metrics=[], callbacks=[]):
+    def validate(self, metrics=[], callbacks=[], **kwargs):
         test_loader = self._iteration_pipeline(self.test_loader, 0, inference=True)
         self.preload_gpu()
         try:
             if len(self.default_metrics):
                 metrics = self.default_metrics + metrics
+                
             loss_records, matrix_records = self.validate_fn(
                 model=self.model,
                 test_loader=test_loader,
@@ -211,7 +212,8 @@ class Runner:
                 epoch=self.epoch,
                 metrics=metrics,
                 callbacks=callbacks,
-                inputs=self.inputs)
+                inputs=self.inputs,
+                **kwargs)
 
             for k, v in loss_records.items():
                 print(str(k) + ':', str(v))
