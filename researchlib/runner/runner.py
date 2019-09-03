@@ -88,7 +88,6 @@ class Runner:
         self.swa = parameter_manager.get_param('swa', False)
         self.swa_start = parameter_manager.get_param('swa_start', -1)
         self.larc = parameter_manager.get_param('larc', False)
-        self.fp16 = parameter_manager.get_param('fp16', False)
         self.multigpu = parameter_manager.get_param('multigpu', False)
         
 

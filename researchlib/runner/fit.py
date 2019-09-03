@@ -171,12 +171,14 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
 
     self.preload_gpu()
 
+    fp16 = parameter_manager.get_param('fp16', False)
+    loss_scale = parameter_manager.get_param('loss_scale', 1)
     self.model, self.optimizer = amp.initialize(
         self.model,
         self.optimizer,
         opt_level='O1',
-        enabled=self.fp16,
-        loss_scale=1)
+        enabled=fp16,
+        loss_scale=loss_scale)
 
     try:
         if len(self.default_metrics):
