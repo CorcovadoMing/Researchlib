@@ -129,7 +129,6 @@ class Runner:
             self.monitor = -1e9
             self.monitor_mode = max
         
-        
         # Regulariation (Need to be check)
         self.reg_fn = reg_fn
         self.reg_weights = reg_weights
@@ -137,7 +136,6 @@ class Runner:
             if type(reg_fn[key]) == str:
                 fn, _, = loss_mapping(reg_fn[key])
                 reg_fn[key] = fn
-
 
         # Model
         if type(model) == GANModel:
@@ -147,10 +145,11 @@ class Runner:
         if self.multigpu:
             self.model = DataParallel(self.model)
 
-            
         # Speedup
         cudnn.benchmark = True
-
+        
+        # must verify after all keys get registered
+        ParameterManager.verify_kwargs(**kwargs)
 
 
     def start_experiment(self, name):

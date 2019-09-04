@@ -21,6 +21,10 @@ def _Linear(tcur, srange, tmax):
         return start + (end - start) * (tcur / tmax)
     else:
         return end
+    
+def _Fixed(tcur, srange, tmax):
+    start, end = srange
+    return end
 
         
 class Annealer:
@@ -29,6 +33,7 @@ class Annealer:
     Cosine = _Cosine
     CosineTwoWay = _CosineTwoWay
     Linear = _Linear
+    Fixed = _Fixed
     
     @classmethod
     def set_trace(cls, name, max_step, srange=[0, 1], anneal_when='iteration', anneal_fn=lambda x: x):

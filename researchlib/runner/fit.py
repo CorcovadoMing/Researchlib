@@ -130,6 +130,8 @@ def _anneal_policy(anneal_type):
         anneal_policy = Annealer.Cosine
     elif anneal_type == 'linear':
         anneal_policy = Annealer.Linear
+    else:
+        anneal_policy = Annealer.Fixed
     return anneal_policy
 
 
