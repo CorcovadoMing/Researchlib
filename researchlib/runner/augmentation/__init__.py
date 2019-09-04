@@ -12,3 +12,4 @@ from .equalize import Equalize
 from .solarize import Solarize
 from .posterize import Posterize
 from .crop import Crop2d
+from .random_erasing import RandomErasing
