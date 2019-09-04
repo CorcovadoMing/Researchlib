@@ -181,6 +181,9 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
         opt_level='O1',
         enabled=fp16,
         loss_scale=loss_scale)
+    
+    # must verify after all keys get registered
+    ParameterManager.verify_kwargs(**kwargs)
 
     try:
         if len(self.default_metrics):
