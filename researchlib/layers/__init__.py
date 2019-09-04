@@ -28,7 +28,7 @@ from .noise_injection import _NoiseInjection
 from .flatten import _Flatten
 from .mish import _Mish
 from .multiply import _Multiply
-
+from .aaconv import _AAConv2d
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
 
@@ -52,6 +52,8 @@ class layer(object):
     CoordConv2d = _CoordConv2d
 
     Multiply = _Multiply
+    
+    AAConv2d = _AAConv2d
     
     # Recurrent
     LSTM = _LSTM
