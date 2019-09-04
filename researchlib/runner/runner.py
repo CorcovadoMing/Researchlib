@@ -247,8 +247,13 @@ class Runner:
             try:
                 if i.static_auto:
                     print('Calculated statistics in dataset')
-                    mean = self.train_loader.dataset.data.mean((0, 1, 2))/255.
-                    std = self.train_loader.dataset.data.std((0, 1, 2))/255.
+                    if type(self.train_loader.dataset) == torch.utils.data.dataset.TensorDataset:
+                        tensors = self.train_loader.dataset.tensors[0]
+                        mean = tensors.mean([0]+list(range(2, tensors.dim())))
+                        std = tensors.std([0]+list(range(2, tensors.dim())))
+                    else:
+                        mean = self.train_loader.dataset.data.mean((0, 1, 2))/255.
+                        std = self.train_loader.dataset.data.std((0, 1, 2))/255.
                     print('Mean:', mean)
                     print('Std:', std)
                     i.static_normalizer = transforms.Normalize(mean=mean, std=std)

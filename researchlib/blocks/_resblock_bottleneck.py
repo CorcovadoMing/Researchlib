@@ -57,11 +57,11 @@ class ResBottleneckBlock(_Block):
             'erased_activator': True if not self.preact else False
         })
         conv_layers = [
-            unit_fn(self.op, self.in_dim, hidden_size, False, self.do_norm,
+            unit_fn(layer.__dict__['Conv' + self._get_dim_type()], self.in_dim, hidden_size, False, self.do_norm,
                     self.preact, **first_custom_kwargs),
             unit_fn(self.op, hidden_size, hidden_size, False, self.do_norm,
                     self.preact, **second_custom_kwargs),
-            unit_fn(self.op, hidden_size, self.out_dim, False, self.do_norm,
+            unit_fn(layer.__dict__['Conv' + self._get_dim_type()], hidden_size, self.out_dim, False, self.do_norm,
                     self.preact, **third_custom_kwargs), preact_final_norm_layer
         ]
 
