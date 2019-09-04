@@ -90,7 +90,8 @@ def _process_data(self, data, target, mixup_alpha, inference):
 
     # On the fly augmentation
     if not inference:
-        for augmentation_fn in self.augmentation_list:
+        random.shuffle(self.augmentation_list)
+        for augmentation_fn in self.augmentation_list[:3]: # at most 3 of augmentations in a minibatch
             data, target = augmentation_fn._forward(data, target, 0.5, random.random())
 
     # Mixup
