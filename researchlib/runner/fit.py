@@ -145,7 +145,7 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
     weight_decay = parameter_manager.get_param('weight_decay', 1)
     if weight_decay > 0:
         weight_decay_policy = parameter_manager.get_param('weight_decay_policy', 'cosine')
-        Annealer.set_trace('weight_decay', epochs * iterations, [0, 1], 'iteration', _anneal_policy(weight_decay_policy))
+        Annealer.set_trace('weight_decay', epochs * iterations, [0, weight_decay], 'iteration', _anneal_policy(weight_decay_policy))
     
     if warmup > 0:
         Annealer.set_trace('warmup_lr', warmup * iterations, [0, lr], 'iteration', _anneal_policy(warmup_policy))
