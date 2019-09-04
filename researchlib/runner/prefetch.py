@@ -7,25 +7,20 @@ if sys.version_info >= (3, 0):
 else:
     import Queue
 
+def _worker(generator, queue):
+    for item in generator:
+        queue.put(item)
 
-class BackgroundGenerator(threading.Thread):
-
+class BackgroundGenerator:
     def __init__(self, generator, max_prefetch=2):
-        threading.Thread.__init__(self)
         self.queue = Queue.Queue(max_prefetch)
         self.generator = generator
-        self.start()
-
-    def run(self):
-        for item in self.generator:
-            self.queue.put(item)
+        self.worker_thread = threading.Thread(target=_worker, args=(self.generator, self.queue))
+        self.worker_thread.start()
 
     def next(self):
-        next_item = None
-        while next_item is None:
-            next_item = self.queue.get()
-            self.queue.task_done()
-        return next_item
+        while self.queue.empty(): time.sleep(0.01) # SPIN LOCK
+        return self.queue.get()
 
     # Python 3 compatibility
     def __next__(self):
