@@ -190,12 +190,13 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
         if len(self.default_metrics):
             metrics = self.default_metrics + metrics
             
-        train_prefetcher = self._iteration_pipeline(self.train_loader, mixup_alpha)
+        train_loader = self._iteration_pipeline(self.train_loader, mixup_alpha)
         if prefetch:
-            train_prefetcher = BackgroundGenerator(train_prefetcher)
+            train_loader = BackgroundGenerator(train_loader)
         if self.test_loader:
-            test_loader = self._iteration_pipeline(
-                self.test_loader, mixup_alpha, inference=True)
+            test_loader = self._iteration_pipeline(self.test_loader, mixup_alpha, inference=True)
+            if prefetch:
+                test_loader = BackgroundGenerator(test_loader)
 
         for epoch in range(1, epochs + 1):
             # Switch point
@@ -228,7 +229,7 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
             liveplot.redis.set('stage', 'train')
             liveplot.timer.clear()
             self.model.train()
-            for batch_idx, (x, y, y_res, lam) in enumerate(train_prefetcher):
+            for batch_idx, (x, y, y_res, lam) in enumerate(train_loader):
                 if epoch <= warmup:
                     warmup_lr = Annealer.get_trace('warmup_lr')
                     set_lr(self.optimizer, warmup_lr)

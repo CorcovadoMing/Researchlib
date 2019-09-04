@@ -10,21 +10,7 @@ else:
 
 class BackgroundGenerator(threading.Thread):
 
-    def __init__(self, generator, max_prefetch=1):
-        """
-        This function transforms generator into a background-thead generator.
-        :param generator: generator or genexp or any
-        It can be used with any minibatch generator.
-        It is quite lightweight, but not entirely weightless.
-        Using global variables inside generator is not recommended (may rise GIL and zero-out the benefit of having a background thread.)
-        The ideal use case is when everything it requires is store inside it and everything it outputs is passed through queue.
-        There's no restriction on doing weird stuff, reading/writing files, retrieving URLs [or whatever] wlilst iterating.
-        :param max_prefetch: defines, how many iterations (at most) can background generator keep stored at any moment of time.
-        Whenever there's already max_prefetch batches stored in queue, the background process will halt until one of these batches is dequeued.
-        !Default max_prefetch=1 is okay unless you deal with some weird file IO in your generator!
-        Setting max_prefetch to -1 lets it store as many batches as it can, which will work slightly (if any) faster, but will require storing
-        all batches in memory. If you use infinite generator with max_prefetch=-1, it will exceed the RAM size unless dequeued quickly enough.
-        """
+    def __init__(self, generator, max_prefetch=2):
         threading.Thread.__init__(self)
         self.queue = Queue.Queue(max_prefetch)
         self.generator = generator
@@ -37,10 +23,8 @@ class BackgroundGenerator(threading.Thread):
     def next(self):
         next_item = None
         while next_item is None:
-            try:
-                next_item = self.queue.get_nowait()
-            except:
-                time.sleep(0.1)
+            next_item = self.queue.get()
+            self.queue.task_done()
         return next_item
 
     # Python 3 compatibility
@@ -49,3 +33,6 @@ class BackgroundGenerator(threading.Thread):
 
     def __iter__(self):
         return self
+    
+    def __len__(self):
+        return len(self.generator)
