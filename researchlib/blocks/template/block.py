@@ -41,7 +41,7 @@ class _Block(nn.Module):
             'bias': bias
         }
 
-    def _get_custom_kwargs(self, custom_kwargs):
+    def _get_custom_kwargs(self, custom_kwargs={}):
         _new = copy.deepcopy(self.parameter_manager.kwargs)
         for key, value in custom_kwargs.items():
             _new[key] = value
@@ -96,7 +96,7 @@ class _Block(nn.Module):
 
         return norm_op(*dim)
 
-    def _get_pool_layer(self, pool_type, pool_factor):
+    def _get_pool_layer(self, pool_type, pool_factor, dim):
         if pool_type not in ['MaxPool', 'AvgPool', 'Combined', 'Upsample']:
             raise ValueError('Unknown pool type')
 
@@ -104,10 +104,26 @@ class _Block(nn.Module):
         if pool_type is 'Upsample':
             pool_op = layer.__dict__[pool_type]
             return pool_op(scale_factor=pool_factor)
+        
         elif pool_type is not 'Combined':
             pool_op_str = pool_type + dim_str
             pool_op = layer.__dict__[pool_op_str]
-            return pool_op(pool_factor)
+            
+            blur = self._get_param('blur', False)
+            if pool_type == 'MaxPool' and blur:
+                pool_layer = nn.Sequential(
+                    pool_op(pool_factor, stride=1),
+                    layer.Downsample(channels=dim, filt_size=3, stride=pool_factor)
+                )
+            elif pool_type == 'AvgPool' and blur:
+                pool_layer = nn.Sequential(
+                    layer.Downsample(channels=dim, filt_size=3, stride=pool_factor)
+                )
+            else:
+                pool_layer = pool_op(pool_factor)
+            
+            return pool_layer
+        
         else:
             max_pool_op = layer.__dict__['MaxPool' + dim_str](pool_factor)
             avg_pool_op = layer.__dict__['AvgPool' + dim_str](pool_factor)

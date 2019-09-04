@@ -17,7 +17,6 @@ from .spatial_transform import _SpatialTransform
 from .permute import _Permute
 from .shakedrop import _ShakeDrop
 from .pixel_norm import _PixelNorm
-from .blur import _Blur2d
 from .drop_relu import _DropReLU
 from .coord_conv import _CoordConvTranspose2d, _CoordConv2d
 from .non_local.concatenation import _ConcatNonLocalBlock1d, _ConcatNonLocalBlock2d, _ConcatNonLocalBlock3d
@@ -29,6 +28,8 @@ from .flatten import _Flatten
 from .mish import _Mish
 from .multiply import _Multiply
 from .aaconv import _AAConv2d
+from .blur import Downsample as _Downsample
+
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
 
@@ -54,6 +55,7 @@ class layer(object):
     Multiply = _Multiply
     
     AAConv2d = _AAConv2d
+    Downsample = _Downsample
     
     # Recurrent
     LSTM = _LSTM
@@ -97,7 +99,6 @@ class layer(object):
     ConditionProjection = _ConditionProjection
     SpatialTransform = _SpatialTransform
 
-    Blur2d = _Blur2d
     DropReLU = _DropReLU
 
     NoiseInjection = _NoiseInjection

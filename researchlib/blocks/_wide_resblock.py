@@ -73,13 +73,10 @@ class WideResBlock(_Block):
             else:
                 reduction_op = None
         elif shortcut_type == 'padding':
-            pool_type = self._get_param('pool_type',
-                                        'AvgPool')  # As paper's design
+            pool_type = self._get_param('pool_type', 'AvgPool')  # As paper's design
             pool_factor = self._get_param('pool_factor', 2)
-            pool_layer = self._get_pool_layer(
-                pool_type, pool_factor) if self.do_pool else None
-            reduction_op = _padding_shortcut(self.in_dim, self.out_dim,
-                                             pool_layer)
+            pool_layer = self._get_pool_layer(pool_type, pool_factor, self.in_dim) if self.do_pool else None
+            reduction_op = _padding_shortcut(self.in_dim, self.out_dim, pool_layer)
 
         self.shortcut = nn.Sequential(*list(filter(None, [reduction_op])))
 
