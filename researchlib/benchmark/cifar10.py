@@ -12,11 +12,11 @@ from torchvision import transforms
 
 class _cifar10:
 
-    def __init__(self, model_name, batch_size=128, exp_name='default'):
+    def __init__(self, model_name, batch_size=128, benchmark=False):
         self.available_models = [
             x for x in _cifar10.__dict__.keys() if type(x) == type
         ]
-        self.exp_name = exp_name
+        self.exp_name = model_name
         self.train_loader = VisionDataset(
             vision.CIFAR10, batch_size=batch_size, train=True)
         self.test_loader = VisionDataset(
@@ -29,9 +29,10 @@ class _cifar10:
                 '{} has not implemented, available models are: {}'.format(
                     model_name, self.available_models))
 
-    def shakedrop_pyramidnet_272(self):
-        """ reach 97% accuracy in 300 epochs with 4 gpus
-        """
+        if benchmark:
+            self.runner.submit_benchmark('Classification', comments={'comments':model_name})
+        
+    def pyramidnet_272(self, shakedrop=False):
         from ..models.auto_conv_net import AutoConvNet
         from ..runner import Runner
         input_dim = 3
@@ -56,7 +57,7 @@ class _cifar10:
                 pool_freq=pool_freq,
                 no_end_pool=no_end_pool,
                 branch_attention=False,
-                shakedrop=True,
+                shakedrop=shakedrop,
                 preact=True,
                 erased_activator=True,
                 filter_policy='pyramid',
@@ -79,8 +80,7 @@ class _cifar10:
             multigpu=True,
             monitor_state='acc',
             monitor_mode='max',
-            swa=False, 
-            weight_decay=1e-4)
+            swa=False)
         self.runner.init_model('xavier_normal')
         print(self.runner.describe())
         self.runner.start_experiment(self.exp_name)
@@ -89,5 +89,10 @@ class _cifar10:
                                   ]).augmentation([HFlip(), Crop2d()]).fit(
                                       300,
                                       1e-1,
-                                      policy='',
+                                      policy='fixed', weight_decay=1e-4, weight_decay_policy='fixed',
                                       multisteps=[150, 225])
+
+    def shakedrop_pyramidnet_272(self):
+        """ reach 97% accuracy in 300 epochs with 4 gpus
+        """
+        self.pyramidnet_272(self, shakedrop=True)
