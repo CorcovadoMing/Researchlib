@@ -3,7 +3,7 @@ from ..dataset import *
 from ..models import *
 from ..runner.preprocessing import *
 from ..runner.augmentation import *
-from ..blocks.unit import unit
+from ..blocks import *
 
 import torch
 from torchvision import datasets
@@ -33,7 +33,6 @@ class _cifar10:
             self.runner.submit_benchmark('Classification', comments={'comments':model_name})
         
     def pyramidnet_272(self, shakedrop=False):
-        from ..models.auto_conv_net import AutoConvNet
         from ..runner import Runner
         input_dim = 3
         base_dim = 16
@@ -100,18 +99,13 @@ class _cifar10:
         
     
     def dawnfast(self):
-        from ..models.auto_conv_net import AutoConvNet
-        from ..models.heads import Heads
-        from ..blocks.unit import unit
-        from ..blocks._dawnfast import DAWNBlock
-        from ..blocks._vggblock import VGGBlock
         from ..runner import Runner
         
         model = builder([
-            VGGBlock(layer.Conv2d, 3, 64, False, True, False, unit=unit.conv, blur=True),
-            DAWNBlock(layer.Conv2d, 64, 128, True, True, False, unit=unit.conv, blur=True),
-            VGGBlock(layer.Conv2d, 128, 256, True, True, False, unit=unit.conv, blur=True),
-            DAWNBlock(layer.Conv2d, 256, 512, True, True, False, unit=unit.conv, blur=True),
+            blcok.VGGBlock(layer.Conv2d, 3, 64, False, True, False, unit=unit.conv, blur=True),
+            blcok.DAWNBlock(layer.Conv2d, 64, 128, True, True, False, unit=unit.conv, blur=True),
+            blcok.VGGBlock(layer.Conv2d, 128, 256, True, True, False, unit=unit.conv, blur=True),
+            blcok.DAWNBlock(layer.Conv2d, 256, 512, True, True, False, unit=unit.conv, blur=True),
             layer.AdaptiveAvgPool2d(1),
             layer.Flatten(),
             layer.Linear(512, 10),

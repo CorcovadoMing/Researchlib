@@ -6,7 +6,7 @@ import torch
 from .unit import unit
 
 
-class ResBlock(_Block):
+class _ResBottleneckBlock(_Block):
     '''
         Deep Residual Learning for Image Recognition
         https://arxiv.org/abs/1512.03385
@@ -27,31 +27,44 @@ class ResBlock(_Block):
         preact_final_norm_layer = self._get_norm_layer(
             norm_type, self.out_dim) if self.do_norm and self.preact else None
 
+        # Layers
+        hidden_size = self.out_dim // 4
         stride = self._get_param('pool_factor', 2) if self.do_pool else 1
-        kernel_size = 2 if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
-        padding = 0 if is_transpose and self.do_pool else self._get_param('padding', int((kernel_size - 1) / 2))
-        
+        kernel_size = 2 if is_transpose and self.do_pool else self._get_param(
+            'kernel_size', 3)
+        padding = 0 if is_transpose and self.do_pool else self._get_param(
+            'padding', int((kernel_size - 1) / 2))
         first_custom_kwargs = self._get_custom_kwargs({
-            'kenel_size':
-                kernel_size,
+            'kernel_size':
+                1,
             'stride':
-                stride,
+                1,
             'padding':
-                padding,
+                0,
             'erased_activator':
                 True if self.preact and erased_activator else False
         })
-        
-        second_custom_kwargs = self._get_custom_kwargs({'erased_activator': True if not self.preact else False})
-        
+        second_custom_kwargs = self._get_custom_kwargs({
+            'kenel_size': kernel_size,
+            'stride': stride,
+            'padding': padding,
+            'erased_activator': False
+        })
+        third_custom_kwargs = self._get_custom_kwargs({
+            'kernel_size': 1,
+            'stride': 1,
+            'padding': 0,
+            'erased_activator': True if not self.preact else False
+        })
         conv_layers = [
-            unit_fn(self.op, self.in_dim, self.out_dim, False, self.do_norm,
+            unit_fn(layer.__dict__['Conv' + self._get_dim_type()], self.in_dim, hidden_size, False, self.do_norm,
                     self.preact, **first_custom_kwargs),
-            unit_fn(self.op, self.out_dim, self.out_dim, False, self.do_norm,
+            unit_fn(self.op, hidden_size, hidden_size, False, self.do_norm,
                     self.preact, **second_custom_kwargs),
-            preact_final_norm_layer
+            unit_fn(layer.__dict__['Conv' + self._get_dim_type()], hidden_size, self.out_dim, False, self.do_norm,
+                    self.preact, **third_custom_kwargs), preact_final_norm_layer
         ]
-        
+
         self.conv = nn.Sequential(*list(filter(None, conv_layers)))
 
         shortcut_type = self._get_param('shortcut', 'projection')

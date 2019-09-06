@@ -6,15 +6,7 @@ from ..layers import layer
 from ..wrapper import wrapper
 from .builder import builder
 from ..utils import ParameterManager
-
-from ..blocks._resblock import ResBlock as rb
-from ..blocks._resblock_bottleneck import ResBottleneckBlock as rbb
-from ..blocks._wide_resblock import WideResBlock as wrb
-from ..blocks._vggblock import VGGBlock as vb
-from ..blocks._inverted_bottleneck import InvertedBottleneckBlock as ibb
-from ..blocks._inception_v3 import InceptionV3A, InceptionV3B, InceptionV3C, InceptionV3D, InceptionV3E
-from ..blocks._inception_v4 import InceptionV4A, InceptionV4B, InceptionV4C, ReductionV4A, ReductionV4B
-from ..blocks._inception_residual_v2 import InceptionResidualV2A, InceptionResidualV2B, InceptionResidualV2C, ReductionV2A, ReductionV2B
+from ..blocks import block
 
 # =============================================================
 
@@ -27,42 +19,42 @@ def _get_op_type(type, cur_block, total_blocks, do_pool, do_expand):
     ]:
         raise ('Type is not supperted')
     if type == 'vgg':
-        _op_type = vb
+        _op_type = block.VGGBlock
     elif type == 'residual':
-        _op_type = rb
+        _op_type = block.ResBlock
     elif type == 'residual-bottleneck':
-        _op_type = rbb
+        _op_type = block.InvertedBottleneckBlock
     elif type == 'wide-residual':
-        _op_type = wrb
+        _op_type = block.WideResBlock
     elif type == 'inverted-bottleneck':
-        _op_type = ibb
+        _op_type = block.InvertedBottleneckBlock
     elif type == 'inceptionv3':
         if (cur_block / total_blocks) <= 0.2:
-            _op_type = InceptionV3A
+            _op_type = block.InceptionV3A
         elif (cur_block / total_blocks) <= 0.4:
-            _op_type = InceptionV3B
+            _op_type = block.InceptionV3B
         elif (cur_block / total_blocks) <= 0.6:
-            _op_type = InceptionV3C
+            _op_type = block.InceptionV3C
         elif (cur_block / total_blocks) <= 0.8:
-            _op_type = InceptionV3D
+            _op_type = block.InceptionV3D
         elif (cur_block / total_blocks) <= 1:
-            _op_type = InceptionV3E
+            _op_type = block.InceptionV3E
     elif type == 'inceptionv4':
         if (cur_block / total_blocks) <= (1 / 3):
-            _op_type = ReductionV4A if do_pool else InceptionV4A
+            _op_type = block.ReductionV4A if do_pool else block.InceptionV4A
         elif (cur_block / total_blocks) <= (2 / 3):
-            _op_type = ReductionV4B if do_pool else InceptionV4B
+            _op_type = block.ReductionV4B if do_pool else block.InceptionV4B
         elif (cur_block / total_blocks) <= 1:
             # We don't have Reduction type C
-            _op_type = ReductionV4B if do_pool else InceptionV4C
+            _op_type = block.ReductionV4B if do_pool else block.InceptionV4C
     elif type == 'inception-residualv2':
         if (cur_block / total_blocks) <= (1 / 3):
-            _op_type = ReductionV2A if do_pool or do_expand else InceptionResidualV2A
+            _op_type = block.ReductionV2A if do_pool or do_expand else block.InceptionResidualV2A
         elif (cur_block / total_blocks) <= (2 / 3):
-            _op_type = ReductionV2B if do_pool or do_expand else InceptionResidualV2B
+            _op_type = block.ReductionV2B if do_pool or do_expand else block.InceptionResidualV2B
         elif (cur_block / total_blocks) <= 1:
             # We don't have Reduction type C
-            _op_type = ReductionV2B if do_pool or do_expand else InceptionResidualV2C
+            _op_type = block.ReductionV2B if do_pool or do_expand else block.InceptionResidualV2C
     return _op_type
 
 

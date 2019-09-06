@@ -5,7 +5,7 @@ import torch
 from .unit import unit
 
 
-class InvertedBottleneckBlock(_Block):
+class _InvertedBottleneckBlock(_Block):
     '''
         InvertedBottleneckBlock didn't support preact settings yet
     '''

@@ -6,7 +6,7 @@ import torch
 from .unit import unit
 
 
-class WideResBlock(_Block):
+class _WideResBlock(_Block):
     '''
         TODO
     '''

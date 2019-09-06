@@ -5,7 +5,7 @@ import torch
 from .unit import unit
 
 
-class DAWNBlock(_Block):
+class _DAWNBlock(_Block):
     '''
         https://myrtle.ai/how-to-train-your-resnet-4-architecture/
     '''

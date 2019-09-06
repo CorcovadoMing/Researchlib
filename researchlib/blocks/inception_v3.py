@@ -5,7 +5,7 @@ import torch
 from .unit import unit
 
 
-class InceptionV3A(_Block):
+class _InceptionV3A(_Block):
     '''
         Inception module with 4 pathways, only 1x1, 5x5, 3x3 kernel size being used
         AvgPool for the pool branch
@@ -93,7 +93,7 @@ class InceptionV3A(_Block):
         return torch.cat(outputs, 1)
 
 
-class InceptionV3B(_Block):
+class _InceptionV3B(_Block):
     '''
         Inception module with 3 pathways, only 1x1, 3x3 kernel size being used
         MaxPool for the pool branch
@@ -159,7 +159,7 @@ class InceptionV3B(_Block):
         return torch.cat(outputs, 1)
 
 
-class InceptionV3C(_Block):
+class _InceptionV3C(_Block):
     '''
         Inception module with 3 pathways, only 1x1, 1x3, 7x1, 1x7 kernel size being used
         7x7 kernel path is with bottleneck style
@@ -275,7 +275,7 @@ class InceptionV3C(_Block):
         return torch.cat(outputs, 1)
 
 
-class InceptionV3D(_Block):
+class _InceptionV3D(_Block):
     '''
         Inception module with 3 pathways, only 1x1, 3x3, 1x7, 7x1 kernel size being used
         MaxPool for the pool branch
@@ -361,7 +361,7 @@ class InceptionV3D(_Block):
         return torch.cat(outputs, 1)
 
 
-class InceptionV3E(_Block):
+class _InceptionV3E(_Block):
     '''
         Inception module with 4 pathways, only 1x1, 1x3, 3x1, 3x3 kernel size being used
         AvgPool for the pool branch

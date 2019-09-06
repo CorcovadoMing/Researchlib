@@ -5,7 +5,7 @@ import torch
 from .unit import unit
 
 
-class VGGBlock(_Block):
+class _VGGBlock(_Block):
     '''
     '''
 
