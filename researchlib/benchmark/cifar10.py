@@ -127,4 +127,4 @@ class _cifar10:
             .augmentation([HFlip(), Crop2d(), Cutout()]) \
             .fit(14,
                  prefetch=True,
-                 plot=True)
+                 plot=False)
