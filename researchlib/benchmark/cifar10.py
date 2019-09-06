@@ -92,7 +92,39 @@ class _cifar10:
                                       policy='fixed', weight_decay=1e-4, weight_decay_policy='fixed',
                                       multisteps=[150, 225])
 
+        
     def shakedrop_pyramidnet_272(self):
         """ reach 97% accuracy in 300 epochs with 4 gpus
         """
         self.pyramidnet_272(self, shakedrop=True)
+        
+    
+    def dawnfast(self):
+        from ..models.auto_conv_net import AutoConvNet
+        from ..models.heads import Heads
+        from ..blocks.unit import unit
+        from ..blocks._dawnfast import DAWNBlock
+        from ..blocks._vggblock import VGGBlock
+        from ..runner import Runner
+        
+        model = builder([
+            VGGBlock(layer.Conv2d, 3, 64, False, True, False, unit=unit.conv, blur=True),
+            DAWNBlock(layer.Conv2d, 64, 128, True, True, False, unit=unit.conv, blur=True),
+            VGGBlock(layer.Conv2d, 128, 256, True, True, False, unit=unit.conv, blur=True),
+            DAWNBlock(layer.Conv2d, 256, 512, True, True, False, unit=unit.conv, blur=True),
+            layer.AdaptiveAvgPool2d(1),
+            layer.Flatten(),
+            layer.Linear(512, 10),
+            layer.LogSoftmax(-1)
+        ])
+        
+        runner = Runner(model, self.train_loader, self.test_loader, 
+                'adamw', 'smooth_nll', lookahead=True, 
+                monitor_state='acc', monitor_mode='max')
+        runner.init_model('default')
+        runner \
+            .preprocessing([Normalizer()]) \
+            .augmentation([HFlip(), Crop2d(), Cutout()]) \
+            .fit(14,
+                 prefetch=True,
+                 plot=True)
