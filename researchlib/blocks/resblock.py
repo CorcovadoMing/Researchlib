@@ -28,27 +28,21 @@ class _ResBlock(_Block):
             norm_type, self.out_dim) if self.do_norm and self.preact else None
 
         stride = self._get_param('pool_factor', 2) if self.do_pool else 1
-        kernel_size = 2 if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
+        kernel_size = self._get_param('kernel_size', 2) if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
         padding = 0 if is_transpose and self.do_pool else self._get_param('padding', int((kernel_size - 1) / 2))
         
         first_custom_kwargs = self._get_custom_kwargs({
-            'kenel_size':
-                kernel_size,
-            'stride':
-                stride,
-            'padding':
-                padding,
-            'erased_activator':
-                True if self.preact and erased_activator else False
+            'kernel_size': kernel_size,
+            'stride': stride,
+            'padding': padding,
+            'erased_activator': True if self.preact and erased_activator else False
         })
         
         second_custom_kwargs = self._get_custom_kwargs({'erased_activator': True if not self.preact else False})
         
         conv_layers = [
-            unit_fn(self.op, self.in_dim, self.out_dim, False, self.do_norm,
-                    self.preact, **first_custom_kwargs),
-            unit_fn(self.op, self.out_dim, self.out_dim, False, self.do_norm,
-                    self.preact, **second_custom_kwargs),
+            unit_fn(self.op, self.in_dim, self.out_dim, False, self.do_norm, self.preact, **first_custom_kwargs),
+            unit_fn(self.op, self.out_dim, self.out_dim, False, self.do_norm, self.preact, **second_custom_kwargs),
             preact_final_norm_layer
         ]
         
@@ -61,7 +55,7 @@ class _ResBlock(_Block):
             shortcut_kernel_size = 2 if is_transpose and self.do_pool else 1
             if self.in_dim != self.out_dim or self.do_pool:
                 custom_kwargs = self._get_custom_kwargs({
-                    'kenel_size': shortcut_kernel_size,
+                    'kernel_size': shortcut_kernel_size,
                     'stride': stride
                 })
                 reduction_op = self.op(

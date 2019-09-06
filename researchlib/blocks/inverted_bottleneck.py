@@ -29,7 +29,7 @@ class _InvertedBottleneckBlock(_Block):
             'erased_activator': False
         })
         second_custom_kwargs = self._get_custom_kwargs({
-            'kenel_size': kernel_size,
+            'kernel_size': kernel_size,
             'stride': stride,
             'padding': padding,
             'erased_activator': False,

@@ -45,7 +45,7 @@ class _ResBottleneckBlock(_Block):
                 True if self.preact and erased_activator else False
         })
         second_custom_kwargs = self._get_custom_kwargs({
-            'kenel_size': kernel_size,
+            'kernel_size': kernel_size,
             'stride': stride,
             'padding': padding,
             'erased_activator': False
@@ -74,7 +74,7 @@ class _ResBottleneckBlock(_Block):
             shortcut_kernel_size = 2 if is_transpose and self.do_pool else 1
             if self.in_dim != self.out_dim or self.do_pool:
                 custom_kwargs = self._get_custom_kwargs({
-                    'kenel_size': shortcut_kernel_size,
+                    'kernel_size': shortcut_kernel_size,
                     'stride': stride
                 })
                 reduction_op = self.op(
