@@ -1,17 +1,14 @@
-from ..layers import layer
-from ..dataset import *
-from ..models import *
 from ..runner.preprocessing import *
 from ..runner.augmentation import *
-from ..blocks import *
-
+from ..dataset import *
+from ..blocks import block, unit
+from ..layers import layer
 import torch
 from torchvision import datasets
 from torchvision import transforms
 
 
 class _cifar10:
-
     def __init__(self, model_name, batch_size=128, benchmark=False):
         self.available_models = [
             x for x in _cifar10.__dict__.keys() if type(x) == type
@@ -32,8 +29,10 @@ class _cifar10:
         if benchmark:
             self.runner.submit_benchmark('Classification', comments={'comments':model_name})
         
+        
     def pyramidnet_272(self, shakedrop=False):
         from ..runner import Runner
+        from ..models import AutoConvNet, builder, Heads
         input_dim = 3
         base_dim = 16
         num_layer = 272
@@ -96,11 +95,11 @@ class _cifar10:
         """ reach 97% accuracy in 300 epochs with 4 gpus
         """
         self.pyramidnet_272(self, shakedrop=True)
-        
+       
     
     def dawnfast(self):
         from ..runner import Runner
-        
+        from ..models import AutoConvNet, builder, Heads
         model = builder([
             block.VGGBlock(layer.WSConv2d, 3, 64, False, True, False, unit=unit.conv, blur=True),
             block.DAWNBlock(layer.WSConv2d, 64, 128, True, True, False, unit=unit.conv, blur=True),

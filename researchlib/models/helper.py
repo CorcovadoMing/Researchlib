@@ -15,7 +15,7 @@ def _get_op_type(type, cur_block, total_blocks, do_pool, do_expand):
     elif type == 'residual':
         _op_type = block.ResBlock
     elif type == 'residual-bottleneck':
-        _op_type = block.InvertedBottleneckBlock
+        _op_type = block.ResBottleneckBlock
     elif type == 'wide-residual':
         _op_type = block.WideResBlock
     elif type == 'inverted-bottleneck':
