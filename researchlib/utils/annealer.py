@@ -24,7 +24,7 @@ def _Linear(tcur, srange, tmax):
     
 def _Fixed(tcur, srange, tmax):
     start, end = srange
-    return end
+    return max(start, end)
 
         
 class Annealer:
@@ -43,6 +43,14 @@ class Annealer:
     @classmethod
     def get_trace(cls, name):
         return cls.tracker[name]['value']
+    
+    @classmethod
+    def get_srange(cls, name):
+        return cls.tracker[name]['srange']
+    
+    @classmethod
+    def update_attr(cls, name, key, value):
+        cls.tracker[name][key] = value
     
     @classmethod
     def _iteration_step(cls, key=None):

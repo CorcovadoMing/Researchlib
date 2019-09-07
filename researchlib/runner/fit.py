@@ -201,12 +201,8 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
         for epoch in range(1, epochs + 1):
             # Switch point
             if epoch == (warmup + 1):
-                try:
-                    regular_lr = Annealer.set_trace('regular_lr', (epochs-warmup) * iterations, [lr, 0], 'iteration', _anneal_policy(policy))
-                    Annealer._iteration_step(key='regular_lr')
-                except:
-                    # Fixed policy
-                    set_lr(self.optimizer, lr)
+                regular_lr = Annealer.set_trace('regular_lr', (epochs-warmup) * iterations, [lr, 0], 'iteration', _anneal_policy(policy))
+                Annealer._iteration_step(key='regular_lr')
 
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(
@@ -234,12 +230,8 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
                     warmup_lr = Annealer.get_trace('warmup_lr')
                     set_lr(self.optimizer, warmup_lr)
                 else:
-                    try:
-                        regular_lr = Annealer.get_trace('regular_lr')
-                        set_lr(self.optimizer, regular_lr)
-                    except:
-                        # Fixed policy
-                        set_lr(self.optimizer, lr)
+                    regular_lr = Annealer.get_trace('regular_lr')
+                    set_lr(self.optimizer, regular_lr)
                 
                 # weight decay
                 weight_decay = Annealer.get_trace('weight_decay')
@@ -406,8 +398,9 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
             # Steps Anneling
             # This is only works fixed LR scheduler
             if self.epoch in self.multisteps:
-                lr *= 0.1
-                set_lr(self.optimizer, lr)
+                srange = Annealer.get_srange('regular_lr')
+                srange = [i*0.1 for i in srange]
+                Annealer.update_attr('regular_lr', 'srange', srange)
                 
             # Self-interative
             if self_iterative:
