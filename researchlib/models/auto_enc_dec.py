@@ -7,6 +7,7 @@ from .builder import builder
 from ..utils import ParameterManager
 from ..blocks import block
 from torch import nn
+import torch
 
 
 class _RecurrentBlock(nn.Module):
@@ -14,8 +15,6 @@ class _RecurrentBlock(nn.Module):
         super().__init__()
         self.skip_connection = skip_connection
         self.skip_type = skip_type
-        if skip_type not in ['add', 'concat']:
-            raise ValueError("skip_type can only be 'add' or 'concat'")
         self.begin = begin_block
         self.inner = inner_block
         self.end = end_block
@@ -44,10 +43,15 @@ def AutoEncDec(down_op,
                 pool_freq=1,
                 do_norm=True,
                 non_local_start=1e8,
+                skip_connection=False,
+                skip_type='concat',
                 **kwargs):
 
     Runner.__model_settings__[
         f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
+    
+    if skip_type not in ['add', 'concat']:
+        raise ValueError("skip_type can only be 'add' or 'concat'")
 
     parameter_manager = ParameterManager(**kwargs)
 
@@ -95,7 +99,8 @@ def AutoEncDec(down_op,
         _op_type_end = _get_op_type(type, id, total_blocks, do_pool, in_dim == out_dim)
 
         in_dim, out_dim, do_pool = dim_cache.pop()
-        print(in_dim, out_dim, do_pool)
+        end_in_dim = out_dim if skip_type == 'add' else 2 * out_dim
+        print(end_in_dim, in_dim, do_pool)
         kwargs['non_local'] = id >= non_local_start
         structure = _RecurrentBlock(
             # Begin
@@ -112,10 +117,13 @@ def AutoEncDec(down_op,
             if id == 1 else structure,
             
             # End
-            _op_type_end(up_op, out_dim, in_dim,
+            _op_type_end(up_op, end_in_dim, in_dim,
                 do_pool=do_pool, do_norm=do_norm, preact=preact,
                 id=id, total_blocks=total_blocks,
-                unit=unit, **kwargs)
+                unit=unit, **kwargs),
+            
+            skip_connection=skip_connection,
+            skip_type=skip_type
         )
 
     layers.append(structure)
