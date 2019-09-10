@@ -53,7 +53,7 @@ RUN apt install -y nodejs
 RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
 
 # OpenAI gym
-RUN apt install -y python3-dev zlib1g-dev libjpeg-dev cmake swig python-pyglet python3-opengl libboost-all-dev libsdl2-dev libosmesa6-dev patchelf ffmpeg xvfb
+RUN apt update && apt install -y python3-dev zlib1g-dev libjpeg-dev cmake swig python-pyglet python3-opengl libboost-all-dev libsdl2-dev libosmesa6-dev patchelf ffmpeg xvfb
 RUN pip install lockfile glfw
 RUN mkdir /root/.mujoco && \
     cd /root/.mujoco  && \
@@ -137,6 +137,8 @@ RUN git clone https://github.com/open-mmlab/mmdetection.git
 RUN cd mmdetection && pip install -v -e .
 RUN pip install hyperopt
 
+RUN git clone https://github.com/NVIDIA/apex && cd apex && pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" .
+
 # Version tag
-ENV _RESEARCHLIB_IMAGE_TAG 19.08.3
+ENV _RESEARCHLIB_IMAGE_TAG 19.09
 

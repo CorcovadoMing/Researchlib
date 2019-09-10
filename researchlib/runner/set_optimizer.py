@@ -1,4 +1,5 @@
 from torch.optim import *
+from apex.optimizers import *
 from .optimizer.adafactor import Adafactor
 from .optimizer.radam import PlainRAdam, RAdam
 from .optimizer.adamw import AdamW
@@ -27,6 +28,10 @@ def set_optimizer(self):
 
         if optimizer == 'adam':
             optimizer = Adam(list(model.parameters()) + loss_params, betas=(0.9, 0.999))
+        elif optimizer == 'lamb':
+            optimizer = FusedLAMB(list(model.parameters()) + loss_params, betas=(0.9, 0.999))
+        elif optimizer == 'novograd':
+            optimizer = FusedNovoGrad(list(model.parameters()) + loss_params)
         elif optimizer == 'cocob':
             optimizer = Cocob(list(model.parameters()) + loss_params)
         elif optimizer == 'radam-plain':
@@ -35,8 +40,6 @@ def set_optimizer(self):
             optimizer = RAdam(list(model.parameters()) + loss_params, betas=(0.9, 0.999))
         elif optimizer == 'adamw':
             optimizer = AdamW(list(model.parameters()) + loss_params, betas=(0.9, 0.999))
-        elif optimizer == 'adam-gan':
-            optimizer = Adam(list(model.parameters()) + loss_params, betas=(0., 0.999))
         elif optimizer == 'sgd':
             optimizer = SGD(list(model.parameters()) + loss_params, lr=1e-1, momentum=0.9)
         elif optimizer == 'nesterov':
