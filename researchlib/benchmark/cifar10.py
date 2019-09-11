@@ -94,7 +94,7 @@ class _cifar10:
     def shakedrop_pyramidnet_272(self):
         """ reach 97% accuracy in 300 epochs with 4 gpus
         """
-        self.pyramidnet_272(self, shakedrop=True)
+        self.pyramidnet_272(shakedrop=True)
        
     
     def dawnfast(self):
