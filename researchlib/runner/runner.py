@@ -351,6 +351,7 @@ class Runner:
         for i, j in self.__class__.__fit_settings__.items():
             query['fit'].setdefault(i, {})
             query['fit'][i] = _describe_fit(j)
+        query.update(ParameterManager.params)
         return query
 
     
