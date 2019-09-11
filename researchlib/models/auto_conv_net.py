@@ -42,18 +42,19 @@ def AutoConvNet(op,
     # Stem
     stem_type, stem_layers = list(stem.items())[0]
     for i in range(stem_layers):
-        print(in_dim, out_dim, stem_type)
+        id = i + 1
+        print(id, in_dim, out_dim, stem_type)
         if i == 0:
             stem_kwargs = copy.deepcopy(kwargs)
             stem_kwargs['erased_activator'] = True if preact else False
         _op_type = _get_op_type(stem_type, i, stem_layers+total_blocks, False, in_dim == out_dim)
         layers.append(
-            _op_type(op, in_dim, out_dim, do_pool=False, do_norm=do_norm, preact=False, id=1, total_blocks=stem_layers+total_blocks, unit=unit, **stem_kwargs)
+            _op_type(op, in_dim, out_dim, do_pool=False, do_norm=do_norm, preact=False, id=id, total_blocks=stem_layers+total_blocks, unit=unit, **stem_kwargs)
         )
         in_dim = out_dim
 
     # Body
-    for i in range(total_blocks):
+    for i in range(stem_layers, stem_layers + total_blocks):
         id = i + 1
 
         if id % pool_freq == 0:
@@ -69,7 +70,7 @@ def AutoConvNet(op,
         _op_type = _get_op_type(type, id, total_blocks, do_pool,
                                 in_dim == out_dim)
 
-        print(in_dim, out_dim, do_pool)
+        print(id, in_dim, out_dim, do_pool)
         if do_pool and auxiliary_classifier is not None:
             parameter_manager.save_buffer('dim_type', _get_dim_type(op))
             parameter_manager.save_buffer('last_dim', in_dim)
@@ -90,7 +91,7 @@ def AutoConvNet(op,
                 do_norm=do_norm,
                 preact=preact,
                 id=id,
-                total_blocks=total_blocks,
+                total_blocks=stem_layers+total_blocks,
                 unit=unit,
                 **kwargs))
 
