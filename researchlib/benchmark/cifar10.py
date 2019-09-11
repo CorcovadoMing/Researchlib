@@ -111,11 +111,11 @@ class _cifar10:
             layer.LogSoftmax(-1)
         ])
         
-        runner = Runner(model, self.train_loader, self.test_loader, 
+        self.runner = Runner(model, self.train_loader, self.test_loader, 
                 'adamw', 'smooth_nll', lookahead=True, 
                 monitor_state='acc', monitor_mode='max')
-        runner.init_model('default')
-        runner \
+        self.runner.init_model('default')
+        self.runner \
             .preprocessing([Normalizer()]) \
             .augmentation([HFlip(), Crop2d(), Cutout()]) \
             .fit(14,
