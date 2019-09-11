@@ -27,13 +27,14 @@ class _ResBlock(_Block):
         preact_final_norm_layer = self._get_norm_layer(
             norm_type, self.out_dim) if self.do_norm and self.preact else None
 
+        blur = self._get_param('blur', False) and self.do_pool
         stride = self._get_param('pool_factor', 2) if self.do_pool else 1
         kernel_size = self._get_param('kernel_size', 2) if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
         padding = 0 if is_transpose and self.do_pool else self._get_param('padding', int((kernel_size - 1) / 2))
         
         first_custom_kwargs = self._get_custom_kwargs({
             'kernel_size': kernel_size,
-            'stride': stride,
+            'stride': 1 if blur else stride,
             'padding': padding,
             'erased_activator': True if self.preact and erased_activator else False
         })
@@ -42,6 +43,7 @@ class _ResBlock(_Block):
         
         conv_layers = [
             unit_fn(self.op, self.in_dim, self.out_dim, False, self.do_norm, self.preact, **first_custom_kwargs),
+            layer.Downsample(channels=self.out_dim, filt_size=3, stride=stride) if blur else None,
             unit_fn(self.op, self.out_dim, self.out_dim, False, self.do_norm, self.preact, **second_custom_kwargs),
             preact_final_norm_layer
         ]
@@ -53,25 +55,24 @@ class _ResBlock(_Block):
             raise ('Shortcut type is not supported')
         if shortcut_type == 'projection':
             shortcut_kernel_size = 2 if is_transpose and self.do_pool else 1
+            shortcut_stride = 1 if blur else stride
             if self.in_dim != self.out_dim or self.do_pool:
-                custom_kwargs = self._get_custom_kwargs({
-                    'kernel_size': shortcut_kernel_size,
-                    'stride': stride
-                })
-                reduction_op = self.op(
+                reduction_op = [self.op(
                     self.in_dim,
                     self.out_dim,
                     kernel_size=shortcut_kernel_size,
-                    stride=stride)
+                    stride=shortcut_stride)]
+                if blur:
+                    reduction_op.append(layer.Downsample(channels=self.out_dim, filt_size=3, stride=stride))
             else:
-                reduction_op = None
+                reduction_op = [None]
         elif shortcut_type == 'padding':
             pool_type = self._get_param('pool_type', 'AvgPool')  # As paper's design
             pool_factor = self._get_param('pool_factor', 2)
             pool_layer = self._get_pool_layer(pool_type, pool_factor, self.in_dim) if self.do_pool else None
-            reduction_op = _padding_shortcut(self.in_dim, self.out_dim, pool_layer)
+            reduction_op = [_padding_shortcut(self.in_dim, self.out_dim, pool_layer)]
 
-        self.shortcut = nn.Sequential(*list(filter(None, [reduction_op])))
+        self.shortcut = nn.Sequential(*list(filter(None, reduction_op)))
 
         self.branch_attention = self._get_param('branch_attention')
         if self.branch_attention:
