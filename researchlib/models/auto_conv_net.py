@@ -47,9 +47,9 @@ def AutoConvNet(op,
         if i == 0:
             stem_kwargs = copy.deepcopy(kwargs)
             stem_kwargs['erased_activator'] = True if preact else False
-        _op_type = _get_op_type(stem_type, i, stem_layers+total_blocks, False, in_dim == out_dim)
+        _op_type = _get_op_type(stem_type, i, stem_layers, False, in_dim == out_dim)
         layers.append(
-            _op_type(op, in_dim, out_dim, do_pool=False, do_norm=do_norm, preact=False, id=id, total_blocks=stem_layers+total_blocks, unit=unit, **stem_kwargs)
+            _op_type(op, in_dim, out_dim, do_pool=False, do_norm=do_norm, preact=False, id=id, total_blocks=stem_layers, unit=unit, **stem_kwargs)
         )
         in_dim = out_dim
 
@@ -90,8 +90,8 @@ def AutoConvNet(op,
                 do_pool=do_pool,
                 do_norm=do_norm,
                 preact=preact,
-                id=id+stem_layers,
-                total_blocks=stem_layers+total_blocks,
+                id=id,
+                total_blocks=total_blocks,
                 unit=unit,
                 **kwargs))
 

@@ -71,13 +71,14 @@ def AutoEncDec(down_op,
     # Stem
     stem_type, stem_layers = list(stem.items())[0]
     for i in range(stem_layers):
-        print(in_dim, out_dim, stem_type)
+        id = i + 1
+        print(id, in_dim, out_dim, stem_type)
         if i == 0:
             stem_kwargs = copy.deepcopy(kwargs)
             stem_kwargs['erased_activator'] = True if preact else False
-        _op_type = _get_op_type(stem_type, i, stem_layers+total_blocks, False, in_dim == out_dim)
+        _op_type = _get_op_type(stem_type, i, stem_layers, False, in_dim == out_dim)
         layers.append(
-            _op_type(down_op, in_dim, out_dim, do_pool=False, do_norm=do_norm, preact=False, id=1, total_blocks=stem_layers+total_blocks, unit=unit, **stem_kwargs)
+            _op_type(down_op, in_dim, out_dim, do_pool=False, do_norm=do_norm, preact=False, id=id, total_blocks=stem_layers, unit=unit, **stem_kwargs)
         )
         in_dim = out_dim
     
@@ -95,8 +96,8 @@ def AutoEncDec(down_op,
         out_dim = wide_scale * _filter_policy(id, type, base_dim, max_dim,
                                               block_group, in_dim, total_blocks,
                                               filter_policy, parameter_manager)
-        print(in_dim, out_dim, do_pool)
-        dim_cache.append((in_dim, out_dim, do_pool))
+        print(id+stem_layers, in_dim, out_dim, do_pool)
+        dim_cache.append((id+stem_layers, in_dim, out_dim, do_pool))
         in_dim = out_dim
         
     # Start build the model recursively
@@ -108,28 +109,28 @@ def AutoEncDec(down_op,
         _op_type_inner = _get_op_type(type, id, total_blocks, do_pool, in_dim == out_dim)
         _op_type_end = _get_op_type(type, id, total_blocks, do_pool, in_dim == out_dim)
 
-        in_dim, out_dim, do_pool = dim_cache.pop()
+        cache_id, in_dim, out_dim, do_pool = dim_cache.pop()
         end_in_dim = out_dim if skip_type == 'add' else 2 * out_dim
-        print(end_in_dim, in_dim, do_pool)
+        print(2*total_blocks+1-cache_id+stem_layers, end_in_dim, in_dim, do_pool)
         kwargs['non_local'] = id >= non_local_start
         structure = _RecurrentBlock(
             # Begin
             _op_type_begin(down_op, in_dim, out_dim,
                 do_pool=do_pool, do_norm=do_norm, preact=preact,
-                id=id, total_blocks=total_blocks,
+                id=cache_id, total_blocks=2*total_blocks+1,
                 unit=unit, **kwargs),
             
             # Inner
             _op_type_inner(down_op, out_dim, out_dim,
                 do_pool=False, do_norm=do_norm, preact=preact,
-                id=id, total_blocks=total_blocks,
+                id=cache_id+1, total_blocks=2*total_blocks+1,
                 unit=unit, **kwargs) \
             if id == 1 else structure,
             
             # End
             _op_type_end(up_op, end_in_dim, in_dim,
                 do_pool=do_pool, do_norm=do_norm, preact=preact,
-                id=id, total_blocks=total_blocks,
+                id=2*total_blocks+1-cache_id, total_blocks=2*total_blocks+1,
                 unit=unit, **kwargs),
             
             skip_connection=skip_connection,
