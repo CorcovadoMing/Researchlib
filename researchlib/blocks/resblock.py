@@ -1,5 +1,4 @@
 from .template.block import _Block
-from .template.shortcut import _padding_shortcut
 from ..layers import layer
 from torch import nn
 import torch
@@ -49,30 +48,8 @@ class _ResBlock(_Block):
         ]
         
         self.conv = nn.Sequential(*list(filter(None, conv_layers)))
-
-        shortcut_type = self._get_param('shortcut', 'projection')
-        if shortcut_type not in ['projection', 'padding']:
-            raise ('Shortcut type is not supported')
-        if shortcut_type == 'projection':
-            shortcut_kernel_size = 2 if is_transpose and self.do_pool else 1
-            shortcut_stride = 1 if blur else stride
-            if self.in_dim != self.out_dim or self.do_pool:
-                reduction_op = [self.op(
-                    self.in_dim,
-                    self.out_dim,
-                    kernel_size=shortcut_kernel_size,
-                    stride=shortcut_stride)]
-                if blur:
-                    reduction_op.append(layer.Downsample(channels=self.out_dim, filt_size=3, stride=stride))
-            else:
-                reduction_op = [None]
-        elif shortcut_type == 'padding':
-            pool_type = self._get_param('pool_type', 'AvgPool')  # As paper's design
-            pool_factor = self._get_param('pool_factor', 2)
-            pool_layer = self._get_pool_layer(pool_type, pool_factor, self.in_dim) if self.do_pool else None
-            reduction_op = [_padding_shortcut(self.in_dim, self.out_dim, pool_layer)]
-
-        self.shortcut = nn.Sequential(*list(filter(None, reduction_op)))
+        
+        self.shortcut = self._get_shortcut()
 
         self.branch_attention = self._get_param('branch_attention')
         if self.branch_attention:
