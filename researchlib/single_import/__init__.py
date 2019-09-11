@@ -21,6 +21,7 @@ from ..frontend.dashboard import _Dashboard
 import redis
 import pickle
 
+
 # google api authorization
 benchmark()
 
@@ -29,10 +30,18 @@ sns.set_style("whitegrid", {'axes.grid': False})
 
 nvmlInit()
 deviceCount = nvmlDeviceGetCount()
+
+try:
+    used_gpus = os.environ["CUDA_VICIBLE_DEVICES"]
+except:
+    used_gpus = list(range(deviceCount))
+print(f'Available GPUs: (CUDA_VISIBLE_DEVICES={used_gpus})')
+print('==========================================')
 for i in range(deviceCount):
     handle = nvmlDeviceGetHandleByIndex(i)
-    print("Using GPU", str(i) + ":", nvmlDeviceGetName(handle).decode('utf-8'))
+    print(str(i) + ":", nvmlDeviceGetName(handle).decode('utf-8'))
 print("Driver:", nvmlSystemGetDriverVersion().decode('utf-8'))
+print()
 
 current_version = '19.08.3'
 print('Researchlib version', current_version)
