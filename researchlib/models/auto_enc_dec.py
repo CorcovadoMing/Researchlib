@@ -8,6 +8,7 @@ from ..utils import ParameterManager
 from ..blocks import block
 from torch import nn
 import torch
+import copy
 
 
 class _RecurrentBlock(nn.Module):
@@ -39,6 +40,7 @@ def AutoEncDec(down_op,
                 type='residual',
                 filters=(128, 1024),
                 filter_policy='default',
+                stem={'vgg': 1},
                 preact=True,
                 pool_freq=1,
                 do_norm=True,
@@ -66,10 +68,18 @@ def AutoEncDec(down_op,
     in_dim = input_dim
     out_dim = wide_scale * base_dim  
 
-    print(in_dim, out_dim)
-    layers.append(layer.__dict__['Conv' + _get_dim_type(down_op)](in_dim, out_dim, 3, 1, 1))  # Preact first layer is simply a hardcore transform
-    layers.append(layer.__dict__['BatchNorm' + _get_dim_type(down_op)](out_dim))
-    in_dim = out_dim
+    # Stem
+    stem_type, stem_layers = list(stem.items())[0]
+    for i in range(stem_layers):
+        print(in_dim, out_dim, stem_type)
+        if i == 0:
+            stem_kwargs = copy.deepcopy(kwargs)
+            stem_kwargs['erased_activator'] = True if preact else False
+        _op_type = _get_op_type(stem_type, i, stem_layers+total_blocks, False, in_dim == out_dim)
+        layers.append(
+            _op_type(down_op, in_dim, out_dim, do_pool=False, do_norm=do_norm, preact=False, id=1, total_blocks=stem_layers+total_blocks, unit=unit, **stem_kwargs)
+        )
+        in_dim = out_dim
     
     # The builder logic is from the middle blocks and recursive to append the begin and end block
     # We calculate the half-part of the model shape first
