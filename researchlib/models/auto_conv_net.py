@@ -54,7 +54,7 @@ def AutoConvNet(op,
         in_dim = out_dim
 
     # Body
-    for i in range(stem_layers, stem_layers + total_blocks):
+    for i in range(total_blocks):
         id = i + 1
 
         if id % pool_freq == 0:
@@ -70,7 +70,7 @@ def AutoConvNet(op,
         _op_type = _get_op_type(type, id, total_blocks, do_pool,
                                 in_dim == out_dim)
 
-        print(id, in_dim, out_dim, do_pool)
+        print(id+stem_layers, in_dim, out_dim, do_pool)
         if do_pool and auxiliary_classifier is not None:
             parameter_manager.save_buffer('dim_type', _get_dim_type(op))
             parameter_manager.save_buffer('last_dim', in_dim)
@@ -90,7 +90,7 @@ def AutoConvNet(op,
                 do_pool=do_pool,
                 do_norm=do_norm,
                 preact=preact,
-                id=id,
+                id=id+stem_layers,
                 total_blocks=stem_layers+total_blocks,
                 unit=unit,
                 **kwargs))
