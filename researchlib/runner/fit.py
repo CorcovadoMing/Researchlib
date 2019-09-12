@@ -18,7 +18,7 @@ register_method = _register_method(__methods__)
 @register_method
 def fit(self,
         epochs,
-        lr=1e-2,
+        lr=3e-3,
         policy='linear',
         warmup=5,
         warmup_policy='linear',
