@@ -1,6 +1,7 @@
 from torch import nn
 import torch.nn.functional as F
 import torch
+from .blur import Downsample
 
 
 class _MHA2d(nn.Module):
@@ -30,13 +31,18 @@ class _MHA2d(nn.Module):
 class _AAConv2d(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros'):
         super().__init__()
-        self.mha = _MHA2d(in_channels, int(out_channels//2))
-        self.conv = nn.Conv2d(in_channels, out_channels - int(out_channels//2), 3, 1, 1, bias=bias)
-        self.stride = stride
+        self.mha = _MHA2d(out_channels, out_channels)
+        self.conv = nn.Conv2d(in_channels, out_channels, 3, stride, 1, bias=bias)
+        self.pool = nn.MaxPool2d(2, return_indices=True)
+        self.unpool = nn.MaxUnpool2d(2)
+        self.gamma = nn.Parameter(torch.zeros(1))
+        self.feature_reduction = nn.Conv2d(in_channels, out_channels, 1, stride)
     
     def forward(self, x):
-        x = torch.cat([self.mha(x), self.conv(x)], 1)
-        if self.stride > 1:
-            x = F.max_pool2d(x, 2)
+        _x = self.feature_reduction(x)
+        _x, indices = self.pool(_x)
+        _x = self.mha(_x)
+        _x = self.unpool(_x, indices)
+        x = _x * torch.tanh(self.gamma) + self.conv(x)
         return x
         
