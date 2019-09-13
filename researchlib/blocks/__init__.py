@@ -20,12 +20,14 @@ from .wide_resblock import _WideResBlock
 from .unit import unit
 
 from .tcnblock import _TCNBlock
+from .gcnblock import _GCNBlock
 
 
 class block(object):
     TemplateBlock = _TemplateBlock
     
     TCNBlock = _TCNBlock
+    GCNBlock = _GCNBlock
     
     DAWNBlock = _DAWNBlock
     
