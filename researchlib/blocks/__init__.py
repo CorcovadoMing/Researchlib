@@ -21,11 +21,12 @@ from .unit import unit
 
 from .tcnblock import _TCNBlock
 from .gcnblock import _GCNBlock
-
+from .agcblock import _AGCBlock
 
 class block(object):
     TemplateBlock = _TemplateBlock
     
+    AGCBlock = _AGCBlock
     TCNBlock = _TCNBlock
     GCNBlock = _GCNBlock
     

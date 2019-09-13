@@ -46,7 +46,7 @@ class _GCNBlock(_Block):
         y = None
         for i in range(self.num_subset):
             C1 = self.embedded_1[i](x).permute(0, 3, 1, 2).contiguous().view(N, V, self.hidden_dim * T)
-            C2 = self.embedded_2[i](x).view(N, self.inter_c * T, V)
+            C2 = self.embedded_2[i](x).view(N, self.hidden_dim*T, V)
             C1 = self.soft(torch.matmul(C1, C2) / C1.size(-1))  # N V V
             C1 = C1 + AB[i]
             C2 = x.view(N, C * T, V)
