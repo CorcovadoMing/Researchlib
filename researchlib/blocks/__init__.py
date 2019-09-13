@@ -19,9 +19,13 @@ from .vggblock import _VGGBlock
 from .wide_resblock import _WideResBlock
 from .unit import unit
 
+from .tcnblock import _TCNBlock
+
 
 class block(object):
     TemplateBlock = _TemplateBlock
+    
+    TCNBlock = _TCNBlock
     
     DAWNBlock = _DAWNBlock
     
