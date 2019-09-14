@@ -10,7 +10,7 @@ class _TCNBlock(_Block):
         
         # TODO (Ming): Only 2d supported
         custom_kwargs['kernel_size'] = (self._get_param('tcn_kernel_size', 9), 1)
-        custom_kwargs['padding'] = (self._get_param('tcn_kernel_size', 4), 0)
+        custom_kwargs['padding'] = ((custom_kwargs['kernel_size'][0] - 1) / 2, 0)
         custom_kwargs['stride'] = (self._get_param('tcn_stride', 1), 1)
         
         unit_fn = self._get_param('unit', unit.conv)
