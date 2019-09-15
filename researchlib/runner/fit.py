@@ -130,13 +130,9 @@ def _fit(self, epochs, lr, metrics, callbacks, _id, self_iterative,
     parameter_manager = ParameterManager(**kwargs)
 
     # Manifold Mixup
-    fixed_mmixup = parameter_manager.get_param(
-        'fixed_mmixup', validator=lambda x: type(x) == list)
-    random_mmixup = parameter_manager.get_param(
-        'random_mmixup',
-        validator=lambda x: len(x) == 2 and type(x) == list)
-    mmixup_alpha = parameter_manager.get_param(
-        'mmixup_alpha', validator=lambda x: type(x) == float)
+    fixed_mmixup = parameter_manager.get_param('fixed_mmixup', validator=lambda x: type(x) == list)
+    random_mmixup = parameter_manager.get_param('random_mmixup', validator=lambda x: len(x) == 2 and type(x) == list)
+    mmixup_alpha = parameter_manager.get_param('mmixup_alpha', validator=lambda x: type(x) == float)
 
     if iterations == 0:
         iterations = len(self.train_loader)
@@ -230,9 +226,11 @@ def _fit(self, epochs, lr, metrics, callbacks, _id, self_iterative,
                 if mmixup_alpha is not None:
                     batch_size = x[0].size()[0]
                     lam = layer.Manifold_Mixup.setup_batch(
-                        mmixup_alpha, batch_size, fixed_mmixup,
-                        random_mmixup)
+                        mmixup_alpha, batch_size, fixed_mmixup, random_mmixup)
                     y, y_res = layer.Manifold_Mixup.get_y(y)
+                else:
+                    y_res = None
+                    lam = None
 
                 if epoch <= warmup:
                     warmup_lr = Annealer.get_trace('warmup_lr')
