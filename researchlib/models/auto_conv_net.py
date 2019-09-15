@@ -32,6 +32,8 @@ def AutoConvNet(op,
     block_group = 0
 
     layers = []
+    # Input mixup
+    layers.append(layer.ManifoldMixup())
 
     wide_scale = parameter_manager.get_param(
         'wide_scale', 10) if type == 'wide-residual' else 1
@@ -64,6 +66,7 @@ def AutoConvNet(op,
                 total_blocks=stem_layers,
                 unit=unit,
                 **stem_kwargs))
+        layers.append(layer.ManifoldMixup())
         in_dim = out_dim
 
     # Body
@@ -108,6 +111,7 @@ def AutoConvNet(op,
                 total_blocks=total_blocks,
                 unit=unit,
                 **kwargs))
+        layers.append(layer.ManifoldMixup())
 
         in_dim = out_dim
 

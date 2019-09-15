@@ -30,7 +30,7 @@ from .multiply import _Multiply
 from .aaconv import _AAConv2d
 from .blur import Downsample as _Downsample
 from .wsconv import _WSConv1d, _WSConvTranspose1d, _WSConv2d, _WSConvTranspose2d, _WSConv3d, _WSConvTranspose3d
-from .manifold_mixup import _Manifold_Mixup
+from .manifold_mixup import _ManifoldMixup
 
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
@@ -95,7 +95,7 @@ class layer(object):
     ShakeDrop = _ShakeDrop
 
     # Manifold Mixup
-    Manifold_Mixup = _Manifold_Mixup
+    ManifoldMixup = _ManifoldMixup
 
     # Others
     Norm = _Norm

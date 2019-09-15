@@ -12,7 +12,7 @@ import copy
 
 
 class _RecurrentBlock(nn.Module):
-
+    
     def __init__(self,
                  begin_block,
                  inner_block,
@@ -25,16 +25,22 @@ class _RecurrentBlock(nn.Module):
         self.begin = begin_block
         self.inner = inner_block
         self.end = end_block
+        self.begin_mmixup = layer.ManifoldMixup()
+        self.inner_mmixup = layer.ManifoldMixup()
+        self.end_mmixup = layer.ManifoldMixup()
 
     def forward(self, x):
         x = self.begin(x)
+        x = self.begin_mmixup(x)
         out = self.inner(x)
+        out = self.inner_mmixup(out)
         if self.skip_connection:
             if self.skip_type == 'add':
                 out = out + x
             elif self.skip_type == 'concat':
                 out = torch.cat([out, x], dim=1)
-        return self.end(out)
+        out = self.end(out)
+        return self.end_mmixup(out)
 
 
 def AutoEncDec(down_op,
@@ -66,6 +72,7 @@ def AutoEncDec(down_op,
     block_group = 0
 
     layers = []
+    layers.append(layer.ManifoldMixup())
 
     wide_scale = parameter_manager.get_param(
         'wide_scale', 10) if type == 'wide-residual' else 1
@@ -96,6 +103,7 @@ def AutoEncDec(down_op,
                 total_blocks=stem_layers,
                 unit=unit,
                 **stem_kwargs))
+        layers.append(layer.ManifoldMixup())
         in_dim = out_dim
 
     # The builder logic is from the middle blocks and recursive to append the begin and end block

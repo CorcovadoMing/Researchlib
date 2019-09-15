@@ -5,7 +5,7 @@ import numpy as np
 from ..utils import ParameterManager
 
 
-class _Manifold_Mixup(nn.Module):
+class _ManifoldMixup(nn.Module):
     block_counter = -1
     prefix_name = 'mmixup_'
     block_id_key = prefix_name + 'block_{}'
