@@ -1,4 +1,4 @@
-from .helper import _get_dim_type, _filter_policy, _get_op_type
+from .helper import _get_dim_type, _filter_policy, _get_op_type, _parse_type
 from .heads import Heads
 from ..runner import Runner
 from ..layers import layer
@@ -74,23 +74,23 @@ def AutoEncDec(down_op,
     layers = []
     layers.append(layer.ManifoldMixup())
 
-    wide_scale = parameter_manager.get_param(
-        'wide_scale', 10) if type == 'wide-residual' else 1
     no_end_pool = parameter_manager.get_param('no_end_pool', False)
 
     in_dim = input_dim
-    out_dim = wide_scale * base_dim
+    out_dim = base_dim
 
     # Stem
     stem_type, stem_layers = list(stem.items())[0]
     for i in range(stem_layers):
         id = i + 1
-        print(id, in_dim, out_dim, stem_type)
         if i == 0:
             stem_kwargs = copy.deepcopy(kwargs)
             stem_kwargs['erased_activator'] = True if preact else False
-        _op_type = _get_op_type(stem_type, i, stem_layers, False,
-                                in_dim == out_dim)
+        _type = _parse_type(i, type)
+        wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
+        out_dim *= wide_scale
+        _op_type = _get_op_type(stem_type, id, stem_layers, False, in_dim == out_dim)    
+        print(id, in_dim, out_dim, stem_type)
         layers.append(
             _op_type(
                 down_op,
@@ -106,6 +106,7 @@ def AutoEncDec(down_op,
         layers.append(layer.ManifoldMixup())
         in_dim = out_dim
 
+        
     # The builder logic is from the middle blocks and recursive to append the begin and end block
     # We calculate the half-part of the model shape first
     dim_cache = []
@@ -126,15 +127,18 @@ def AutoEncDec(down_op,
 
     # Start build the model recursively
     for i in range(total_blocks):
-        # TODO (Ming): id needs to be fixed, it doesn't work in this kinds of architecture
         id = i + 1
 
-        _op_type_begin = _get_op_type(type, id, total_blocks, do_pool,
-                                      in_dim == out_dim)
-        _op_type_inner = _get_op_type(type, id, total_blocks, do_pool,
-                                      in_dim == out_dim)
-        _op_type_end = _get_op_type(type, id, total_blocks, do_pool,
-                                    in_dim == out_dim)
+        # TODO (Ming): Add an option to use different type of blocks in the autoencoder-like architecture
+        _type = _parse_type(i, type)
+        wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
+        out_dim = wide_scale * _filter_policy(id, type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy, parameter_manager)
+        _op_type = _get_op_type(type, id, total_blocks, do_pool, in_dim == out_dim)
+        
+        _op_type_begin = _op_type
+        _op_type_inner = _op_type
+        _op_type_end = _op_type
+        # End of TODO
 
         cache_id, in_dim, out_dim, do_pool = dim_cache.pop()
         end_in_dim = out_dim if skip_type == 'add' else 2 * out_dim

@@ -3,24 +3,43 @@ import math
 from ..blocks import block
 
 
-def _get_op_type(type, cur_block, total_blocks, do_pool, do_expand):
-    if type not in [
-            'vgg', 'residual', 'residual-bottleneck', 'wide-residual',
+def _parse_type(i, type_object):
+    if type(type_object) == dict:
+        _type_cadidate = type_object['order']
+        if type_object['type'] == 'alternative':
+            _type = _type_cadidate[i % len(_type_cadidate)]
+        else:
+            raise ValueError('Other types is not implemented yet')
+    elif type(type_object) == str:
+        _type = type_object
+    else:
+        raise ValueError('Type is with wrong data format')
+    return _type
+
+
+def _get_op_type(type_object, cur_block, total_blocks, do_pool, do_expand):
+    _type = _parse_type(cur_block-1, type_object)    
+    
+    if _type not in [
+            'vgg', 'dawn', 'residual', 'residual-bottleneck', 'wide-residual',
             'inverted-bottleneck', 'inceptionv3', 'inceptionv4',
             'inception-residualv2'
     ]:
-        raise ('Type is not supperted')
-    if type == 'vgg':
+        raise ValueError(f'Type {_type} is not supperted')
+        
+    if _type == 'vgg':
         _op_type = block.VGGBlock
-    elif type == 'residual':
+    elif _type == 'dawn':
+        _op_type = block.DAWNBlock
+    elif _type == 'residual':
         _op_type = block.ResBlock
-    elif type == 'residual-bottleneck':
+    elif _type == 'residual-bottleneck':
         _op_type = block.ResBottleneckBlock
-    elif type == 'wide-residual':
+    elif _type == 'wide-residual':
         _op_type = block.WideResBlock
-    elif type == 'inverted-bottleneck':
+    elif _type == 'inverted-bottleneck':
         _op_type = block.InvertedBottleneckBlock
-    elif type == 'inceptionv3':
+    elif _type == 'inceptionv3':
         if (cur_block / total_blocks) <= 0.2:
             _op_type = block.InceptionV3A
         elif (cur_block / total_blocks) <= 0.4:
@@ -31,7 +50,7 @@ def _get_op_type(type, cur_block, total_blocks, do_pool, do_expand):
             _op_type = block.InceptionV3D
         elif (cur_block / total_blocks) <= 1:
             _op_type = block.InceptionV3E
-    elif type == 'inceptionv4':
+    elif _type == 'inceptionv4':
         if (cur_block / total_blocks) <= (1 / 3):
             _op_type = block.ReductionV4A if do_pool else block.InceptionV4A
         elif (cur_block / total_blocks) <= (2 / 3):
@@ -39,7 +58,7 @@ def _get_op_type(type, cur_block, total_blocks, do_pool, do_expand):
         elif (cur_block / total_blocks) <= 1:
             # We don't have Reduction type C
             _op_type = block.ReductionV4B if do_pool else block.InceptionV4C
-    elif type == 'inception-residualv2':
+    elif _type == 'inception-residualv2':
         if (cur_block / total_blocks) <= (1 / 3):
             _op_type = block.ReductionV2A if do_pool or do_expand else block.InceptionResidualV2A
         elif (cur_block / total_blocks) <= (2 / 3):
@@ -56,12 +75,15 @@ def _get_dim_type(op):
     return dim_str
 
 
-def _filter_policy(block_idx, type, base_dim, max_dim, block_group, cur_dim,
+def _filter_policy(block_idx, type_object, base_dim, max_dim, block_group, cur_dim,
                    total_blocks, policy, parameter_manager):
+    
+    _type = _parse_type(block_idx-1, type_object) 
+    
     if policy == 'default':
         result = base_dim * (2**(block_group))
     elif policy == 'pyramid':
-        if type == 'residual-bottleneck':
+        if _type == 'residual-bottleneck':
             ratio = 4
         else:
             ratio = 1

@@ -1,4 +1,4 @@
-from .helper import _get_dim_type, _filter_policy, _get_op_type
+from .helper import _get_dim_type, _filter_policy, _get_op_type, _parse_type
 from .heads import Heads
 from ..runner import Runner
 from ..layers import layer
@@ -35,25 +35,24 @@ def AutoConvNet(op,
     # Input mixup
     layers.append(layer.ManifoldMixup())
 
-    wide_scale = parameter_manager.get_param(
-        'wide_scale', 10) if type == 'wide-residual' else 1
     no_end_pool = parameter_manager.get_param('no_end_pool', False)
-    auxiliary_classifier = parameter_manager.get_param('auxiliary_classifier',
-                                                       None)
+    auxiliary_classifier = parameter_manager.get_param('auxiliary_classifier', None)
 
     in_dim = input_dim
-    out_dim = wide_scale * base_dim
+    out_dim = base_dim
 
     # Stem
     stem_type, stem_layers = list(stem.items())[0]
     for i in range(stem_layers):
         id = i + 1
-        print(id, in_dim, out_dim, stem_type)
         if i == 0:
             stem_kwargs = copy.deepcopy(kwargs)
             stem_kwargs['erased_activator'] = True if preact else False
-        _op_type = _get_op_type(stem_type, i, stem_layers, False,
-                                in_dim == out_dim)
+        _type = _parse_type(i, type)
+        wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
+        out_dim *= wide_scale
+        _op_type = _get_op_type(stem_type, id, stem_layers, False, in_dim == out_dim)    
+        print(id, in_dim, out_dim, stem_type)
         layers.append(
             _op_type(
                 op,
@@ -79,12 +78,10 @@ def AutoConvNet(op,
         else:
             do_pool = False
 
-        out_dim = wide_scale * _filter_policy(id, type, base_dim, max_dim,
-                                              block_group, in_dim, total_blocks,
-                                              filter_policy, parameter_manager)
-
-        _op_type = _get_op_type(type, id, total_blocks, do_pool,
-                                in_dim == out_dim)
+        _type = _parse_type(i, type)
+        wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
+        out_dim = wide_scale * _filter_policy(id, type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy, parameter_manager)
+        _op_type = _get_op_type(type, id, total_blocks, do_pool, in_dim == out_dim)
 
         print(id + stem_layers, in_dim, out_dim, do_pool)
         if do_pool and auxiliary_classifier is not None:

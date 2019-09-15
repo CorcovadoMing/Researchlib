@@ -14,7 +14,7 @@ class _conv(_Block):
         # Parameters
         activator_type = self._get_param('activator_type', 'ReLU')
         norm_type = self._get_param('norm_type', 'BatchNorm')
-        pool_type = self._get_param('pool_type', 'MaxPool')
+        pool_type = self._get_param('pool_type', 'Upsample') if self._is_transpose() else self._get_param('pool_type', 'MaxPool')
         pool_factor = self._get_param('pool_factor', 2)
         non_local = self._get_param(
             'non_local', False) and self._get_param('kernel_size', 3) != 1
