@@ -8,6 +8,7 @@ from ..utils import ParameterManager
 from ..blocks import block
 import copy
 
+
 def AutoConvNet(op,
                 unit,
                 input_dim,
@@ -32,12 +33,14 @@ def AutoConvNet(op,
 
     layers = []
 
-    wide_scale = parameter_manager.get_param('wide_scale', 10) if type == 'wide-residual' else 1
+    wide_scale = parameter_manager.get_param(
+        'wide_scale', 10) if type == 'wide-residual' else 1
     no_end_pool = parameter_manager.get_param('no_end_pool', False)
-    auxiliary_classifier = parameter_manager.get_param('auxiliary_classifier', None)
-    
+    auxiliary_classifier = parameter_manager.get_param('auxiliary_classifier',
+                                                       None)
+
     in_dim = input_dim
-    out_dim = wide_scale * base_dim  
+    out_dim = wide_scale * base_dim
 
     # Stem
     stem_type, stem_layers = list(stem.items())[0]
@@ -47,10 +50,20 @@ def AutoConvNet(op,
         if i == 0:
             stem_kwargs = copy.deepcopy(kwargs)
             stem_kwargs['erased_activator'] = True if preact else False
-        _op_type = _get_op_type(stem_type, i, stem_layers, False, in_dim == out_dim)
+        _op_type = _get_op_type(stem_type, i, stem_layers, False,
+                                in_dim == out_dim)
         layers.append(
-            _op_type(op, in_dim, out_dim, do_pool=False, do_norm=do_norm, preact=False, id=id, total_blocks=stem_layers, unit=unit, **stem_kwargs)
-        )
+            _op_type(
+                op,
+                in_dim,
+                out_dim,
+                do_pool=False,
+                do_norm=do_norm,
+                preact=False,
+                id=id,
+                total_blocks=stem_layers,
+                unit=unit,
+                **stem_kwargs))
         in_dim = out_dim
 
     # Body
@@ -70,7 +83,7 @@ def AutoConvNet(op,
         _op_type = _get_op_type(type, id, total_blocks, do_pool,
                                 in_dim == out_dim)
 
-        print(id+stem_layers, in_dim, out_dim, do_pool)
+        print(id + stem_layers, in_dim, out_dim, do_pool)
         if do_pool and auxiliary_classifier is not None:
             parameter_manager.save_buffer('dim_type', _get_dim_type(op))
             parameter_manager.save_buffer('last_dim', in_dim)
@@ -78,9 +91,10 @@ def AutoConvNet(op,
                 wrapper.Auxiliary(
                     builder([
                         Heads(auxiliary_classifier),
-                        layer.LogSoftmax(-1) # TODO (Ming): if not classification? if using softmax not logsoftmax?
-                    ])
-                ))
+                        layer.LogSoftmax(
+                            -1
+                        )  # TODO (Ming): if not classification? if using softmax not logsoftmax?
+                    ])))
         kwargs['non_local'] = id >= non_local_start
         layers.append(
             _op_type(

@@ -66,7 +66,7 @@ class _Block(nn.Module):
                 'CELU', 'DropReLU', 'Mish'
         ]:
             raise ValueError('Unknown activator type')
-        
+
         # Inplace
         if activator_type in ['ReLU']:
             act_kwargs = {'inplace': True}
@@ -105,26 +105,26 @@ class _Block(nn.Module):
         if pool_type is 'Upsample':
             pool_op = layer.__dict__[pool_type]
             return pool_op(scale_factor=pool_factor)
-        
+
         elif pool_type is not 'Combined':
             pool_op_str = pool_type + dim_str
             pool_op = layer.__dict__[pool_op_str]
-            
+
             blur = self._get_param('blur', False)
             if pool_type == 'MaxPool' and blur:
                 pool_layer = nn.Sequential(
                     pool_op(pool_factor, stride=1),
-                    layer.Downsample(channels=dim, filt_size=3, stride=pool_factor)
-                )
+                    layer.Downsample(
+                        channels=dim, filt_size=3, stride=pool_factor))
             elif pool_type == 'AvgPool' and blur:
                 pool_layer = nn.Sequential(
-                    layer.Downsample(channels=dim, filt_size=3, stride=pool_factor)
-                )
+                    layer.Downsample(
+                        channels=dim, filt_size=3, stride=pool_factor))
             else:
                 pool_layer = pool_op(pool_factor)
-            
+
             return pool_layer
-        
+
         else:
             max_pool_op = layer.__dict__['MaxPool' + dim_str](pool_factor)
             avg_pool_op = layer.__dict__['AvgPool' + dim_str](pool_factor)
@@ -163,7 +163,7 @@ class _Block(nn.Module):
             beta_range=beta_range,
             shakedrop_prob=shakedrop_prob,
             mode=mode)
-    
+
     def _get_shortcut(self):
         blur = self._get_param('blur', False) and self.do_pool
         is_transpose = self._is_transpose()
@@ -175,22 +175,29 @@ class _Block(nn.Module):
             shortcut_kernel_size = 2 if is_transpose and self.do_pool else 1
             shortcut_stride = 1 if blur else stride
             if self.in_dim != self.out_dim or self.do_pool:
-                reduction_op = [self.op(
-                    self.in_dim,
-                    self.out_dim,
-                    kernel_size=shortcut_kernel_size,
-                    stride=shortcut_stride)]
+                reduction_op = [
+                    self.op(
+                        self.in_dim,
+                        self.out_dim,
+                        kernel_size=shortcut_kernel_size,
+                        stride=shortcut_stride)
+                ]
                 if blur:
-                    reduction_op.append(layer.Downsample(channels=self.out_dim, filt_size=3, stride=stride))
+                    reduction_op.append(
+                        layer.Downsample(
+                            channels=self.out_dim, filt_size=3, stride=stride))
             else:
                 reduction_op = [None]
         elif shortcut_type == 'padding':
-            pool_type = self._get_param('pool_type', 'AvgPool')  # As paper's design
+            pool_type = self._get_param('pool_type',
+                                        'AvgPool')  # As paper's design
             pool_factor = self._get_param('pool_factor', 2)
-            pool_layer = self._get_pool_layer(pool_type, pool_factor, self.in_dim) if self.do_pool else None
-            reduction_op = [_padding_shortcut(self.in_dim, self.out_dim, pool_layer)]
+            pool_layer = self._get_pool_layer(
+                pool_type, pool_factor, self.in_dim) if self.do_pool else None
+            reduction_op = [
+                _padding_shortcut(self.in_dim, self.out_dim, pool_layer)
+            ]
         return nn.Sequential(*list(filter(None, reduction_op)))
-    
 
     def forward(self, x):
         pass

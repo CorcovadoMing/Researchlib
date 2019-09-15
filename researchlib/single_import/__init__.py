@@ -21,7 +21,6 @@ from ..frontend.dashboard import _Dashboard
 import redis
 import pickle
 
-
 # google api authorization
 benchmark()
 

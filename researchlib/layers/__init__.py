@@ -30,6 +30,7 @@ from .multiply import _Multiply
 from .aaconv import _AAConv2d
 from .blur import Downsample as _Downsample
 from .wsconv import _WSConv1d, _WSConvTranspose1d, _WSConv2d, _WSConvTranspose2d, _WSConv3d, _WSConvTranspose3d
+from .manifold_mixup import _Manifold_Mixup
 
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
@@ -52,7 +53,7 @@ class layer(object):
 
     CoordConvTranspose2d = _CoordConvTranspose2d
     CoordConv2d = _CoordConv2d
-    
+
     WSConv1d = _WSConv1d
     WSConvTranspose1d = _WSConvTranspose1d
     WSConv2d = _WSConv2d
@@ -61,10 +62,10 @@ class layer(object):
     WSConvTranspose3d = _WSConvTranspose3d
 
     Multiply = _Multiply
-    
+
     AAConv2d = _AAConv2d
     Downsample = _Downsample
-    
+
     # Recurrent
     LSTM = _LSTM
     QRNN = _QRNN
@@ -92,6 +93,9 @@ class layer(object):
 
     # ShakeDrop
     ShakeDrop = _ShakeDrop
+
+    # Manifold Mixup
+    Manifold_Mixup = _Manifold_Mixup
 
     # Others
     Norm = _Norm

@@ -1,6 +1,7 @@
 from ..template import template
 from torchvision import transforms
 
+
 class Normalizer(template.TorchPreprocessing):
 
     def __init__(self, static_auto=True, include_y=False):

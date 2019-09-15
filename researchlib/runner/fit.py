@@ -1,6 +1,7 @@
 import os
 from tqdm import tnrange
 from ..utils import _register_method, plot_montage, _is_port_in_use, set_lr, inifinity_loop, Annealer, ParameterManager, update_optim
+from ..layers import layer
 from .history import History
 import torch
 import random
@@ -39,9 +40,9 @@ def fit(self,
 
     if init_optim:
         self.set_optimizer()
-        
+
     self.multisteps = multisteps
-    
+
     # Fix issue the dashboard is down while training is interrupted
     if not _is_port_in_use(8050):
         dash = _Dashboard(verbose=False)
@@ -91,11 +92,14 @@ def _process_data(self, data, target, mixup_alpha, inference):
     # On the fly augmentation
     if not inference:
         random.shuffle(self.augmentation_list)
-        for augmentation_fn in self.augmentation_list[:3]: # at most 3 of augmentations in a minibatch
-            data, target = augmentation_fn._forward(data, target, 0.5, random.random())
+        for augmentation_fn in self.augmentation_list[:
+                                                      3]:  # at most 3 of augmentations in a minibatch
+            data, target = augmentation_fn._forward(data, target, 0.5,
+                                                    random.random())
 
     # Mixup
-    _mixup_alpha = Annealer.get_trace('mixup_alpha') if mixup_alpha == Annealer else mixup_alpha
+    _mixup_alpha = Annealer.get_trace(
+        'mixup_alpha') if mixup_alpha == Annealer else mixup_alpha
     if _mixup_alpha > 0 and not inference:
         lam = np.random.beta(_mixup_alpha, _mixup_alpha)
         target_res = []
@@ -126,6 +130,7 @@ def _list_avg(l):
 
 #==================================================================================
 
+
 def _anneal_policy(anneal_type):
     if anneal_type == 'cosine':
         anneal_policy = Annealer.Cosine
@@ -139,21 +144,33 @@ def _anneal_policy(anneal_type):
 @register_method
 def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
          iterations, policy, warmup, warmup_policy, prefetch, plot, **kwargs):
-    
+
     parameter_manager = ParameterManager(**kwargs)
-    
+
+    # Manifold Mixup
+    fixed_mmixup = parameter_manager.get_param(
+        'fixed_mmixup', validator=lambda x: type(x) == list)
+    random_mmixup = parameter_manager.get_param(
+        'random_mmixup',
+        validator=lambda x: len(x) == 2 and type(x) == list)
+    mmixup_alpha = parameter_manager.get_param(
+        'mmixup_alpha', validator=lambda x: type(x) == float)
+
     if iterations == 0:
         iterations = len(self.train_loader)
-    
+
     weight_decay = parameter_manager.get_param('weight_decay', 1)
     if weight_decay > 0:
-        weight_decay_policy = parameter_manager.get_param('weight_decay_policy', 'cosine')
-        Annealer.set_trace('weight_decay', epochs * iterations, [0, weight_decay], 'iteration', _anneal_policy(weight_decay_policy))
-    
+        weight_decay_policy = parameter_manager.get_param(
+            'weight_decay_policy', 'cosine')
+        Annealer.set_trace('weight_decay', epochs * iterations,
+                           [0, weight_decay], 'iteration',
+                           _anneal_policy(weight_decay_policy))
+
     if warmup > 0:
-        Annealer.set_trace('warmup_lr', warmup * iterations, [0, lr], 'iteration', _anneal_policy(warmup_policy))
+        Annealer.set_trace('warmup_lr', warmup * iterations, [0, lr],
+                           'iteration', _anneal_policy(warmup_policy))
         Annealer._iteration_step(key='warmup_lr')
-        
 
     if type(self.optimizer) == list:
         for i in self.optimizer:
@@ -162,7 +179,6 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
         self.optimizer.zero_grad()
 
     liveplot = Liveplot(self.model, len(self.train_loader), plot)
-
 
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
@@ -182,26 +198,30 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
         opt_level='O1',
         enabled=fp16,
         loss_scale=loss_scale)
-    
+
     # must verify after all keys get registered
     ParameterManager.verify_kwargs(**kwargs)
 
     try:
         if len(self.default_metrics):
             metrics = self.default_metrics + metrics
-            
+
         train_loader = self._iteration_pipeline(self.train_loader, mixup_alpha)
         if prefetch:
             train_loader = BackgroundGenerator(train_loader)
         if self.test_loader:
-            test_loader = self._iteration_pipeline(self.test_loader, mixup_alpha, inference=True)
+            test_loader = self._iteration_pipeline(
+                self.test_loader, mixup_alpha, inference=True)
             if prefetch:
                 test_loader = BackgroundGenerator(test_loader)
 
         for epoch in range(1, epochs + 1):
             # Switch point
             if epoch == (warmup + 1):
-                regular_lr = Annealer.set_trace('regular_lr', (epochs-warmup) * iterations, [lr, 0], 'iteration', _anneal_policy(policy))
+                regular_lr = Annealer.set_trace('regular_lr',
+                                                (epochs - warmup) * iterations,
+                                                [lr, 0], 'iteration',
+                                                _anneal_policy(policy))
                 Annealer._iteration_step(key='regular_lr')
 
             for callback_func in callbacks:
@@ -226,17 +246,24 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
             liveplot.timer.clear()
             self.model.train()
             for batch_idx, (x, y, y_res, lam) in enumerate(train_loader):
+                if mmixup_alpha is not None:
+                    batch_size = x[0].size()[0]
+                    lam = layer.Manifold_Mixup.setup_batch(
+                        mmixup_alpha, batch_size, fixed_mmixup,
+                        random_mmixup)
+                    y, y_res = layer.Manifold_Mixup.get_y(y)
+
                 if epoch <= warmup:
                     warmup_lr = Annealer.get_trace('warmup_lr')
                     set_lr(self.optimizer, warmup_lr)
                 else:
                     regular_lr = Annealer.get_trace('regular_lr')
                     set_lr(self.optimizer, regular_lr)
-                
+
                 # weight decay
                 weight_decay = Annealer.get_trace('weight_decay')
                 update_optim(self.optimizer, weight_decay, key='weight_decay')
-                    
+
                 liveplot.update_progressbar(batch_idx + 1)
                 if self.is_cuda:
                     x, y = [i.cuda() for i in x], [i.cuda() for i in y]
@@ -267,7 +294,7 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
 
                 liveplot.update_loss_desc(self.epoch, g_loss_history,
                                           d_loss_history, loss_history)
-                
+
                 # Global iteration annealling
                 Annealer._iteration_step()
 
@@ -399,9 +426,9 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
             # This is only works fixed LR scheduler
             if self.epoch in self.multisteps:
                 srange = Annealer.get_srange('regular_lr')
-                srange = [i*0.1 for i in srange]
+                srange = [i * 0.1 for i in srange]
                 Annealer.update_attr('regular_lr', 'srange', srange)
-                
+
             # Self-interative
             if self_iterative:
                 with torch.no_grad():
@@ -409,7 +436,7 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
                         self.train_loader.dataset.tensors[1][i] = \
                         self.model(self.train_loader.dataset.tensors[0][i].unsqueeze(0).cuda()).detach().cpu()[0]
                         torch.cuda.empty_cache()
-            
+
             # Global epoch annealling
             Annealer._epoch_step()
 

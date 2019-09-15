@@ -89,9 +89,8 @@ class ShakeDropFunction(torch.autograd.Function):
         if gate.item() == 0:
             if len(beta_range) == 2:  # two-element list
                 if int(mode) == 0:
-                    beta = torch.FloatTensor(1).to(
-                        grad_output.device).to(
-                            grad_output.dtype).uniform_(*beta_range)
+                    beta = torch.FloatTensor(1).to(grad_output.device).to(
+                        grad_output.dtype).uniform_(*beta_range)
                     new_shape = []
                     while len(new_shape) != grad_output.dim():
                         new_shape.append(1)

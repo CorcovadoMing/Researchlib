@@ -3,6 +3,7 @@ import torch
 
 
 class _padding_shortcut(nn.Module):
+
     def __init__(self, in_dim, out_dim, pool_layer):
         super().__init__()
         self.in_dim = in_dim

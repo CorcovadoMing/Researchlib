@@ -28,27 +28,39 @@ class _ResBlock(_Block):
 
         blur = self._get_param('blur', False) and self.do_pool
         stride = self._get_param('pool_factor', 2) if self.do_pool else 1
-        kernel_size = self._get_param('kernel_size', 2) if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
-        padding = 0 if is_transpose and self.do_pool else self._get_param('padding', int((kernel_size - 1) / 2))
-        
+        kernel_size = self._get_param(
+            'kernel_size',
+            2) if is_transpose and self.do_pool else self._get_param(
+                'kernel_size', 3)
+        padding = 0 if is_transpose and self.do_pool else self._get_param(
+            'padding', int((kernel_size - 1) / 2))
+
         first_custom_kwargs = self._get_custom_kwargs({
-            'kernel_size': kernel_size,
-            'stride': 1 if blur else stride,
-            'padding': padding,
-            'erased_activator': True if self.preact and erased_activator else False
+            'kernel_size':
+                kernel_size,
+            'stride':
+                1 if blur else stride,
+            'padding':
+                padding,
+            'erased_activator':
+                True if self.preact and erased_activator else False
         })
-        
-        second_custom_kwargs = self._get_custom_kwargs({'erased_activator': True if not self.preact else False})
-        
+
+        second_custom_kwargs = self._get_custom_kwargs(
+            {'erased_activator': True if not self.preact else False})
+
         conv_layers = [
-            unit_fn(self.op, self.in_dim, self.out_dim, False, self.do_norm, self.preact, **first_custom_kwargs),
-            layer.Downsample(channels=self.out_dim, filt_size=3, stride=stride) if blur else None,
-            unit_fn(self.op, self.out_dim, self.out_dim, False, self.do_norm, self.preact, **second_custom_kwargs),
+            unit_fn(self.op, self.in_dim, self.out_dim, False, self.do_norm,
+                    self.preact, **first_custom_kwargs),
+            layer.Downsample(channels=self.out_dim, filt_size=3, stride=stride)
+            if blur else None,
+            unit_fn(self.op, self.out_dim, self.out_dim, False, self.do_norm,
+                    self.preact, **second_custom_kwargs),
             preact_final_norm_layer
         ]
-        
+
         self.conv = nn.Sequential(*list(filter(None, conv_layers)))
-        
+
         self.shortcut = self._get_shortcut()
 
         self.branch_attention = self._get_param('branch_attention')
