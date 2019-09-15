@@ -29,7 +29,7 @@ def fit(self,
         self_iterative=False,
         iterations=0,
         multisteps=[],
-        prefetch=False,
+        prefetch=True,
         plot=False,
         init_optim=True,
         **kwargs):
