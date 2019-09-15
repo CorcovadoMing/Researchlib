@@ -228,8 +228,8 @@ def _fit(self, epochs, lr, metrics, callbacks, _id, self_iterative,
                     # Set default as random sample mmixup
                     if fixed_mmixup is None and random_mmixup is None:
                         random_mmixup = [0, layer.ManifoldMixup.block_counter]
-                    lam = layer.Manifold_Mixup.setup_batch(mmixup_alpha, batch_size, fixed_mmixup, random_mmixup)
-                    y, y_res = layer.Manifold_Mixup.get_y(y)
+                    lam = layer.ManifoldMixup.setup_batch(mmixup_alpha, batch_size, fixed_mmixup, random_mmixup)
+                    y, y_res = layer.ManifoldMixup.get_y(y)
                 else:
                     y_res = None
                     lam = None
