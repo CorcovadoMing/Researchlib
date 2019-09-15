@@ -16,26 +16,37 @@ class ParameterManager:
     def __init__(self, **kwargs):
         self.kwargs = kwargs
 
-    def get_param(self, key, init_value=None, required=False):
+    def get_param(self,
+                  key,
+                  init_value=None,
+                  required=False,
+                  validator=lambda _: True):
         # register key
         if key not in ParameterManager.keys_whitelist:
             ParameterManager.keys_whitelist.append(key)
 
         if required and key not in self.kwargs:
             raise ValueError("{} is required in **kwargs".format(key))
-            
+
+        query = None
         if key in self.kwargs:
             query = self.kwargs[key]
-            ParameterManager.params[key] = query
-            return query
         else:
-            ParameterManager.params[key] = init_value
-            return init_value
+            query = init_value
 
-    def save_buffer(self, key, value):
+        if query is not None and not validator(query):
+            raise ValueError('{} is not a proper value for key:{}'.format(
+                query, key))
+
+        ParameterManager.params[key] = query
+        return query
+
+    @classmethod
+    def save_buffer(cls, key, value):
         ParameterManager.buffer[key] = value
 
-    def get_buffer(self, key, clear=True):
+    @classmethod
+    def get_buffer(cls, key, clear=True):
         if key not in ParameterManager.buffer:
             raise ValueError("Key {} is not in buffer".format(key))
         result = ParameterManager.buffer[key]

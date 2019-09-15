@@ -1,5 +1,6 @@
 def get_aux_out(model):
     result = []
+
     def _inner(m):
         try:
             result.append(m.store)

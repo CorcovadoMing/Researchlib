@@ -42,23 +42,29 @@ from models_lpf import *
 
 __all__ = ['MobileNetV2', 'mobilenet_v2']
 
-
 # model_urls = {
-    # 'mobilenet_v2': 'https://download.pytorch.org/models/mobilenet_v2-b0353104.pth',
+# 'mobilenet_v2': 'https://download.pytorch.org/models/mobilenet_v2-b0353104.pth',
 # }
 
 
 class ConvBNReLU(nn.Sequential):
-    def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
+
+    def __init__(self, in_planes, out_planes, kernel_size=3, stride=1,
+                 groups=1):
         padding = (kernel_size - 1) // 2
         super(ConvBNReLU, self).__init__(
-            nn.Conv2d(in_planes, out_planes, kernel_size, stride, padding, groups=groups, bias=False),
-            nn.BatchNorm2d(out_planes),
-            nn.ReLU6(inplace=True)
-        )
+            nn.Conv2d(
+                in_planes,
+                out_planes,
+                kernel_size,
+                stride,
+                padding,
+                groups=groups,
+                bias=False), nn.BatchNorm2d(out_planes), nn.ReLU6(inplace=True))
 
 
 class InvertedResidual(nn.Module):
+
     def __init__(self, inp, oup, stride, expand_ratio, filter_size=1):
         super(InvertedResidual, self).__init__()
         self.stride = stride
@@ -71,10 +77,11 @@ class InvertedResidual(nn.Module):
         if expand_ratio != 1:
             # pw
             layers.append(ConvBNReLU(inp, hidden_dim, kernel_size=1))
-        if(stride==1):
+        if (stride == 1):
             layers.extend([
                 # dw
-                ConvBNReLU(hidden_dim, hidden_dim, stride=stride, groups=hidden_dim),
+                ConvBNReLU(
+                    hidden_dim, hidden_dim, stride=stride, groups=hidden_dim),
                 # pw-linear
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(oup),
@@ -83,7 +90,8 @@ class InvertedResidual(nn.Module):
             layers.extend([
                 # dw
                 ConvBNReLU(hidden_dim, hidden_dim, stride=1, groups=hidden_dim),
-                Downsample(filt_size=filter_size, stride=stride, channels=hidden_dim), 
+                Downsample(
+                    filt_size=filter_size, stride=stride, channels=hidden_dim),
                 # pw-linear
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(oup),
@@ -98,6 +106,7 @@ class InvertedResidual(nn.Module):
 
 
 class MobileNetV2(nn.Module):
+
     def __init__(self, num_classes=1000, width_mult=1.0, filter_size=1):
         super(MobileNetV2, self).__init__()
         block = InvertedResidual
@@ -123,18 +132,24 @@ class MobileNetV2(nn.Module):
             output_channel = int(c * width_mult)
             for i in range(n):
                 stride = s if i == 0 else 1
-                features.append(block(input_channel, output_channel, stride, expand_ratio=t, filter_size=filter_size))
+                features.append(
+                    block(
+                        input_channel,
+                        output_channel,
+                        stride,
+                        expand_ratio=t,
+                        filter_size=filter_size))
                 input_channel = output_channel
         # building last several layers
-        features.append(ConvBNReLU(input_channel, self.last_channel, kernel_size=1))
+        features.append(
+            ConvBNReLU(input_channel, self.last_channel, kernel_size=1))
         # make it nn.Sequential
         self.features = nn.Sequential(*features)
 
         # building classifier
         self.classifier = nn.Sequential(
             # nn.Dropout(0.2),
-            nn.Linear(self.last_channel, num_classes),
-        )
+            nn.Linear(self.last_channel, num_classes),)
 
         # weight initialization
         for m in self.modules():
@@ -166,8 +181,7 @@ def mobilenet_v2(pretrained=False, progress=True, filter_size=1, **kwargs):
     """
     model = MobileNetV2(filter_size=filter_size, **kwargs)
     # if pretrained:
-        # state_dict = load_state_dict_from_url(model_urls['mobilenet_v2'],
-                                              # progress=progress)
-        # model.load_state_dict(state_dict)
+    # state_dict = load_state_dict_from_url(model_urls['mobilenet_v2'],
+    # progress=progress)
+    # model.load_state_dict(state_dict)
     return model
-    

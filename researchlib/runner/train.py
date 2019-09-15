@@ -7,7 +7,6 @@ from ..models import GANModel, VAEModel
 from ..utils import *
 from ..utils import _register_method
 
-
 __methods__ = []
 register_method = _register_method(__methods__)
 
@@ -133,7 +132,7 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler,
     if len(auxout) > 0:
         learning_type = 'supervise'
     auxout.append(output)
-    
+
     # Padding target (local copy, no need to remove), DIRTY TRICK DON'T MODIFIED IT!!
     # This hack just apply on GAN
     while type(_model) == GANModel and len(kwargs['target']) != len(auxout):
@@ -146,7 +145,9 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler,
     if learning_type == 'supervise':
         kwargs['target'] = [i.view(i.size(0), -1) for i in kwargs['target']]
         if kwargs['lam'] is not None:
-            kwargs['target_res'] = [i.view(i.size(0), -1) for i in kwargs['target_res']]
+            kwargs['target_res'] = [
+                i.view(i.size(0), -1) for i in kwargs['target_res']
+            ]
         # TODO (Ming): This line should be removed by someway
         if len(kwargs['target']) > len(auxout):
             kwargs['target'] = [kwargs['target']]
@@ -158,11 +159,14 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler,
             else:
                 loss_i = i if len(loss_ffn) > i else loss_i
                 target_i = i if len(kwargs['target']) > i else target_i
-                target_res_i = i if kwargs['lam'] is not None and len(kwargs['target_res']) > i else target_res_i
-                
+                target_res_i = i if kwargs['lam'] is not None and len(
+                    kwargs['target_res']) > i else target_res_i
+
             if kwargs['lam'] is not None:
-                loss += kwargs['lam'] * loss_ffn[loss_i](auxout[i], kwargs['target'][target_i])
-                loss += (1 - kwargs['lam']) * loss_ffn[loss_i](auxout[i], kwargs['target_res'][target_res_i])
+                loss += kwargs['lam'] * loss_ffn[loss_i](
+                    auxout[i], kwargs['target'][target_i])
+                loss += (1 - kwargs['lam']) * loss_ffn[loss_i](
+                    auxout[i], kwargs['target_res'][target_res_i])
             else:
                 loss += loss_ffn[loss_i](auxout[i], kwargs['target'][target_i])
     elif learning_type == 'self_supervise':
@@ -217,5 +221,5 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler,
     # Apply metrics
     for m in kwargs['metrics']:
         m.forward([auxout[-1]] + [kwargs['target'][-1]])
-        
+
     return loss.detach().cpu(), norm

@@ -24,13 +24,15 @@ def _gpu_monitor_worker(membar, utilsbar):
         if _STOP_GPU_MONITOR_:
             for i, (membar_i, utilsbar_i) in enumerate(zip(membar, utilsbar)):
                 membar_i.value, utilsbar_i.value = 0, 0
-                membar_i.description, utilsbar_i.description = 'M'+str(i), 'U'+str(i)
+                membar_i.description, utilsbar_i.description = 'M' + str(
+                    i), 'U' + str(i)
             break
         else:
             for i, (membar_i, utilsbar_i) in enumerate(zip(membar, utilsbar)):
                 m, u = _get_gpu_monitor(i)
                 membar_i.value, utilsbar_i.value = m, u
-                membar_i.description, utilsbar_i.description = 'M'+str(i)+': ' + str(m) + '%', 'U'+str(i)+': ' + str(u) + '%'
+                membar_i.description, utilsbar_i.description = 'M' + str(
+                    i) + ': ' + str(m) + '%', 'U' + str(i) + ': ' + str(u) + '%'
             time.sleep(1)
 
 
@@ -95,7 +97,7 @@ class Liveplot:
 
         # Memory and Log
         gpu_count = nvmlDeviceGetCount()
-        total_bars = [Output() for _ in range(2*gpu_count)] 
+        total_bars = [Output() for _ in range(2 * gpu_count)]
         self.gpu_mem_monitor = total_bars[::2]
         self.gpu_utils_monitor = total_bars[1::2]
         self.text_log = Output()
@@ -104,17 +106,21 @@ class Liveplot:
 
         self.gpu_mem_monitor_bar = []
         self.gpu_utils_monitor_bar = []
-        for i, (membar, utilsbar) in enumerate(zip(self.gpu_mem_monitor, self.gpu_utils_monitor)):
+        for i, (membar, utilsbar) in enumerate(
+                zip(self.gpu_mem_monitor, self.gpu_utils_monitor)):
             with membar:
-                self.gpu_mem_monitor_bar.append(IntProgress(orientation='vertical', bar_style='success'))
-                self.gpu_mem_monitor_bar[-1].description = 'M'+str(i)+': 0%'
+                self.gpu_mem_monitor_bar.append(
+                    IntProgress(orientation='vertical', bar_style='success'))
+                self.gpu_mem_monitor_bar[-1].description = 'M' + str(i) + ': 0%'
                 self.gpu_mem_monitor_bar[-1].min = 0
                 self.gpu_mem_monitor_bar[-1].max = 100
                 display(self.gpu_mem_monitor_bar[-1])
 
             with utilsbar:
-                self.gpu_utils_monitor_bar.append(IntProgress(orientation='vertical', bar_style='success'))
-                self.gpu_utils_monitor_bar[-1].description = 'U'+str(i)+': 0%'
+                self.gpu_utils_monitor_bar.append(
+                    IntProgress(orientation='vertical', bar_style='success'))
+                self.gpu_utils_monitor_bar[-1].description = 'U' + str(
+                    i) + ': 0%'
                 self.gpu_utils_monitor_bar[-1].min = 0
                 self.gpu_utils_monitor_bar[-1].max = 100
                 display(self.gpu_utils_monitor_bar[-1])

@@ -5,12 +5,15 @@ from torch import nn
 
 
 class _AGCBlock(_Block):
+
     def __postinit__(self):
         stride = self._get_param('stride', 1)
-        self.gcn = _GCNBlock(self.op, self.in_dim, self.out_dim, False, True, False, **self._get_custom_kwargs())
-        self.tcn = _TCNBlock(self.op, self.in_dim, self.out_dim, False, True, False, **self._get_custom_kwargs())
+        self.gcn = _GCNBlock(self.op, self.in_dim, self.out_dim, False, True,
+                             False, **self._get_custom_kwargs())
+        self.tcn = _TCNBlock(self.op, self.in_dim, self.out_dim, False, True,
+                             False, **self._get_custom_kwargs())
         self.relu = nn.ReLU()
-        
+
         if (self.in_dim == self.out_dim) and (stride == 1):
             self.residual = lambda x: x
         else:

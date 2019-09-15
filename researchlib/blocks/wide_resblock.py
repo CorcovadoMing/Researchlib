@@ -33,9 +33,12 @@ class _WideResBlock(_Block):
         drop_layer = nn.Dropout(0.5) if self._get_param('dropout',
                                                         True) else None
         first_custom_kwargs = self._get_custom_kwargs({
-            'kernel_size': kernel_size,
-            'stride': stride,
-            'padding': padding,
+            'kernel_size':
+                kernel_size,
+            'stride':
+                stride,
+            'padding':
+                padding,
             'erased_activator':
                 True if self.preact and erased_activator else False
         })

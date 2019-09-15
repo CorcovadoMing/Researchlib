@@ -62,7 +62,7 @@ class _InvertedBottleneckBlock(_Block):
     def forward(self, x):
         _x = self.pre_conv(x)
         if self.branch_attention:
-            _x  = self.attention_branch(_x)
+            _x = self.attention_branch(_x)
         _x = self.post_conv(_x)
 
         if self.need_shortcut:
