@@ -23,7 +23,7 @@ def Heads(out_dim, attention=False, preact=False, **kwargs):
         # Normal heads
         layer.__dict__['AdaptiveConcatPool' + str(dim_type)](1),
         layer.Flatten(),
-        layer.Linear(2 * last_dim, out_dim)
+        layer.Linear(2 * last_dim, out_dim, bias=False)
     ]
 
     layers = list(filter(None, layers))
