@@ -290,7 +290,7 @@ class Runner:
 
         def _describe_fit(fit_dict):
             query = {}
-            keys = ['self_iterative', 'mixup_alpha', 'policy', 'lr', 'epochs']
+            keys = ['self_iterative', 'mmixup_alpha', 'policy', 'lr', 'epochs']
             for key, value in fit_dict.items():
                 if key in keys:
                     query[key] = copy.deepcopy(value)

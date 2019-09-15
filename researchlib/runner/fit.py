@@ -23,7 +23,6 @@ def fit(self,
         policy='linear',
         warmup=5,
         warmup_policy='linear',
-        mixup_alpha=0,
         metrics=[],
         callbacks=[],
         _id='none',
@@ -51,7 +50,6 @@ def fit(self,
     self._fit(
         epochs,
         lr,
-        mixup_alpha,
         metrics,
         callbacks,
         _id,
@@ -84,41 +82,25 @@ def _process_type(self, data_pack, inputs):
 
 
 @register_method
-def _process_data(self, data, target, mixup_alpha, inference):
-    # On the flay preprocessing
+def _process_data(self, data, target, inference):
+    # On the fly preprocessing
     for preprocessing_fn in self.preprocessing_list:
         data, target = preprocessing_fn._forward(data, target)
 
     # On the fly augmentation
     if not inference:
         random.shuffle(self.augmentation_list)
-        for augmentation_fn in self.augmentation_list[:
-                                                      3]:  # at most 3 of augmentations in a minibatch
-            data, target = augmentation_fn._forward(data, target, 0.5,
-                                                    random.random())
-
-    # Mixup
-    _mixup_alpha = Annealer.get_trace(
-        'mixup_alpha') if mixup_alpha == Annealer else mixup_alpha
-    if _mixup_alpha > 0 and not inference:
-        lam = np.random.beta(_mixup_alpha, _mixup_alpha)
-        target_res = []
-        for i in range(len(data)):
-            index = torch.randperm(data[i].size(0))
-            data[i] = lam * data[i] + (1 - lam) * data[i][index]
-            target_res.append(target[i][index])
-    else:
-        lam = None
-        target_res = None
-    return data, target, target_res, lam
+        for augmentation_fn in self.augmentation_list[:3]:  # at most 3 of augmentations in a minibatch
+            data, target = augmentation_fn._forward(data, target, 0.5, random.random())
+    return data, target
 
 
 @register_method
-def _iteration_pipeline(self, loader, mixup_alpha, inference=False):
+def _iteration_pipeline(self, loader, inference=False):
     for batch_idx, data_pack in inifinity_loop(loader):
         x, y = self._process_type(data_pack, self.inputs)
-        x, y, y_res, lam = self._process_data(x, y, mixup_alpha, inference)
-        yield x, y, y_res, lam
+        x, y = self._process_data(x, y, inference)
+        yield x, y
 
 
 #==================================================================================
@@ -142,7 +124,7 @@ def _anneal_policy(anneal_type):
 
 
 @register_method
-def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
+def _fit(self, epochs, lr, metrics, callbacks, _id, self_iterative,
          iterations, policy, warmup, warmup_policy, prefetch, plot, **kwargs):
 
     parameter_manager = ParameterManager(**kwargs)
@@ -206,12 +188,11 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
         if len(self.default_metrics):
             metrics = self.default_metrics + metrics
 
-        train_loader = self._iteration_pipeline(self.train_loader, mixup_alpha)
+        train_loader = self._iteration_pipeline(self.train_loader)
         if prefetch:
             train_loader = BackgroundGenerator(train_loader)
         if self.test_loader:
-            test_loader = self._iteration_pipeline(
-                self.test_loader, mixup_alpha, inference=True)
+            test_loader = self._iteration_pipeline(self.test_loader, inference=True)
             if prefetch:
                 test_loader = BackgroundGenerator(test_loader)
 
@@ -245,7 +226,7 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
             liveplot.redis.set('stage', 'train')
             liveplot.timer.clear()
             self.model.train()
-            for batch_idx, (x, y, y_res, lam) in enumerate(train_loader):
+            for batch_idx, (x, y) in enumerate(train_loader):
                 if mmixup_alpha is not None:
                     batch_size = x[0].size()[0]
                     lam = layer.Manifold_Mixup.setup_batch(
@@ -267,7 +248,7 @@ def _fit(self, epochs, lr, mixup_alpha, metrics, callbacks, _id, self_iterative,
                 liveplot.update_progressbar(batch_idx + 1)
                 if self.is_cuda:
                     x, y = [i.cuda() for i in x], [i.cuda() for i in y]
-                    if lam is not None:
+                    if y_res is not None:
                         # Mixup enabled
                         y_res = [i.cuda() for i in y_res]
 

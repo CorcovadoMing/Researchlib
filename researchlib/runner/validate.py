@@ -36,7 +36,7 @@ def validate_fn(self, **kwargs):
     test_loss = 0
     total = len(self.test_loader)
     with torch.no_grad():
-        for batch_idx, (x, y, _, _) in enumerate(test_loader):
+        for batch_idx, (x, y) in enumerate(test_loader):
             if self.is_cuda:
                 x, y = [i.cuda() for i in x], [i.cuda() for i in y]
 
