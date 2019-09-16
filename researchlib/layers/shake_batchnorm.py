@@ -15,7 +15,7 @@ class _ShakeBatchNorm2d(nn.Module):
         self.bn_affine = bn_affine
         self.gamma_range = gamma_range
         self.beta_range = beta_range
-        self.bn_layer = nn.BatchNorm2d(self.num_features, affine=self.bn_affine)
+        self.bn_layer = nn.BatchNorm2d(self.num_features, affine=self.bn_affine, track_running_stats=False)
 
     def forward(self, x):
         """
