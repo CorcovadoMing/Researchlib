@@ -42,31 +42,32 @@ def AutoConvNet(op,
     out_dim = base_dim
 
     # Stem
-    stem_type, stem_layers = list(stem.items())[0]
-    for i in range(stem_layers):
-        id = i + 1
-        if i == 0:
-            stem_kwargs = copy.deepcopy(kwargs)
-            stem_kwargs['erased_activator'] = True if preact else False
-        _type = _parse_type(i, type)
-        wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
-        out_dim *= wide_scale
-        _op_type = _get_op_type(stem_type, id, stem_layers, False, in_dim == out_dim)    
-        print(id, in_dim, out_dim, stem_type)
-        layers.append(
-            _op_type(
-                op,
-                in_dim,
-                out_dim,
-                do_pool=False,
-                do_norm=do_norm,
-                preact=False,
-                id=id,
-                total_blocks=stem_layers,
-                unit=unit,
-                **stem_kwargs))
-        layers.append(layer.ManifoldMixup())
-        in_dim = out_dim
+    if stem is not None:
+        stem_type, stem_layers = list(stem.items())[0]
+        for i in range(stem_layers):
+            id = i + 1
+            if i == 0:
+                stem_kwargs = copy.deepcopy(kwargs)
+                stem_kwargs['erased_activator'] = True if preact else False
+            _type = _parse_type(i, type)
+            wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
+            out_dim *= wide_scale
+            _op_type = _get_op_type(stem_type, id, stem_layers, False, in_dim == out_dim)    
+            print(id, in_dim, out_dim, stem_type)
+            layers.append(
+                _op_type(
+                    op,
+                    in_dim,
+                    out_dim,
+                    do_pool=False,
+                    do_norm=do_norm,
+                    preact=False,
+                    id=id,
+                    total_blocks=stem_layers,
+                    unit=unit,
+                    **stem_kwargs))
+            layers.append(layer.ManifoldMixup())
+            in_dim = out_dim
 
     # Body
     for i in range(total_blocks):
