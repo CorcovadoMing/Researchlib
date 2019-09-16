@@ -83,7 +83,7 @@ class _Block(nn.Module):
 
     def _get_norm_layer(self, norm_type, dim=None):
         if norm_type not in ['BatchNorm', 'InstanceNorm', 'GroupNorm', 'ShakeBatchNorm']:
-            raise ValueError('Unknown norm type')
+            raise ValueError(f'Unknown norm type {norm_type}')
 
         if dim is None:
             if self.preact:
