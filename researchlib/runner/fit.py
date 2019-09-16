@@ -242,8 +242,9 @@ def _fit(self, epochs, lr, metrics, callbacks, _id, self_iterative,
                     set_lr(self.optimizer, regular_lr)
 
                 # weight decay
-                weight_decay = Annealer.get_trace('weight_decay')
-                update_optim(self.optimizer, weight_decay, key='weight_decay')
+                if weight_decay > 0:
+                    weight_decay = Annealer.get_trace('weight_decay')
+                    update_optim(self.optimizer, weight_decay, key='weight_decay')
 
                 liveplot.update_progressbar(batch_idx + 1)
                 if self.is_cuda:
