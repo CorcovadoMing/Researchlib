@@ -68,6 +68,8 @@ def AutoConvNet(op,
                     **stem_kwargs))
             layers.append(layer.ManifoldMixup())
             in_dim = out_dim
+    else:
+        stem_layers = 0
 
     # Body
     for i in range(total_blocks):

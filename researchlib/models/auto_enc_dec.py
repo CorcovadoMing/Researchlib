@@ -106,6 +106,8 @@ def AutoEncDec(down_op,
                     **stem_kwargs))
             layers.append(layer.ManifoldMixup())
             in_dim = out_dim
+    else:
+        stem_layers = 0
 
         
     # The builder logic is from the middle blocks and recursive to append the begin and end block
