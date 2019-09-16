@@ -1,5 +1,6 @@
 from torch import nn
 from ..wrapper import _MultiscaleOutput, _MultiscaleInput
+from ..layers import layer
 
 
 class builder(nn.Module):
@@ -8,6 +9,7 @@ class builder(nn.Module):
 
     def __init__(self, nnlist):
         super().__init__()
+#         layer.ManifoldMixup.reset_counter()
         self.nnlist = nn.ModuleList(nnlist)
 
     def forward(self, x):
