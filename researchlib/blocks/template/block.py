@@ -48,8 +48,8 @@ class _Block(nn.Module):
             _new[key] = value
         return _new
 
-    def _get_param(self, key, init_value=None, required=False):
-        return self.parameter_manager.get_param(key, init_value, required)
+    def _get_param(self, key, init_value=None, required=False, validator=lambda _:True):
+        return self.parameter_manager.get_param(key, init_value, required, validator)
 
     def _get_dim_type(self):
         match = re.search('\dd', str(self.op))
@@ -75,7 +75,7 @@ class _Block(nn.Module):
         return layer.__dict__[activator_type](**act_kwargs)
 
     def _get_norm_layer(self, norm_type, dim=None):
-        if norm_type not in ['BatchNorm', 'InstanceNorm', 'GroupNorm']:
+        if norm_type not in ['BatchNorm', 'InstanceNorm', 'GroupNorm', 'ShakeBatchNorm']:
             raise ValueError('Unknown norm type')
 
         if dim is None:
@@ -95,7 +95,13 @@ class _Block(nn.Module):
         norm_op_str = norm_type + dim_str
         norm_op = layer.__dict__[norm_op_str]
 
-        return norm_op(*dim)
+        if norm_type == 'ShakeBatchNorm':
+            bn_affine = self._get_param('bn_affine', False, validator=lambda x: type(x)==bool)
+            gamma_range = self._get_param('gamma_range', [-1., 1.], validator=lambda x: type(x)==list)
+            beta_range = self._get_param('beta_range', [-1, 1.], validator=lambda x: type(x)==list)
+            return norm_op(*dim, bn_affine=bn_affine, gamma_range=gamma_range, beta_range=beta_range)
+        else:
+            return norm_op(*dim)
 
     def _get_pool_layer(self, pool_type, pool_factor, dim):
         if pool_type not in ['MaxPool', 'AvgPool', 'Combined', 'Upsample']:

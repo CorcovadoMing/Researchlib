@@ -31,6 +31,7 @@ from .aaconv import _AAConv2d
 from .blur import Downsample as _Downsample
 from .wsconv import _WSConv1d, _WSConvTranspose1d, _WSConv2d, _WSConvTranspose2d, _WSConv3d, _WSConvTranspose3d
 from .manifold_mixup import _ManifoldMixup
+from .shake_batchnorm import _ShakeBatchNorm1d, _ShakeBatchNorm2d, _ShakeBatchNorm3d
 
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
@@ -104,6 +105,9 @@ class layer(object):
     PositionEncoding = _PositionEncoding
     NoisyLinear = _NoisyLinear
     PixelNorm = _PixelNorm
+    ShakeBatchNorm1d = _ShakeBatchNorm1d
+    ShakeBatchNorm2d = _ShakeBatchNorm2d
+    ShakeBatchNorm3d = _ShakeBatchNorm3d
 
     Reshape = _Reshape
     Permute = _Permute
