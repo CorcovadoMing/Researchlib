@@ -68,11 +68,18 @@ class _Block(nn.Module):
             raise ValueError('Unknown activator type')
 
         # Inplace
-        if activator_type in ['ReLU']:
-            act_kwargs = {'inplace': True}
+        if activator_type in ['ReLU', 'CELU']:
+            inplace_kwargs = {'inplace': True}
+        else:
+            inplace_kwargs = {}
+        
+        # Other specific parameters
+        if activator_type in ['CELU']:
+            act_kwargs = {'alpha': 0.075}
         else:
             act_kwargs = {}
-        return layer.__dict__[activator_type](**act_kwargs)
+            
+        return layer.__dict__[activator_type](**inplace_kwargs, **act_kwargs)
 
     def _get_norm_layer(self, norm_type, dim=None):
         if norm_type not in ['BatchNorm', 'InstanceNorm', 'GroupNorm']:
