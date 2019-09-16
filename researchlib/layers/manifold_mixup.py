@@ -32,6 +32,10 @@ class _ManifoldMixup(nn.Module):
             return x
 
     @classmethod
+    def reset_counter(cls):
+        cls.block_counter = -1
+    
+    @classmethod
     def get_y(cls, y):
         index = ParameterManager.get_buffer(cls.index_key, clear=False)
         return y, [i[index] for i in y]
