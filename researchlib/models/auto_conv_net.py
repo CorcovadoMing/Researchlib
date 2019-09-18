@@ -35,7 +35,6 @@ def AutoConvNet(op,
     # Input mixup
     layers.append(layer.ManifoldMixup())
 
-    no_end_pool = parameter_manager.get_param('no_end_pool', False)
     auxiliary_classifier = parameter_manager.get_param('auxiliary_classifier', None)
 
     in_dim = input_dim
@@ -74,19 +73,18 @@ def AutoConvNet(op,
     # Body
     for i in range(total_blocks):
         id = i + 1
-
-        if id % pool_freq == 0:
+        if (isinstance(pool_freq, int) and id % pool_freq == 0) or (isinstance(pool_freq, list) and id in pool_freq):
             block_group += 1
-            do_pool = False if id == total_blocks and no_end_pool else True
+            do_pool = True
         else:
             do_pool = False
-
+            
         _type = _parse_type(i, type)
         wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
         out_dim = wide_scale * _filter_policy(id, type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy, parameter_manager)
         _op_type = _get_op_type(type, id, total_blocks, do_pool, in_dim == out_dim)
-
         print(id + stem_layers, in_dim, out_dim, do_pool)
+        
         if do_pool and auxiliary_classifier is not None:
             parameter_manager.save_buffer('dim_type', _get_dim_type(op))
             parameter_manager.save_buffer('last_dim', in_dim)
