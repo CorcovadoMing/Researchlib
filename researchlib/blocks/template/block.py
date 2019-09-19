@@ -99,17 +99,10 @@ class _Block(nn.Module):
             dim_str = ''
             group_num = self._get_param('groupnorm_group', 4)
             dim.insert(0, group_num)
+        
         norm_op_str = norm_type + dim_str
         norm_op = layer.__dict__[norm_op_str]
-
-        if norm_type == 'ShakeBatchNorm':
-            learnable_mean = self._get_param('learnable_mean', False, validator=lambda x: type(x)==bool)
-            bn_affine = self._get_param('bn_affine', False, validator=lambda x: type(x)==bool)
-            gamma_range = self._get_param('gamma_range', [-1., 1.], validator=lambda x: type(x)==list)
-            beta_range = self._get_param('beta_range', [-1, 1.], validator=lambda x: type(x)==list)
-            return norm_op(*dim, bn_affine=bn_affine, gamma_range=gamma_range, beta_range=beta_range, learnable_mean=learnable_mean)
-        else:
-            return norm_op(*dim)
+        return norm_op(*dim)
 
     def _get_pool_layer(self, pool_type, pool_factor, dim):
         if pool_type not in ['MaxPool', 'AvgPool', 'Combined', 'Upsample']:

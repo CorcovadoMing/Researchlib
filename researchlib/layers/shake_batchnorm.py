@@ -1,5 +1,6 @@
 from torch import nn
 import torch
+import torch.nn.functional as F
 
 
 class _ShakeBatchNorm1d(nn.Module): 
@@ -9,46 +10,26 @@ class _ShakeBatchNorm1d(nn.Module):
 
 class _ShakeBatchNorm2d(nn.Module):
 
-    def __init__(self, num_features, bn_affine, gamma_range, beta_range, learnable_mean):
+    def __init__(self, num_features):
         super().__init__()
         self.num_features = num_features
-        self.bn_affine = bn_affine
-        self.gamma_range = gamma_range
-        self.beta_range = beta_range
-        self.learnable_mean = learnable_mean
-        self.bn_layer = nn.BatchNorm2d(self.num_features, affine=self.bn_affine, track_running_stats=False)
-        
-        if learnable_mean:
-            self.m = nn.Parameter(torch.zeros(1))
+        self.mu = nn.Parameter(torch.randn(1, num_features, 1, 1))
+        self.logvar = nn.Parameter(torch.randn(1, num_features, 1, 1))
 
     def forward(self, x):
-        """
-        gamma_range (TODO)
-        """
-        x = self.bn_layer(x)
-        if self.training:
-            gamma = self._sample(self.gamma_range, x)
-            beta = self._sample(self.beta_range, x)
-        else:
-            gamma = (self.gamma_range[0] + self.gamma_range[1]) / 2.0
-            if self.learnable_mean:
-                beta = self.m
-            else:
-                beta = (self.beta_range[0] + self.beta_range[1]) / 2.0
-        return x * gamma + beta
-    
-    def _sample(self, range_, x):
-        if range_[0] == range_[1]:
-            samples = range_[0]
-        else:
-            samples = torch.FloatTensor(self.num_features).to(x.device).to(x.dtype).uniform_(*range_)
-            if self.learnable_mean:
-                samples += self.m
-            new_shape = [1, x.size(1)]
-            while len(new_shape) != x.dim(): 
-                new_shape.append(1)
-            samples = samples.view(*new_shape).expand_as(x)
-        return samples
+        # Instance norm, no batch size effect
+        original_mean = x.mean(dim=[2,3])[:, :, None, None]
+        x = x - original_mean
+        original_std = x.std(dim=[2,3])[:, :, None, None]
+        x = x / original_std
+        return x + self.reparameterize()
+        
+    def reparameterize(self):
+        std = torch.exp(0.5 * self.logvar)
+        std = F.softplus(std) + 1e-4
+        eps = torch.randn_like(std)
+        return self.mu + eps * std
+
         
 
 class _ShakeBatchNorm3d(nn.Module):
