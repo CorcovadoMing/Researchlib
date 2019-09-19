@@ -8,3 +8,4 @@ from .huber import *
 from .quantile import *
 from .ssim_msssim import *
 from .adaptive_robust_loss import *
+from .soft_dtw import *

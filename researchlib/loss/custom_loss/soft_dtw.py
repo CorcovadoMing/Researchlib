@@ -73,7 +73,10 @@ class _SoftDTW(Function):
         return grad_output * E, None
 
 
-class SoftDTW(torch.nn.Module):
+class SoftDTWLoss(torch.nn.Module):
+    '''
+        Shape (batch, timesteps, features)
+    '''
     def __init__(self, gamma = 1.0, normalize = False):
         super().__init__()
         self.normalize = normalize
