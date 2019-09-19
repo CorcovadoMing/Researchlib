@@ -74,8 +74,6 @@ def AutoEncDec(down_op,
     layers = []
     layers.append(layer.ManifoldMixup())
 
-    no_end_pool = parameter_manager.get_param('no_end_pool', False)
-
     in_dim = input_dim
     out_dim = base_dim
 
@@ -115,12 +113,12 @@ def AutoEncDec(down_op,
     dim_cache = []
     for i in range(total_blocks):
         id = i + 1
-        if id % pool_freq == 0:
+        if (isinstance(pool_freq, int) and id % pool_freq == 0) or (isinstance(pool_freq, list) and id in pool_freq):
             block_group += 1
-            do_pool = False if id == total_blocks and no_end_pool else True
+            do_pool = True
         else:
             do_pool = False
-
+            
         out_dim = wide_scale * _filter_policy(id, type, base_dim, max_dim,
                                               block_group, in_dim, total_blocks,
                                               filter_policy, parameter_manager)
