@@ -7,8 +7,7 @@ import torch
 
 
 class DiceMatrix(Matrix):
-
-    def __init__(self, smooth=1, target_class=1, need_exp=False):
+    def __init__(self, smooth = 1, target_class = 1, need_exp = False):
         super().__init__()
         self.smooth = smooth
         self.target_class = target_class
@@ -30,8 +29,8 @@ class DiceMatrix(Matrix):
             y_true = (y_true == self.target_class)
             y_true = y_true.view(y_pred.size(0), -1).float().contiguous()
             intersection = (y_pred * y_true).sum(1)
-            ratio = 2 * (intersection + self.smooth) / (
-                y_true.sum(1) + y_pred.sum(1) + self.smooth)
+            ratio = 2 * (intersection +
+                         self.smooth) / (y_true.sum(1) + y_pred.sum(1) + self.smooth)
             self.correct += ratio.mean()
         self.total += 1
 

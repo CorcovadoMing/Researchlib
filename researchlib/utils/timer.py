@@ -2,7 +2,6 @@ import time
 
 
 class Timer:
-
     def __init__(self, max_iterations):
         self.max_iterations = max_iterations
         self.start_time = 0

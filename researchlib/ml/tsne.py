@@ -19,12 +19,11 @@ def pairwise(data):
     n_obs, dim = data.size()
     xk = data.unsqueeze(0).expand(n_obs, n_obs, dim)
     xl = data.unsqueeze(1).expand(n_obs, n_obs, dim)
-    dkl2 = ((xk - xl)**2.0).sum(2).squeeze()
+    dkl2 = ((xk - xl) ** 2.0).sum(2).squeeze()
     return dkl2
 
 
 class VTSNE(nn.Module):
-
     def __init__(self, n_points, n_topics):
         super().__init__()
         self.n_points = n_points
@@ -47,10 +46,9 @@ class VTSNE(nn.Module):
         kld = torch.sum(kld).mul_(-0.5)
         return z, kld
 
-    def sample_logits(self, i=None):
+    def sample_logits(self, i = None):
         if i is None:
-            return self.reparametrize(self.logits_mu.weight,
-                                      self.logits_lv.weight)
+            return self.reparametrize(self.logits_mu.weight, self.logits_lv.weight)
         else:
             return self.reparametrize(self.logits_mu(i), self.logits_lv(i))
 
@@ -65,7 +63,7 @@ class VTSNE(nn.Module):
         # Compute the numerator
         xi, _ = self.sample_logits(i)
         xj, _ = self.sample_logits(j)
-        num = ((1. + (xi - xj)**2.0).sum(1)).pow(-1.0).squeeze()
+        num = ((1. + (xi - xj) ** 2.0).sum(1)).pow(-1.0).squeeze()
         qij = num / part.expand_as(num)
         # Compute KLD(pij || qij)
         loss_kld = pij * (torch.log(pij) - torch.log(qij))
@@ -76,10 +74,10 @@ class VTSNE(nn.Module):
         return self.forward(*args)
 
 
-def preprocess(x, perplexity=30, metric='euclidean'):
+def preprocess(x, perplexity = 30, metric = 'euclidean'):
     """ Compute pairiwse probabilities for MNIST pixels.
     """
-    distances2 = pairwise_distances(x, metric=metric, squared=True)
+    distances2 = pairwise_distances(x, metric = metric, squared = True)
     # This return a n x (n-1) prob array
     pij = manifold.t_sne._joint_probabilities(distances2, perplexity, False)
     # Convert to n x n prob array
@@ -87,7 +85,7 @@ def preprocess(x, perplexity=30, metric='euclidean'):
     return pij
 
 
-def plot(model, y=None):
+def plot(model, y = None):
     # Visualize the results
     embed = model.logits.weight.cpu().data.numpy()
     plt.figure()
@@ -96,7 +94,7 @@ def plot(model, y=None):
     ax = plt.gca()
     #for xy, (w, h), c in zip(embed, var, y):
     for xy, (w, h) in zip(embed, var):
-        e = Ellipse(xy=xy, width=w, height=h, ec=None, lw=0.0)
+        e = Ellipse(xy = xy, width = w, height = h, ec = None, lw = 0.0)
         #e.set_facecolor(plt.cm.Paired(c * 1.0 / y.max()))
         e.set_alpha(0.8)
         ax.add_artist(e)
@@ -115,8 +113,7 @@ def chunks(n, *args):
 
 
 class Wrapper():
-
-    def __init__(self, model, cuda=True):
+    def __init__(self, model, cuda = True):
         self.cuda = cuda
         self.model = model
         if cuda:
@@ -124,7 +121,7 @@ class Wrapper():
 
     def fit(self, batch_size, lr, epochs, *args):
         self.model.train()
-        opt = optim.Adam(self.model.parameters(), lr=lr)
+        opt = optim.Adam(self.model.parameters(), lr = lr)
         for epoch in range(epochs):
             total = 0.0
             for datas in chunks(batch_size, *args):
@@ -139,7 +136,6 @@ class Wrapper():
 
 
 class TSNE:
-
     def __init__(self, x):
         pij2d = preprocess(x)
         i, j = np.indices(pij2d.shape)
@@ -151,11 +147,11 @@ class TSNE:
         i, j, pij = i[idx], j[idx], pij[idx]
         self.model = VTSNE(x.shape[0], 2)
         self.wrap = Wrapper(self.model)
-        pij, i, j = torch.from_numpy(pij).cuda(), torch.from_numpy(
-            i).cuda(), torch.from_numpy(j).cuda()
+        pij, i, j = torch.from_numpy(pij).cuda(), torch.from_numpy(i).cuda(
+        ), torch.from_numpy(j).cuda()
         self.data = (pij, i, j)
 
-    def fit(self, batch_size=1024, lr=5e-2, epochs=50):
+    def fit(self, batch_size = 1024, lr = 5e-2, epochs = 50):
         self.wrap.fit(batch_size, lr, epochs, *self.data)
 
     def plot(self):

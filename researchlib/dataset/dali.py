@@ -2,7 +2,6 @@ import math
 
 
 class _NumpyIterator(object):
-
     def __init__(self, batch_size, x, y):
         self.x = x
         self.y = y
@@ -14,10 +13,8 @@ class _NumpyIterator(object):
         return self
 
     def __next__(self):
-        x = self.x[int(self.i * self.batch_size):int((self.i + 1) *
-                                                     self.batch_size)]
-        y = self.y[int(self.i * self.batch_size):int((self.i + 1) *
-                                                     self.batch_size)]
+        x = self.x[int(self.i * self.batch_size):int((self.i + 1) * self.batch_size)]
+        y = self.y[int(self.i * self.batch_size):int((self.i + 1) * self.batch_size)]
         self.i = (self.i + 1) % self.n
 
         return x[:, :, :, None], y[:, :, :, None]
@@ -32,14 +29,13 @@ from nvidia.dali.plugin.pytorch import DALIGenericIterator
 
 
 class _AugPipeline(Pipeline):
-
     def __init__(self, iterator, batch_size, num_threads, device_id):
         super().__init__(batch_size, num_threads, device_id)
         self.input = ops.ExternalSource()
         self.input_label = ops.ExternalSource()
-        self.int32 = ops.Cast(device="gpu", dtype=types.INT32)
-        self.float = ops.Cast(device="gpu", dtype=types.FLOAT)
-        self.flip = ops.Flip(device="gpu", vertical=0, horizontal=1)
+        self.int32 = ops.Cast(device = "gpu", dtype = types.INT32)
+        self.float = ops.Cast(device = "gpu", dtype = types.FLOAT)
+        self.flip = ops.Flip(device = "gpu", vertical = 0, horizontal = 1)
         self.iterator = iterator
 
     def iter_setup(self):
@@ -57,11 +53,12 @@ class _AugPipeline(Pipeline):
         return (output_img, output_label)
 
 
-def FromDali(x, y, batch_size=1, num_workers=4):
+def FromDali(x, y, batch_size = 1, num_workers = 4):
     pipe = _AugPipeline(
         iter(_NumpyIterator(batch_size, x, y)),
-        batch_size=batch_size,
-        num_threads=num_workers,
-        device_id=0)
+        batch_size = batch_size,
+        num_threads = num_workers,
+        device_id = 0
+    )
     pipe.build()
-    return DALIGenericIterator(pipe, ['data', 'label'], len(x), auto_reset=True)
+    return DALIGenericIterator(pipe, ['data', 'label'], len(x), auto_reset = True)

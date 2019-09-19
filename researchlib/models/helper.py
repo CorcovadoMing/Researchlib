@@ -18,15 +18,14 @@ def _parse_type(i, type_object):
 
 
 def _get_op_type(type_object, cur_block, total_blocks, do_pool, do_expand):
-    _type = _parse_type(cur_block-1, type_object)    
-    
+    _type = _parse_type(cur_block - 1, type_object)
+
     if _type not in [
-            'vgg', 'dawn', 'residual', 'residual-bottleneck', 'wide-residual',
-            'inverted-bottleneck', 'inceptionv3', 'inceptionv4',
-            'inception-residualv2'
+        'vgg', 'dawn', 'residual', 'residual-bottleneck', 'wide-residual', 'inverted-bottleneck',
+        'inceptionv3', 'inceptionv4', 'inception-residualv2'
     ]:
         raise ValueError(f'Type {_type} is not supperted')
-        
+
     if _type == 'vgg':
         _op_type = block.VGGBlock
     elif _type == 'dawn':
@@ -75,21 +74,22 @@ def _get_dim_type(op):
     return dim_str
 
 
-def _filter_policy(block_idx, type_object, base_dim, max_dim, block_group, cur_dim,
-                   total_blocks, policy, parameter_manager):
-    
-    _type = _parse_type(block_idx-1, type_object) 
-    
+def _filter_policy(
+    block_idx, type_object, base_dim, max_dim, block_group, cur_dim, total_blocks, policy,
+    parameter_manager
+):
+
+    _type = _parse_type(block_idx - 1, type_object)
+
     if policy == 'default':
-        result = base_dim * (2**(block_group))
+        result = base_dim * (2 ** (block_group))
     elif policy == 'pyramid':
         if _type == 'residual-bottleneck':
             ratio = 4
         else:
             ratio = 1
         pyramid_alpha = parameter_manager.get_param('pyramid_alpha', 200)
-        result = math.floor(base_dim +
-                            pyramid_alpha * block_idx / total_blocks) * ratio
+        result = math.floor(base_dim + pyramid_alpha * block_idx / total_blocks) * ratio
     if max_dim != -1:
         return min(max_dim, result)
     else:

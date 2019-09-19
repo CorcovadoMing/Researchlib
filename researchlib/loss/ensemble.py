@@ -4,7 +4,6 @@ from .mapping import loss_mapping
 
 
 class EnsembleLoss(nn.Module):
-
     def __init__(self, fns, weights):
         super().__init__()
         self.fns = fns

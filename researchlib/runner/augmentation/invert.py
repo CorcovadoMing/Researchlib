@@ -5,8 +5,7 @@ from PIL import Image, ImageOps, ImageEnhance
 
 
 class Invert(template.NumpyAugmentation):
-
-    def __init__(self, prob=None, mag=None, include_y=False):
+    def __init__(self, prob = None, mag = None, include_y = False):
         super().__init__()
         self.include_y = include_y
         self.prob = prob

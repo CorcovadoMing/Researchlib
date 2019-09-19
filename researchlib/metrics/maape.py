@@ -9,18 +9,15 @@ class MAAPE(Matrix):
     Range: 0 ≤ MAAPE < π/2, does not indicate bias, smaller is better.
     Notes: Represents the mean absolute error as a percentage of the observed values. Handles 0s in the observed data. This metric is not as biased as MAPE by under-over predictions.
     """
-
-    def __init__(self, epsilon=1e-9):
+    def __init__(self, epsilon = 1e-9):
         super().__init__()
         self.total = 0
         self.value = 0
         self.epsilon = epsilon
 
     def forward(self, loss_input):
-        y_pred, y_true = loss_input[0].cpu().detach().numpy(
-        ), loss_input[1].cpu().detach().numpy()
-        self.value += np.arctan(
-            np.abs(y_true - y_pred) / (y_true + self.epsilon)).mean()
+        y_pred, y_true = loss_input[0].cpu().detach().numpy(), loss_input[1].cpu().detach().numpy()
+        self.value += np.arctan(np.abs(y_true - y_pred) / (y_true + self.epsilon)).mean()
         self.total += 1
 
     def output(self):

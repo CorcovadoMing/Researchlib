@@ -13,26 +13,22 @@ import zarr
 
 
 class _Parser:
-
     def __init__(self):
         pass
 
-    def parse(self,
-              name: str,
-              path: str,
-              parse_format: str,
-              label_mapping: str = None,
-              sep: str = None) -> None:
-        os.makedirs(name, exist_ok=True)
+    def parse(
+        self, name: str, path: str, parse_format: str, label_mapping: str = None, sep: str = None
+    ) -> None:
+        os.makedirs(name, exist_ok = True)
 
         glob_pattern = os.path.join(
             path,
-            parse_format.replace('{label}', '*').replace('{data}', '*'))
+            parse_format.replace('{label}', '*').replace('{data}', '*')
+        )
         match_pattern = os.path.join(
             path,
-            parse_format.replace('{label}',
-                                 '(.+)').replace('{data}',
-                                                 '(.+)')).replace('*', '.+')
+            parse_format.replace('{label}', '(.+)').replace('{data}', '(.+)')
+        ).replace('*', '.+')
 
         data_position = parse_format.find('{data}')
         label_position = parse_format.find('{label}')
@@ -57,11 +53,8 @@ class _Parser:
 
         # Deal with label mapping
         if label_mapping is not None:
-            mapping_df = pd.read_csv(
-                os.path.join(path, label_mapping), sep=sep, header=None)
-            mapping_dict = {
-                i: j for i, j in zip(mapping_df[0].values, mapping_df[1].values)
-            }
+            mapping_df = pd.read_csv(os.path.join(path, label_mapping), sep = sep, header = None)
+            mapping_dict = {i: j for i, j in zip(mapping_df[0].values, mapping_df[1].values)}
 
         data_path = []
         label = []
@@ -76,23 +69,23 @@ class _Parser:
 
         df = pd.DataFrame(list(zip(data_path, label)))
         df.columns = ['Data Path', 'Labels']
-        df.to_csv(os.path.join(name, 'parse_result.csv'), index=False)
+        df.to_csv(os.path.join(name, 'parse_result.csv'), index = False)
 
-    def build(self,
-              name: str,
-              shape,
-              batch_size: int = 1000,
-              num_workers: int = os.cpu_count(),
-              force: bool = False):
-
+    def build(
+        self,
+        name: str,
+        shape,
+        batch_size: int = 1000,
+        num_workers: int = os.cpu_count(),
+        force: bool = False
+    ):
         def _task(*args):
             # TODO: shape needs to be passed from outside
             desc = args[0]
             data_zarr = args[1]
             label_zarr = args[2]
-            data_zarr[desc['id']] = cv2.resize(
-                imread(desc['data'], pilmode='RGB'), (256, 256)).transpose(
-                    (2, 0, 1))
+            data_zarr[desc['id']] = cv2.resize(imread(desc['data'], pilmode = 'RGB'),
+                                               (256, 256)).transpose((2, 0, 1))
             label_zarr[desc['id']] = int(desc['label'])
             return desc['id']
 
@@ -102,23 +95,20 @@ class _Parser:
             )
         else:
             parse_file = pd.read_csv(os.path.join(name, 'parse_result.csv'))
-            parse_iter = zip(parse_file['Data Path'].values,
-                             parse_file['Labels'].values)
+            parse_iter = zip(parse_file['Data Path'].values, parse_file['Labels'].values)
             total_length = len(parse_file['Data Path'].values)
             total_epoch = math.ceil(total_length / batch_size)
 
             # Initialization
-            root = zarr.open(os.path.join(name, 'db.zarr'), mode='w')
-            data_zarr = root.zeros(
-                'data', shape=(1, *shape), chunks=(1, *shape), dtype='f')
-            label_zarr = root.zeros('label', shape=(1,), chunks=(1,), dtype='i')
+            root = zarr.open(os.path.join(name, 'db.zarr'), mode = 'w')
+            data_zarr = root.zeros('data', shape = (1, *shape), chunks = (1, *shape), dtype = 'f')
+            label_zarr = root.zeros('label', shape = (1, ), chunks = (1, ), dtype = 'i')
 
             # resize the storage in the first place
             data_zarr.resize(total_length, *shape)
-            label_zarr.resize(total_length,)
+            label_zarr.resize(total_length, )
 
-            executor = ParallelExecutor(
-                _task, max_job=batch_size, num_workers=num_workers)
+            executor = ParallelExecutor(_task, max_job = batch_size, num_workers = num_workers)
             executor.start(data_zarr, label_zarr)
 
             try:

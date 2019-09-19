@@ -5,7 +5,6 @@ from torch.autograd import Variable
 
 
 class ShakeDropFunction(torch.autograd.Function):
-
     @staticmethod
     def forward(ctx, x, training, p, alpha_range, beta_range, mode):
         '''
@@ -47,15 +46,16 @@ class ShakeDropFunction(torch.autograd.Function):
             if gate.item() == 0:
                 if type(alpha_range) == list:  # two-element list
                     if int(mode) == 0:
-                        alpha = torch.FloatTensor(1).to(x.device).to(
-                            x.dtype).uniform_(*alpha_range)
+                        alpha = torch.FloatTensor(1).to(x.device).to(x.dtype
+                                                                     ).uniform_(*alpha_range)
                         new_shape = []
                         while len(new_shape) != x.dim():
                             new_shape.append(1)
                         alpha = alpha.view(*new_shape).expand_as(x)
                     if int(mode) == 1:
-                        alpha = torch.FloatTensor(x.size(0)).to(x.device).to(
-                            x.dtype).uniform_(*alpha_range)
+                        alpha = torch.FloatTensor(x.size(0)).to(x.device
+                                                                ).to(x.dtype
+                                                                     ).uniform_(*alpha_range)
                         new_shape = [
                             alpha.size(0),
                         ]
@@ -63,15 +63,16 @@ class ShakeDropFunction(torch.autograd.Function):
                             new_shape.append(1)
                         alpha = alpha.view(*new_shape).expand_as(x)
                     elif int(mode) == 2:
-                        alpha = torch.FloatTensor(x.size(0), x.size(1)).to(
-                            x.device).to(x.dtype).uniform_(*alpha_range)
+                        alpha = torch.FloatTensor(x.size(0),
+                                                  x.size(1)).to(x.device
+                                                                ).to(x.dtype
+                                                                     ).uniform_(*alpha_range)
                         new_shape = [alpha.size(0), alpha.size(1)]
                         while len(new_shape) != x.dim():
                             new_shape.append(1)
                         alpha = alpha.view(*new_shape).expand_as(x)
                     elif int(mode) == 3:
-                        alpha = torch.empty_like(x).to(x.device).to(
-                            x.dtype).uniform_(*alpha_range)
+                        alpha = torch.empty_like(x).to(x.device).to(x.dtype).uniform_(*alpha_range)
                 elif alpha_range == 0:
                     alpha = 0
                 return alpha * x
@@ -89,16 +90,16 @@ class ShakeDropFunction(torch.autograd.Function):
         if gate.item() == 0:
             if len(beta_range) == 2:  # two-element list
                 if int(mode) == 0:
-                    beta = torch.FloatTensor(1).to(grad_output.device).to(
-                        grad_output.dtype).uniform_(*beta_range)
+                    beta = torch.FloatTensor(1).to(grad_output.device).to(grad_output.dtype
+                                                                          ).uniform_(*beta_range)
                     new_shape = []
                     while len(new_shape) != grad_output.dim():
                         new_shape.append(1)
                     beta = beta.view(*new_shape).expand_as(grad_output)
                 if int(mode) == 1:
-                    beta = torch.FloatTensor(grad_output.size(0)).to(
-                        grad_output.device).to(
-                            grad_output.dtype).uniform_(*beta_range)
+                    beta = torch.FloatTensor(grad_output.size(0)).to(grad_output.device
+                                                                     ).to(grad_output.dtype
+                                                                          ).uniform_(*beta_range)
                     new_shape = [
                         beta.size(0),
                     ]
@@ -106,18 +107,18 @@ class ShakeDropFunction(torch.autograd.Function):
                         new_shape.append(1)
                     beta = beta.view(*new_shape).expand_as(grad_output)
                 elif int(mode) == 2:
-                    beta = torch.FloatTensor(
-                        grad_output.size(0),
-                        grad_output.size(1)).to(grad_output.device).to(
-                            grad_output.dtype).uniform_(*beta_range)
+                    beta = torch.FloatTensor(grad_output.size(0),
+                                             grad_output.size(1)).to(grad_output.device
+                                                                     ).to(grad_output.dtype
+                                                                          ).uniform_(*beta_range)
                     new_shape = [beta.size(0), beta.size(1)]
                     while len(new_shape) != grad_output.dim():
                         new_shape.append(1)
                     beta = beta.view(*new_shape).expand_as(grad_output)
                 elif int(mode) == 3:
-                    beta = torch.empty_like(grad_output).to(
-                        grad_output.device).to(
-                            grad_output.dtype).uniform_(*beta_range)
+                    beta = torch.empty_like(grad_output).to(grad_output.device
+                                                            ).to(grad_output.dtype
+                                                                 ).uniform_(*beta_range)
                 beta = Variable(beta)
             elif beta_range == 0:
                 beta = 0
@@ -131,14 +132,15 @@ class _ShakeDrop(nn.Module):
         ShakeDrop Regularization for Deep Residual Learning:
         https://arxiv.org/abs/1802.02375
     '''
-
-    def __init__(self,
-                 block_idx,
-                 block_num,
-                 alpha_range=[-1, 1],
-                 beta_range=[0, 1],
-                 shakedrop_prob=0.5,
-                 mode=3):
+    def __init__(
+        self,
+        block_idx,
+        block_num,
+        alpha_range = [-1, 1],
+        beta_range = [0, 1],
+        shakedrop_prob = 0.5,
+        mode = 3
+    ):
         '''
         Apply linear decay rule to compute p value for each block.
         Then p=1 for input, p=p_L for last block
@@ -174,6 +176,6 @@ class _ShakeDrop(nn.Module):
         self.mode = torch.empty(1).fill_(mode)
 
     def forward(self, x):
-        return ShakeDropFunction.apply(x, self.training, self.p,
-                                       self.alpha_range, self.beta_range,
-                                       self.mode)
+        return ShakeDropFunction.apply(
+            x, self.training, self.p, self.alpha_range, self.beta_range, self.mode
+        )

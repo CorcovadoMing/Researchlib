@@ -3,8 +3,7 @@ import torch
 
 
 class _NoiseInjection(nn.Module):
-
-    def __init__(self, type='add'):
+    def __init__(self, type = 'add'):
         super().__init__()
         self.gain = nn.Parameter(torch.ones(1))
         self.type = type

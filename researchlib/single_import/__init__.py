@@ -53,7 +53,7 @@ else:
 
 
 # Frontend
-def _initialize_redis(r, variable, init_value, need_encode=False):
+def _initialize_redis(r, variable, init_value, need_encode = False):
     try:
         result = r.get(variable)
         assert result is not None
@@ -82,10 +82,11 @@ else:
             'val_loss': [],
             'val_acc': []
         },
-        need_encode=True)
-    _initialize_redis(r, 'experiment', [], need_encode=True)
+        need_encode = True
+    )
+    _initialize_redis(r, 'experiment', [], need_encode = True)
     del r
-    dash = _Dashboard(verbose=False)
+    dash = _Dashboard(verbose = False)
     dash.start()
     print()
     print('* Dashboard is open at http://<ip>:8050')

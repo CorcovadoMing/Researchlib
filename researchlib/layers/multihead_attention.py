@@ -2,8 +2,7 @@ from torch import nn
 
 
 class MultiHeadAttention(nn.Module):
-
-    def __init__(self, in_feature, out_feature, heads=8):
+    def __init__(self, in_feature, out_feature, heads = 8):
         super().__init__()
 
         assert out_feature % heads == 0
@@ -31,15 +30,13 @@ class MultiHeadAttention(nn.Module):
         bs = x.size(0)
         ts = x.size(2)
         x = x.transpose(-1, -2)  # bs, ts, features
-        q = self.qw(x).view(bs, ts, self.heads, self.inter_feature).transpose(
-            1, 2)  # bs, head, ts, feature
-        k = self.kw(x).view(bs, ts, self.heads,
-                            self.inter_feature).transpose(1, 2)
-        v = self.vw(x).view(bs, ts, self.heads,
-                            self.inter_feature).transpose(1, 2)
-        e = (self.softmax(
-            (q @ k.transpose(-1, -2)) /
-            self.inter_feature**0.5)) @ v  # (ts, ts) @ (ts, feature)
+        q = self.qw(x).view(bs, ts, self.heads,
+                            self.inter_feature).transpose(1, 2)  # bs, head, ts, feature
+        k = self.kw(x).view(bs, ts, self.heads, self.inter_feature).transpose(1, 2)
+        v = self.vw(x).view(bs, ts, self.heads, self.inter_feature).transpose(1, 2)
+        e = (
+            self.softmax((q @ k.transpose(-1, -2)) / self.inter_feature ** 0.5)
+        ) @ v  # (ts, ts) @ (ts, feature)
         out = e.transpose(1, 2).contiguous().view(bs, ts, self.out_feature)
         out_inter = self.norm1(out + x)  # bs, ts, features
         out = self.drop1(out_inter)

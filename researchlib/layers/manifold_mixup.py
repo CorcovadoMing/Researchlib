@@ -19,10 +19,11 @@ class _ManifoldMixup(nn.Module):
 
     def forward(self, x):
         enable = ParameterManager.get_buffer(
-            self.block_id_key.format(self.block_idx), clear=False)
+            self.block_id_key.format(self.block_idx), clear = False
+        )
         if enable:
-            lambda_ = ParameterManager.get_buffer(self.lambda_key, clear=False)
-            index = ParameterManager.get_buffer(self.index_key, clear=False)
+            lambda_ = ParameterManager.get_buffer(self.lambda_key, clear = False)
+            index = ParameterManager.get_buffer(self.index_key, clear = False)
             if not self.training:
                 lambda_ = 1.0
                 index = list(range(x.size()[0]))
@@ -34,27 +35,21 @@ class _ManifoldMixup(nn.Module):
     @classmethod
     def reset_counter(cls):
         cls.block_counter = -1
-    
+
     @classmethod
     def get_y(cls, y):
-        index = ParameterManager.get_buffer(cls.index_key, clear=False)
+        index = ParameterManager.get_buffer(cls.index_key, clear = False)
         return y, [i[index] for i in y]
 
     @classmethod
     def register(cls):
         cls.block_counter = cls.block_counter + 1
-        ParameterManager.save_buffer(
-            cls.block_id_key.format(cls.block_counter), False)
+        ParameterManager.save_buffer(cls.block_id_key.format(cls.block_counter), False)
 
     @classmethod
-    def setup_batch(cls,
-                    alpha,
-                    batch_size,
-                    fixed_mmixup=None,
-                    random_mmixup=None):
+    def setup_batch(cls, alpha, batch_size, fixed_mmixup = None, random_mmixup = None):
         if fixed_mmixup is not None and random_mmixup is not None:
-            raise ValueError(
-                'Please choose either fixed_mmixup or random_mmixup.')
+            raise ValueError('Please choose either fixed_mmixup or random_mmixup.')
         else:
             if alpha > 0.:
                 lambda_ = np.random.beta(alpha, alpha)
@@ -74,12 +69,12 @@ class _ManifoldMixup(nn.Module):
     def enable_blocks(cls, block_list):
         if max(block_list) > cls.block_counter:
             raise ValueError(
-                'block_idx:{} not exist! deepest block_idx is {} (zero-based)'
-                .format(max(block_list), cls.block_counter))
+                'block_idx:{} not exist! deepest block_idx is {} (zero-based)'.format(
+                    max(block_list), cls.block_counter
+                )
+            )
         for block_idx in range(cls.block_counter):
             if block_idx in block_list:
-                ParameterManager.save_buffer(
-                    cls.block_id_key.format(block_idx), True)
+                ParameterManager.save_buffer(cls.block_id_key.format(block_idx), True)
             else:
-                ParameterManager.save_buffer(
-                    cls.block_id_key.format(block_idx), False)
+                ParameterManager.save_buffer(cls.block_id_key.format(block_idx), False)

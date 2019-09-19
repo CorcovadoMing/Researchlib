@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def count(y, classes=10):
+def count(y, classes = 10):
     hist = [0 for _ in range(classes + 1)]
     for i in y:
         for j in set(i.reshape(100)):

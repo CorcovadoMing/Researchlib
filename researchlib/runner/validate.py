@@ -13,10 +13,9 @@ def validate_fn(self, **kwargs):
 
     metrics = parameter_manager.get_param('metrics', [])
     callbacks = parameter_manager.get_param('callbacks', [])
-    test_loader = parameter_manager.get_param('test_loader', required=True)
-    loss_fn = parameter_manager.get_param('loss_fn', required=True)
-    auxiliary_ensemble = parameter_manager.get_param('auxiliary_ensemble',
-                                                     False)
+    test_loader = parameter_manager.get_param('test_loader', required = True)
+    loss_fn = parameter_manager.get_param('loss_fn', required = True)
+    auxiliary_ensemble = parameter_manager.get_param('auxiliary_ensemble', False)
 
     self.model.eval()
     matrix_records = History()
@@ -24,10 +23,9 @@ def validate_fn(self, **kwargs):
     if self.swa and self.epoch >= self.swa_start:
         _switch_swa_mode(self.optimzier)
         if type(self.optimizer) == list:
-            i.bn_update(self.train_loader, self.model, device='cuda')
+            i.bn_update(self.train_loader, self.model, device = 'cuda')
         else:
-            self.optimizer.bn_update(
-                self.train_loader, self.model, device='cuda')
+            self.optimizer.bn_update(self.train_loader, self.model, device = 'cuda')
 
     # Reset metrics
     for m in metrics:
@@ -82,7 +80,7 @@ def validate_fn(self, **kwargs):
 
     # Output metrics
     for m in metrics:
-        matrix_records.add(m.output(), prefix='val')
+        matrix_records.add(m.output(), prefix = 'val')
 
     if self.swa and self.epoch >= self.swa_start:
         _switch_swa_mode(self.optimzier)

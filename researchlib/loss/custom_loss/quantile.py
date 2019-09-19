@@ -9,8 +9,7 @@ class QuantileLoss(nn.Module):
         gamma < 0.5 gives more panalty on higer prediction
         gamma > 0.5 gives more panalty on lower prediction
     '''
-
-    def __init__(self, gamma=0.5):
+    def __init__(self, gamma = 0.5):
         super().__init__()
         self.gamma = gamma
 

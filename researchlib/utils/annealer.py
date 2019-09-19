@@ -9,7 +9,7 @@ def _Cosine(tcur, srange, tmax):
         return end
 
 
-def _CosineTwoWay(tcur, srange, tmax, split_ratio=0.333):
+def _CosineTwoWay(tcur, srange, tmax, split_ratio = 0.333):
     split_epoch = int(tmax * split_ratio)
     if tcur <= split_epoch:
         return _Cosine(tcur, srange, split_epoch)
@@ -39,12 +39,9 @@ class Annealer:
     Fixed = _Fixed
 
     @classmethod
-    def set_trace(cls,
-                  name,
-                  max_step,
-                  srange=[0, 1],
-                  anneal_when='iteration',
-                  anneal_fn=lambda x: x):
+    def set_trace(
+        cls, name, max_step, srange = [0, 1], anneal_when = 'iteration', anneal_fn = lambda x: x
+    ):
         cls.tracker[name] = {
             'value': srange[0],
             'srange': srange,
@@ -68,35 +65,37 @@ class Annealer:
         cls.tracker[name][key] = value
 
     @classmethod
-    def _iteration_step(cls, key=None):
+    def _iteration_step(cls, key = None):
         if key is not None:
             if cls.tracker[key]['anneal_when'] == 'iteration':
                 cls.tracker[key]['cur_step'] += 1
                 cls.tracker[key]['value'] = cls.tracker[key]['anneal_fn'](
                     cls.tracker[key]['cur_step'], cls.tracker[key]['srange'],
-                    cls.tracker[key]['max_step'])
+                    cls.tracker[key]['max_step']
+                )
         else:
             for _key in cls.tracker:
                 if cls.tracker[_key]['anneal_when'] == 'iteration':
                     cls.tracker[_key]['cur_step'] += 1
                     cls.tracker[_key]['value'] = cls.tracker[_key]['anneal_fn'](
-                        cls.tracker[_key]['cur_step'],
-                        cls.tracker[_key]['srange'],
-                        cls.tracker[_key]['max_step'])
+                        cls.tracker[_key]['cur_step'], cls.tracker[_key]['srange'],
+                        cls.tracker[_key]['max_step']
+                    )
 
     @classmethod
-    def _epoch_step(cls, key=None):
+    def _epoch_step(cls, key = None):
         if key is not None:
             if cls.tracker[key]['anneal_when'] == 'epoch':
                 cls.tracker[key]['cur_step'] += 1
                 cls.tracker[key]['value'] = cls.tracker[key]['anneal_fn'](
                     cls.tracker[key]['cur_step'], cls.tracker[key]['srange'],
-                    cls.tracker[key]['max_step'])
+                    cls.tracker[key]['max_step']
+                )
         else:
             for _key in cls.tracker:
                 if cls.tracker[_key]['anneal_when'] == 'epoch':
                     cls.tracker[_key]['cur_step'] += 1
                     cls.tracker[_key]['value'] = cls.tracker[_key]['anneal_fn'](
-                        cls.tracker[_key]['cur_step'],
-                        cls.tracker[_key]['srange'],
-                        cls.tracker[_key]['max_step'])
+                        cls.tracker[_key]['cur_step'], cls.tracker[_key]['srange'],
+                        cls.tracker[_key]['max_step']
+                    )

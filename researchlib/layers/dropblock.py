@@ -23,8 +23,7 @@ class _DropBlock2d(nn.Module):
        https://arxiv.org/abs/1810.12890
 
     """
-
-    def __init__(self, drop_prob, block_size, steps=1e-5):
+    def __init__(self, drop_prob, block_size, steps = 1e-5):
         super().__init__()
         self.cur_prob = 0
         self.drop_prob = drop_prob
@@ -38,8 +37,7 @@ class _DropBlock2d(nn.Module):
     def forward(self, x):
         # shape: (bsize, channels, height, width)
 
-        assert x.dim(
-        ) == 4, "Expected input with 4 dimensions (bsize, channels, height, width)"
+        assert x.dim() == 4, "Expected input with 4 dimensions (bsize, channels, height, width)"
 
         if not self.training or self.drop_prob == 0.:
             return x
@@ -69,10 +67,11 @@ class _DropBlock2d(nn.Module):
 
     def _compute_block_mask(self, mask):
         block_mask = F.max_pool2d(
-            input=mask[:, None, :, :],
-            kernel_size=(self.block_size, self.block_size),
-            stride=(1, 1),
-            padding=self.block_size // 2)
+            input = mask[:, None, :, :],
+            kernel_size = (self.block_size, self.block_size),
+            stride = (1, 1),
+            padding = self.block_size // 2
+        )
 
         if self.block_size % 2 == 0:
             block_mask = block_mask[:, :, :-1, :-1]
@@ -82,7 +81,7 @@ class _DropBlock2d(nn.Module):
         return block_mask
 
     def _compute_gamma(self, x):
-        return self.cur_prob / (self.block_size**2)
+        return self.cur_prob / (self.block_size ** 2)
 
 
 class _DropBlock3d(_DropBlock2d):
@@ -105,8 +104,7 @@ class _DropBlock3d(_DropBlock2d):
        https://arxiv.org/abs/1810.12890
 
     """
-
-    def __init__(self, drop_prob, block_size, steps=1e-5):
+    def __init__(self, drop_prob, block_size, steps = 1e-5):
         super().__init__(drop_prob, block_size, steps)
 
     def forward(self, x):
@@ -143,10 +141,11 @@ class _DropBlock3d(_DropBlock2d):
 
     def _compute_block_mask(self, mask):
         block_mask = F.max_pool3d(
-            input=mask[:, None, :, :, :],
-            kernel_size=(self.block_size, self.block_size, self.block_size),
-            stride=(1, 1, 1),
-            padding=self.block_size // 2)
+            input = mask[:, None, :, :, :],
+            kernel_size = (self.block_size, self.block_size, self.block_size),
+            stride = (1, 1, 1),
+            padding = self.block_size // 2
+        )
 
         if self.block_size % 2 == 0:
             block_mask = block_mask[:, :, :-1, :-1, :-1]
@@ -156,4 +155,4 @@ class _DropBlock3d(_DropBlock2d):
         return block_mask
 
     def _compute_gamma(self, x):
-        return self.cur_prob / (self.block_size**3)
+        return self.cur_prob / (self.block_size ** 3)

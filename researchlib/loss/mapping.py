@@ -10,17 +10,16 @@ import numpy as np
 
 
 class smooth_nll_loss(nn.Module):
-
-    def __init__(self, smoothing=0.1):
+    def __init__(self, smoothing = 0.1):
         super().__init__()
-        self.criterion = nn.KLDivLoss(reduction='batchmean')
+        self.criterion = nn.KLDivLoss(reduction = 'batchmean')
         self.smoothing = smoothing
 
     def forward(self, x, target):
         smooth_dist = x.data.clone()
         smooth_dist.fill_(self.smoothing / (x.size(1) - 1))
         smooth_dist.scatter_(1, target.data, 1 - self.smoothing)
-        return self.criterion(x, Variable(smooth_dist, requires_grad=False))
+        return self.criterion(x, Variable(smooth_dist, requires_grad = False))
 
 
 def nl_loss(x, y):

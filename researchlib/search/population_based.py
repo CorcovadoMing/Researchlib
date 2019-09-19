@@ -41,8 +41,8 @@ def po_meta_heuristic_(x, objective, epoch, mode, accept, opt, opt_tune):
         for (i, data) in enumerate(child):
             child_fitness[i] = objective(data)
 
-        x_fitness, x_index = x_fitness.sort(descending=True)
-        child_fitness, child_index = child_fitness.sort(descending=True)
+        x_fitness, x_index = x_fitness.sort(descending = True)
+        child_fitness, child_index = child_fitness.sort(descending = True)
         x = x[x_index]
         child = child[child_index]
         x[int(x.size(0) / 2):] = child[:int(x.size(0) / 2)]
@@ -69,6 +69,6 @@ def po_meta_heuristic_(x, objective, epoch, mode, accept, opt, opt_tune):
 # -----------------------------------------------------------
 
 
-def _GeneticAlgorithm(x, objective, epoch, population=20):
+def _GeneticAlgorithm(x, objective, epoch, population = 20):
     x = x.repeat(population).view(population, -1)
     return po_meta_heuristic_(x, objective, epoch, None, None, None, None)

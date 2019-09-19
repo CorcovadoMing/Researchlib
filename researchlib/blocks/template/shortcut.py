@@ -3,7 +3,6 @@ import torch
 
 
 class _padding_shortcut(nn.Module):
-
     def __init__(self, in_dim, out_dim, pool_layer):
         super().__init__()
         self.in_dim = in_dim
@@ -15,9 +14,10 @@ class _padding_shortcut(nn.Module):
         if self.in_dim >= self.out_dim:
             return x[:, :self.out_dim]
         else:
-            return torch.cat(
-                (x,
-                 torch.autograd.Variable(
-                     torch.zeros(
-                         (x.size(0), self.out_dim - self.in_dim, *x.shape[2:]),
-                         device=x.device))), 1)
+            return torch.cat((
+                x,
+                torch.autograd.Variable(
+                    torch.zeros((x.size(0), self.out_dim - self.in_dim, *x.shape[2:]),
+                                device = x.device)
+                )
+            ), 1)

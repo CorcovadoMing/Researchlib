@@ -7,7 +7,6 @@ from .unit import unit
 
 
 class _InceptionResidualV2A(_Block):
-
     def __postinit__(self):
         unit_fn = self._get_param('unit', unit.conv)
         hidden_dim = self.out_dim // 3
@@ -22,7 +21,8 @@ class _InceptionResidualV2A(_Block):
                 'stride': 1,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.branch1 = nn.Sequential(
             unit_fn(
@@ -32,7 +32,8 @@ class _InceptionResidualV2A(_Block):
                     'stride': 1,
                     'padding': 0,
                     'erased_activator': False
-                })),
+                })
+            ),
             unit_fn(
                 self.op, hidden_dim, hidden_dim, False, True, False,
                 **self._get_custom_kwargs({
@@ -40,7 +41,9 @@ class _InceptionResidualV2A(_Block):
                     'stride': 1,
                     'padding': 1,
                     'erased_activator': False
-                })))
+                })
+            )
+        )
 
         self.branch2 = nn.Sequential(
             unit_fn(
@@ -50,7 +53,8 @@ class _InceptionResidualV2A(_Block):
                     'stride': 1,
                     'padding': 0,
                     'erased_activator': False
-                })),
+                })
+            ),
             unit_fn(
                 self.op, remain_hidden, remain_hidden, False, True, False,
                 **self._get_custom_kwargs({
@@ -58,7 +62,8 @@ class _InceptionResidualV2A(_Block):
                     'stride': 1,
                     'padding': 1,
                     'erased_activator': False
-                })),
+                })
+            ),
             unit_fn(
                 self.op, remain_hidden, remain_hidden, False, True, False,
                 **self._get_custom_kwargs({
@@ -66,7 +71,9 @@ class _InceptionResidualV2A(_Block):
                     'stride': 1,
                     'padding': 1,
                     'erased_activator': False
-                })))
+                })
+            )
+        )
 
         self.conv2d = unit_fn(
             self.op, self.out_dim, self.out_dim, False, True, False,
@@ -75,9 +82,10 @@ class _InceptionResidualV2A(_Block):
                 'stride': 1,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
 
-        self.relu = nn.ReLU(inplace=False)
+        self.relu = nn.ReLU(inplace = False)
 
     def forward(self, x):
         x0 = self.branch0(x)
@@ -91,7 +99,6 @@ class _InceptionResidualV2A(_Block):
 
 
 class _ReductionV2A(_Block):
-
     def __postinit__(self):
         unit_fn = self._get_param('unit', unit.conv)
         hidden_dim = self.out_dim // 3
@@ -105,7 +112,8 @@ class _ReductionV2A(_Block):
                 'stride': stride,
                 'padding': 1,
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.branch1 = nn.Sequential(
             unit_fn(
@@ -115,7 +123,8 @@ class _ReductionV2A(_Block):
                     'stride': 1,
                     'padding': 0,
                     'erased_activator': False
-                })),
+                })
+            ),
             unit_fn(
                 self.op, hidden_dim, hidden_dim, False, True, False,
                 **self._get_custom_kwargs({
@@ -123,7 +132,8 @@ class _ReductionV2A(_Block):
                     'stride': 1,
                     'padding': 1,
                     'erased_activator': False
-                })),
+                })
+            ),
             unit_fn(
                 self.op, hidden_dim, hidden_dim, False, True, False,
                 **self._get_custom_kwargs({
@@ -131,7 +141,9 @@ class _ReductionV2A(_Block):
                     'stride': stride,
                     'padding': 1,
                     'erased_activator': False
-                })))
+                })
+            )
+        )
 
         self.branch2 = nn.Sequential(
             layer.__dict__['MaxPool' + self._get_dim_type()](3, stride, 1),
@@ -142,7 +154,9 @@ class _ReductionV2A(_Block):
                     'stride': 1,
                     'padding': 0,
                     'erased_activator': False
-                })))
+                })
+            )
+        )
 
     def forward(self, x):
         x0 = self.branch0(x)
@@ -153,7 +167,6 @@ class _ReductionV2A(_Block):
 
 
 class _InceptionResidualV2B(_Block):
-
     def __postinit__(self):
         unit_fn = self._get_param('unit', unit.conv)
         hidden_dim = self.out_dim // 2
@@ -168,7 +181,8 @@ class _InceptionResidualV2B(_Block):
                 'stride': 1,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.branch1 = nn.Sequential(
             unit_fn(
@@ -178,7 +192,8 @@ class _InceptionResidualV2B(_Block):
                     'stride': 1,
                     'padding': 0,
                     'erased_activator': False
-                })),
+                })
+            ),
             unit_fn(
                 self.op, remain_hidden, remain_hidden, False, True, False,
                 **self._get_custom_kwargs({
@@ -186,7 +201,8 @@ class _InceptionResidualV2B(_Block):
                     'stride': 1,
                     'padding': (0, 3),
                     'erased_activator': False
-                })),
+                })
+            ),
             unit_fn(
                 self.op, remain_hidden, remain_hidden, False, True, False,
                 **self._get_custom_kwargs({
@@ -194,7 +210,8 @@ class _InceptionResidualV2B(_Block):
                     'stride': 1,
                     'padding': (3, 0),
                     'erased_activator': False
-                })),
+                })
+            ),
         )
 
         self.conv2d = unit_fn(
@@ -204,9 +221,10 @@ class _InceptionResidualV2B(_Block):
                 'stride': 1,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
 
-        self.relu = nn.ReLU(inplace=False)
+        self.relu = nn.ReLU(inplace = False)
 
     def forward(self, x):
         x0 = self.branch0(x)
@@ -219,7 +237,6 @@ class _InceptionResidualV2B(_Block):
 
 
 class _ReductionV2B(_Block):
-
     def __postinit__(self):
         unit_fn = self._get_param('unit', unit.conv)
         hidden_dim = self.out_dim // 4
@@ -234,7 +251,8 @@ class _ReductionV2B(_Block):
                     'stride': 1,
                     'padding': 0,
                     'erased_activator': False
-                })),
+                })
+            ),
             unit_fn(
                 self.op, hidden_dim, hidden_dim, False, True, False,
                 **self._get_custom_kwargs({
@@ -242,7 +260,9 @@ class _ReductionV2B(_Block):
                     'stride': stride,
                     'padding': 1,
                     'erased_activator': False
-                })))
+                })
+            )
+        )
 
         self.branch1 = nn.Sequential(
             unit_fn(
@@ -252,7 +272,8 @@ class _ReductionV2B(_Block):
                     'stride': 1,
                     'padding': 0,
                     'erased_activator': False
-                })),
+                })
+            ),
             unit_fn(
                 self.op, hidden_dim, hidden_dim, False, True, False,
                 **self._get_custom_kwargs({
@@ -260,7 +281,9 @@ class _ReductionV2B(_Block):
                     'stride': stride,
                     'padding': 1,
                     'erased_activator': False
-                })))
+                })
+            )
+        )
 
         self.branch2 = nn.Sequential(
             unit_fn(
@@ -270,7 +293,8 @@ class _ReductionV2B(_Block):
                     'stride': 1,
                     'padding': 0,
                     'erased_activator': False
-                })),
+                })
+            ),
             unit_fn(
                 self.op, hidden_dim, hidden_dim, False, True, False,
                 **self._get_custom_kwargs({
@@ -278,7 +302,8 @@ class _ReductionV2B(_Block):
                     'stride': 1,
                     'padding': 1,
                     'erased_activator': False
-                })),
+                })
+            ),
             unit_fn(
                 self.op, hidden_dim, hidden_dim, False, True, False,
                 **self._get_custom_kwargs({
@@ -286,7 +311,9 @@ class _ReductionV2B(_Block):
                     'stride': stride,
                     'padding': 1,
                     'erased_activator': False
-                })))
+                })
+            )
+        )
 
         self.branch3 = nn.Sequential(
             layer.__dict__['MaxPool' + self._get_dim_type()](3, stride, 1),
@@ -297,7 +324,9 @@ class _ReductionV2B(_Block):
                     'stride': 1,
                     'padding': 0,
                     'erased_activator': False
-                })))
+                })
+            )
+        )
 
     def forward(self, x):
         x0 = self.branch0(x)
@@ -309,7 +338,6 @@ class _ReductionV2B(_Block):
 
 
 class _InceptionResidualV2C(_Block):
-
     def __postinit__(self):
         unit_fn = self._get_param('unit', unit.conv)
         hidden_dim = self.out_dim // 2
@@ -324,7 +352,8 @@ class _InceptionResidualV2C(_Block):
                 'stride': 1,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.branch1 = nn.Sequential(
             unit_fn(
@@ -334,7 +363,8 @@ class _InceptionResidualV2C(_Block):
                     'stride': 1,
                     'padding': 0,
                     'erased_activator': False
-                })),
+                })
+            ),
             unit_fn(
                 self.op, remain_hidden, remain_hidden, False, True, False,
                 **self._get_custom_kwargs({
@@ -342,7 +372,8 @@ class _InceptionResidualV2C(_Block):
                     'stride': 1,
                     'padding': (0, 1),
                     'erased_activator': False
-                })),
+                })
+            ),
             unit_fn(
                 self.op, remain_hidden, remain_hidden, False, True, False,
                 **self._get_custom_kwargs({
@@ -350,7 +381,9 @@ class _InceptionResidualV2C(_Block):
                     'stride': 1,
                     'padding': (1, 0),
                     'erased_activator': False
-                })))
+                })
+            )
+        )
 
         self.conv2d = unit_fn(
             self.op, self.out_dim, self.out_dim, False, True, False,
@@ -359,8 +392,9 @@ class _InceptionResidualV2C(_Block):
                 'stride': 1,
                 'padding': 0,
                 'erased_activator': False
-            }))
-        self.relu = nn.ReLU(inplace=False)
+            })
+        )
+        self.relu = nn.ReLU(inplace = False)
 
     def forward(self, x):
         x0 = self.branch0(x)

@@ -9,7 +9,6 @@ import imageio
 
 
 class ReinforcementRunner:
-
     def __init__(self, env, net, estimator):
         self.env = env
         self.net = net.cuda()
@@ -22,7 +21,7 @@ class ReinforcementRunner:
         self.optimizer = torchcontrib.optim.SWA(Adam(net.parameters(), 1e-3))
         self.optimizer.swap_swa_sgd()
 
-    def _forward(self, prev_state=None, collect=True):
+    def _forward(self, prev_state = None, collect = True):
         if prev_state is None:
             prev_state = self.env.reset()
         if collect:
@@ -37,18 +36,17 @@ class ReinforcementRunner:
             self.log_policy_pool.append(distribution.log_prob(action))
         return state, reward, distribution, action, done
 
-    def _train(self, swa_update, gamma=0.99):
+    def _train(self, swa_update, gamma = 0.99):
         self.net.train()
         self.optimizer.swap_swa_sgd()
         for i in reversed(range(len(self.reward_pool) - 1)):
             if self.reward_pool[i] != 0:
                 self.reward_pool[i] += gamma * self.reward_pool[i + 1]
         self.reward_pool = torch.Tensor(self.reward_pool)
-        self.reward_pool = (self.reward_pool - self.reward_pool.mean()) / (
-            self.reward_pool.std() + 1e-7)
+        self.reward_pool = (self.reward_pool -
+                            self.reward_pool.mean()) / (self.reward_pool.std() + 1e-7)
 
-        baseline = self.estimator(torch.Tensor(
-            self.state_pool).float().cuda()).cpu().squeeze()
+        baseline = self.estimator(torch.Tensor(self.state_pool).float().cuda()).cpu().squeeze()
         rewards = self.reward_pool - baseline
         rewards = rewards.detach()
 
@@ -68,7 +66,7 @@ class ReinforcementRunner:
         loss.backward()
         self.estimator_optimizer.step()
 
-    def optimize(self, num_episode=500, batch_size=5):
+    def optimize(self, num_episode = 500, batch_size = 5):
         for episode in range(1, num_episode):
             self.net.eval()
             state = None
@@ -91,9 +89,8 @@ class ReinforcementRunner:
         self.net.eval()
         state = None
         for iteration in count(1):
-            state, reward, _, action, done = self._forward(state, collect=False)
-            self.env.render(
-                str(iteration) + ' ' + str(action) + ' ' + str(reward))
+            state, reward, _, action, done = self._forward(state, collect = False)
+            self.env.render(str(iteration) + ' ' + str(action) + ' ' + str(reward))
             if done:
                 break
 
@@ -102,8 +99,8 @@ class ReinforcementRunner:
         state = None
         buffer = []
         for iteration in count(1):
-            state, reward, _, action, done = self._forward(state, collect=False)
-            buffer.append(self.env.render(None, return_cache=True))
+            state, reward, _, action, done = self._forward(state, collect = False)
+            buffer.append(self.env.render(None, return_cache = True))
             if done:
                 break
-        imageio.mimsave(name + '.gif', buffer, duration=duration)
+        imageio.mimsave(name + '.gif', buffer, duration = duration)

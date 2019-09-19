@@ -2,7 +2,6 @@ import torch
 
 
 class Pipe:
-
     def __init__(self, runners, process_type: str = 'chain'):
         self.runners = runners
         self.process_type = process_type
@@ -21,7 +20,7 @@ class Pipe:
         if self.process == 'parallel':
             for _ in range(epochs):
                 for i, runner in enumerate(self.runners):
-                    runner.fit(1, _id='runner' + str(i + 1))
+                    runner.fit(1, _id = 'runner' + str(i + 1))
 
     def ensemble(self, x):
         if self.process != 'parallel':

@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
-
     def __init__(self):
         self.reset()
 
@@ -17,7 +16,7 @@ class AverageMeter(object):
         self.sum = 0
         self.count = 0
 
-    def update(self, val, n=1):
+    def update(self, val, n = 1):
         self.val = val
         self.sum += val * n
         self.count += n
@@ -26,7 +25,6 @@ class AverageMeter(object):
 
 class RecorderMeter(object):
     """Computes and stores the minimum loss value and its epoch index"""
-
     def __init__(self, total_epoch):
         self.reset(total_epoch)
 
@@ -35,16 +33,17 @@ class RecorderMeter(object):
         self.total_epoch = total_epoch
         self.current_epoch = 0
         self.epoch_losses = np.zeros((self.total_epoch, 2),
-                                     dtype=np.float32)  # [epoch, train/val]
+                                     dtype = np.float32)  # [epoch, train/val]
         self.epoch_losses = self.epoch_losses - 1
 
         self.epoch_accuracy = np.zeros((self.total_epoch, 2),
-                                       dtype=np.float32)  # [epoch, train/val]
+                                       dtype = np.float32)  # [epoch, train/val]
         self.epoch_accuracy = self.epoch_accuracy
 
     def update(self, idx, train_loss, train_acc, val_loss, val_acc):
         assert idx >= 0 and idx < self.total_epoch, 'total_epoch : {} , but update with the {} index'.format(
-            self.total_epoch, idx)
+            self.total_epoch, idx
+        )
         self.epoch_losses[idx, 0] = train_loss
         self.epoch_losses[idx, 1] = val_loss
         self.epoch_accuracy[idx, 0] = train_acc
@@ -68,7 +67,7 @@ class RecorderMeter(object):
         scale_distance = 48.8
         figsize = width / float(dpi), height / float(dpi)
 
-        fig = plt.figure(figsize=figsize)
+        fig = plt.figure(figsize = figsize)
         x_axis = np.array([i for i in range(self.total_epoch)])  # epochs
         y_axis = np.zeros(self.total_epoch)
 
@@ -79,60 +78,39 @@ class RecorderMeter(object):
         plt.xticks(np.arange(0, self.total_epoch + interval_x, interval_x))
         plt.yticks(np.arange(0, 100 + interval_y, interval_y))
         plt.grid()
-        plt.title(title, fontsize=20)
-        plt.xlabel('the training epoch', fontsize=16)
-        plt.ylabel('accuracy', fontsize=16)
+        plt.title(title, fontsize = 20)
+        plt.xlabel('the training epoch', fontsize = 16)
+        plt.ylabel('accuracy', fontsize = 16)
 
         y_axis[:] = self.epoch_accuracy[:, 0]
-        plt.plot(
-            x_axis,
-            y_axis,
-            color='g',
-            linestyle='-',
-            label='train-accuracy',
-            lw=2)
-        plt.legend(loc=4, fontsize=legend_fontsize)
+        plt.plot(x_axis, y_axis, color = 'g', linestyle = '-', label = 'train-accuracy', lw = 2)
+        plt.legend(loc = 4, fontsize = legend_fontsize)
 
         y_axis[:] = self.epoch_accuracy[:, 1]
-        plt.plot(
-            x_axis,
-            y_axis,
-            color='y',
-            linestyle='-',
-            label='valid-accuracy',
-            lw=2)
-        plt.legend(loc=4, fontsize=legend_fontsize)
+        plt.plot(x_axis, y_axis, color = 'y', linestyle = '-', label = 'valid-accuracy', lw = 2)
+        plt.legend(loc = 4, fontsize = legend_fontsize)
 
         y_axis[:] = self.epoch_losses[:, 0]
         plt.plot(
-            x_axis,
-            y_axis * 50,
-            color='g',
-            linestyle=':',
-            label='train-loss-x50',
-            lw=2)
-        plt.legend(loc=4, fontsize=legend_fontsize)
+            x_axis, y_axis * 50, color = 'g', linestyle = ':', label = 'train-loss-x50', lw = 2
+        )
+        plt.legend(loc = 4, fontsize = legend_fontsize)
 
         y_axis[:] = self.epoch_losses[:, 1]
         plt.plot(
-            x_axis,
-            y_axis * 50,
-            color='y',
-            linestyle=':',
-            label='valid-loss-x50',
-            lw=2)
-        plt.legend(loc=4, fontsize=legend_fontsize)
+            x_axis, y_axis * 50, color = 'y', linestyle = ':', label = 'valid-loss-x50', lw = 2
+        )
+        plt.legend(loc = 4, fontsize = legend_fontsize)
 
         if save_path is not None:
-            fig.savefig(save_path, dpi=dpi, bbox_inches='tight')
+            fig.savefig(save_path, dpi = dpi, bbox_inches = 'tight')
             print('---- save figure {} into {}'.format(title, save_path))
         plt.close(fig)
 
 
 def time_string():
     ISOTIMEFORMAT = '%Y-%m-%d %X'
-    string = '[{}]'.format(
-        time.strftime(ISOTIMEFORMAT, time.gmtime(time.time())))
+    string = '[{}]'.format(time.strftime(ISOTIMEFORMAT, time.gmtime(time.time())))
     return string
 
 

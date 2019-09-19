@@ -5,7 +5,6 @@ import torch.nn.functional as F
 
 
 class _NoisyLinear(nn.Module):
-
     def __init__(self, in_features, out_features):
         super().__init__()
         self.in_features = in_features
@@ -28,10 +27,8 @@ class _NoisyLinear(nn.Module):
 
     def forward(self, x):
         if self.training:
-            rand_in = self._f(
-                torch.randn(1, self.in_features, device=self.weight.device))
-            rand_out = self._f(
-                torch.randn(self.out_features, 1, device=self.weight.device))
+            rand_in = self._f(torch.randn(1, self.in_features, device = self.weight.device))
+            rand_out = self._f(torch.randn(self.out_features, 1, device = self.weight.device))
             epsilon_w = torch.matmul(rand_out, rand_in)
             epsilon_b = rand_out.squeeze()
 

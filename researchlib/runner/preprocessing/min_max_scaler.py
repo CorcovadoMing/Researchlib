@@ -2,8 +2,7 @@ from ..template import template
 
 
 class MinMaxScaler(template.TorchPreprocessing):
-
-    def __init__(self, target_range=[-1, 1], include_y=False):
+    def __init__(self, target_range = [-1, 1], include_y = False):
         super().__init__()
         self.target_range = target_range
         self.include_y = include_y

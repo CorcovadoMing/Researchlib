@@ -12,13 +12,9 @@ import copy
 
 
 class _RecurrentBlock(nn.Module):
-    
-    def __init__(self,
-                 begin_block,
-                 inner_block,
-                 end_block,
-                 skip_connection=False,
-                 skip_type='add'):
+    def __init__(
+        self, begin_block, inner_block, end_block, skip_connection = False, skip_type = 'add'
+    ):
         super().__init__()
         self.skip_connection = skip_connection
         self.skip_type = skip_type
@@ -38,30 +34,31 @@ class _RecurrentBlock(nn.Module):
             if self.skip_type == 'add':
                 out = out + x
             elif self.skip_type == 'concat':
-                out = torch.cat([out, x], dim=1)
+                out = torch.cat([out, x], dim = 1)
         out = self.end(out)
         return self.end_mmixup(out)
 
 
-def AutoEncDec(down_op,
-               up_op,
-               unit,
-               input_dim,
-               total_blocks,
-               type='residual',
-               filters=(128, 1024),
-               filter_policy='default',
-               stem={'vgg': 1},
-               preact=False,
-               pool_freq=1,
-               do_norm=True,
-               non_local_start=1e8,
-               skip_connection=False,
-               skip_type='concat',
-               **kwargs):
+def AutoEncDec(
+    down_op,
+    up_op,
+    unit,
+    input_dim,
+    total_blocks,
+    type = 'residual',
+    filters = (128, 1024),
+    filter_policy = 'default',
+    stem = {'vgg': 1},
+    preact = False,
+    pool_freq = 1,
+    do_norm = True,
+    non_local_start = 1e8,
+    skip_connection = False,
+    skip_type = 'concat',
+    **kwargs
+):
 
-    Runner.__model_settings__[
-        f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
+    Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
 
     if skip_type not in ['add', 'concat']:
         raise ValueError("skip_type can only be 'add' or 'concat'")
@@ -86,42 +83,47 @@ def AutoEncDec(down_op,
                 stem_kwargs = copy.deepcopy(kwargs)
                 stem_kwargs['erased_activator'] = True if preact else False
             _type = _parse_type(i, type)
-            wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
+            wide_scale = parameter_manager.get_param(
+                'wide_scale', 10
+            ) if _type == 'wide-residual' else 1
             out_dim *= wide_scale
-            _op_type = _get_op_type(stem_type, id, stem_layers, False, in_dim == out_dim)    
+            _op_type = _get_op_type(stem_type, id, stem_layers, False, in_dim == out_dim)
             print(id, in_dim, out_dim, stem_type)
             layers.append(
                 _op_type(
                     down_op,
                     in_dim,
                     out_dim,
-                    do_pool=False,
-                    do_norm=do_norm,
-                    preact=False,
-                    id=id,
-                    total_blocks=stem_layers,
-                    unit=unit,
-                    **stem_kwargs))
+                    do_pool = False,
+                    do_norm = do_norm,
+                    preact = False,
+                    id = id,
+                    total_blocks = stem_layers,
+                    unit = unit,
+                    **stem_kwargs
+                )
+            )
             layers.append(layer.ManifoldMixup())
             in_dim = out_dim
     else:
         stem_layers = 0
 
-        
     # The builder logic is from the middle blocks and recursive to append the begin and end block
     # We calculate the half-part of the model shape first
     dim_cache = []
     for i in range(total_blocks):
         id = i + 1
-        if (isinstance(pool_freq, int) and id % pool_freq == 0) or (isinstance(pool_freq, list) and id in pool_freq):
+        if (isinstance(pool_freq, int)
+            and id % pool_freq == 0) or (isinstance(pool_freq, list) and id in pool_freq):
             block_group += 1
             do_pool = True
         else:
             do_pool = False
-            
-        out_dim = wide_scale * _filter_policy(id, type, base_dim, max_dim,
-                                              block_group, in_dim, total_blocks,
-                                              filter_policy, parameter_manager)
+
+        out_dim = wide_scale * _filter_policy(
+            id, type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy,
+            parameter_manager
+        )
         print(id + stem_layers, in_dim, out_dim, do_pool)
         dim_cache.append((id + stem_layers, in_dim, out_dim, do_pool))
         in_dim = out_dim
@@ -132,10 +134,15 @@ def AutoEncDec(down_op,
 
         # TODO (Ming): Add an option to use different type of blocks in the autoencoder-like architecture
         _type = _parse_type(i, type)
-        wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
-        out_dim = wide_scale * _filter_policy(id, type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy, parameter_manager)
+        wide_scale = parameter_manager.get_param(
+            'wide_scale', 10
+        ) if _type == 'wide-residual' else 1
+        out_dim = wide_scale * _filter_policy(
+            id, type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy,
+            parameter_manager
+        )
         _op_type = _get_op_type(type, id, total_blocks, do_pool, in_dim == out_dim)
-        
+
         _op_type_begin = _op_type
         _op_type_inner = _op_type
         _op_type_end = _op_type
@@ -143,8 +150,7 @@ def AutoEncDec(down_op,
 
         cache_id, in_dim, out_dim, do_pool = dim_cache.pop()
         end_in_dim = out_dim if skip_type == 'add' else 2 * out_dim
-        print(2 * total_blocks + 1 - cache_id + stem_layers, end_in_dim, in_dim,
-              do_pool)
+        print(2 * total_blocks + 1 - cache_id + stem_layers, end_in_dim, in_dim, do_pool)
         kwargs['non_local'] = id >= non_local_start
         structure = _RecurrentBlock(
             # Begin

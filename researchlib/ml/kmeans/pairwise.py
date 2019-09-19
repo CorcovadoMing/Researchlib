@@ -4,7 +4,7 @@ calculation of pairwise distance, and return condensed result, i.e. we omit the 
 import torch
 
 
-def pairwise_distance(data1, data2=None):
+def pairwise_distance(data1, data2 = None):
     r'''
     using broadcast mechanism to calculate pairwise ecludian distance of data
     the input data is N*M matrix, where M is the dimension
@@ -17,21 +17,18 @@ def pairwise_distance(data1, data2=None):
     data1, data2 = data1.cuda(), data2.cuda()
 
     #N*1*M
-    A = data1.unsqueeze(dim=1)
+    A = data1.unsqueeze(dim = 1)
 
     #1*N*M
-    B = data2.unsqueeze(dim=0)
+    B = data2.unsqueeze(dim = 0)
 
-    dis = (A - B)**2.0
+    dis = (A - B) ** 2.0
     #return N*N matrix for pairwise distance
-    dis = dis.sum(dim=-1).squeeze()
+    dis = dis.sum(dim = -1).squeeze()
     return dis
 
 
-def group_pairwise(X,
-                   groups,
-                   device=0,
-                   fun=lambda r, c: pairwise_distance(r, c)):
+def group_pairwise(X, groups, device = 0, fun = lambda r, c: pairwise_distance(r, c)):
     group_dict = {}
     for group_index_r, group_r in enumerate(groups):
         for group_index_c, group_c in enumerate(groups):

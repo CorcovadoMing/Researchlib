@@ -5,7 +5,7 @@ from torch.autograd import Variable
 import numpy as np
 
 
-def get_sfs_idxs(sfs, last=True):
+def get_sfs_idxs(sfs, last = True):
     """
     Return the saved feature indexes that will be concatenated
     Inputs:
@@ -14,9 +14,7 @@ def get_sfs_idxs(sfs, last=True):
     """
     if last:
         feature_szs = [sfs_feats.features.size()[-1] for sfs_feats in sfs]
-        sfs_idxs = list(
-            np.where(
-                np.array(feature_szs[:-1]) != np.array(feature_szs[1:]))[0])
+        sfs_idxs = list(np.where(np.array(feature_szs[:-1]) != np.array(feature_szs[1:]))[0])
         if feature_szs[0] != feature_szs[1]:
             sfs_idxs = [0] + sfs_idxs
     else:
@@ -26,12 +24,7 @@ def get_sfs_idxs(sfs, last=True):
 
 def conv_bn_relu(in_c, out_c, kernel_size, stride, padding):
     return [
-        nn.Conv2d(
-            in_c,
-            out_c,
-            kernel_size=kernel_size,
-            stride=stride,
-            padding=padding),
+        nn.Conv2d(in_c, out_c, kernel_size = kernel_size, stride = stride, padding = padding),
         nn.ReLU(),
         nn.BatchNorm2d(out_c)
     ]
@@ -41,17 +34,14 @@ class UnetBlock(nn.Module):
     #TODO: ADAPT KERNEL SIZE, STRIDE AND PADDING SO THAT ANY SIZE DECAY WILL BE SUPPORTED
     def __init__(self, up_in_c, x_in_c):
         super().__init__()
-        self.upconv = nn.ConvTranspose2d(up_in_c, up_in_c // 2, 2,
-                                         2)  # H, W -> 2H, 2W
-        self.conv1 = nn.Conv2d(x_in_c + up_in_c // 2,
-                               (x_in_c + up_in_c // 2) // 2, 3, 1, 1)
-        self.conv2 = nn.Conv2d((x_in_c + up_in_c // 2) // 2,
-                               (x_in_c + up_in_c // 2) // 2, 3, 1, 1)
+        self.upconv = nn.ConvTranspose2d(up_in_c, up_in_c // 2, 2, 2)  # H, W -> 2H, 2W
+        self.conv1 = nn.Conv2d(x_in_c + up_in_c // 2, (x_in_c + up_in_c // 2) // 2, 3, 1, 1)
+        self.conv2 = nn.Conv2d((x_in_c + up_in_c // 2) // 2, (x_in_c + up_in_c // 2) // 2, 3, 1, 1)
         self.bn = nn.BatchNorm2d((x_in_c + up_in_c // 2) // 2)
 
     def forward(self, up_in, x_in):
         up_out = self.upconv(up_in)
-        cat_x = torch.cat([up_out, x_in], dim=1)
+        cat_x = torch.cat([up_out, x_in], dim = 1)
         x = F.relu(self.conv1(cat_x))
         x = F.relu(self.conv2(x))
         return self.bn(x)
@@ -93,8 +83,7 @@ class DynamicUnet(nn.Module):
     not a problem for state-of-the-art architectures as they follow this pattern but it should
     be changed for custom encoders that might have a different size decay.
     """
-
-    def __init__(self, encoder, last=True, n_classes=3):
+    def __init__(self, encoder, last = True, n_classes = 3):
         super().__init__()
         self.encoder = encoder
         self.n_children = len(list(encoder.children()))
@@ -118,7 +107,8 @@ class DynamicUnet(nn.Module):
             middle_in_c = self.sfs_szs[-1][1]
             middle_conv = nn.Sequential(
                 *conv_bn_relu(middle_in_c, middle_in_c * 2, 3, 1, 1),
-                *conv_bn_relu(middle_in_c * 2, middle_in_c, 3, 1, 1))
+                *conv_bn_relu(middle_in_c * 2, middle_in_c, 3, 1, 1)
+            )
             self.middle_conv = middle_conv.type(dtype)
 
         # middle conv
@@ -126,11 +116,10 @@ class DynamicUnet(nn.Module):
 
         # initialize upmodel, extra_block and 1x1 final conv
         if not hasattr(self, 'upmodel'):
-            x_copy = Variable(x.data, requires_grad=False)
+            x_copy = Variable(x.data, requires_grad = False)
             upmodel = []
             for idx in self.sfs_idxs[::-1]:
-                up_in_c, x_in_c = int(x_copy.size()[1]), int(
-                    self.sfs_szs[idx][1])
+                up_in_c, x_in_c = int(x_copy.size()[1]), int(self.sfs_szs[idx][1])
                 unet_block = UnetBlock(up_in_c, x_in_c).type(dtype)
                 upmodel.append(unet_block)
                 x_copy = unet_block(x_copy, self.sfs[idx].features)
@@ -138,12 +127,10 @@ class DynamicUnet(nn.Module):
 
             if imsize != self.sfs_szs[0][-2:]:
                 extra_in_c = self.upmodel[-1].conv2.out_channels
-                self.extra_block = nn.ConvTranspose2d(extra_in_c, extra_in_c, 2,
-                                                      2).type(dtype)
+                self.extra_block = nn.ConvTranspose2d(extra_in_c, extra_in_c, 2, 2).type(dtype)
 
             final_in_c = self.upmodel[-1].conv2.out_channels
-            self.final_conv = nn.Conv2d(final_in_c, self.n_classes,
-                                        1).type(dtype)
+            self.final_conv = nn.Conv2d(final_in_c, self.n_classes, 1).type(dtype)
 
         # run upsample
         for block, idx in zip(self.upmodel, self.sfs_idxs[::-1]):

@@ -12,7 +12,6 @@ import numpy as np
 
 
 class EqualLR:
-
     def __init__(self, name):
         self.name = name
 
@@ -38,15 +37,14 @@ class EqualLR:
         setattr(module, self.name, weight)
 
 
-def equal_lr(module, name='weight'):
+def equal_lr(module, name = 'weight'):
     EqualLR.apply(module, name)
 
     return module
 
 
 class FusedUpsample(nn.Module):
-
-    def __init__(self, in_channel, out_channel, kernel_size, padding=0):
+    def __init__(self, in_channel, out_channel, kernel_size, padding = 0):
         super().__init__()
 
         weight = torch.randn(in_channel, out_channel, kernel_size, kernel_size)
@@ -62,18 +60,18 @@ class FusedUpsample(nn.Module):
 
     def forward(self, input):
         weight = F.pad(self.weight * self.multiplier, [1, 1, 1, 1])
-        weight = (weight[:, :, 1:, 1:] + weight[:, :, :-1, 1:] +
-                  weight[:, :, 1:, :-1] + weight[:, :, :-1, :-1]) / 4
+        weight = (
+            weight[:, :, 1:, 1:] + weight[:, :, :-1, 1:] + weight[:, :, 1:, :-1] +
+            weight[:, :, :-1, :-1]
+        ) / 4
 
-        out = F.conv_transpose2d(
-            input, weight, self.bias, stride=2, padding=self.pad)
+        out = F.conv_transpose2d(input, weight, self.bias, stride = 2, padding = self.pad)
 
         return out
 
 
 class FusedDownsample(nn.Module):
-
-    def __init__(self, in_channel, out_channel, kernel_size, padding=0):
+    def __init__(self, in_channel, out_channel, kernel_size, padding = 0):
         super().__init__()
 
         weight = torch.randn(out_channel, in_channel, kernel_size, kernel_size)
@@ -89,32 +87,30 @@ class FusedDownsample(nn.Module):
 
     def forward(self, input):
         weight = F.pad(self.weight * self.multiplier, [1, 1, 1, 1])
-        weight = (weight[:, :, 1:, 1:] + weight[:, :, :-1, 1:] +
-                  weight[:, :, 1:, :-1] + weight[:, :, :-1, :-1]) / 4
+        weight = (
+            weight[:, :, 1:, 1:] + weight[:, :, :-1, 1:] + weight[:, :, 1:, :-1] +
+            weight[:, :, :-1, :-1]
+        ) / 4
 
-        out = F.conv2d(input, weight, self.bias, stride=2, padding=self.pad)
+        out = F.conv2d(input, weight, self.bias, stride = 2, padding = self.pad)
 
         return out
 
 
 class PixelNorm(nn.Module):
-
     def __init__(self):
         super().__init__()
 
     def forward(self, input):
-        return input / torch.sqrt(
-            torch.mean(input**2, dim=1, keepdim=True) + 1e-8)
+        return input / torch.sqrt(torch.mean(input ** 2, dim = 1, keepdim = True) + 1e-8)
 
 
 class BlurFunctionBackward(Function):
-
     @staticmethod
     def forward(ctx, grad_output, kernel, kernel_flip):
         ctx.save_for_backward(kernel, kernel_flip)
 
-        grad_input = F.conv2d(
-            grad_output, kernel_flip, padding=1, groups=grad_output.shape[1])
+        grad_input = F.conv2d(grad_output, kernel_flip, padding = 1, groups = grad_output.shape[1])
 
         return grad_input
 
@@ -123,18 +119,18 @@ class BlurFunctionBackward(Function):
         kernel, kernel_flip = ctx.saved_tensors
 
         grad_input = F.conv2d(
-            gradgrad_output, kernel, padding=1, groups=gradgrad_output.shape[1])
+            gradgrad_output, kernel, padding = 1, groups = gradgrad_output.shape[1]
+        )
 
         return grad_input, None, None
 
 
 class BlurFunction(Function):
-
     @staticmethod
     def forward(ctx, input, kernel, kernel_flip):
         ctx.save_for_backward(kernel, kernel_flip)
 
-        output = F.conv2d(input, kernel, padding=1, groups=input.shape[1])
+        output = F.conv2d(input, kernel, padding = 1, groups = input.shape[1])
 
         return output
 
@@ -142,8 +138,7 @@ class BlurFunction(Function):
     def backward(ctx, grad_output):
         kernel, kernel_flip = ctx.saved_tensors
 
-        grad_input = BlurFunctionBackward.apply(grad_output, kernel,
-                                                kernel_flip)
+        grad_input = BlurFunctionBackward.apply(grad_output, kernel, kernel_flip)
 
         return grad_input, None, None
 
@@ -152,19 +147,16 @@ blur = BlurFunction.apply
 
 
 class Blur(nn.Module):
-
     def __init__(self, channel):
         super().__init__()
 
-        weight = torch.tensor([[1, 2, 1], [2, 4, 2], [1, 2, 1]],
-                              dtype=torch.float32)
+        weight = torch.tensor([[1, 2, 1], [2, 4, 2], [1, 2, 1]], dtype = torch.float32)
         weight = weight.view(1, 1, 3, 3)
         weight = weight / weight.sum()
         weight_flip = torch.flip(weight, [2, 3])
 
         self.register_buffer('weight', weight.repeat(channel, 1, 1, 1))
-        self.register_buffer('weight_flip',
-                             weight_flip.repeat(channel, 1, 1, 1))
+        self.register_buffer('weight_flip', weight_flip.repeat(channel, 1, 1, 1))
 
     def forward(self, input):
         return blur(input, self.weight, self.weight_flip)
@@ -172,7 +164,6 @@ class Blur(nn.Module):
 
 
 class EqualConv2d(nn.Module):
-
     def __init__(self, *args, **kwargs):
         super().__init__()
 
@@ -186,7 +177,6 @@ class EqualConv2d(nn.Module):
 
 
 class EqualLinear(nn.Module):
-
     def __init__(self, in_dim, out_dim):
         super().__init__()
 
@@ -201,17 +191,16 @@ class EqualLinear(nn.Module):
 
 
 class ConvBlock(nn.Module):
-
     def __init__(
-            self,
-            in_channel,
-            out_channel,
-            kernel_size,
-            padding,
-            kernel_size2=None,
-            padding2=None,
-            downsample=False,
-            fused=False,
+        self,
+        in_channel,
+        out_channel,
+        kernel_size,
+        padding,
+        kernel_size2 = None,
+        padding2 = None,
+        downsample = False,
+        fused = False,
     ):
         super().__init__()
 
@@ -226,7 +215,7 @@ class ConvBlock(nn.Module):
             kernel2 = kernel_size2
 
         self.conv1 = nn.Sequential(
-            EqualConv2d(in_channel, out_channel, kernel1, padding=pad1),
+            EqualConv2d(in_channel, out_channel, kernel1, padding = pad1),
             nn.LeakyReLU(0.2),
         )
 
@@ -234,23 +223,21 @@ class ConvBlock(nn.Module):
             if fused:
                 self.conv2 = nn.Sequential(
                     Blur(out_channel),
-                    FusedDownsample(
-                        out_channel, out_channel, kernel2, padding=pad2),
+                    FusedDownsample(out_channel, out_channel, kernel2, padding = pad2),
                     nn.LeakyReLU(0.2),
                 )
 
             else:
                 self.conv2 = nn.Sequential(
                     Blur(out_channel),
-                    EqualConv2d(
-                        out_channel, out_channel, kernel2, padding=pad2),
+                    EqualConv2d(out_channel, out_channel, kernel2, padding = pad2),
                     nn.AvgPool2d(2),
                     nn.LeakyReLU(0.2),
                 )
 
         else:
             self.conv2 = nn.Sequential(
-                EqualConv2d(out_channel, out_channel, kernel2, padding=pad2),
+                EqualConv2d(out_channel, out_channel, kernel2, padding = pad2),
                 nn.LeakyReLU(0.2),
             )
 
@@ -261,8 +248,7 @@ class ConvBlock(nn.Module):
 
 
 class Discriminator(nn.Module):
-
-    def __init__(self, fused=True, variety='none'):
+    def __init__(self, fused = True, variety = 'none'):
         super().__init__()
 
         self.pack = 1
@@ -272,26 +258,30 @@ class Discriminator(nn.Module):
         elif variety == 'pack':
             self.pack = 2
 
-        self.conv = nn.Sequential(*[
-            EqualConv2d(3 * self.pack, 32, 1),
-            ConvBlock(32, 64, 3, 1, downsample=True, fused=fused),  # 128
-            ConvBlock(64, 128, 3, 1, downsample=True, fused=fused),  # 64
-            ConvBlock(128, 256, 3, 1, downsample=True),  # 32
-            ConvBlock(256, 256, 3, 1, downsample=True),  # 16
-            ConvBlock(256, 512, 3, 1, downsample=True),  # 8
-        ])
+        self.conv = nn.Sequential(
+            *[
+                EqualConv2d(3 * self.pack, 32, 1),
+                ConvBlock(32, 64, 3, 1, downsample = True, fused = fused),  # 128
+                ConvBlock(64, 128, 3, 1, downsample = True, fused = fused),  # 64
+                ConvBlock(128, 256, 3, 1, downsample = True),  # 32
+                ConvBlock(256, 256, 3, 1, downsample = True),  # 16
+                ConvBlock(256, 512, 3, 1, downsample = True),  # 8
+            ]
+        )
 
-        self.linear = nn.Sequential(*[
-            ConvBlock(512 + self.minibatch_std, 512, 3, 1, 4, 0),
-            layer.Reshape((-1, 512)),
-            EqualLinear(512, 1)
-        ])
+        self.linear = nn.Sequential(
+            *[
+                ConvBlock(512 + self.minibatch_std, 512, 3, 1, 4, 0),
+                layer.Reshape((-1, 512)),
+                EqualLinear(512, 1)
+            ]
+        )
 
     def forward(self, input):
         # Make sure the batch size is grouped by pack
         bs, ch, w, h = input.shape
         while bs < self.pack:
-            input = torch.cat([input, input], dim=0)
+            input = torch.cat([input, input], dim = 0)
             bs, ch, w, h = input.shape
         input = input[:int((input.size(0) // self.pack) * self.pack)]
         bs, ch, w, h = input.shape
@@ -299,25 +289,26 @@ class Discriminator(nn.Module):
         input = input.reshape(bs // self.pack, ch * self.pack, w, h)
         out = self.conv(input)
         if self.minibatch_std > 0:
-            out_std = torch.sqrt(out.var(0, unbiased=False) + 1e-8)
+            out_std = torch.sqrt(out.var(0, unbiased = False) + 1e-8)
             mean_std = out_std.mean()
             mean_std = mean_std.expand(out.size(0), 1, 4, 4)
-            out = torch.cat([out, mean_std], dim=1)
+            out = torch.cat([out, mean_std], dim = 1)
         return self.linear(out)
 
 
 class StyledConvBlock(nn.Module):
-
-    def __init__(self,
-                 in_channel,
-                 out_channel,
-                 kernel_size=3,
-                 padding=1,
-                 style_dim=512,
-                 initial=False,
-                 upsample=False,
-                 fused=False,
-                 id=0):
+    def __init__(
+        self,
+        in_channel,
+        out_channel,
+        kernel_size = 3,
+        padding = 1,
+        style_dim = 512,
+        initial = False,
+        upsample = False,
+        fused = False,
+        id = 0
+    ):
         super().__init__()
 
         self.id = id
@@ -331,35 +322,25 @@ class StyledConvBlock(nn.Module):
             if upsample:
                 if fused:
                     self.conv1 = nn.Sequential(
-                        FusedUpsample(
-                            in_channel,
-                            out_channel,
-                            kernel_size,
-                            padding=padding),
+                        FusedUpsample(in_channel, out_channel, kernel_size, padding = padding),
                         Blur(out_channel),
                     )
 
                 else:
                     self.conv1 = nn.Sequential(
-                        nn.Upsample(scale_factor=2, mode='nearest'),
-                        EqualConv2d(
-                            in_channel,
-                            out_channel,
-                            kernel_size,
-                            padding=padding),
+                        nn.Upsample(scale_factor = 2, mode = 'nearest'),
+                        EqualConv2d(in_channel, out_channel, kernel_size, padding = padding),
                         Blur(out_channel),
                     )
 
             else:
-                self.conv1 = EqualConv2d(
-                    in_channel, out_channel, kernel_size, padding=padding)
+                self.conv1 = EqualConv2d(in_channel, out_channel, kernel_size, padding = padding)
 
         self.noise1 = equal_lr(NoiseInjection(out_channel, True))
         self.adain1 = AdaIn2d(out_channel)
         self.lrelu1 = nn.LeakyReLU(0.2)
 
-        self.conv2 = EqualConv2d(
-            out_channel, out_channel, kernel_size, padding=padding)
+        self.conv2 = EqualConv2d(out_channel, out_channel, kernel_size, padding = padding)
         self.noise2 = equal_lr(NoiseInjection(out_channel, True))
         self.adain2 = AdaIn2d(out_channel)
         self.lrelu2 = nn.LeakyReLU(0.2)
@@ -385,13 +366,12 @@ class StyledConvBlock(nn.Module):
 
 
 def _truncate_trick(w, truncate_psi):
-    w_bar = torch.mean(w, dim=-1).unsqueeze(-1)
+    w_bar = torch.mean(w, dim = -1).unsqueeze(-1)
     return w_bar + truncate_psi * (w_bar - w)
 
 
 class Generator(nn.Module):
-
-    def __init__(self, mixing_ratio=0, truncate_psi=1, mapping_layers=8):
+    def __init__(self, mixing_ratio = 0, truncate_psi = 1, mapping_layers = 8):
         super().__init__()
 
         self.mapping_layers = mapping_layers
@@ -404,10 +384,12 @@ class Generator(nn.Module):
         self.truncate_psi = truncate_psi
 
         self.latent_norm = PixelNorm()
-        self.projection = nn.Sequential(*[
-            EqualLinear(512, 512),
-            nn.LeakyReLU(0.2),
-        ] * self.mapping_layers)
+        self.projection = nn.Sequential(
+            *[
+                EqualLinear(512, 512),
+                nn.LeakyReLU(0.2),
+            ] * self.mapping_layers
+        )
 
         blocks = []
         resolution = 4  # constant
@@ -426,13 +408,9 @@ class Generator(nn.Module):
             print(in_dim, out_dim, resolution)
             blocks.append(
                 StyledConvBlock(
-                    int(in_dim),
-                    int(out_dim),
-                    3,
-                    1,
-                    upsample=True,
-                    fused=fused,
-                    id=i))
+                    int(in_dim), int(out_dim), 3, 1, upsample = True, fused = fused, id = i
+                )
+            )
 
         self.mixing_max_range = 6
 
@@ -451,14 +429,13 @@ class Generator(nn.Module):
 
     def forward(self, input):
         if self.multi_sample > 1:
-            w1, w2 = input[:int(input.size(0) / self.multi_sample
-                               )], input[int(input.size(0) /
-                                             self.multi_sample):]
+            w1, w2 = input[:int(input.size(0) /
+                                self.multi_sample)], input[int(input.size(0) / self.multi_sample):]
             w1, w2 = self.latent_norm(w1), self.latent_norm(w2)
             w1, w2 = self.projection(w1), self.projection(w2)
             w1 = _truncate_trick(w1, self.truncate_psi)
             w2 = _truncate_trick(w2, self.truncate_psi)
-            out = torch.cat([w1, w2], dim=0)
+            out = torch.cat([w1, w2], dim = 0)
             # Mixing regularization ratio
             if np.random.rand() < self.mixing_ratio:
                 cross_point = np.random.randint(1, self.mixing_max_range)
@@ -477,16 +454,15 @@ class Generator(nn.Module):
 
 
 class MinibatchDiscrimination(nn.Module):
-
-    def __init__(self, in_features, out_features, intermediate_features=16):
+    def __init__(self, in_features, out_features, intermediate_features = 16):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.intermediate_features = intermediate_features
 
         self.T = nn.Parameter(
-            torch.Tensor(in_features, out_features - in_features,
-                         intermediate_features))
+            torch.Tensor(in_features, out_features - in_features, intermediate_features)
+        )
 
     def forward(self, x):
         """Computes the output of the Minibatch Discrimination Layer
@@ -502,15 +478,14 @@ class MinibatchDiscrimination(nn.Module):
                    self.intermediate_features).unsqueeze(0)
         M_t = M.permute(1, 0, 2, 3)
         # Broadcasting reduces the matrix subtraction to the form desired in the paper
-        out = torch.sum(torch.exp(-(torch.abs(M - M_t).sum(3))), dim=0) - 1
+        out = torch.sum(torch.exp(-(torch.abs(M - M_t).sum(3))), dim = 0) - 1
         return torch.cat([x, out], 1)
 
 
 class SelfModNorm2d(nn.Module):
-
     def __init__(self, num_features):
         super().__init__()
-        self.norm = nn.BatchNorm2d(num_features, affine=False)
+        self.norm = nn.BatchNorm2d(num_features, affine = False)
         hidden_features = num_features // 4
         self.gamma_f1 = sn(nn.Linear(64, hidden_features))
         self.beta_f1 = sn(nn.Linear(64, hidden_features))
@@ -519,17 +494,15 @@ class SelfModNorm2d(nn.Module):
 
     def forward(self, x, y):
         out = self.norm(x)
-        gamma = self.gamma_f2(F.leaky_relu(self.gamma_f1(y), 0.2, inplace=True))
-        beta = self.beta_f2(F.leaky_relu(self.beta_f1(y), 0.2, inplace=True))
-        return (1 + gamma).view(out.size(0), -1, 1, 1) * out + beta.view(
-            out.size(0), -1, 1, 1)
+        gamma = self.gamma_f2(F.leaky_relu(self.gamma_f1(y), 0.2, inplace = True))
+        beta = self.beta_f2(F.leaky_relu(self.beta_f1(y), 0.2, inplace = True))
+        return (1 + gamma).view(out.size(0), -1, 1, 1) * out + beta.view(out.size(0), -1, 1, 1)
 
 
 class AdaIn2d(nn.Module):
-
     def __init__(self, num_features):
         super().__init__()
-        self.norm = nn.InstanceNorm2d(num_features, affine=False)
+        self.norm = nn.InstanceNorm2d(num_features, affine = False)
         self.gamma_f = sn(nn.Linear(512, num_features))
         self.beta_f = sn(nn.Linear(512, num_features))
 
@@ -537,30 +510,22 @@ class AdaIn2d(nn.Module):
         out = self.norm(x)
         gamma = self.gamma_f(y)
         beta = self.beta_f(y)
-        return gamma.view(out.size(0), -1, 1, 1) * out + beta.view(
-            out.size(0), -1, 1, 1)
+        return gamma.view(out.size(0), -1, 1, 1) * out + beta.view(out.size(0), -1, 1, 1)
 
 
 class SelfAttention(nn.Module):
-
     def __init__(self, ch):
         super().__init__()
         # Channel multiplier
         self.ch = ch
         self.theta = sn(
-            nn.Conv2d(
-                self.ch, self.ch // 8, kernel_size=1, padding=0, bias=False))
-        self.phi = sn(
-            nn.Conv2d(
-                self.ch, self.ch // 8, kernel_size=1, padding=0, bias=False))
-        self.g = sn(
-            nn.Conv2d(
-                self.ch, self.ch // 2, kernel_size=1, padding=0, bias=False))
-        self.o = sn(
-            nn.Conv2d(
-                self.ch // 2, self.ch, kernel_size=1, padding=0, bias=False))
+            nn.Conv2d(self.ch, self.ch // 8, kernel_size = 1, padding = 0, bias = False)
+        )
+        self.phi = sn(nn.Conv2d(self.ch, self.ch // 8, kernel_size = 1, padding = 0, bias = False))
+        self.g = sn(nn.Conv2d(self.ch, self.ch // 2, kernel_size = 1, padding = 0, bias = False))
+        self.o = sn(nn.Conv2d(self.ch // 2, self.ch, kernel_size = 1, padding = 0, bias = False))
         # Learnable gain parameter
-        self.gamma = nn.Parameter(torch.tensor(0.), requires_grad=True)
+        self.gamma = nn.Parameter(torch.tensor(0.), requires_grad = True)
 
     def forward(self, input):
         if type(input) == tuple:
@@ -579,8 +544,8 @@ class SelfAttention(nn.Module):
         beta = F.softmax(torch.bmm(theta.transpose(1, 2), phi), -1)
         # Attention map times g path
         o = self.o(
-            torch.bmm(g, beta.transpose(1, 2)).view(-1, self.ch // 2,
-                                                    x.shape[2], x.shape[3]))
+            torch.bmm(g, beta.transpose(1, 2)).view(-1, self.ch // 2, x.shape[2], x.shape[3])
+        )
         if type(input) == tuple:
             return (self.gamma * o), y
         else:
@@ -588,7 +553,6 @@ class SelfAttention(nn.Module):
 
 
 class NoiseInjection(nn.Module):
-
     def __init__(self, channel, enable):
         super().__init__()
         self.enable = enable
@@ -604,13 +568,7 @@ class NoiseInjection(nn.Module):
 
 
 class block_g(nn.Module):
-
-    def __init__(self,
-                 in_dim,
-                 out_dim,
-                 id=0,
-                 do_upsample=True,
-                 inject_noise=False):
+    def __init__(self, in_dim, out_dim, id = 0, do_upsample = True, inject_noise = False):
         super().__init__()
         self.id = id
         self.inject_noise = inject_noise
@@ -618,12 +576,10 @@ class block_g(nn.Module):
         self.out_dim = out_dim
 
         hidden_dim = in_dim // 4
-        self.conv1 = sn(torch.nn.Conv2d(in_dim, hidden_dim, 1, bias=False))
-        self.conv2 = sn(
-            torch.nn.Conv2d(hidden_dim, hidden_dim, 3, 1, 1, bias=False))
-        self.conv3 = sn(
-            torch.nn.Conv2d(hidden_dim, hidden_dim, 3, 1, 1, bias=False))
-        self.conv4 = sn(torch.nn.Conv2d(hidden_dim, out_dim, 1, bias=False))
+        self.conv1 = sn(torch.nn.Conv2d(in_dim, hidden_dim, 1, bias = False))
+        self.conv2 = sn(torch.nn.Conv2d(hidden_dim, hidden_dim, 3, 1, 1, bias = False))
+        self.conv3 = sn(torch.nn.Conv2d(hidden_dim, hidden_dim, 3, 1, 1, bias = False))
+        self.conv4 = sn(torch.nn.Conv2d(hidden_dim, out_dim, 1, bias = False))
 
         self.n1 = NoiseInjection(in_dim, inject_noise)
         self.n2 = NoiseInjection(hidden_dim, inject_noise)
@@ -639,8 +595,8 @@ class block_g(nn.Module):
         self.bn3 = AdaIn2d(hidden_dim)
         self.bn4 = AdaIn2d(hidden_dim)
 
-        self.act = nn.LeakyReLU(0.2, inplace=True)
-        self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
+        self.act = nn.LeakyReLU(0.2, inplace = True)
+        self.upsample = nn.Upsample(scale_factor = 2, mode = 'nearest')
         self.do_upsample = do_upsample
 
     def forward(self, input):
@@ -666,10 +622,9 @@ class block_g(nn.Module):
 
 
 class ToRGB(nn.Module):
-
-    def __init__(self, in_dim, id=0):
+    def __init__(self, in_dim, id = 0):
         super().__init__()
-        self.f = block_g(in_dim, 3, id, do_upsample=False)
+        self.f = block_g(in_dim, 3, id, do_upsample = False)
         self.out = nn.Tanh()
 
     def forward(self, input):
@@ -678,8 +633,7 @@ class ToRGB(nn.Module):
 
 
 class ConstantInput(nn.Module):
-
-    def __init__(self, channel, size=4):
+    def __init__(self, channel, size = 4):
         super().__init__()
         self.input = nn.Parameter(torch.randn(1, channel, size, size))
 
@@ -690,13 +644,14 @@ class ConstantInput(nn.Module):
 
 
 class AutoGAN_G(torch.nn.Module):
-
-    def __init__(self,
-                 img_size,
-                 base_hidden=16,
-                 attention=64,
-                 const_input=False,
-                 inject_noise=False):
+    def __init__(
+        self,
+        img_size,
+        base_hidden = 16,
+        attention = 64,
+        const_input = False,
+        inject_noise = False
+    ):
         super().__init__()
 
         self.inject_noise = inject_noise
@@ -719,15 +674,16 @@ class AutoGAN_G(torch.nn.Module):
         while img_new_size != img_size:
             print(img_new_size, mult * base_hidden, base_hidden * (mult // 2))
             if self.attention and img_new_size == self.attention_resolution:
-                main.add_module('Att [%d]' % i,
-                                SelfAttention(base_hidden * mult))
+                main.add_module('Att [%d]' % i, SelfAttention(base_hidden * mult))
             main.add_module(
                 'Middle-block [%d]' % i,
                 _block(
                     base_hidden * mult,
                     base_hidden * (mult // 2),
-                    id=i,
-                    inject_noise=self.inject_noise))
+                    id = i,
+                    inject_noise = self.inject_noise
+                )
+            )
             # Size = (G_h_size * (mult/(2*i))) x 8 x 8
             mult = mult // 2
             i += 1
@@ -739,35 +695,39 @@ class AutoGAN_G(torch.nn.Module):
         # Size = G_h_size x image_size/2 x image_size/2
         #         if sa:
         #             main.add_module('End-Att', SelfAttention(base_hidden))
-        main.add_module('End-Out', ToRGB(base_hidden, id=i))
+        main.add_module('End-Out', ToRGB(base_hidden, id = i))
         # Size = n_colors x image_size x image_size
         self.main = main
 
-        self.projection = nn.Sequential(*[
-            sn(nn.Linear(512, 512, bias=False)),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.BatchNorm1d(512),
-            sn(nn.Linear(512, 512, bias=False)),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.BatchNorm1d(512),
-            sn(nn.Linear(512, 512, bias=False)),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.BatchNorm1d(512),
-            sn(nn.Linear(512, 512, bias=False)),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.BatchNorm1d(512),
-            sn(nn.Linear(512, 512, bias=False)),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.BatchNorm1d(512),
-            sn(nn.Linear(512, 512, bias=False)),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.BatchNorm1d(512),
-        ])
+        self.projection = nn.Sequential(
+            *[
+                sn(nn.Linear(512, 512, bias = False)),
+                nn.LeakyReLU(0.2, inplace = True),
+                nn.BatchNorm1d(512),
+                sn(nn.Linear(512, 512, bias = False)),
+                nn.LeakyReLU(0.2, inplace = True),
+                nn.BatchNorm1d(512),
+                sn(nn.Linear(512, 512, bias = False)),
+                nn.LeakyReLU(0.2, inplace = True),
+                nn.BatchNorm1d(512),
+                sn(nn.Linear(512, 512, bias = False)),
+                nn.LeakyReLU(0.2, inplace = True),
+                nn.BatchNorm1d(512),
+                sn(nn.Linear(512, 512, bias = False)),
+                nn.LeakyReLU(0.2, inplace = True),
+                nn.BatchNorm1d(512),
+                sn(nn.Linear(512, 512, bias = False)),
+                nn.LeakyReLU(0.2, inplace = True),
+                nn.BatchNorm1d(512),
+            ]
+        )
 
-        self.reshape = nn.Sequential(*[
-            sn(nn.Linear(64, kt * base_hidden * 4 * 4, bias=False)),
-            layer.Reshape((-1, kt * base_hidden, 4, 4))
-        ])
+        self.reshape = nn.Sequential(
+            *[
+                sn(nn.Linear(64, kt * base_hidden * 4 * 4, bias = False)),
+                layer.Reshape((-1, kt * base_hidden, 4, 4))
+            ]
+        )
 
         self.const_input = const_input
         if const_input:
@@ -785,8 +745,7 @@ class AutoGAN_G(torch.nn.Module):
 
 
 class block_d(nn.Module):
-
-    def __init__(self, in_dim, out_dim, id=0):
+    def __init__(self, in_dim, out_dim, id = 0):
         super().__init__()
         self.id = id
 
@@ -799,7 +758,7 @@ class block_d(nn.Module):
         self.conv3 = sn(torch.nn.Conv2d(hidden_dim, hidden_dim, 3, 1, 1))
         self.conv4 = sn(torch.nn.Conv2d(hidden_dim, out_dim, 1))
 
-        self.act = nn.LeakyReLU(0.2, inplace=True)
+        self.act = nn.LeakyReLU(0.2, inplace = True)
         self.downsample = nn.AvgPool2d(2)
 
         self.conv_sc = sn(torch.nn.Conv2d(in_dim, out_dim - in_dim, 1))
@@ -818,10 +777,9 @@ class block_d(nn.Module):
 
 
 class ToFeature(nn.Module):
-
     def __init__(self):
         super().__init__()
-        self.act = nn.LeakyReLU(0.2, inplace=True)
+        self.act = nn.LeakyReLU(0.2, inplace = True)
 
     def forward(self, x):
         return torch.sum(self.act(x), [2, 3])
@@ -829,8 +787,7 @@ class ToFeature(nn.Module):
 
 # DCGAN discriminator (using somewhat the reverse of the generator)
 class AutoGAN_D(torch.nn.Module):
-
-    def __init__(self, img_size, base_hidden=16, pack=2, attention=64):
+    def __init__(self, img_size, base_hidden = 16, pack = 2, attention = 64):
         super().__init__()
         self.pack = pack
 
@@ -844,8 +801,7 @@ class AutoGAN_D(torch.nn.Module):
         main = torch.nn.Sequential()
         ### Start block
         # Size = n_colors x image_size x image_size
-        main.add_module('Start-block',
-                        sn(nn.Conv2d(3 * pack, base_hidden, 3, 1, 1)))
+        main.add_module('Start-block', sn(nn.Conv2d(3 * pack, base_hidden, 3, 1, 1)))
         image_size_new = img_size
         # Size = D_h_size x image_size/2 x image_size/2
 
@@ -855,11 +811,11 @@ class AutoGAN_D(torch.nn.Module):
         while image_size_new > 1:
             if self.attention and image_size_new == self.attention_resolution:
                 print('Attention!')
-                main.add_module('Start-Attention',
-                                SelfAttention(base_hidden * mult))
+                main.add_module('Start-Attention', SelfAttention(base_hidden * mult))
             main.add_module(
                 'Millde-block [%d]' % i,
-                _block(base_hidden * mult, base_hidden * (2 * mult), id=i))
+                _block(base_hidden * mult, base_hidden * (2 * mult), id = i)
+            )
             # Size = (D_h_size*(2*i)) x image_size/(2*i) x image_size/(2*i)
             image_size_new = image_size_new // 2
             mult *= 2
@@ -868,10 +824,12 @@ class AutoGAN_D(torch.nn.Module):
         # Size = (D_h_size * mult) x 4 x 4
         main.add_module('End-Feature', ToFeature())
         # Size = (bs, base_hidden * mult)
-        self.out = nn.Sequential(*[
-            #MinibatchDiscrimination(base_hidden*mult, base_hidden*mult+128),
-            sn(nn.Linear(base_hidden * mult, 1))
-        ])
+        self.out = nn.Sequential(
+            *[
+                #MinibatchDiscrimination(base_hidden*mult, base_hidden*mult+128),
+                sn(nn.Linear(base_hidden * mult, 1))
+            ]
+        )
 
         self.main = main
 
@@ -888,7 +846,6 @@ class AutoGAN_D(torch.nn.Module):
 
 
 class DCGAN_G(torch.nn.Module):
-
     def __init__(self):
         super().__init__()
         main = torch.nn.Sequential()
@@ -902,12 +859,10 @@ class DCGAN_G(torch.nn.Module):
             'Start-ConvTranspose2d',
             sn(
                 torch.nn.ConvTranspose2d(
-                    100,
-                    128 * mult,
-                    kernel_size=4,
-                    stride=1,
-                    padding=0,
-                    bias=False)))
+                    100, 128 * mult, kernel_size = 4, stride = 1, padding = 0, bias = False
+                )
+            )
+        )
         main.add_module('Start-BatchNorm2d', torch.nn.BatchNorm2d(128 * mult))
         main.add_module('Start-ReLU', torch.nn.ReLU())
         # Size = (G_h_size * mult) x 4 x 4
@@ -921,12 +876,14 @@ class DCGAN_G(torch.nn.Module):
                     torch.nn.ConvTranspose2d(
                         128 * mult,
                         128 * (mult // 2),
-                        kernel_size=4,
-                        stride=2,
-                        padding=1,
-                        bias=False)))
-            main.add_module('Middle-BatchNorm2d [%d]' % i,
-                            torch.nn.BatchNorm2d(128 * (mult // 2)))
+                        kernel_size = 4,
+                        stride = 2,
+                        padding = 1,
+                        bias = False
+                    )
+                )
+            )
+            main.add_module('Middle-BatchNorm2d [%d]' % i, torch.nn.BatchNorm2d(128 * (mult // 2)))
             main.add_module('Middle-ReLU [%d]' % i, torch.nn.ReLU())
             # Size = (G_h_size * (mult/(2*i))) x 8 x 8
             mult = mult // 2
@@ -938,7 +895,10 @@ class DCGAN_G(torch.nn.Module):
             'End-ConvTranspose2d',
             sn(
                 torch.nn.ConvTranspose2d(
-                    128, 3, kernel_size=4, stride=2, padding=1, bias=False)))
+                    128, 3, kernel_size = 4, stride = 2, padding = 1, bias = False
+                )
+            )
+        )
         main.add_module('End-TanH', torch.nn.Tanh())
         # Size = n_colors x image_size x image_size
         self.main = main
@@ -952,7 +912,6 @@ class DCGAN_G(torch.nn.Module):
 
 # DCGAN discriminator (using somewhat the reverse of the generator)
 class DCGAN_D(torch.nn.Module):
-
     def __init__(self):
         super().__init__()
         main = torch.nn.Sequential()
@@ -961,11 +920,9 @@ class DCGAN_D(torch.nn.Module):
         # Size = n_colors x image_size x image_size
         main.add_module(
             'Start-Conv2d',
-            sn(
-                torch.nn.Conv2d(
-                    3, 128, kernel_size=4, stride=2, padding=1, bias=False)))
-        main.add_module('Start-LeakyReLU',
-                        torch.nn.LeakyReLU(0.2, inplace=True))
+            sn(torch.nn.Conv2d(3, 128, kernel_size = 4, stride = 2, padding = 1, bias = False))
+        )
+        main.add_module('Start-LeakyReLU', torch.nn.LeakyReLU(0.2, inplace = True))
         image_size_new = 64 // 2
         # Size = D_h_size x image_size/2 x image_size/2
 
@@ -979,14 +936,15 @@ class DCGAN_D(torch.nn.Module):
                     torch.nn.Conv2d(
                         128 * mult,
                         128 * (2 * mult),
-                        kernel_size=4,
-                        stride=2,
-                        padding=1,
-                        bias=False)))
-            main.add_module('Middle-BatchNorm2d [%d]' % i,
-                            torch.nn.BatchNorm2d(128 * (2 * mult)))
-            main.add_module('Middle-LeakyReLU [%d]' % i,
-                            torch.nn.LeakyReLU(0.2, inplace=True))
+                        kernel_size = 4,
+                        stride = 2,
+                        padding = 1,
+                        bias = False
+                    )
+                )
+            )
+            main.add_module('Middle-BatchNorm2d [%d]' % i, torch.nn.BatchNorm2d(128 * (2 * mult)))
+            main.add_module('Middle-LeakyReLU [%d]' % i, torch.nn.LeakyReLU(0.2, inplace = True))
             # Size = (D_h_size*(2*i)) x image_size/(2*i) x image_size/(2*i)
             image_size_new = image_size_new // 2
             mult *= 2
@@ -998,12 +956,10 @@ class DCGAN_D(torch.nn.Module):
             'End-Conv2d',
             sn(
                 torch.nn.Conv2d(
-                    128 * mult,
-                    1,
-                    kernel_size=4,
-                    stride=1,
-                    padding=0,
-                    bias=False)))
+                    128 * mult, 1, kernel_size = 4, stride = 1, padding = 0, bias = False
+                )
+            )
+        )
         # Size = 1 x 1 x 1 (Is a real cat or not?)
         self.main = main
 

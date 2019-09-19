@@ -5,8 +5,7 @@ from PIL import Image, ImageOps, ImageEnhance
 
 
 class AutoContrast(template.NumpyAugmentation):
-
-    def __init__(self, prob=None, mag=None, include_y=False):
+    def __init__(self, prob = None, mag = None, include_y = False):
         super().__init__()
         self.include_y = include_y
         self.prob = prob
@@ -16,7 +15,7 @@ class AutoContrast(template.NumpyAugmentation):
     def _aug_fn(self, img, mag):
         img = self.helper.to_pil(img.transpose(1, 2, 0))
         cutoff = int(mag * 49)
-        img = ImageOps.autocontrast(img, cutoff=cutoff)
+        img = ImageOps.autocontrast(img, cutoff = cutoff)
         img = self.helper.to_numpy(img).transpose(2, 0, 1)
         return img
 

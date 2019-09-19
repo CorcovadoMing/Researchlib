@@ -4,8 +4,7 @@ import torch.nn.functional as F
 
 
 class MarginLoss(nn.Module):
-
-    def __init__(self, size_average=True, loss_lambda=0.5):
+    def __init__(self, size_average = True, loss_lambda = 0.5):
         '''
         Margin loss for digit existence
         Eq. (4): L_k = T_k * max(0, m+ - ||v_k||)^2 + lambda * (1 - T_k) * max(0, ||v_k|| - m-)^2
@@ -22,9 +21,10 @@ class MarginLoss(nn.Module):
 
     def forward(self, inputs, labels):
         labels = to_one_hot(labels, 10).cuda()
-        L_k = labels * F.relu(self.m_plus - inputs)**2 + self.loss_lambda * (
-            1 - labels) * F.relu(inputs - self.m_minus)**2
-        L_k = L_k.sum(dim=1)
+        L_k = labels * F.relu(self.m_plus - inputs) ** 2 + self.loss_lambda * (
+            1 - labels
+        ) * F.relu(inputs - self.m_minus) ** 2
+        L_k = L_k.sum(dim = 1)
 
         if self.size_average:
             return L_k.mean()

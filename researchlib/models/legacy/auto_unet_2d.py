@@ -22,24 +22,26 @@ def _get_op_type(type):
     return _op_type, _op_transpose_type
 
 
-def AutoUNet2d(input_dim,
-               block_num,
-               down_type='residual',
-               up_type='vgg',
-               start_filter=128,
-               max_filter=1024,
-               down_pooling_type='maxpool',
-               up_pooling_type='pixelshuffle',
-               pooling_factor=2,
-               pooling_freq=1,
-               norm='batch',
-               activator=nn.ELU,
-               flatten=False,
-               preact=True,
-               attention=False,
-               input_multiscale=False,
-               return_multiscale=False,
-               se=True):
+def AutoUNet2d(
+    input_dim,
+    block_num,
+    down_type = 'residual',
+    up_type = 'vgg',
+    start_filter = 128,
+    max_filter = 1024,
+    down_pooling_type = 'maxpool',
+    up_pooling_type = 'pixelshuffle',
+    pooling_factor = 2,
+    pooling_freq = 1,
+    norm = 'batch',
+    activator = nn.ELU,
+    flatten = False,
+    preact = True,
+    attention = False,
+    input_multiscale = False,
+    return_multiscale = False,
+    se = True
+):
 
     _op_type, _op_transpose_type = _get_op_type(down_type)
 
@@ -55,8 +57,9 @@ def AutoUNet2d(input_dim,
         size_queue.append(out_dim)
         layers.append(
             MultiscaleOutput(
-                block.ConvBlock2d(
-                    in_dim, out_dim, pooling=False, activator=activator)))
+                block.ConvBlock2d(in_dim, out_dim, pooling = False, activator = activator)
+            )
+        )
 
     for i in range(block_num):
         in_dim = out_dim
@@ -72,24 +75,30 @@ def AutoUNet2d(input_dim,
                             _op_transpose_type,
                             in_dim,
                             out_dim,
-                            norm=norm,
-                            activator=activator,
-                            pooling_type=down_pooling_type,
-                            pooling_factor=pooling_factor,
-                            preact=preact,
-                            se=se)))
+                            norm = norm,
+                            activator = activator,
+                            pooling_type = down_pooling_type,
+                            pooling_factor = pooling_factor,
+                            preact = preact,
+                            se = se
+                        )
+                    )
+                )
             else:
                 layers.append(
                     MultiscaleOutput(
                         _op_type(
                             in_dim,
                             out_dim,
-                            norm=norm,
-                            activator=activator,
-                            pooling_type=down_pooling_type,
-                            pooling_factor=pooling_factor,
-                            preact=preact,
-                            se=se)))
+                            norm = norm,
+                            activator = activator,
+                            pooling_type = down_pooling_type,
+                            pooling_factor = pooling_factor,
+                            preact = preact,
+                            se = se
+                        )
+                    )
+                )
             count = 0
             size_queue.append(out_dim)
         else:
@@ -100,21 +109,25 @@ def AutoUNet2d(input_dim,
                         _op_transpose_type,
                         in_dim,
                         out_dim,
-                        norm=norm,
-                        activator=activator,
-                        pooling=False,
-                        preact=preact,
-                        se=se))
+                        norm = norm,
+                        activator = activator,
+                        pooling = False,
+                        preact = preact,
+                        se = se
+                    )
+                )
             else:
                 layers.append(
                     _op_type(
                         in_dim,
                         out_dim,
-                        norm=norm,
-                        activator=activator,
-                        pooling=False,
-                        preact=preact,
-                        se=se))
+                        norm = norm,
+                        activator = activator,
+                        pooling = False,
+                        preact = preact,
+                        se = se
+                    )
+                )
         print(in_dim, out_dim)
 
     # Body
@@ -126,21 +139,25 @@ def AutoUNet2d(input_dim,
                 _op_transpose_type,
                 in_dim,
                 in_dim,
-                norm=norm,
-                activator=activator,
-                pooling=False,
-                preact=preact,
-                se=se))
+                norm = norm,
+                activator = activator,
+                pooling = False,
+                preact = preact,
+                se = se
+            )
+        )
     else:
         layers.append(
             _op_type(
                 in_dim,
                 in_dim,
-                norm=norm,
-                activator=activator,
-                pooling=False,
-                preact=preact,
-                se=se))
+                norm = norm,
+                activator = activator,
+                pooling = False,
+                preact = preact,
+                se = se
+            )
+        )
 
     downpath = builder(layers)
 
@@ -165,24 +182,30 @@ def AutoUNet2d(input_dim,
                             _op_transpose_type,
                             concat_in_dim,
                             out_dim,
-                            norm=norm,
-                            activator=activator,
-                            pooling_type=up_pooling_type,
-                            pooling_factor=pooling_factor,
-                            preact=preact,
-                            se=se)))
+                            norm = norm,
+                            activator = activator,
+                            pooling_type = up_pooling_type,
+                            pooling_factor = pooling_factor,
+                            preact = preact,
+                            se = se
+                        )
+                    )
+                )
             else:
                 layers.append(
                     MultiscaleInput(
                         _op_transpose_type(
                             concat_in_dim,
                             out_dim,
-                            norm=norm,
-                            activator=activator,
-                            pooling_type=up_pooling_type,
-                            pooling_factor=pooling_factor,
-                            preact=preact,
-                            se=se)))
+                            norm = norm,
+                            activator = activator,
+                            pooling_type = up_pooling_type,
+                            pooling_factor = pooling_factor,
+                            preact = preact,
+                            se = se
+                        )
+                    )
+                )
             count = 0
             in_dim = out_dim
         else:
@@ -194,21 +217,25 @@ def AutoUNet2d(input_dim,
                         _op_transpose_type,
                         in_dim,
                         out_dim,
-                        norm=norm,
-                        activator=activator,
-                        pooling=False,
-                        preact=preact,
-                        se=se))
+                        norm = norm,
+                        activator = activator,
+                        pooling = False,
+                        preact = preact,
+                        se = se
+                    )
+                )
             else:
                 layers.append(
                     _op_transpose_type(
                         in_dim,
                         out_dim,
-                        norm=norm,
-                        activator=activator,
-                        pooling=False,
-                        preact=preact,
-                        se=se))
+                        norm = norm,
+                        activator = activator,
+                        pooling = False,
+                        preact = preact,
+                        se = se
+                    )
+                )
 
     # final
     in_dim = out_dim
@@ -222,22 +249,28 @@ def AutoUNet2d(input_dim,
                     _op_transpose_type,
                     concat_in_dim,
                     out_dim,
-                    norm=norm,
-                    activator=activator,
-                    pooling=False,
-                    preact=preact,
-                    se=se)))
+                    norm = norm,
+                    activator = activator,
+                    pooling = False,
+                    preact = preact,
+                    se = se
+                )
+            )
+        )
     else:
         layers.append(
             MultiscaleInput(
                 _op_type(
                     concat_in_dim,
                     out_dim,
-                    norm=norm,
-                    activator=activator,
-                    pooling=False,
-                    preact=preact,
-                    se=se)))
+                    norm = norm,
+                    activator = activator,
+                    pooling = False,
+                    preact = preact,
+                    se = se
+                )
+            )
+        )
 
     uppath = builder(layers)
 

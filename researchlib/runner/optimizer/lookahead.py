@@ -6,8 +6,7 @@ import warnings
 
 
 class Lookahead(Optimizer):
-
-    def __init__(self, optimizer, k=5, alpha=0.5):
+    def __init__(self, optimizer, k = 5, alpha = 0.5):
         self.optimizer = optimizer
         self.k = k
         self.alpha = alpha
@@ -31,7 +30,7 @@ class Lookahead(Optimizer):
         for group in self.param_groups:
             self.update(group)
 
-    def step(self, closure=None):
+    def step(self, closure = None):
         loss = self.optimizer.step(closure)
         for group in self.param_groups:
             if group["counter"] == 0:

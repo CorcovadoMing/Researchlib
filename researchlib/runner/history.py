@@ -1,6 +1,5 @@
 class History:
-
-    def __init__(self, records=None):
+    def __init__(self, records = None):
         self.records = {}
         if records:
             self.records = records
@@ -14,7 +13,7 @@ class History:
                 self.records[key] += list(map(str, target.records[key]))
         return History(self.records)
 
-    def add(self, d, prefix=None):
+    def add(self, d, prefix = None):
         for key in d:
             if prefix:
                 ckey = prefix + '_' + key

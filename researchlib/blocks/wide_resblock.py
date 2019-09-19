@@ -9,7 +9,6 @@ class _WideResBlock(_Block):
     '''
         TODO
     '''
-
     def __postinit__(self):
         is_transpose = self._is_transpose()
 
@@ -23,34 +22,39 @@ class _WideResBlock(_Block):
 
         norm_type = self._get_param('norm_type', 'BatchNorm')
         preact_final_norm_layer = self._get_norm_layer(
-            norm_type, self.out_dim) if self.do_norm and self.preact else None
+            norm_type, self.out_dim
+        ) if self.do_norm and self.preact else None
 
         stride = self._get_param('pool_factor', 2) if self.do_pool else 1
-        kernel_size = 2 if is_transpose and self.do_pool else self._get_param(
-            'kernel_size', 3)
+        kernel_size = 2 if is_transpose and self.do_pool else self._get_param('kernel_size', 3)
         padding = 0 if is_transpose and self.do_pool else self._get_param(
-            'padding', int((kernel_size - 1) / 2))
-        drop_layer = nn.Dropout(0.5) if self._get_param('dropout',
-                                                        True) else None
+            'padding', int((kernel_size - 1) / 2)
+        )
+        drop_layer = nn.Dropout(0.5) if self._get_param('dropout', True) else None
         first_custom_kwargs = self._get_custom_kwargs({
             'kernel_size':
-                kernel_size,
+            kernel_size,
             'stride':
-                stride,
+            stride,
             'padding':
-                padding,
+            padding,
             'erased_activator':
-                True if self.preact and erased_activator else False
+            True if self.preact and erased_activator else False
         })
-        second_custom_kwargs = self._get_custom_kwargs(
-            {'erased_activator': True if not self.preact else False})
+        second_custom_kwargs = self._get_custom_kwargs({
+            'erased_activator':
+            True if not self.preact else False
+        })
 
         conv_layers = [
-            unit_fn(self.op, self.in_dim, self.out_dim, False, self.do_norm,
-                    self.preact, **first_custom_kwargs), drop_layer,
-            unit_fn(self.op, self.out_dim, self.out_dim, False, self.do_norm,
-                    self.preact, **second_custom_kwargs),
-            preact_final_norm_layer
+            unit_fn(
+                self.op, self.in_dim, self.out_dim, False, self.do_norm, self.preact,
+                **first_custom_kwargs
+            ), drop_layer,
+            unit_fn(
+                self.op, self.out_dim, self.out_dim, False, self.do_norm, self.preact,
+                **second_custom_kwargs
+            ), preact_final_norm_layer
         ]
         self.conv = nn.Sequential(*list(filter(None, conv_layers)))
 

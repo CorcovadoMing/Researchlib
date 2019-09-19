@@ -1,5 +1,4 @@
-def set_lr(opt, lr, key='lr'):
-
+def set_lr(opt, lr, key = 'lr'):
     def _inner_process(opt, lr, key):
         for g in opt.param_groups:
             g[key] = lr

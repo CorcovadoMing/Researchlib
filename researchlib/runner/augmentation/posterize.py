@@ -5,8 +5,7 @@ from PIL import Image, ImageOps, ImageEnhance
 
 
 class Posterize(template.NumpyAugmentation):
-
-    def __init__(self, prob=None, mag=None, include_y=False):
+    def __init__(self, prob = None, mag = None, include_y = False):
         super().__init__()
         self.include_y = include_y
         self.prob = prob
@@ -16,7 +15,7 @@ class Posterize(template.NumpyAugmentation):
     def _aug_fn(self, img, mag):
         img = self.helper.to_pil(img.transpose(1, 2, 0))
         bits = int((1 - mag) * 8)
-        img = ImageOps.posterize(img, bits=bits)
+        img = ImageOps.posterize(img, bits = bits)
         img = self.helper.to_numpy(img).transpose(2, 0, 1)
         return img
 

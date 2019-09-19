@@ -4,7 +4,6 @@ import os
 
 
 class _Export:
-
     def __init__(self, runner):
         self.runner = runner
 
@@ -16,10 +15,9 @@ class _Export:
             @shape: input size, e.g., (3, 32, 32) for Cifar10
         '''
         dummy_input = torch.randn(1, *shape)
-        torch.onnx.export(self.runner.model.cpu().eval(), dummy_input.cpu(),
-                          name + '.onnx')
+        torch.onnx.export(self.runner.model.cpu().eval(), dummy_input.cpu(), name + '.onnx')
 
-    def optimized(self, name, max_batch_size=1024):
+    def optimized(self, name, max_batch_size = 1024):
         '''
             Cache the optimized TensorRT model for best performance
             

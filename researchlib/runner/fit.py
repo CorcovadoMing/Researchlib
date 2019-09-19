@@ -17,25 +17,26 @@ register_method = _register_method(__methods__)
 
 
 @register_method
-def fit(self,
-        epochs,
-        lr=3e-3,
-        policy='linear',
-        warmup=5,
-        warmup_policy='linear',
-        metrics=[],
-        callbacks=[],
-        _id='none',
-        self_iterative=False,
-        iterations=0,
-        multisteps=[],
-        prefetch=True,
-        plot=False,
-        init_optim=True,
-        **kwargs):
+def fit(
+    self,
+    epochs,
+    lr = 3e-3,
+    policy = 'linear',
+    warmup = 5,
+    warmup_policy = 'linear',
+    metrics = [],
+    callbacks = [],
+    _id = 'none',
+    self_iterative = False,
+    iterations = 0,
+    multisteps = [],
+    prefetch = True,
+    plot = False,
+    init_optim = True,
+    **kwargs
+):
 
-    self.__class__.__fit_settings__[
-        f'epoch_{self.epoch}-{self.epoch+epochs-1}'] = locals()
+    self.__class__.__fit_settings__[f'epoch_{self.epoch}-{self.epoch+epochs-1}'] = locals()
 
     if init_optim:
         self.set_optimizer()
@@ -44,7 +45,7 @@ def fit(self,
 
     # Fix issue the dashboard is down while training is interrupted
     if not _is_port_in_use(8050):
-        dash = _Dashboard(verbose=False)
+        dash = _Dashboard(verbose = False)
         dash.start()
 
     self._fit(
@@ -54,13 +55,14 @@ def fit(self,
         callbacks,
         _id,
         self_iterative,
-        iterations=iterations,
-        policy=policy,
-        plot=plot,
-        prefetch=prefetch,
-        warmup=max(0, warmup),
-        warmup_policy=warmup_policy,
-        **kwargs)
+        iterations = iterations,
+        policy = policy,
+        plot = plot,
+        prefetch = prefetch,
+        warmup = max(0, warmup),
+        warmup_policy = warmup_policy,
+        **kwargs
+    )
 
 
 @register_method
@@ -76,8 +78,7 @@ def _process_type(self, data_pack, inputs):
     if type(target) != list and type(target) != tuple:
         target = [target]
     if type(data[0]) != torch.Tensor:
-        data, target = [torch.from_numpy(i) for i in data
-                       ], [torch.from_numpy(i) for i in target]
+        data, target = [torch.from_numpy(i) for i in data], [torch.from_numpy(i) for i in target]
     return data, target
 
 
@@ -90,13 +91,14 @@ def _process_data(self, data, target, inference):
     # On the fly augmentation
     if not inference:
         random.shuffle(self.augmentation_list)
-        for augmentation_fn in self.augmentation_list[:3]:  # at most 3 of augmentations in a minibatch
+        for augmentation_fn in self.augmentation_list[:3
+                                                      ]:  # at most 3 of augmentations in a minibatch
             data, target = augmentation_fn._forward(data, target, 0.5, random.random())
     return data, target
 
 
 @register_method
-def _iteration_pipeline(self, loader, inference=False):
+def _iteration_pipeline(self, loader, inference = False):
     for batch_idx, data_pack in inifinity_loop(loader):
         x, y = self._process_type(data_pack, self.inputs)
         x, y = self._process_data(x, y, inference)
@@ -124,31 +126,40 @@ def _anneal_policy(anneal_type):
 
 
 @register_method
-def _fit(self, epochs, lr, metrics, callbacks, _id, self_iterative,
-         iterations, policy, warmup, warmup_policy, prefetch, plot, **kwargs):
+def _fit(
+    self, epochs, lr, metrics, callbacks, _id, self_iterative, iterations, policy, warmup,
+    warmup_policy, prefetch, plot, **kwargs
+):
 
     parameter_manager = ParameterManager(**kwargs)
 
     # Manifold Mixup
-    fixed_mmixup = parameter_manager.get_param('fixed_mmixup', validator=lambda x: type(x) == list)
-    random_mmixup = parameter_manager.get_param('random_mmixup', validator=lambda x: len(x) == 2 and type(x) == list)
-    mmixup_alpha = parameter_manager.get_param('mmixup_alpha', validator=lambda x: type(x) == float)
+    fixed_mmixup = parameter_manager.get_param(
+        'fixed_mmixup', validator = lambda x: type(x) == list
+    )
+    random_mmixup = parameter_manager.get_param(
+        'random_mmixup', validator = lambda x: len(x) == 2 and type(x) == list
+    )
+    mmixup_alpha = parameter_manager.get_param(
+        'mmixup_alpha', validator = lambda x: type(x) == float
+    )
 
     if iterations == 0:
         iterations = len(self.train_loader)
 
     weight_decay = parameter_manager.get_param('weight_decay', 1)
     if weight_decay > 0:
-        weight_decay_policy = parameter_manager.get_param(
-            'weight_decay_policy', 'cosine')
-        Annealer.set_trace('weight_decay', epochs * iterations,
-                           [0, weight_decay], 'iteration',
-                           _anneal_policy(weight_decay_policy))
+        weight_decay_policy = parameter_manager.get_param('weight_decay_policy', 'cosine')
+        Annealer.set_trace(
+            'weight_decay', epochs * iterations, [0, weight_decay], 'iteration',
+            _anneal_policy(weight_decay_policy)
+        )
 
     if warmup > 0:
-        Annealer.set_trace('warmup_lr', warmup * iterations, [0, lr],
-                           'iteration', _anneal_policy(warmup_policy))
-        Annealer._iteration_step(key='warmup_lr')
+        Annealer.set_trace(
+            'warmup_lr', warmup * iterations, [0, lr], 'iteration', _anneal_policy(warmup_policy)
+        )
+        Annealer._iteration_step(key = 'warmup_lr')
 
     if type(self.optimizer) == list:
         for i in self.optimizer:
@@ -171,11 +182,8 @@ def _fit(self, epochs, lr, metrics, callbacks, _id, self_iterative,
     fp16 = parameter_manager.get_param('fp16', False)
     loss_scale = parameter_manager.get_param('loss_scale', 1)
     self.model, self.optimizer = amp.initialize(
-        self.model,
-        self.optimizer,
-        opt_level='O1',
-        enabled=fp16,
-        loss_scale=loss_scale)
+        self.model, self.optimizer, opt_level = 'O1', enabled = fp16, loss_scale = loss_scale
+    )
 
     # must verify after all keys get registered
     ParameterManager.verify_kwargs(**kwargs)
@@ -188,25 +196,26 @@ def _fit(self, epochs, lr, metrics, callbacks, _id, self_iterative,
         if prefetch:
             train_loader = BackgroundGenerator(train_loader)
         if self.test_loader:
-            test_loader = self._iteration_pipeline(self.test_loader, inference=True)
+            test_loader = self._iteration_pipeline(self.test_loader, inference = True)
             if prefetch:
                 test_loader = BackgroundGenerator(test_loader)
 
         for epoch in range(1, epochs + 1):
             # Switch point
             if epoch == (warmup + 1):
-                regular_lr = Annealer.set_trace('regular_lr',
-                                                (epochs - warmup) * iterations,
-                                                [lr, 0], 'iteration',
-                                                _anneal_policy(policy))
-                Annealer._iteration_step(key='regular_lr')
+                regular_lr = Annealer.set_trace(
+                    'regular_lr', (epochs - warmup) * iterations, [lr, 0], 'iteration',
+                    _anneal_policy(policy)
+                )
+                Annealer._iteration_step(key = 'regular_lr')
 
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(
-                    model=self.model,
-                    train_loader=self.train_loader,
-                    optimizer=self.optimizer,
-                    epoch=self.epoch)
+                    model = self.model,
+                    train_loader = self.train_loader,
+                    optimizer = self.optimizer,
+                    epoch = self.epoch
+                )
 
             loss_history = []
             g_loss_history = []
@@ -228,7 +237,9 @@ def _fit(self, epochs, lr, metrics, callbacks, _id, self_iterative,
                     # Set default as random sample mmixup
                     if fixed_mmixup is None and random_mmixup is None:
                         random_mmixup = [0, layer.ManifoldMixup.block_counter]
-                    lam = layer.ManifoldMixup.setup_batch(mmixup_alpha, batch_size, fixed_mmixup, random_mmixup)
+                    lam = layer.ManifoldMixup.setup_batch(
+                        mmixup_alpha, batch_size, fixed_mmixup, random_mmixup
+                    )
                     y, y_res = layer.ManifoldMixup.get_y(y)
                 else:
                     y_res = None
@@ -244,7 +255,7 @@ def _fit(self, epochs, lr, metrics, callbacks, _id, self_iterative,
                 # weight decay
                 if weight_decay > 0:
                     weight_decay = Annealer.get_trace('weight_decay')
-                    update_optim(self.optimizer, weight_decay, key='weight_decay')
+                    update_optim(self.optimizer, weight_decay, key = 'weight_decay')
 
                 liveplot.update_progressbar(batch_idx + 1)
                 if self.is_cuda:
@@ -254,28 +265,28 @@ def _fit(self, epochs, lr, metrics, callbacks, _id, self_iterative,
                         y_res = [i.cuda() for i in y_res]
 
                 self.train_fn(
-                    train=True,
-                    model=self.model,
-                    data=x,
-                    target=y,
-                    target_res=y_res,
-                    lam=lam,
-                    optimizer=self.optimizer,
-                    loss_fn=self.loss_fn,
-                    reg_fn=self.reg_fn,
-                    reg_weights=self.reg_weights,
-                    epoch=self.epoch,
-                    callbacks=callbacks,
-                    metrics=metrics,
-                    loss_history=loss_history,
-                    g_loss_history=g_loss_history,
-                    d_loss_history=d_loss_history,
-                    norm=norm,
-                    matrix_records=matrix_records,
-                    bar=None)
+                    train = True,
+                    model = self.model,
+                    data = x,
+                    target = y,
+                    target_res = y_res,
+                    lam = lam,
+                    optimizer = self.optimizer,
+                    loss_fn = self.loss_fn,
+                    reg_fn = self.reg_fn,
+                    reg_weights = self.reg_weights,
+                    epoch = self.epoch,
+                    callbacks = callbacks,
+                    metrics = metrics,
+                    loss_history = loss_history,
+                    g_loss_history = g_loss_history,
+                    d_loss_history = d_loss_history,
+                    norm = norm,
+                    matrix_records = matrix_records,
+                    bar = None
+                )
 
-                liveplot.update_loss_desc(self.epoch, g_loss_history,
-                                          d_loss_history, loss_history)
+                liveplot.update_loss_desc(self.epoch, g_loss_history, d_loss_history, loss_history)
 
                 # Global iteration annealling
                 Annealer._iteration_step()
@@ -288,25 +299,21 @@ def _fit(self, epochs, lr, metrics, callbacks, _id, self_iterative,
 
             liveplot.record(epoch, 'norm', _list_avg(norm))
             if liveplot._gan:
-                liveplot.record(epoch, 'g_lr', [
-                    i['lr'] for i in self.optimizer[1].param_groups
-                ][-1])
-                liveplot.record(epoch, 'd_lr', [
-                    i['lr'] for i in self.optimizer[0].param_groups
-                ][-1])
-                liveplot.record(epoch, 'train_g_loss',
-                                _list_avg(g_loss_history))
-                liveplot.record(epoch, 'train_d_loss',
-                                _list_avg(d_loss_history))
+                liveplot.record(
+                    epoch, 'g_lr', [i['lr'] for i in self.optimizer[1].param_groups][-1]
+                )
+                liveplot.record(
+                    epoch, 'd_lr', [i['lr'] for i in self.optimizer[0].param_groups][-1]
+                )
+                liveplot.record(epoch, 'train_g_loss', _list_avg(g_loss_history))
+                liveplot.record(epoch, 'train_d_loss', _list_avg(d_loss_history))
             else:
-                liveplot.record(epoch, 'lr',
-                                [i['lr'] for i in self.optimizer.param_groups
-                                ][-1])
+                liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer.param_groups][-1])
                 liveplot.record(epoch, 'train_loss', _list_avg(loss_history))
 
             # Output metrics
             for m in metrics:
-                matrix_records.add(m.output(), prefix='train')
+                matrix_records.add(m.output(), prefix = 'train')
 
             if liveplot._gan:
                 loss_records = {
@@ -316,33 +323,31 @@ def _fit(self, epochs, lr, metrics, callbacks, _id, self_iterative,
             else:
                 loss_records = {'loss': _list_avg(loss_history)}
 
-            self.history_.add(loss_records, prefix='train')
+            self.history_.add(loss_records, prefix = 'train')
             self.history_ += matrix_records
 
             try:
-                liveplot.record(epoch, 'train_acc',
-                                self.history_.records['train_acc'][-1])
+                liveplot.record(epoch, 'train_acc', self.history_.records['train_acc'][-1])
             except:
                 pass
 
             if liveplot._gan:
                 liveplot.record(
-                    epoch, 'inception_score',
-                    self.history_.records['train_inception_score'][-1])
-                liveplot.record(epoch, 'fid',
-                                self.history_.records['train_fid'][-1])
+                    epoch, 'inception_score', self.history_.records['train_inception_score'][-1]
+                )
+                liveplot.record(epoch, 'fid', self.history_.records['train_fid'][-1])
 
             for callback_func in callbacks:
                 callback_func.on_epoch_end(
-                    model=self.model,
-                    train_loader=self.train_loader,
-                    optimizer=self.optimizer,
-                    epoch=epoch)
+                    model = self.model,
+                    train_loader = self.train_loader,
+                    optimizer = self.optimizer,
+                    epoch = epoch
+                )
 
             if liveplot._gan:
-                _gan_sample = self.model.sample(4, inference=True, gpu=True)
-                _gan_sample = _gan_sample.detach().cpu().numpy().transpose(
-                    (0, 2, 3, 1))
+                _gan_sample = self.model.sample(4, inference = True, gpu = True)
+                _gan_sample = _gan_sample.detach().cpu().numpy().transpose((0, 2, 3, 1))
                 _grid = plot_montage(_gan_sample, 2, 2, False)
                 liveplot.record(epoch, 'image', _grid)
 
@@ -358,24 +363,23 @@ def _fit(self, epochs, lr, metrics, callbacks, _id, self_iterative,
 
             if self.test_loader:
                 loss_records, matrix_records = self.validate_fn(
-                    model=self.model,
-                    test_loader=test_loader,
-                    loss_fn=self.loss_fn,
-                    is_cuda=self.is_cuda,
-                    epoch=self.epoch,
-                    metrics=metrics,
-                    callbacks=callbacks,
-                    inputs=self.inputs)
+                    model = self.model,
+                    test_loader = test_loader,
+                    loss_fn = self.loss_fn,
+                    is_cuda = self.is_cuda,
+                    epoch = self.epoch,
+                    metrics = metrics,
+                    callbacks = callbacks,
+                    inputs = self.inputs
+                )
 
-                self.history_.add(loss_records, prefix='val')
+                self.history_.add(loss_records, prefix = 'val')
                 self.history_ += matrix_records
                 try:
-                    liveplot.record(epoch, 'val_acc',
-                                    self.history_.records['val_acc'][-1])
+                    liveplot.record(epoch, 'val_acc', self.history_.records['val_acc'][-1])
                 except:
                     pass
-                liveplot.record(epoch, 'val_loss',
-                                self.history_.records['val_loss'][-1])
+                liveplot.record(epoch, 'val_loss', self.history_.records['val_loss'][-1])
 
             epoch_str = str(self.epoch)
 
@@ -387,14 +391,12 @@ def _fit(self, epochs, lr, metrics, callbacks, _id, self_iterative,
 
             # Checkpoint
             checkpoint_model_name = os.path.join(
-                self.checkpoint_path,
-                'checkpoint_' + _id + '_epoch_' + str(self.epoch))
+                self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(self.epoch)
+            )
             self.save(checkpoint_model_name)
-            if critic is not None and self.monitor_mode(critic,
-                                                        self.monitor) == critic:
+            if critic is not None and self.monitor_mode(critic, self.monitor) == critic:
                 self.monitor = critic
-                best_checkpoint_model_name = os.path.join(
-                    self.checkpoint_path, 'best_' + _id)
+                best_checkpoint_model_name = os.path.join(self.checkpoint_path, 'best_' + _id)
                 self.save(best_checkpoint_model_name)
                 epoch_str += '*'
                 self.history_.add({'saved': '*'})

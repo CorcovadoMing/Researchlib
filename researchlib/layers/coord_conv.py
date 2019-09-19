@@ -37,30 +37,30 @@ class _AddCoordinates2d(object):
         >>> input = torch.randn(8, 3, 64, 64).to(device)
         >>> output = coord_adder(input)
     '''
-
-    def __init__(self, with_r=True):
+    def __init__(self, with_r = True):
         self.with_r = with_r
 
     def __call__(self, image):
         batch_size, _, image_height, image_width = image.size()
 
         y_coords = 2.0 * torch.arange(image_height).unsqueeze(1).expand(
-            image_height, image_width) / (image_height - 1.0) - 1.0
+            image_height, image_width
+        ) / (image_height - 1.0) - 1.0
         x_coords = 2.0 * torch.arange(image_width).unsqueeze(0).expand(
-            image_height, image_width) / (image_width - 1.0) - 1.0
+            image_height, image_width
+        ) / (image_width - 1.0) - 1.0
 
-        coords = torch.stack((y_coords, x_coords), dim=0)
+        coords = torch.stack((y_coords, x_coords), dim = 0)
 
         if self.with_r:
-            rs = ((y_coords**2) + (x_coords**2))**0.5
+            rs = ((y_coords ** 2) + (x_coords ** 2)) ** 0.5
             rs = rs / torch.max(rs)
-            rs = torch.unsqueeze(rs, dim=0)
-            coords = torch.cat((coords, rs), dim=0)
+            rs = torch.unsqueeze(rs, dim = 0)
+            coords = torch.cat((coords, rs), dim = 0)
 
-        coords = torch.unsqueeze(
-            coords, dim=0).repeat(batch_size, 1, 1, 1).float()
+        coords = torch.unsqueeze(coords, dim = 0).repeat(batch_size, 1, 1, 1).float()
 
-        image = torch.cat((coords.to(image.device), image), dim=1)
+        image = torch.cat((coords.to(image.device), image), dim = 1)
 
         return image
 
@@ -94,17 +94,18 @@ class _CoordConv2d(nn.Module):
         >>> input = torch.randn(8, 3, 64, 64).to(device)
         >>> output = coord_conv(input)
     '''
-
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 kernel_size,
-                 stride=1,
-                 padding=0,
-                 dilation=1,
-                 groups=1,
-                 bias=True,
-                 with_r=True):
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        kernel_size,
+        stride = 1,
+        padding = 0,
+        dilation = 1,
+        groups = 1,
+        bias = True,
+        with_r = True
+    ):
         super().__init__()
 
         in_channels += 2
@@ -115,11 +116,12 @@ class _CoordConv2d(nn.Module):
             in_channels,
             out_channels,
             kernel_size,
-            stride=stride,
-            padding=padding,
-            dilation=dilation,
-            groups=groups,
-            bias=bias)
+            stride = stride,
+            padding = padding,
+            dilation = dilation,
+            groups = groups,
+            bias = bias
+        )
 
         self.coord_adder = _AddCoordinates2d(with_r)
 
@@ -159,18 +161,19 @@ class _CoordConvTranspose2d(nn.Module):
         >>> input = torch.randn(8, 3, 64, 64).to(device)
         >>> output = coord_conv_tr(input)
     '''
-
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 kernel_size,
-                 stride=1,
-                 padding=0,
-                 output_padding=0,
-                 groups=1,
-                 bias=True,
-                 dilation=1,
-                 with_r=True):
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        kernel_size,
+        stride = 1,
+        padding = 0,
+        output_padding = 0,
+        groups = 1,
+        bias = True,
+        dilation = 1,
+        with_r = True
+    ):
         super().__init__()
 
         in_channels += 2
@@ -181,12 +184,13 @@ class _CoordConvTranspose2d(nn.Module):
             in_channels,
             out_channels,
             kernel_size,
-            stride=stride,
-            padding=padding,
-            output_padding=output_padding,
-            groups=groups,
-            bias=bias,
-            dilation=dilation)
+            stride = stride,
+            padding = padding,
+            output_padding = output_padding,
+            groups = groups,
+            bias = bias,
+            dilation = dilation
+        )
 
         self.coord_adder = _AddCoordinates2d(with_r)
 

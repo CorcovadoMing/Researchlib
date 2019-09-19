@@ -3,7 +3,6 @@ import numpy as np
 
 
 class _PILHelper:
-
     def __init__(self):
         pass
 

@@ -1,5 +1,4 @@
 def update_optim(opt, value, key):
-
     def _inner_process(opt, value, key):
         for g in opt.param_groups:
             g[key] = value

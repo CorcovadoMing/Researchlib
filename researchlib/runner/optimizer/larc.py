@@ -32,8 +32,7 @@ class LARC(object):
         clip: Decides between clipping or scaling mode of LARC. If `clip=True` the learning rate is set to `min(optimizer_lr, local_lr)` for each parameter. If `clip=False` the learning rate is set to `local_lr*optimizer_lr`.
         eps: epsilon kludge to help with numerical stability while calculating adaptive_lr
     """
-
-    def __init__(self, optimizer, trust_coefficient=0.02, clip=True, eps=1e-8):
+    def __init__(self, optimizer, trust_coefficient = 0.02, clip = True, eps = 1e-8):
         self.param_groups = optimizer.param_groups
         self.optim = optimizer
         self.trust_coefficient = trust_coefficient
@@ -66,8 +65,7 @@ class LARC(object):
             weight_decays = []
             for group in self.optim.param_groups:
                 # absorb weight decay control from optimizer
-                weight_decay = group[
-                    'weight_decay'] if 'weight_decay' in group else 0
+                weight_decay = group['weight_decay'] if 'weight_decay' in group else 0
                 weight_decays.append(weight_decay)
                 group['weight_decay'] = 0
                 for p in group['params']:
@@ -79,7 +77,8 @@ class LARC(object):
                     if param_norm != 0 and grad_norm != 0:
                         # calculate adaptive lr + weight decay
                         adaptive_lr = self.trust_coefficient * (param_norm) / (
-                            grad_norm + param_norm * weight_decay + self.eps)
+                            grad_norm + param_norm * weight_decay + self.eps
+                        )
 
                         # clip learning rate for LARC
                         if self.clip:

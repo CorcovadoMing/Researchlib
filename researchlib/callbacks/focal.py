@@ -5,7 +5,6 @@ import numpy as np
 
 
 class AdaptiveFocalUpdate(Callback):
-
     def __init__(self):
         super().__init__()
         self.total_map = None

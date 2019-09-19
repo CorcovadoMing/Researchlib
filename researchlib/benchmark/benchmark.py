@@ -14,8 +14,7 @@ client_secret_path = os.path.join(
     module_path,
     '../.credential/client_secret_855251407115-slk3rv4qfi6b6narp2hapov9lv6iipjt.apps.googleusercontent.com.json'
 )
-sheetnames2ids_path = os.path.join(module_path,
-                                   '../.credential/sheetnames2ids.json')
+sheetnames2ids_path = os.path.join(module_path, '../.credential/sheetnames2ids.json')
 
 
 @Singleton
@@ -30,11 +29,12 @@ class benchmark(object):
         self._folder_id (str): (private), team folder id, please don't change
         self._client_secret_path (str): (private), path to Google API credentials, please don't change
     """
-
-    def __init__(self,
-                 client_secret_path=client_secret_path,
-                 sheetnames2ids_path=sheetnames2ids_path,
-                 daily_backup=False):
+    def __init__(
+        self,
+        client_secret_path = client_secret_path,
+        sheetnames2ids_path = sheetnames2ids_path,
+        daily_backup = False
+    ):
         ## 1. benchmark settings ##
         self._client_secret_path = client_secret_path
         self.sheetnames2ids_path = sheetnames2ids_path
@@ -49,9 +49,7 @@ class benchmark(object):
         self._date_format = '%Y/%m/%d %H:%M:%S'
         self._date_timezone = 'Asia/Taipei'
         # benchmark sheets
-        self.sheetnames = [
-            'Classification', 'Segmentation', 'GAN', 'AnomalyDetection'
-        ]
+        self.sheetnames = ['Classification', 'Segmentation', 'GAN', 'AnomalyDetection']
         # for auth
         self.gc = None
 
@@ -60,8 +58,11 @@ class benchmark(object):
             with open(self.sheetnames2ids_path, 'r') as f:
                 self.sheetnames2ids = json.load(f)
         except:
-            print('creating sheetnames2ids.json(first time only), save at:\n{}'
-                  .format(self.sheetnames2ids_path))
+            print(
+                'creating sheetnames2ids.json(first time only), save at:\n{}'.format(
+                    self.sheetnames2ids_path
+                )
+            )
             self.sheetnames2ids = {}
             for sheetname in self.sheetnames:
                 self.sheetnames2ids[sheetname] = ''
@@ -77,13 +78,11 @@ class benchmark(object):
                 print('Daily backup failed!!')
 
     def get_date(self):
-        return dt.datetime.now(timezone(self._date_timezone)).strftime(
-            self._date_format)
+        return dt.datetime.now(timezone(self._date_timezone)).strftime(self._date_format)
 
     def get_auth(self):
         try:
-            self.gc = pygsheets.authorize(
-                client_secret=self._client_secret_path)
+            self.gc = pygsheets.authorize(client_secret = self._client_secret_path)
             self.gc.drive.enable_team_drive(self._team_id)  # enable TeamDrive
             print('Google API Auth Successfully!')
         except:
@@ -96,17 +95,16 @@ class benchmark(object):
                 sh = self.gc.open(sheetname + self._back_up_postfix)
                 wks = sh.worksheet_by_title(self._worksheet_name)
                 time_id_list = wks.get_col(
-                    col=1, returnas='matrix', include_tailing_empty=False)
+                    col = 1, returnas = 'matrix', include_tailing_empty = False
+                )
                 if len(time_id_list) > 0:
                     time_id_list = time_id_list[1:]  # exclude header
-                    last_modified_date = dt.datetime.strptime(
-                        time_id_list[0], self._date_format)
-                    if dt.datetime.now(timezone(self._date_timezone)).date(
-                    ) > last_modified_date.date():
+                    last_modified_date = dt.datetime.strptime(time_id_list[0], self._date_format)
+                    if dt.datetime.now(timezone(self._date_timezone)
+                                       ).date() > last_modified_date.date():
                         self.backup(sheetname)
                     else:
-                        print('{} benchmark is backed up to today.'.format(
-                            sheetname))
+                        print('{} benchmark is backed up to today.'.format(sheetname))
             except:
                 self.backup(sheetname)
 
@@ -114,9 +112,10 @@ class benchmark(object):
         self.verify(sheetname)
         print('backing up {} benchmark'.format(sheetname))
         self.gc.drive.copy_file(
-            file_id=self.sheetnames2ids[sheetname],
-            title=sheetname + self._back_up_postfix,
-            folder=self._backup_folder_id)
+            file_id = self.sheetnames2ids[sheetname],
+            title = sheetname + self._back_up_postfix,
+            folder = self._backup_folder_id
+        )
 
     def verify(self, sheetname):
         """ make sure the auth exists and sheetname following the rule!
@@ -124,8 +123,7 @@ class benchmark(object):
         if self.gc is None:
             self.get_auth()
         if sheetname not in self.sheetnames2ids:
-            raise ValueError('{} is not in the {}'.format(
-                sheetname, self.sheetnames2ids.keys()))
+            raise ValueError('{} is not in the {}'.format(sheetname, self.sheetnames2ids.keys()))
 
     def genesis(self, sheetnames):
         """ delete sheet if exist, then create new one.  
@@ -135,8 +133,7 @@ class benchmark(object):
         for sheetname in sheetnames:
             self.verify(sheetname)
 
-        ans = input(
-            'Are you sure reset these benchmarks: {}? [y/n]'.format(sheetnames))
+        ans = input('Are you sure reset these benchmarks: {}? [y/n]'.format(sheetnames))
         if ans in ['y', 'Y']:
             for sheetname in sheetnames:
                 # delete if not exist
@@ -145,11 +142,9 @@ class benchmark(object):
                     sh.delete()
                     print('Delete {}'.format(sheetname))
                 except:
-                    print(
-                        'Failed to delete {}, because it is not exist.'.format(
-                            sheetname))
+                    print('Failed to delete {}, because it is not exist.'.format(sheetname))
                 # create new
-                sh = self.gc.create(sheetname, folder=self._folder_id)
+                sh = self.gc.create(sheetname, folder = self._folder_id)
                 self.sheetnames2ids[sheetname] = sh.id
                 wks = sh.worksheet('index', 0)
                 wks.title = self._worksheet_name
@@ -172,7 +167,7 @@ class benchmark(object):
         copy_dict_[key_name] = list(v.keys())
         return copy_dict_
 
-    def update_from_runner(self, sheetname, time_id, description, backup=False):
+    def update_from_runner(self, sheetname, time_id, description, backup = False):
         """ update row(description) by primary key(time_id) in spreadsheet(sheetname)
         Args:
             time_id (str): primary key, use the creation timestamp of the runner.
@@ -184,8 +179,7 @@ class benchmark(object):
 
         sh = self.gc.open_by_key(self.sheetnames2ids[sheetname])
         wks = sh.worksheet_by_title(self._worksheet_name)
-        worksheet_cols = wks.get_row(
-            row=1, returnas='matrix', include_tailing_empty=False)
+        worksheet_cols = wks.get_row(row = 1, returnas = 'matrix', include_tailing_empty = False)
         if len(worksheet_cols) == 0:
             worksheet_cols = self._primary_keys + worksheet_cols
         new_cols = list(description.keys())
@@ -194,7 +188,7 @@ class benchmark(object):
         if len(diff_cols) > 0:
             # update worksheet_cols
             worksheet_cols = worksheet_cols + diff_cols
-            wks.update_row(index=1, values=worksheet_cols, col_offset=0)
+            wks.update_row(index = 1, values = worksheet_cols, col_offset = 0)
 
         # recollect the values by keys' order
         insert_values = [
@@ -208,8 +202,7 @@ class benchmark(object):
                 insert_values.append('')
 
         # if time_id exists, update the row by time_id
-        time_id_list = wks.get_col(
-            col=1, returnas='matrix', include_tailing_empty=False)
+        time_id_list = wks.get_col(col = 1, returnas = 'matrix', include_tailing_empty = False)
         try:
             time_id_idx = time_id_list.index(time_id)
         except:
@@ -217,11 +210,10 @@ class benchmark(object):
 
         if time_id_idx >= 0:
             index_ = time_id_idx + wks.frozen_rows
-            wks.update_row(index=index_, values=insert_values, col_offset=0)
+            wks.update_row(index = index_, values = insert_values, col_offset = 0)
         else:
             # always insert at the top of worksheet
-            wks.insert_rows(
-                wks.frozen_rows, number=1, values=insert_values, inherit=True)
+            wks.insert_rows(wks.frozen_rows, number = 1, values = insert_values, inherit = True)
 
         if backup:
             self.backup(sheetname)

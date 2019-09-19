@@ -3,9 +3,7 @@ import torch
 
 
 class VAEModel(nn.Module):
-
-    def __init__(self, encoder, decoder, hidden_vector_len=100,
-                 z_vector_len=32):
+    def __init__(self, encoder, decoder, hidden_vector_len = 100, z_vector_len = 32):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder

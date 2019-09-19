@@ -18,14 +18,13 @@ class Cocob(optim.Optimizer):
             alpha (default: 1e-8)
     __ https://arxiv.org/pdf/1705.07795.pdf
     '''
-
-    def __init__(self, params, alpha=100.0, eps=1e-8):
+    def __init__(self, params, alpha = 100.0, eps = 1e-8):
         self.alpha = alpha
         self.eps = eps
-        defaults = dict(alpha=alpha, eps=eps)
+        defaults = dict(alpha = alpha, eps = eps)
         super().__init__(params, defaults)
 
-    def step(self, closure=None):
+    def step(self, closure = None):
 
         loss = None
         if closure is not None:
@@ -55,8 +54,7 @@ class Cocob(optim.Optimizer):
                     # Initialize internal states useful for computing betting fraction
                     state['neg_grads_sum'] = param.new_zeros(param_shape)
                     state['grads_abs_sum'] = param.new_zeros(param_shape)
-                    state['max_observed_scale'] = self.eps * param.new_ones(
-                        param_shape)
+                    state['max_observed_scale'] = self.eps * param.new_ones(param_shape)
 
                 # load states in variables
                 initial_weight = state['initial_weight']
@@ -67,8 +65,7 @@ class Cocob(optim.Optimizer):
                 max_observed_scale = state['max_observed_scale']
 
                 # Update internal states useful for computing betting fraction
-                max_observed_scale = torch.max(max_observed_scale,
-                                               torch.abs(grad))
+                max_observed_scale = torch.max(max_observed_scale, torch.abs(grad))
                 grads_abs_sum += torch.abs(grad)
                 neg_grads_sum += neg_grad
 
@@ -77,14 +74,15 @@ class Cocob(optim.Optimizer):
                 win_amount = bet * neg_grad
 
                 # Update better's reward. Negative reward is not allowed.
-                reward = torch.max(reward + win_amount,
-                                   torch.zeros_like(reward))
+                reward = torch.max(reward + win_amount, torch.zeros_like(reward))
 
                 # Better decides the bet fraction based on so-far observations
                 bet_fraction = neg_grads_sum / (
-                    max_observed_scale *
-                    (torch.max(grads_abs_sum + max_observed_scale,
-                               self.alpha * max_observed_scale)))
+                    max_observed_scale * (
+                        torch.
+                        max(grads_abs_sum + max_observed_scale, self.alpha * max_observed_scale)
+                    )
+                )
 
                 # Better makes the bet according to decided betting fraction.
                 bet = bet_fraction * (max_observed_scale + reward)

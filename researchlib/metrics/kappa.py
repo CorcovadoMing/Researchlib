@@ -4,7 +4,6 @@ from sklearn.metrics import cohen_kappa_score
 
 
 class Kappa(Matrix):
-
     def __init__(self):
         super().__init__()
         self.pred = None
@@ -16,8 +15,7 @@ class Kappa(Matrix):
             pass
         else:
             y_pred, y_true = loss_input[0], loss_input[1]
-            y_pred, y_true = y_pred.detach().squeeze(), y_true.detach().squeeze(
-            )
+            y_pred, y_true = y_pred.detach().squeeze(), y_true.detach().squeeze()
             y_pred = y_pred.cpu().numpy()
             y_true = y_true.cpu().numpy()
             if self.pred is None:

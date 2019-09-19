@@ -30,7 +30,7 @@ def _restore_grad(model):
 
 
 @register_method
-def train_fn(self, train=True, **kwargs):
+def train_fn(self, train = True, **kwargs):
     for callback_func in kwargs['callbacks']:
         kwargs = callback_func.on_iteration_begin(**kwargs)
 
@@ -42,13 +42,11 @@ def train_fn(self, train=True, **kwargs):
         _backup_grad(self.model.generator)
         model = self.model.discriminator
         model_ffn = self.model.forward_d
-        loss_ffn = [
-            i.forward_d if isinstance(i, nn.Module) else i for i in self.loss_fn
-        ]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
-                                        self.optimizer[0], self.scheduler,
-                                        'unsupervise', condition, train, True,
-                                        False, **kwargs)
+        loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in self.loss_fn]
+        _loss, _norm = _train_minibatch(
+            model, model_ffn, loss_ffn, self.optimizer[0], self.scheduler, 'unsupervise',
+            condition, train, True, False, **kwargs
+        )
         for m in kwargs['metrics']:
             m.forward_d([self.model.fake_data_metrics, self.model.real_data])
         _restore_grad(self.model.generator)
@@ -64,13 +62,11 @@ def train_fn(self, train=True, **kwargs):
         _backup_grad(self.model.discriminator)
         model = self.model.generator
         model_ffn = self.model.forward_g
-        loss_ffn = [
-            i.forward_g if isinstance(i, nn.Module) else i for i in self.loss_fn
-        ]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
-                                        self.optimizer[1], self.scheduler,
-                                        'unsupervise', condition, train, False,
-                                        False, **kwargs)
+        loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in self.loss_fn]
+        _loss, _norm = _train_minibatch(
+            model, model_ffn, loss_ffn, self.optimizer[1], self.scheduler, 'unsupervise',
+            condition, train, False, False, **kwargs
+        )
         for m in kwargs['metrics']:
             m.forward_g([self.model.fake_data_metrics, self.model.real_data])
         _restore_grad(self.model.discriminator)
@@ -85,13 +81,11 @@ def train_fn(self, train=True, **kwargs):
             learning_type = 'supervise'
         model = self.model
         model_ffn = self.model.forward
-        loss_ffn = [
-            i.forward if isinstance(i, nn.Module) else i for i in self.loss_fn
-        ]
-        _loss, _norm = _train_minibatch(model, model_ffn, loss_ffn,
-                                        self.optimizer, self.scheduler,
-                                        learning_type, False, train, False,
-                                        False, **kwargs)
+        loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in self.loss_fn]
+        _loss, _norm = _train_minibatch(
+            model, model_ffn, loss_ffn, self.optimizer, self.scheduler, learning_type, False,
+            train, False, False, **kwargs
+        )
 
         # Record loss
         kwargs['loss_history'].append(_loss)
@@ -119,9 +113,10 @@ def _cal_regularization(_model, **kwargs):
     return loss
 
 
-def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler,
-                     learning_type, condition, train, retain_graph,
-                     orthogonal_reg, **kwargs):
+def _train_minibatch(
+    _model, model_ffn, loss_ffn, optim, scheduler, learning_type, condition, train, retain_graph,
+    orthogonal_reg, **kwargs
+):
     # Forward
     if condition:
         output = model_ffn(*kwargs['data'], *kwargs['target'])
@@ -145,9 +140,7 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler,
     if learning_type == 'supervise':
         kwargs['target'] = [i.view(i.size(0), -1) for i in kwargs['target']]
         if kwargs['lam'] is not None:
-            kwargs['target_res'] = [
-                i.view(i.size(0), -1) for i in kwargs['target_res']
-            ]
+            kwargs['target_res'] = [i.view(i.size(0), -1) for i in kwargs['target_res']]
         # TODO (Ming): This line should be removed by someway
         if len(kwargs['target']) > len(auxout):
             kwargs['target'] = [kwargs['target']]
@@ -160,13 +153,13 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler,
                 loss_i = i if len(loss_ffn) > i else loss_i
                 target_i = i if len(kwargs['target']) > i else target_i
                 target_res_i = i if kwargs['lam'] is not None and len(
-                    kwargs['target_res']) > i else target_res_i
+                    kwargs['target_res']
+                ) > i else target_res_i
 
             if kwargs['lam'] is not None:
-                loss += kwargs['lam'] * loss_ffn[loss_i](
-                    auxout[i], kwargs['target'][target_i])
-                loss += (1 - kwargs['lam']) * loss_ffn[loss_i](
-                    auxout[i], kwargs['target_res'][target_res_i])
+                loss += kwargs['lam'] * loss_ffn[loss_i](auxout[i], kwargs['target'][target_i])
+                loss += (1 - kwargs['lam']
+                         ) * loss_ffn[loss_i](auxout[i], kwargs['target_res'][target_res_i])
             else:
                 loss += loss_ffn[loss_i](auxout[i], kwargs['target'][target_i])
     elif learning_type == 'self_supervise':
@@ -182,7 +175,7 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler,
     # Backward
     with amp.scale_loss(loss, optim) as scaled_loss:
         if train:
-            scaled_loss.backward(retain_graph=retain_graph)
+            scaled_loss.backward(retain_graph = retain_graph)
 
     for callback_func in kwargs['callbacks']:
         kwargs = callback_func.on_update_begin(**kwargs)
@@ -197,17 +190,19 @@ def _train_minibatch(_model, model_ffn, loss_ffn, optim, scheduler,
                     if len(param.shape) < 2:
                         continue
                     w = param.view(param.shape[0], -1)
-                    grad = (2 * torch.mm(
-                        torch.mm(w, w.t()) *
-                        (1. - torch.eye(w.shape[0], device=w.device)), w))
+                    grad = (
+                        2 * torch.mm(
+                            torch.mm(w, w.t()) * (1. - torch.eye(w.shape[0], device = w.device)), w
+                        )
+                    )
                     param.grad.data += 1e-4 * grad.view(param.shape)
 
             for param in _model.parameters():
                 try:
-                    norm += param.grad.data.norm(2)**2
+                    norm += param.grad.data.norm(2) ** 2
                 except:
                     pass
-            norm = norm**0.5
+            norm = norm ** 0.5
             norm = norm.cpu()
 
         optim.step()

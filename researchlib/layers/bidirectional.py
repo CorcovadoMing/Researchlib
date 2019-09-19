@@ -4,7 +4,6 @@ import copy
 
 
 class Bidirectional(nn.Module):
-
     def __init__(self, f):
         super().__init__()
         self.forward_f = f
@@ -13,4 +12,4 @@ class Bidirectional(nn.Module):
     def forward(self, x):
         x_forward = self.forward_f(x)
         x_backward = self.backward_f(x)
-        return torch.cat((x_forward, x_backward), dim=-1)
+        return torch.cat((x_forward, x_backward), dim = -1)

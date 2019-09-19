@@ -6,7 +6,7 @@ register_method = _register_method(__methods__)
 
 
 @register_method
-def predict(self, x, y=[], augmentor=None):
+def predict(self, x, y = [], augmentor = None):
     with torch.no_grad():
         self.preload_gpu()
         try:

@@ -13,13 +13,9 @@ from IPython import embed
 
 
 class Downsample(nn.Module):
-
-    def __init__(self,
-                 pad_type='reflect',
-                 filt_size=3,
-                 stride=2,
-                 channels=None,
-                 pad_off=0):
+    def __init__(
+        self, pad_type = 'reflect', filt_size = 3, stride = 2, channels = None, pad_off = 0
+    ):
         super(Downsample, self).__init__()
         self.filt_size = filt_size
         self.pad_off = pad_off
@@ -54,8 +50,7 @@ class Downsample(nn.Module):
 
         filt = torch.Tensor(a[:, None] * a[None, :])
         filt = filt / torch.sum(filt)
-        self.register_buffer(
-            'filt', filt[None, None, :, :].repeat((self.channels, 1, 1, 1)))
+        self.register_buffer('filt', filt[None, None, :, :].repeat((self.channels, 1, 1, 1)))
 
         self.pad = get_pad_layer(pad_type)(self.pad_sizes)
 
@@ -66,11 +61,7 @@ class Downsample(nn.Module):
             else:
                 return self.pad(inp)[:, :, ::self.stride, ::self.stride]
         else:
-            return F.conv2d(
-                self.pad(inp),
-                self.filt,
-                stride=self.stride,
-                groups=inp.shape[1])
+            return F.conv2d(self.pad(inp), self.filt, stride = self.stride, groups = inp.shape[1])
 
 
 def get_pad_layer(pad_type):
@@ -86,20 +77,13 @@ def get_pad_layer(pad_type):
 
 
 class Downsample1D(nn.Module):
-
-    def __init__(self,
-                 pad_type='reflect',
-                 filt_size=3,
-                 stride=2,
-                 channels=None,
-                 pad_off=0):
+    def __init__(
+        self, pad_type = 'reflect', filt_size = 3, stride = 2, channels = None, pad_off = 0
+    ):
         super(Downsample1D, self).__init__()
         self.filt_size = filt_size
         self.pad_off = pad_off
-        self.pad_sizes = [
-            int(1. * (filt_size - 1) / 2),
-            int(np.ceil(1. * (filt_size - 1) / 2))
-        ]
+        self.pad_sizes = [int(1. * (filt_size - 1) / 2), int(np.ceil(1. * (filt_size - 1) / 2))]
         self.pad_sizes = [pad_size + pad_off for pad_size in self.pad_sizes]
         self.stride = stride
         self.off = int((self.stride - 1) / 2.)
@@ -125,8 +109,7 @@ class Downsample1D(nn.Module):
 
         filt = torch.Tensor(a)
         filt = filt / torch.sum(filt)
-        self.register_buffer('filt', filt[None, None, :].repeat(
-            (self.channels, 1, 1)))
+        self.register_buffer('filt', filt[None, None, :].repeat((self.channels, 1, 1)))
 
         self.pad = get_pad_layer_1d(pad_type)(self.pad_sizes)
 
@@ -137,11 +120,7 @@ class Downsample1D(nn.Module):
             else:
                 return self.pad(inp)[:, :, ::self.stride]
         else:
-            return F.conv1d(
-                self.pad(inp),
-                self.filt,
-                stride=self.stride,
-                groups=inp.shape[1])
+            return F.conv1d(self.pad(inp), self.filt, stride = self.stride, groups = inp.shape[1])
 
 
 def get_pad_layer_1d(pad_type):

@@ -40,19 +40,20 @@ class Runner:
     __runner_settings__ = None
 
     def __init__(
-            self,
-            # Required
-            model,
-            train_loader,
-            # Optional with defualt values
-            test_loader=None,
-            optimizer=None,
-            loss_fn=None,
-            monitor_mode='min',
-            monitor_state='loss',
-            reg_fn={},
-            reg_weights={},
-            **kwargs):
+        self,
+        # Required
+        model,
+        train_loader,
+        # Optional with defualt values
+        test_loader = None,
+        optimizer = None,
+        loss_fn = None,
+        monitor_mode = 'min',
+        monitor_state = 'loss',
+        reg_fn = {},
+        reg_weights = {},
+        **kwargs
+    ):
 
         self.__class__.__runner_settings__ = locals()
 
@@ -70,8 +71,7 @@ class Runner:
         self._date_id = self.bencher.get_date()
 
         self.model = model
-        self.num_params = sum(
-            p.numel() for p in model.parameters() if p.requires_grad)
+        self.num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
         self.train_loader = train_loader
         self.test_loader = test_loader
@@ -101,8 +101,7 @@ class Runner:
         self.default_metrics = []
 
         def _process_loss_fn(loss_fn):
-            process_func = loss_ensemble if type(
-                loss_fn) == dict else loss_mapping
+            process_func = loss_ensemble if type(loss_fn) == dict else loss_mapping
             return process_func(loss_fn)
 
         if type(loss_fn) == list:
@@ -151,21 +150,18 @@ class Runner:
 
     def start_experiment(self, name):
         self.experiment_name = name
-        self.checkpoint_path = os.path.join('.', 'checkpoint',
-                                            self.experiment_name)
-        os.makedirs(self.checkpoint_path, exist_ok=True)
+        self.checkpoint_path = os.path.join('.', 'checkpoint', self.experiment_name)
+        os.makedirs(self.checkpoint_path, exist_ok = True)
 
-    def load_best(self, _id='none'):
+    def load_best(self, _id = 'none'):
         if len(self.experiment_name) == 0:
             self.start_experiment('default')
         self.load(os.path.join(self.checkpoint_path, 'best_' + _id))
 
-    def load_epoch(self, epoch, _id='none'):
+    def load_epoch(self, epoch, _id = 'none'):
         if len(self.experiment_name) == 0:
             self.start_experiment('default')
-        self.load(
-            os.path.join(self.checkpoint_path,
-                         'checkpoint_' + _id + '_epoch_' + str(epoch)))
+        self.load(os.path.join(self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(epoch)))
 
     def load_last(self):
         try:
@@ -190,23 +186,24 @@ class Runner:
         self.model.train()
         _switch_swa_mode(self.optimzier)
 
-    def validate(self, metrics=[], callbacks=[], **kwargs):
-        test_loader = self._iteration_pipeline(self.test_loader, inference=True)
+    def validate(self, metrics = [], callbacks = [], **kwargs):
+        test_loader = self._iteration_pipeline(self.test_loader, inference = True)
         self.preload_gpu()
         try:
             if len(self.default_metrics):
                 metrics = self.default_metrics + metrics
 
             loss_records, matrix_records = self.validate_fn(
-                model=self.model,
-                test_loader=test_loader,
-                loss_fn=self.loss_fn,
-                is_cuda=self.is_cuda,
-                epoch=self.epoch,
-                metrics=metrics,
-                callbacks=callbacks,
-                inputs=self.inputs,
-                **kwargs)
+                model = self.model,
+                test_loader = test_loader,
+                loss_fn = self.loss_fn,
+                is_cuda = self.is_cuda,
+                epoch = self.epoch,
+                metrics = metrics,
+                callbacks = callbacks,
+                inputs = self.inputs,
+                **kwargs
+            )
 
             for k, v in loss_records.items():
                 print(str(k) + ':', str(v))
@@ -232,37 +229,33 @@ class Runner:
             self.preprocessing_list = pickle.load(f)
         self.preprocessing(self.preprocessing_list)
 
-    def preprocessing(self, preprocessing_list, debug=False):
+    def preprocessing(self, preprocessing_list, debug = False):
         self.preprocessing_list = preprocessing_list
         for i in self.preprocessing_list:
             try:
                 if i.static_auto:
                     print('Calculated statistics in dataset')
-                    if type(self.train_loader.dataset
-                           ) == torch.utils.data.dataset.TensorDataset:
+                    if type(self.train_loader.dataset) == torch.utils.data.dataset.TensorDataset:
                         tensors = self.train_loader.dataset.tensors[0]
                         mean = tensors.mean([0] + list(range(2, tensors.dim())))
                         std = tensors.std([0] + list(range(2, tensors.dim())))
                     else:
-                        mean = self.train_loader.dataset.data.mean(
-                            (0, 1, 2)) / 255.
-                        std = self.train_loader.dataset.data.std(
-                            (0, 1, 2)) / 255.
+                        mean = self.train_loader.dataset.data.mean((0, 1, 2)) / 255.
+                        std = self.train_loader.dataset.data.std((0, 1, 2)) / 255.
                     print('Mean:', mean)
                     print('Std:', std)
-                    i.static_normalizer = transforms.Normalize(
-                        mean=mean, std=std)
+                    i.static_normalizer = transforms.Normalize(mean = mean, std = std)
             except:
                 pass
         if debug:
             self.preprocessing_list.append(PreprocessingDebugger())
         return self
 
-    def postprocessing(self, postprocessing_list, debug=False):
+    def postprocessing(self, postprocessing_list, debug = False):
         self.postprocessing_list = postprocessing_list
         return self
 
-    def augmentation(self, augmentation_list, debug=False):
+    def augmentation(self, augmentation_list, debug = False):
         self.augmentation_list = augmentation_list
         if debug:
             for i in self.augmentation_list:
@@ -272,12 +265,11 @@ class Runner:
     # =======================================================================================================
     # following function need to be refined
     def describe(self):
-
         def _describe_model(model_dict):
             query = {}
             keys = [
-                'do_norm', 'pool_freq', 'preact', 'filter_policy', 'filters',
-                'type', 'total_blocks', 'op', 'unit'
+                'do_norm', 'pool_freq', 'preact', 'filter_policy', 'filters', 'type',
+                'total_blocks', 'op', 'unit'
             ]
             for key, value in model_dict.items():
                 if key in keys:
@@ -300,8 +292,8 @@ class Runner:
             return runner.histroy_.records['val_' + str(metrics)][index]
 
         keys = [
-            'swa', 'swa_start', 'larc', 'fp16', 'augmentation_list',
-            'weight_decay', 'preprocessing_list', 'loss_fn', 'train_loader'
+            'swa', 'swa_start', 'larc', 'fp16', 'augmentation_list', 'weight_decay',
+            'preprocessing_list', 'loss_fn', 'train_loader'
         ]
         query = {}
         for key, value in self.__dict__.items():
@@ -327,16 +319,14 @@ class Runner:
         query['train_loader'] = query['train_loader'].dataset.__class__.__name__
 
         query['optimizer'] = self.__class__.__runner_settings__['optimizer']
-        query['monitor_state'] = self.__class__.__runner_settings__[
-            'monitor_state']
+        query['monitor_state'] = self.__class__.__runner_settings__['monitor_state']
 
         query['num_params'] = self.num_params
 
         try:
             query['best_state'] = self.__dict__['monitor']
         except:
-            query['best_state'] = _get_best_metrics(self,
-                                                    query['monitor_state'])
+            query['best_state'] = _get_best_metrics(self, query['monitor_state'])
 
         query['model'] = {}
         for i, j in self.__class__.__model_settings__.items():
@@ -349,7 +339,7 @@ class Runner:
         query.update(ParameterManager.params)
         return query
 
-    def submit_benchmark(self, category, comments={}, backup=False):
+    def submit_benchmark(self, category, comments = {}, backup = False):
         if type(comments) != dict:
             raise ValueError("Type Error")
         dict_ = self.describe()
@@ -357,5 +347,4 @@ class Runner:
             if k in dict_.keys():
                 raise ValueError("key is overlapped: {}".forat(k))
             dict_[k] = v
-        self.bencher.update_from_runner(
-            category, self._date_id, dict_, backup=backup)
+        self.bencher.update_from_runner(category, self._date_id, dict_, backup = backup)

@@ -5,8 +5,7 @@ import torch
 
 
 class Cutout(template.TorchAugmentation):
-
-    def __init__(self, prob=None, mag=None, include_y=False):
+    def __init__(self, prob = None, mag = None, include_y = False):
         super().__init__()
         self.include_y = include_y
         self.prob = prob
@@ -31,7 +30,7 @@ class Cutout(template.TorchAugmentation):
 
     def forward_single(self, x, y, mag):
         max_length = x[0].size(1) // 2
-        length = mapping(mag, [0, 1], [0, max_length], to_int=True)
+        length = mapping(mag, [0, 1], [0, max_length], to_int = True)
         x = [self._aug_fn(i, length) for i in x]
         if self.include_y:
             y = [self._aug_fn(i, length) for i in y]

@@ -10,7 +10,6 @@ class _InceptionV3A(_Block):
         Inception module with 4 pathways, only 1x1, 5x5, 3x3 kernel size being used
         AvgPool for the pool branch
     '''
-
     def __postinit__(self):
         unit_fn = self._get_param('unit', unit.conv)
         hidden_dim = self.out_dim // 4
@@ -23,7 +22,8 @@ class _InceptionV3A(_Block):
                 'stride': stride,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.branch5x5_1 = unit_fn(
             self.op, self.in_dim, hidden_dim, False, True, False,
@@ -32,7 +32,8 @@ class _InceptionV3A(_Block):
                 'stride': 1,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch5x5_2 = unit_fn(
             self.op, hidden_dim, hidden_dim, False, True, False,
             **self._get_custom_kwargs({
@@ -40,7 +41,8 @@ class _InceptionV3A(_Block):
                 'stride': stride,
                 'padding': 2,
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.branch3x3dbl_1 = unit_fn(
             self.op, self.in_dim, hidden_dim, False, True, False,
@@ -49,7 +51,8 @@ class _InceptionV3A(_Block):
                 'stride': 1,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch3x3dbl_2 = unit_fn(
             self.op, hidden_dim, hidden_dim, False, True, False,
             **self._get_custom_kwargs({
@@ -57,7 +60,8 @@ class _InceptionV3A(_Block):
                 'stride': 1,
                 'padding': 1,
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch3x3dbl_3 = unit_fn(
             self.op, hidden_dim, hidden_dim, False, True, False,
             **self._get_custom_kwargs({
@@ -65,7 +69,8 @@ class _InceptionV3A(_Block):
                 'stride': stride,
                 'padding': 1,
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.pool_fn = layer.__dict__['AvgPool' + self._get_dim_type()](3, 1, 1)
         self.branch_pool = unit_fn(
@@ -75,7 +80,8 @@ class _InceptionV3A(_Block):
                 'stride': stride,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
 
     def forward(self, x):
         branch1x1 = self.branch1x1(x)
@@ -98,7 +104,6 @@ class _InceptionV3B(_Block):
         Inception module with 3 pathways, only 1x1, 3x3 kernel size being used
         MaxPool for the pool branch
     '''
-
     def __postinit__(self):
         unit_fn = self._get_param('unit', unit.conv)
         hidden_dim = self.out_dim // 3
@@ -111,7 +116,8 @@ class _InceptionV3B(_Block):
                 'stride': stride,
                 'padding': 1,
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.branch3x3dbl_1 = unit_fn(
             self.op, self.in_dim, hidden_dim, False, True, False,
@@ -120,7 +126,8 @@ class _InceptionV3B(_Block):
                 'stride': 1,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch3x3dbl_2 = unit_fn(
             self.op, hidden_dim, hidden_dim, False, True, False,
             **self._get_custom_kwargs({
@@ -128,7 +135,8 @@ class _InceptionV3B(_Block):
                 'stride': 1,
                 'padding': 1,
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch3x3dbl_3 = unit_fn(
             self.op, hidden_dim, hidden_dim, False, True, False,
             **self._get_custom_kwargs({
@@ -136,7 +144,8 @@ class _InceptionV3B(_Block):
                 'stride': stride,
                 'padding': 1,
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.pool_fn = layer.__dict__['MaxPool' + self._get_dim_type()](3, 1, 1)
         self.branch_pool = unit_fn(
@@ -146,7 +155,8 @@ class _InceptionV3B(_Block):
                 'stride': stride,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
 
     def forward(self, x):
         branch3x3 = self.branch3x3(x)
@@ -165,7 +175,6 @@ class _InceptionV3C(_Block):
         7x7 kernel path is with bottleneck style
         AvgPool for the pool branch
     '''
-
     def __postinit__(self):
         unit_fn = self._get_param('unit', unit.conv)
         hidden_dim = self.out_dim // 4
@@ -178,7 +187,8 @@ class _InceptionV3C(_Block):
                 'stride': stride,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.branch7x7_1 = unit_fn(
             self.op, self.in_dim, hidden_dim // 2, False, True, False,
@@ -187,7 +197,8 @@ class _InceptionV3C(_Block):
                 'stride': stride,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch7x7_2 = unit_fn(
             self.op, hidden_dim // 2, hidden_dim // 2, False, True, False,
             **self._get_custom_kwargs({
@@ -195,7 +206,8 @@ class _InceptionV3C(_Block):
                 'stride': 1,
                 'padding': (0, 3),
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch7x7_3 = unit_fn(
             self.op, hidden_dim // 2, hidden_dim, False, True, False,
             **self._get_custom_kwargs({
@@ -203,7 +215,8 @@ class _InceptionV3C(_Block):
                 'stride': 1,
                 'padding': (3, 0),
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.branch7x7dbl_1 = unit_fn(
             self.op, self.in_dim, hidden_dim // 2, False, True, False,
@@ -212,7 +225,8 @@ class _InceptionV3C(_Block):
                 'stride': stride,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch7x7dbl_2 = unit_fn(
             self.op, hidden_dim // 2, hidden_dim // 2, False, True, False,
             **self._get_custom_kwargs({
@@ -220,7 +234,8 @@ class _InceptionV3C(_Block):
                 'stride': 1,
                 'padding': (3, 0),
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch7x7dbl_3 = unit_fn(
             self.op, hidden_dim // 2, hidden_dim // 2, False, True, False,
             **self._get_custom_kwargs({
@@ -228,7 +243,8 @@ class _InceptionV3C(_Block):
                 'stride': 1,
                 'padding': (0, 3),
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch7x7dbl_4 = unit_fn(
             self.op, hidden_dim // 2, hidden_dim // 2, False, True, False,
             **self._get_custom_kwargs({
@@ -236,7 +252,8 @@ class _InceptionV3C(_Block):
                 'stride': 1,
                 'padding': (3, 0),
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch7x7dbl_5 = unit_fn(
             self.op, hidden_dim // 2, hidden_dim, False, True, False,
             **self._get_custom_kwargs({
@@ -244,7 +261,8 @@ class _InceptionV3C(_Block):
                 'stride': 1,
                 'padding': (0, 3),
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.pool_fn = layer.__dict__['AvgPool' + self._get_dim_type()](3, 1, 1)
         self.branch_pool = unit_fn(
@@ -254,7 +272,8 @@ class _InceptionV3C(_Block):
                 'stride': stride,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
 
     def forward(self, x):
         branch1x1 = self.branch1x1(x)
@@ -280,7 +299,6 @@ class _InceptionV3D(_Block):
         Inception module with 3 pathways, only 1x1, 3x3, 1x7, 7x1 kernel size being used
         MaxPool for the pool branch
     '''
-
     def __postinit__(self):
         unit_fn = self._get_param('unit', unit.conv)
         hidden_dim = self.out_dim // 3
@@ -293,7 +311,8 @@ class _InceptionV3D(_Block):
                 'stride': 1,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch3x3_2 = unit_fn(
             self.op, hidden_dim, hidden_dim, False, True, False,
             **self._get_custom_kwargs({
@@ -301,7 +320,8 @@ class _InceptionV3D(_Block):
                 'stride': stride,
                 'padding': 1,
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.branch7x7x3_1 = unit_fn(
             self.op, self.in_dim, hidden_dim, False, True, False,
@@ -310,7 +330,8 @@ class _InceptionV3D(_Block):
                 'stride': 1,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch7x7x3_2 = unit_fn(
             self.op, hidden_dim, hidden_dim, False, True, False,
             **self._get_custom_kwargs({
@@ -318,7 +339,8 @@ class _InceptionV3D(_Block):
                 'stride': 1,
                 'padding': (0, 3),
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch7x7x3_3 = unit_fn(
             self.op, hidden_dim, hidden_dim, False, True, False,
             **self._get_custom_kwargs({
@@ -326,7 +348,8 @@ class _InceptionV3D(_Block):
                 'stride': 1,
                 'padding': (3, 0),
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch7x7x3_4 = unit_fn(
             self.op, hidden_dim, hidden_dim, False, True, False,
             **self._get_custom_kwargs({
@@ -334,7 +357,8 @@ class _InceptionV3D(_Block):
                 'stride': stride,
                 'padding': 1,
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.pool_fn = layer.__dict__['MaxPool' + self._get_dim_type()](3, 1, 1)
         self.branch_pool = unit_fn(
@@ -344,7 +368,8 @@ class _InceptionV3D(_Block):
                 'stride': stride,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
 
     def forward(self, x):
         branch3x3 = self.branch3x3_1(x)
@@ -366,7 +391,6 @@ class _InceptionV3E(_Block):
         Inception module with 4 pathways, only 1x1, 1x3, 3x1, 3x3 kernel size being used
         AvgPool for the pool branch
     '''
-
     def __postinit__(self):
         unit_fn = self._get_param('unit', unit.conv)
         hidden_dim = self.out_dim // 4
@@ -379,7 +403,8 @@ class _InceptionV3E(_Block):
                 'stride': stride,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.branch3x3_1 = unit_fn(
             self.op, self.in_dim, hidden_dim, False, True, False,
@@ -388,7 +413,8 @@ class _InceptionV3E(_Block):
                 'stride': stride,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
         hidden_dim_2a = hidden_dim // 2
         hidden_dim_2b = hidden_dim - hidden_dim_2a
         self.branch3x3_2a = unit_fn(
@@ -398,7 +424,8 @@ class _InceptionV3E(_Block):
                 'stride': 1,
                 'padding': (0, 1),
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch3x3_2b = unit_fn(
             self.op, hidden_dim, hidden_dim_2b, False, True, False,
             **self._get_custom_kwargs({
@@ -406,7 +433,8 @@ class _InceptionV3E(_Block):
                 'stride': 1,
                 'padding': (1, 0),
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.branch3x3dbl_1 = unit_fn(
             self.op, self.in_dim, hidden_dim, False, True, False,
@@ -415,7 +443,8 @@ class _InceptionV3E(_Block):
                 'stride': stride,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch3x3dbl_2 = unit_fn(
             self.op, hidden_dim, hidden_dim, False, True, False,
             **self._get_custom_kwargs({
@@ -423,7 +452,8 @@ class _InceptionV3E(_Block):
                 'stride': 1,
                 'padding': 1,
                 'erased_activator': False
-            }))
+            })
+        )
         hidden_dim_3a = hidden_dim // 2
         hidden_dim_3b = hidden_dim - hidden_dim_3a
         self.branch3x3dbl_3a = unit_fn(
@@ -433,7 +463,8 @@ class _InceptionV3E(_Block):
                 'stride': 1,
                 'padding': (0, 1),
                 'erased_activator': False
-            }))
+            })
+        )
         self.branch3x3dbl_3b = unit_fn(
             self.op, hidden_dim, hidden_dim_3b, False, True, False,
             **self._get_custom_kwargs({
@@ -441,7 +472,8 @@ class _InceptionV3E(_Block):
                 'stride': 1,
                 'padding': (1, 0),
                 'erased_activator': False
-            }))
+            })
+        )
 
         self.pool_fn = layer.__dict__['AvgPool' + self._get_dim_type()](3, 1, 1)
         self.branch_pool = unit_fn(
@@ -451,7 +483,8 @@ class _InceptionV3E(_Block):
                 'stride': stride,
                 'padding': 0,
                 'erased_activator': False
-            }))
+            })
+        )
 
     def forward(self, x):
         branch1x1 = self.branch1x1(x)

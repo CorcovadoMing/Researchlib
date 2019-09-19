@@ -8,7 +8,6 @@ from .conv import _conv
 
 
 class _inner_res2conv(nn.Module):
-
     def __init__(self, group, op_group, scales, ignore_last):
         super().__init__()
         self.group = group
@@ -38,7 +37,6 @@ class _res2(_Block):
         Res2Net: A New Multi-scale Backbone Architecture
         https://arxiv.org/abs/1904.01169
     '''
-
     def __postinit__(self):
         # Parameters
         activator_type = self._get_param('actvator_type', 'ReLU')
@@ -52,26 +50,26 @@ class _res2(_Block):
 
         # Layers
         if conv_kwargs['kernel_size'] == 1:
-            conv_layer = _conv(self.op, self.in_dim, self.out_dim, self.do_pool,
-                               self.do_norm, self.preact, **conv_kwargs)
+            conv_layer = _conv(
+                self.op, self.in_dim, self.out_dim, self.do_pool, self.do_norm, self.preact,
+                **conv_kwargs
+            )
         else:
             scales = self._get_param('scales', 4)
             test_case = torch.chunk(torch.randn(self.in_dim), scales)
             group, dim, ignore_last = len(test_case), len(
-                test_case[0]), len(test_case[-1]) != len(test_case[0])
+                test_case[0]
+            ), len(test_case[-1]) != len(test_case[0])
             dim = math.ceil(self.in_dim / scales)
             stride = conv_kwargs['stride']
             conv_kwargs['stride'] = 1
             op_group = [
-                _conv(self.op, dim, dim, False, True, self.preact)
-                for _ in range(group - 1)
+                _conv(self.op, dim, dim, False, True, self.preact) for _ in range(group - 1)
             ]
             conv_layer = []
             if stride != conv_kwargs['stride']:
-                conv_layer.append(
-                    self.op(self.in_dim, self.in_dim, 1, stride=stride))
-            conv_layer.append(
-                _inner_res2conv(group, op_group, scales, ignore_last))
+                conv_layer.append(self.op(self.in_dim, self.in_dim, 1, stride = stride))
+            conv_layer.append(_inner_res2conv(group, op_group, scales, ignore_last))
             if self.in_dim != self.out_dim:
                 conv_layer.append(self.op(self.in_dim, self.out_dim, 1))
             conv_layer = nn.Sequential(*conv_layer)
@@ -79,9 +77,9 @@ class _res2(_Block):
         if spectral_norm:
             conv_layer = sn(conv_layer)
         activator_layer = self._get_activator_layer(
-            activator_type) if not erased_activator else None
-        pool_layer = self._get_pool_layer(pool_type,
-                                          pool_factor) if self.do_pool else None
+            activator_type
+        ) if not erased_activator else None
+        pool_layer = self._get_pool_layer(pool_type, pool_factor) if self.do_pool else None
         norm_layer = self._get_norm_layer(norm_type) if self.do_norm else None
 
         if self.preact:

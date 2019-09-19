@@ -7,8 +7,7 @@ import random
 
 
 class Saturation(template.TorchAugmentation):
-
-    def __init__(self, prob=None, mag=None, include_y=False):
+    def __init__(self, prob = None, mag = None, include_y = False):
         super().__init__()
         self.include_y = include_y
         self.prob = prob

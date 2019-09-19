@@ -9,7 +9,6 @@ import hiddenlayer as hl
 
 
 class _Model:
-
     def __init__(self):
         pass
 
@@ -26,14 +25,15 @@ class _Model:
         """
         param_map = {id(v): k for k, v in params.items()}
         node_attr = dict(
-            style='filled',
-            shape='box',
-            align='left',
-            fontsize='12',
-            ranksep='0.1',
-            height='0.2')
+            style = 'filled',
+            shape = 'box',
+            align = 'left',
+            fontsize = '12',
+            ranksep = '0.1',
+            height = '0.2'
+        )
 
-        dot = Digraph(node_attr=node_attr, graph_attr=dict(size="200,200"))
+        dot = Digraph(node_attr = node_attr, graph_attr = dict(size = "200,200"))
         seen = set()
 
         def size_to_str(size):
@@ -42,19 +42,13 @@ class _Model:
         def add_nodes(var):
             if var not in seen:
                 if torch.is_tensor(var):
-                    dot.node(
-                        str(id(var)),
-                        size_to_str(var.size()),
-                        fillcolor='orange')
+                    dot.node(str(id(var)), size_to_str(var.size()), fillcolor = 'orange')
                 elif hasattr(var, 'variable'):
                     u = var.variable
-                    node_name = '%s\n %s' % (param_map.get(
-                        id(u)), size_to_str(u.size()))
-                    dot.node(str(id(var)), node_name, fillcolor='lightblue')
+                    node_name = '%s\n %s' % (param_map.get(id(u)), size_to_str(u.size()))
+                    dot.node(str(id(var)), node_name, fillcolor = 'lightblue')
                 else:
-                    dot.node(
-                        str(id(var)),
-                        str(type(var).__name__).replace('Backward', ''))
+                    dot.node(str(id(var)), str(type(var).__name__).replace('Backward', ''))
                 seen.add(var)
                 if hasattr(var, 'next_functions'):
                     for u in var.next_functions:
@@ -71,7 +65,7 @@ class _Model:
 
     def _highlevel(self, model, trial):
         transforms = [
-            hl.transforms.Rename(op='ATen', to='Norm'),
+            hl.transforms.Rename(op = 'ATen', to = 'Norm'),
             hl.transforms.Fold("Norm > Elu > Conv", "PreActConvblock"),
             hl.transforms.Fold("BatchNorm > Elu > Conv", "PreActConvblock"),
             hl.transforms.Fold("BatchNorm > Relu > Conv", "PreActConvblock"),
@@ -79,9 +73,8 @@ class _Model:
             hl.transforms.Fold("Conv > BatchNorm > Elu", "Convblock"),
             hl.transforms.FoldDuplicates(),
         ]
-        hl_graph = hl.build_graph(model, trial, transforms=transforms)
-        hl_graph.theme = hl.graph.THEMES["blue"].copy(
-        )  # Two options: basic and blue
+        hl_graph = hl.build_graph(model, trial, transforms = transforms)
+        hl_graph.theme = hl.graph.THEMES["blue"].copy()  # Two options: basic and blue
         display(hl_graph)
 
     def computation_graph(self, model, input_shape):

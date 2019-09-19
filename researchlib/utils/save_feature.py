@@ -1,5 +1,4 @@
 class SaveFeatures:
-
     def __init__(self, m):
         self.features = None
         self.hook = m.register_forward_hook(self.hook_fn)

@@ -2,7 +2,6 @@ import torch
 
 
 class NumpyPreprocessing(object):
-
     def __init__(self):
         pass
 
@@ -10,11 +9,9 @@ class NumpyPreprocessing(object):
         x, y = [i.numpy().copy() for i in x], [i.numpy().copy() for i in y]
         x, y = self.forward_batch(x, y)
         try:
-            x, y = [torch.from_numpy(i) for i in x
-                   ], [torch.from_numpy(i) for i in y]
+            x, y = [torch.from_numpy(i) for i in x], [torch.from_numpy(i) for i in y]
         except:
-            x, y = [torch.from_numpy(i.copy()) for i in x
-                   ], [torch.from_numpy(i.copy()) for i in y]
+            x, y = [torch.from_numpy(i.copy()) for i in x], [torch.from_numpy(i.copy()) for i in y]
         return x, y
 
     def forward_batch(self, x, y):
@@ -34,7 +31,6 @@ class NumpyPreprocessing(object):
 
 
 class TorchPreprocessing(object):
-
     def __init__(self):
         pass
 

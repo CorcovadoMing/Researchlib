@@ -5,11 +5,7 @@ import time
 
 
 class ParallelExecutor:
-
-    def __init__(self,
-                 task,
-                 max_job: int = 100,
-                 num_workers: int = os.cpu_count()):
+    def __init__(self, task, max_job: int = 100, num_workers: int = os.cpu_count()):
         assert max_job > 0, 'max_job should be > 0'
         self.max_job = int(max_job)
         self.job_count = 0
@@ -47,7 +43,7 @@ class ParallelExecutor:
 
     def start(self, *args):
         for rank in range(self.num_workers):
-            p = mp.Process(target=self._worker, args=(*args,))
+            p = mp.Process(target = self._worker, args = (*args, ))
             p.start()
             self.worker_pool.append(p)
 
@@ -65,5 +61,5 @@ class ParallelExecutor:
         while len(result) != self.job_count:
             result.append(self.get())
         self.job_count = 0
-        display.clear_output(wait=True)
+        display.clear_output(wait = True)
         return result

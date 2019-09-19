@@ -28,13 +28,13 @@ def lovasz_grad(gt_sorted):
     return jaccard
 
 
-def iou_binary(preds, labels, EMPTY=1., ignore=None, per_image=True):
+def iou_binary(preds, labels, EMPTY = 1., ignore = None, per_image = True):
     """
     IoU for foreground class
     binary: 1 foreground, 0 background
     """
     if not per_image:
-        preds, labels = (preds,), (labels,)
+        preds, labels = (preds, ), (labels, )
     ious = []
     for pred, label in zip(preds, labels):
         intersection = ((label == 1) & (pred == 1)).sum()
@@ -48,12 +48,12 @@ def iou_binary(preds, labels, EMPTY=1., ignore=None, per_image=True):
     return 100 * iou
 
 
-def iou(preds, labels, C, EMPTY=1., ignore=None, per_image=False):
+def iou(preds, labels, C, EMPTY = 1., ignore = None, per_image = False):
     """
     Array of IoU for each (non ignored) class
     """
     if not per_image:
-        preds, labels = (preds,), (labels,)
+        preds, labels = (preds, ), (labels, )
     ious = []
     for pred, label in zip(preds, labels):
         iou = []
@@ -73,7 +73,7 @@ def iou(preds, labels, C, EMPTY=1., ignore=None, per_image=False):
 # --------------------------- BINARY LOSSES ---------------------------
 
 
-def lovasz_hinge(logits, labels, per_image=True, ignore=None):
+def lovasz_hinge(logits, labels, per_image = True, ignore = None):
     """
     Binary Lovasz hinge loss
       logits: [B, H, W] Variable, logits at each pixel (between -\infty and +\infty)
@@ -83,9 +83,9 @@ def lovasz_hinge(logits, labels, per_image=True, ignore=None):
     """
     if per_image:
         loss = mean(
-            lovasz_hinge_flat(*flatten_binary_scores(
-                log.unsqueeze(0), lab.unsqueeze(0), ignore))
-            for log, lab in zip(logits, labels))
+            lovasz_hinge_flat(*flatten_binary_scores(log.unsqueeze(0), lab.unsqueeze(0), ignore))
+            for log, lab in zip(logits, labels)
+        )
     else:
         loss = lovasz_hinge_flat(*flatten_binary_scores(logits, labels, ignore))
     return loss
@@ -103,7 +103,7 @@ def lovasz_hinge_flat(logits, labels):
         return logits.sum() * 0.
     signs = 2. * labels.float() - 1.
     errors = (1. - logits * Variable(signs))
-    errors_sorted, perm = torch.sort(errors, dim=0, descending=True)
+    errors_sorted, perm = torch.sort(errors, dim = 0, descending = True)
     perm = perm.data
     gt_sorted = labels[perm]
     grad = lovasz_grad(gt_sorted)
@@ -111,7 +111,7 @@ def lovasz_hinge_flat(logits, labels):
     return loss
 
 
-def flatten_binary_scores(scores, labels, ignore=None):
+def flatten_binary_scores(scores, labels, ignore = None):
     """
     Flattens predictions in the batch (binary case)
     Remove labels equal to 'ignore'
@@ -127,17 +127,16 @@ def flatten_binary_scores(scores, labels, ignore=None):
 
 
 class StableBCELoss(torch.nn.modules.Module):
-
     def __init__(self):
         super(StableBCELoss, self).__init__()
 
     def forward(self, input, target):
         neg_abs = -input.abs()
-        loss = input.clamp(min=0) - input * target + (1 + neg_abs.exp()).log()
+        loss = input.clamp(min = 0) - input * target + (1 + neg_abs.exp()).log()
         return loss.mean()
 
 
-def binary_xloss(logits, labels, ignore=None):
+def binary_xloss(logits, labels, ignore = None):
     """
     Binary Cross entropy loss
       logits: [B, H, W] Variable, logits at each pixel (between -\infty and +\infty)
@@ -152,11 +151,7 @@ def binary_xloss(logits, labels, ignore=None):
 # --------------------------- MULTICLASS LOSSES ---------------------------
 
 
-def lovasz_softmax(probas,
-                   labels,
-                   only_present=False,
-                   per_image=False,
-                   ignore=None):
+def lovasz_softmax(probas, labels, only_present = False, per_image = False, ignore = None):
     """
     Multi-class Lovasz-Softmax loss
       probas: [B, C, H, W] Variable, class probabilities at each prediction (between 0 and 1)
@@ -169,14 +164,17 @@ def lovasz_softmax(probas,
         loss = mean(
             lovasz_softmax_flat(
                 *flatten_probas(prob.unsqueeze(0), lab.unsqueeze(0), ignore),
-                only_present=only_present) for prob, lab in zip(probas, labels))
+                only_present = only_present
+            ) for prob, lab in zip(probas, labels)
+        )
     else:
         loss = lovasz_softmax_flat(
-            *flatten_probas(probas, labels, ignore), only_present=only_present)
+            *flatten_probas(probas, labels, ignore), only_present = only_present
+        )
     return loss
 
 
-def lovasz_softmax_flat(probas, labels, only_present=False):
+def lovasz_softmax_flat(probas, labels, only_present = False):
     """
     Multi-class Lovasz-Softmax loss
       probas: [P, C] Variable, class probabilities at each prediction (between 0 and 1)
@@ -195,21 +193,19 @@ def lovasz_softmax_flat(probas, labels, only_present=False):
         if only_present and fg.sum() == 0:
             continue
         errors = (Variable(fg) - probas[:, c]).abs()
-        errors_sorted, perm = torch.sort(errors, 0, descending=True)
+        errors_sorted, perm = torch.sort(errors, 0, descending = True)
         perm = perm.data
         fg_sorted = fg[perm]
-        losses.append(
-            torch.dot(errors_sorted, Variable(lovasz_grad(fg_sorted))))
+        losses.append(torch.dot(errors_sorted, Variable(lovasz_grad(fg_sorted))))
     return mean(losses)
 
 
-def flatten_probas(probas, labels, ignore=None):
+def flatten_probas(probas, labels, ignore = None):
     """
     Flattens predictions in the batch
     """
     B, C, H, W = probas.size()
-    probas = probas.permute(0, 2, 3,
-                            1).contiguous().view(-1, C)  # B * H * W, C = P, C
+    probas = probas.permute(0, 2, 3, 1).contiguous().view(-1, C)  # B * H * W, C = P, C
     labels = labels.view(-1)
     if ignore is None:
         return probas, labels
@@ -219,11 +215,11 @@ def flatten_probas(probas, labels, ignore=None):
     return vprobas, vlabels
 
 
-def xloss(logits, labels, ignore=None):
+def xloss(logits, labels, ignore = None):
     """
     Cross entropy loss
     """
-    return F.cross_entropy(logits, Variable(labels), ignore_index=255)
+    return F.cross_entropy(logits, Variable(labels), ignore_index = 255)
 
 
 # --------------------------- HELPER FUNCTIONS ---------------------------
@@ -231,7 +227,7 @@ def isnan(x):
     return x != x
 
 
-def mean(l, ignore_nan=True, empty=0):
+def mean(l, ignore_nan = True, empty = 0):
     """
     nanmean compatible with generators.
     """

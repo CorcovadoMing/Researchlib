@@ -3,8 +3,7 @@ from torch import nn
 
 
 class _AdaptiveConcatPool2d(nn.Module):
-
-    def __init__(self, sz=None):
+    def __init__(self, sz = None):
         super().__init__()
         sz = sz or (1, 1)
         self.ap = nn.AdaptiveAvgPool2d(sz)
@@ -15,7 +14,6 @@ class _AdaptiveConcatPool2d(nn.Module):
 
 
 class _AdaptiveConcatPool1d(nn.Module):
-
     def __init__(self, l):
         super().__init__()
         self.ap = nn.AdaptiveAvgPool1d(l)

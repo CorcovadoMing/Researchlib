@@ -3,18 +3,19 @@ from ..layers import layer
 
 
 class _OctConvBlock2d(nn.Module):
-
-    def __init__(self,
-                 ch_in,
-                 ch_out,
-                 kernel_size,
-                 stride=1,
-                 padding=0,
-                 alphas=(0.5, 0.5),
-                 pool=False,
-                 pooling_factor=2,
-                 activator=nn.ReLU,
-                 norm=nn.BatchNorm2d):
+    def __init__(
+        self,
+        ch_in,
+        ch_out,
+        kernel_size,
+        stride = 1,
+        padding = 0,
+        alphas = (0.5, 0.5),
+        pool = False,
+        pooling_factor = 2,
+        activator = nn.ReLU,
+        norm = nn.BatchNorm2d
+    ):
         super().__init__()
         self.alpha_in, self.alpha_out = alphas
         assert 0 <= self.alpha_in <= 1 and 0 <= self.alpha_in <= 1, "Alphas must be in interval [0, 1]"
@@ -27,8 +28,7 @@ class _OctConvBlock2d(nn.Module):
         self.ch_out_hf = int((1 - self.alpha_out) * ch_out)
         self.ch_out_lf = ch_out - self.ch_out_hf
 
-        self.conv = layer.OctConv2d(ch_in, ch_out, kernel_size, stride, padding,
-                                    alphas)
+        self.conv = layer.OctConv2d(ch_in, ch_out, kernel_size, stride, padding, alphas)
         self.norm_hf = norm(self.ch_out_hf)
         if self.ch_out_lf:
             self.norm_lf = norm(self.ch_out_lf)
@@ -40,8 +40,7 @@ class _OctConvBlock2d(nn.Module):
     def forward(self, x):
         if self.ch_out_lf > 0:
             h, l = self.conv(x)
-            h, l = self.activator(self.norm_hf(h)), self.activator(
-                self.norm_lf(l))
+            h, l = self.activator(self.norm_hf(h)), self.activator(self.norm_lf(l))
             if self.pool:
                 h, l = self.pooling(h), self.pooling(l)
             return h, l

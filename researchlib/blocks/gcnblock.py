@@ -5,9 +5,8 @@ from torch import nn
 
 
 class _GCNBlock(_Block):
-
     def __postinit__(self):
-        A = self._get_param('adjacency_matrix', None, required=True)
+        A = self._get_param('adjacency_matrix', None, required = True)
         coff_embedding = self._get_param('coff_embedding', 4)
         subset = self._get_param('subset', 3)
 
@@ -28,8 +27,8 @@ class _GCNBlock(_Block):
 
         if self.in_dim != self.out_dim:
             self.down = nn.Sequential(
-                self.op(self.in_dim, self.out_dim, 1),
-                nn.BatchNorm2d(self.out_dim))
+                self.op(self.in_dim, self.out_dim, 1), nn.BatchNorm2d(self.out_dim)
+            )
         else:
             self.down = lambda x: x
 
@@ -44,8 +43,8 @@ class _GCNBlock(_Block):
 
         y = None
         for i in range(self.num_subset):
-            C1 = self.embedded_1[i](x).permute(0, 3, 1, 2).contiguous().view(
-                N, V, self.hidden_dim * T)
+            C1 = self.embedded_1[i](x).permute(0, 3, 1,
+                                               2).contiguous().view(N, V, self.hidden_dim * T)
             C2 = self.embedded_2[i](x).view(N, self.hidden_dim * T, V)
             C1 = self.soft(torch.matmul(C1, C2) / C1.size(-1))  # N V V
             C1 = C1 + AB[i]

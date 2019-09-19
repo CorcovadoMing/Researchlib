@@ -1,5 +1,4 @@
 class Singleton:
-
     def __init__(self, klass):
         self.klass = klass
         self.instance = None

@@ -14,7 +14,6 @@ from functools import reduce
 
 
 class LambdaBase(nn.Sequential):
-
     def __init__(self, fn, *args):
         super(LambdaBase, self).__init__(*args)
         self.lambda_func = fn
@@ -27,20 +26,17 @@ class LambdaBase(nn.Sequential):
 
 
 class Lambda(LambdaBase):
-
     def forward(self, input):
         return self.lambda_func(self.forward_prepare(input))
 
 
 class LambdaMap(LambdaBase):
-
     def forward(self, input):
         # result is Variables list [Variable1, Variable2, ...]
         return list(map(self.lambda_func, self.forward_prepare(input)))
 
 
 class LambdaReduce(LambdaBase):
-
     def forward(self, input):
         # result is a Variable
         return reduce(self.lambda_func, self.forward_prepare(input))
@@ -78,27 +74,25 @@ def lua_recursive_model(module, seq):
                 m.nOutputPlane, (m.kW, m.kH), (m.dW, m.dH), (m.padW, m.padH),
                 1,
                 m.groups,
-                bias=(m.bias is not None))
+                bias = (m.bias is not None)
+            )
             copy_param(m, n)
             add_submodule(seq, n)
         elif name == 'SpatialBatchNormalization':
-            n = nn.BatchNorm2d(
-                m.running_mean.size(0), m.eps, m.momentum, m.affine)
+            n = nn.BatchNorm2d(m.running_mean.size(0), m.eps, m.momentum, m.affine)
             copy_param(m, n)
             add_submodule(seq, n)
         elif name == 'ReLU':
             n = nn.ReLU()
             add_submodule(seq, n)
         elif name == 'SpatialMaxPooling':
-            n = nn.MaxPool2d((m.kW, m.kH), (m.dW, m.dH), (m.padW, m.padH),
-                             ceil_mode=m.ceil_mode)
+            n = nn.MaxPool2d((m.kW, m.kH), (m.dW, m.dH), (m.padW, m.padH), ceil_mode = m.ceil_mode)
             add_submodule(seq, n)
         elif name == 'SpatialAveragePooling':
-            n = nn.AvgPool2d((m.kW, m.kH), (m.dW, m.dH), (m.padW, m.padH),
-                             ceil_mode=m.ceil_mode)
+            n = nn.AvgPool2d((m.kW, m.kH), (m.dW, m.dH), (m.padW, m.padH), ceil_mode = m.ceil_mode)
             add_submodule(seq, n)
         elif name == 'SpatialUpSamplingNearest':
-            n = nn.UpsamplingNearest2d(scale_factor=m.scale_factor)
+            n = nn.UpsamplingNearest2d(scale_factor = m.scale_factor)
             add_submodule(seq, n)
         elif name == 'View':
             n = Lambda(lambda x: x.view(x.size(0), -1))
@@ -106,8 +100,7 @@ def lua_recursive_model(module, seq):
         elif name == 'Linear':
             # Linear in pytorch only accept 2D input
             n1 = Lambda(lambda x: x.view(1, -1) if 1 == len(x.size()) else x)
-            n2 = nn.Linear(
-                m.weight.size(1), m.weight.size(0), bias=(m.bias is not None))
+            n2 = nn.Linear(m.weight.size(1), m.weight.size(0), bias = (m.bias is not None))
             copy_param(m, n2)
             n = nn.Sequential(n1, n2)
             add_submodule(seq, n)
@@ -122,8 +115,9 @@ def lua_recursive_model(module, seq):
             n = Lambda(lambda x: x)  # do nothing
             add_submodule(seq, n)
         elif name == 'SpatialFullConvolution':
-            n = nn.ConvTranspose2d(m.nInputPlane, m.nOutputPlane, (m.kW, m.kH),
-                                   (m.dW, m.dH), (m.padW, m.padH))
+            n = nn.ConvTranspose2d(
+                m.nInputPlane, m.nOutputPlane, (m.kW, m.kH), (m.dW, m.dH), (m.padW, m.padH)
+            )
             add_submodule(seq, n)
         elif name == 'SpatialReplicationPadding':
             n = nn.ReplicationPad2d((m.pad_l, m.pad_r, m.pad_t, m.pad_b))
@@ -135,13 +129,11 @@ def lua_recursive_model(module, seq):
             n = Lambda(lambda x: x)  # do nothing
             add_submodule(seq, n)
         elif name == 'Narrow':
-            n = Lambda(
-                lambda x, a=(m.dimension, m.index, m.length): x.narrow(*a))
+            n = Lambda(lambda x, a = (m.dimension, m.index, m.length): x.narrow(*a))
             add_submodule(seq, n)
         elif name == 'SpatialCrossMapLRN':
-            lrn = torch.legacy.nn.SpatialCrossMapLRN(m.size, m.alpha, m.beta,
-                                                     m.k)
-            n = Lambda(lambda x, lrn=lrn: Variable(lrn.forward(x.data)))
+            lrn = torch.legacy.nn.SpatialCrossMapLRN(m.size, m.alpha, m.beta, m.k)
+            n = Lambda(lambda x, lrn = lrn: Variable(lrn.forward(x.data)))
             add_submodule(seq, n)
         elif name == 'Sequential':
             n = nn.Sequential()
@@ -156,7 +148,7 @@ def lua_recursive_model(module, seq):
             add_submodule(seq, n)
         elif name == 'Concat':
             dim = m.dimension
-            n = LambdaReduce(lambda x, y, dim=dim: torch.cat((x, y), dim))
+            n = LambdaReduce(lambda x, y, dim = dim: torch.cat((x, y), dim))
             lua_recursive_model(m, n)
             add_submodule(seq, n)
         elif name == 'TorchObject':
@@ -179,36 +171,39 @@ def lua_recursive_source(module):
                 m.groups = 1
             s += [
                 'nn.Conv2d({},{},{},{},{},{},{},bias={}),#Conv2d'.format(
-                    m.nInputPlane, m.nOutputPlane, (m.kW, m.kH), (m.dW, m.dH),
-                    (m.padW, m.padH), 1, m.groups, m.bias is not None)
+                    m.nInputPlane, m.nOutputPlane, (m.kW, m.kH), (m.dW, m.dH), (m.padW, m.padH), 1,
+                    m.groups, m.bias is not None
+                )
             ]
         elif name == 'SpatialBatchNormalization':
             s += [
                 'nn.BatchNorm2d({},{},{},{}),#BatchNorm2d'.format(
-                    m.running_mean.size(0), m.eps, m.momentum, m.affine)
+                    m.running_mean.size(0), m.eps, m.momentum, m.affine
+                )
             ]
         elif name == 'ReLU':
             s += ['nn.ReLU()']
         elif name == 'SpatialMaxPooling':
             s += [
-                'nn.MaxPool2d({},{},{},ceil_mode={}),#MaxPool2d'.format(
-                    (m.kW, m.kH), (m.dW, m.dH), (m.padW, m.padH), m.ceil_mode)
+                'nn.MaxPool2d({},{},{},ceil_mode={}),#MaxPool2d'.format((m.kW, m.kH), (m.dW, m.dH),
+                                                                        (m.padW, m.padH),
+                                                                        m.ceil_mode)
             ]
         elif name == 'SpatialAveragePooling':
             s += [
-                'nn.AvgPool2d({},{},{},ceil_mode={}),#AvgPool2d'.format(
-                    (m.kW, m.kH), (m.dW, m.dH), (m.padW, m.padH), m.ceil_mode)
+                'nn.AvgPool2d({},{},{},ceil_mode={}),#AvgPool2d'.format((m.kW, m.kH), (m.dW, m.dH),
+                                                                        (m.padW, m.padH),
+                                                                        m.ceil_mode)
             ]
         elif name == 'SpatialUpSamplingNearest':
-            s += [
-                'nn.UpsamplingNearest2d(scale_factor={})'.format(m.scale_factor)
-            ]
+            s += ['nn.UpsamplingNearest2d(scale_factor={})'.format(m.scale_factor)]
         elif name == 'View':
             s += ['Lambda(lambda x: x.view(x.size(0),-1)), # View']
         elif name == 'Linear':
             s1 = 'Lambda(lambda x: x.view(1,-1) if 1==len(x.size()) else x )'
             s2 = 'nn.Linear({},{},bias={})'.format(
-                m.weight.size(1), m.weight.size(0), (m.bias is not None))
+                m.weight.size(1), m.weight.size(0), (m.bias is not None)
+            )
             s += ['nn.Sequential({},{}),#Linear'.format(s1, s2)]
         elif name == 'Dropout':
             s += ['nn.Dropout({})'.format(m.p)]
@@ -219,33 +214,20 @@ def lua_recursive_source(module):
         elif name == 'SpatialFullConvolution':
             s += [
                 'nn.ConvTranspose2d({},{},{},{},{})'.format(
-                    m.nInputPlane, m.nOutputPlane, (m.kW, m.kH), (m.dW, m.dH),
-                    (m.padW, m.padH))
+                    m.nInputPlane, m.nOutputPlane, (m.kW, m.kH), (m.dW, m.dH), (m.padW, m.padH)
+                )
             ]
         elif name == 'SpatialReplicationPadding':
-            s += [
-                'nn.ReplicationPad2d({})'.format(
-                    (m.pad_l, m.pad_r, m.pad_t, m.pad_b))
-            ]
+            s += ['nn.ReplicationPad2d({})'.format((m.pad_l, m.pad_r, m.pad_t, m.pad_b))]
         elif name == 'SpatialReflectionPadding':
-            s += [
-                'nn.ReflectionPad2d({})'.format(
-                    (m.pad_l, m.pad_r, m.pad_t, m.pad_b))
-            ]
+            s += ['nn.ReflectionPad2d({})'.format((m.pad_l, m.pad_r, m.pad_t, m.pad_b))]
         elif name == 'Copy':
             s += ['Lambda(lambda x: x), # Copy']
         elif name == 'Narrow':
-            s += [
-                'Lambda(lambda x,a={}: x.narrow(*a))'.format(
-                    (m.dimension, m.index, m.length))
-            ]
+            s += ['Lambda(lambda x,a={}: x.narrow(*a))'.format((m.dimension, m.index, m.length))]
         elif name == 'SpatialCrossMapLRN':
-            lrn = 'torch.legacy.nn.SpatialCrossMapLRN(*{})'.format(
-                (m.size, m.alpha, m.beta, m.k))
-            s += [
-                'Lambda(lambda x,lrn={}: Variable(lrn.forward(x.data)))'.format(
-                    lrn)
-            ]
+            lrn = 'torch.legacy.nn.SpatialCrossMapLRN(*{})'.format((m.size, m.alpha, m.beta, m.k))
+            s += ['Lambda(lambda x,lrn={}: Variable(lrn.forward(x.data)))'.format(lrn)]
 
         elif name == 'Sequential':
             s += ['nn.Sequential( # Sequential']
@@ -260,8 +242,9 @@ def lua_recursive_source(module):
         elif name == 'Concat':
             dim = m.dimension
             s += [
-                'LambdaReduce(lambda x,y,dim={}: torch.cat((x,y),dim), # Concat'
-                .format(m.dimension)
+                'LambdaReduce(lambda x,y,dim={}: torch.cat((x,y),dim), # Concat'.format(
+                    m.dimension
+                )
             ]
             s += lua_recursive_source(m)
             s += [')']
@@ -272,8 +255,7 @@ def lua_recursive_source(module):
 
 
 def simplify_source(s):
-    s = map(lambda x: x.replace(',(1, 1),(0, 0),1,1,bias=True),#Conv2d', ')'),
-            s)
+    s = map(lambda x: x.replace(',(1, 1),(0, 0),1,1,bias=True),#Conv2d', ')'), s)
     s = map(lambda x: x.replace(',(0, 0),1,1,bias=True),#Conv2d', ')'), s)
     s = map(lambda x: x.replace(',1,1,bias=True),#Conv2d', ')'), s)
     s = map(lambda x: x.replace(',bias=True),#Conv2d', ')'), s)
@@ -294,8 +276,8 @@ def simplify_source(s):
     return s
 
 
-def torch_to_pytorch(t7_filename, outputname=None):
-    model = load_lua(t7_filename, unknown_classes=True)
+def torch_to_pytorch(t7_filename, outputname = None):
+    model = load_lua(t7_filename, unknown_classes = True)
     if type(model).__name__ == 'hashable_uniq_dict':
         model = model.model
     model.gradInput = None
@@ -343,20 +325,13 @@ class LambdaReduce(LambdaBase):
     torch.save(n.state_dict(), outputname + '.pth')
 
 
-parser = argparse.ArgumentParser(
-    description='Convert torch t7 model to pytorch')
+parser = argparse.ArgumentParser(description = 'Convert torch t7 model to pytorch')
 parser.add_argument(
-    '--model',
-    '-m',
-    type=str,
-    required=True,
-    help='torch model file in t7 format')
+    '--model', '-m', type = str, required = True, help = 'torch model file in t7 format'
+)
 parser.add_argument(
-    '--output',
-    '-o',
-    type=str,
-    default=None,
-    help='output file name prefix, xxx.py xxx.pth')
+    '--output', '-o', type = str, default = None, help = 'output file name prefix, xxx.py xxx.pth'
+)
 args = parser.parse_args()
 
 torch_to_pytorch(args.model, args.output)

@@ -3,14 +3,7 @@ import torch.nn.functional as F
 
 
 class _OctConv2d(nn.Module):
-
-    def __init__(self,
-                 ch_in,
-                 ch_out,
-                 kernel_size,
-                 stride=1,
-                 padding=0,
-                 alphas=(0.5, 0.5)):
+    def __init__(self, ch_in, ch_out, kernel_size, stride = 1, padding = 0, alphas = (0.5, 0.5)):
         super().__init__()
         self.alpha_in, self.alpha_out = alphas
         assert 0 <= self.alpha_in <= 1 and 0 <= self.alpha_in <= 1, "Alphas must be in interval [0, 1]"
@@ -24,26 +17,22 @@ class _OctConv2d(nn.Module):
         self.ch_out_lf = ch_out - self.ch_out_hf
 
         try:
-            self.H2H = nn.Conv2d(self.ch_in_hf, self.ch_out_hf, kernel_size,
-                                 stride, padding)
+            self.H2H = nn.Conv2d(self.ch_in_hf, self.ch_out_hf, kernel_size, stride, padding)
         except:
             pass
 
         try:
-            self.H2L = nn.Conv2d(self.ch_in_hf, self.ch_out_lf, kernel_size,
-                                 stride, padding)
+            self.H2L = nn.Conv2d(self.ch_in_hf, self.ch_out_lf, kernel_size, stride, padding)
         except:
             pass
 
         try:
-            self.L2H = nn.Conv2d(self.ch_in_lf, self.ch_out_hf, kernel_size,
-                                 stride, padding)
+            self.L2H = nn.Conv2d(self.ch_in_lf, self.ch_out_hf, kernel_size, stride, padding)
         except:
             pass
 
         try:
-            self.L2L = nn.Conv2d(self.ch_in_lf, self.ch_out_lf, kernel_size,
-                                 stride, padding)
+            self.L2L = nn.Conv2d(self.ch_in_lf, self.ch_out_lf, kernel_size, stride, padding)
         except:
             pass
 

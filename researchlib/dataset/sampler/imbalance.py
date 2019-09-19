@@ -2,8 +2,7 @@ import torch
 
 
 class ImbalancedSampler(torch.utils.data.sampler.Sampler):
-
-    def __init__(self, dataset, indices=None, num_samples=None):
+    def __init__(self, dataset, indices = None, num_samples = None):
         # if indices is not provided,
         # all elements in the dataset will be considered
         self.indices = list(range(len(dataset))) \
@@ -24,10 +23,7 @@ class ImbalancedSampler(torch.utils.data.sampler.Sampler):
                 label_to_count[label] = 1
 
         # weight for each sample
-        weights = [
-            1.0 / label_to_count[self._get_label(dataset, idx)]
-            for idx in self.indices
-        ]
+        weights = [1.0 / label_to_count[self._get_label(dataset, idx)] for idx in self.indices]
         self.weights = torch.FloatTensor(weights)
 
     def _get_label(self, dataset, idx):
@@ -38,8 +34,10 @@ class ImbalancedSampler(torch.utils.data.sampler.Sampler):
             return int(dataset.targets[idx])
 
     def __iter__(self):
-        return (self.indices[i] for i in torch.multinomial(
-            self.weights, self.num_samples, replacement=True))
+        return (
+            self.indices[i]
+            for i in torch.multinomial(self.weights, self.num_samples, replacement = True)
+        )
 
     def __len__(self):
         return self.num_samples

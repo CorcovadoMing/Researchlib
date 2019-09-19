@@ -15,7 +15,7 @@ from pynvml import *
 import logging
 import os
 
-_app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+_app = dash.Dash(__name__, external_stylesheets = [dbc.themes.BOOTSTRAP])
 _app.layout = html.Div(
     html.Div([
         # NavBar
@@ -24,53 +24,51 @@ _app.layout = html.Div(
                 # Use row and col to control vertical alignment of logo / brand
                 dbc.Row(
                     [
-                        dbc.Col(
-                            dbc.NavbarBrand(
-                                "Researchlib Dashboard", className="ml-2")),
+                        dbc.Col(dbc.NavbarBrand("Researchlib Dashboard", className = "ml-2")),
                     ],
-                    align="left",
-                    no_gutters=True,
+                    align = "left",
+                    no_gutters = True,
                 ),
-                href="#",
+                href = "#",
             ),
-            dark=False,
+            dark = False,
         ),
 
         # Resource monitor
         dbc.Card(
             dbc.CardBody([
-                dcc.Graph(
-                    id='live-update-pie', config={'displayModeBar': False}),
-            ])),
+                dcc.Graph(id = 'live-update-pie', config = {'displayModeBar': False}),
+            ])
+        ),
 
         # Experiments choose (TODO)
         html.Div([
             dcc.Tabs(
-                id="tabs",
-                value='tab-0',
-                children=[
-                    dcc.Tab(label='Loading', value='tab-0'),
-                ]),
+                id = "tabs",
+                value = 'tab-0',
+                children = [
+                    dcc.Tab(label = 'Loading', value = 'tab-0'),
+                ]
+            ),
             dbc.Card(
                 dbc.CardBody([
-                    html.Div(id='live-update-text'),
-                    dbc.Progress(
-                        id="progress", value=0, striped=True, animated=True),
-                ])),
+                    html.Div(id = 'live-update-text'),
+                    dbc.Progress(id = "progress", value = 0, striped = True, animated = True),
+                ])
+            ),
             dbc.Card(
                 dbc.CardBody([
-                    dcc.Graph(
-                        id='live-update-loss',
-                        config={'displayModeBar': False}),
-                    dcc.Graph(
-                        id='live-update-acc', config={'displayModeBar': False}),
-                ])),
+                    dcc.Graph(id = 'live-update-loss', config = {'displayModeBar': False}),
+                    dcc.Graph(id = 'live-update-acc', config = {'displayModeBar': False}),
+                ])
+            ),
         ]),
-        dcc.Interval(id='text-update', interval=1000, n_intervals=0),
-        dcc.Interval(id='pie-update', interval=1000, n_intervals=0),
-        dcc.Interval(id='loss-update', interval=1000, n_intervals=0),
-        dcc.Interval(id='acc-update', interval=1000, n_intervals=0)
-    ]))
+        dcc.Interval(id = 'text-update', interval = 1000, n_intervals = 0),
+        dcc.Interval(id = 'pie-update', interval = 1000, n_intervals = 0),
+        dcc.Interval(id = 'loss-update', interval = 1000, n_intervals = 0),
+        dcc.Interval(id = 'acc-update', interval = 1000, n_intervals = 0)
+    ])
+)
 
 
 @_app.callback([
@@ -89,44 +87,42 @@ def _update_desc(n):
     tabs = []
     experiments = pickle.loads(r.get('experiment'))
     for i, name in enumerate(experiments):
-        tabs.append(dcc.Tab(label=str(name), value='tab-' + str(i)))
+        tabs.append(dcc.Tab(label = str(name), value = 'tab-' + str(i)))
     if len(tabs) == 0:
-        tabs.append(dcc.Tab(label='Loading', value='tab-0'))
+        tabs.append(dcc.Tab(label = 'Loading', value = 'tab-0'))
 
     if stage == 'stop':
-        return [html.Span(f'{desc}', style=style)], value, tabs
+        return [html.Span(f'{desc}', style = style)], value, tabs
     else:
         return [
-            dbc.Spinner(color=stage_color[stage], type="grow"),
-            html.Span(f'{desc}', style=style)
+            dbc.Spinner(color = stage_color[stage], type = "grow"),
+            html.Span(f'{desc}', style = style)
         ], value, tabs
 
 
 def _add_trace(fig, data, key, name, row_index, col_index):
     try:
-        fig.append_trace(
-            {
-                'x': list(range(len(data[key]))),
-                'y': data[key],
-                'name': name,
-                'mode': 'lines+markers',
-                'type': 'scatter',
-            }, row_index, col_index)
+        fig.append_trace({
+            'x': list(range(len(data[key]))),
+            'y': data[key],
+            'name': name,
+            'mode': 'lines+markers',
+            'type': 'scatter',
+        }, row_index, col_index)
     except:
         pass
     return fig
 
 
 def _add_pie(fig, values, name, row_index, col_index):
-    fig.append_trace(
-        {
-            'values': values,
-            'labels': ['Occupy', 'Non-Occupy'],
-            'sort': False,
-            'name': name,
-            'type': 'pie',
-            'hole': 0.3,
-        }, row_index, col_index)
+    fig.append_trace({
+        'values': values,
+        'labels': ['Occupy', 'Non-Occupy'],
+        'sort': False,
+        'name': name,
+        'type': 'pie',
+        'hole': 0.3,
+    }, row_index, col_index)
     return fig
 
 
@@ -139,15 +135,13 @@ def _get_gpu_monitor():
 
 
 # Multiple components can update everytime interval gets fired.
-@_app.callback(
-    Output('live-update-pie', 'figure'), [Input('pie-update', 'n_intervals')])
+@_app.callback(Output('live-update-pie', 'figure'), [Input('pie-update', 'n_intervals')])
 def _update_pie_live(n):
     fig = plotly.subplots.make_subplots(
-        rows=1,
-        cols=4,
-        subplot_titles=('CPU Memory', 'CPU Utilization', 'GPU Memory',
-                        'GPU Utilization'),
-        specs=[[{
+        rows = 1,
+        cols = 4,
+        subplot_titles = ('CPU Memory', 'CPU Utilization', 'GPU Memory', 'GPU Utilization'),
+        specs = [[{
             'type': 'domain'
         }, {
             'type': 'domain'
@@ -155,7 +149,8 @@ def _update_pie_live(n):
             'type': 'domain'
         }, {
             'type': 'domain'
-        }]])
+        }]]
+    )
 
     fig['layout']['margin'] = {'l': 20, 'r': 20, 'b': 20, 't': 20}
 
@@ -167,7 +162,7 @@ def _update_pie_live(n):
     gpu_mem_free = float(100 - gpu_mem_used)
     gpu_util_free = float(100 - gpu_util_used)
 
-    fig.update_layout(autosize=True, showlegend=False, height=150)
+    fig.update_layout(autosize = True, showlegend = False, height = 150)
     fig = _add_pie(fig, [cpu_mem_used, cpu_mem_free], 'CPU Memory', 1, 1)
     fig = _add_pie(fig, [cpu_util_used, cpu_util_free], 'CPU Utilization', 1, 2)
     fig = _add_pie(fig, [gpu_mem_used, gpu_mem_free], 'GPU Memory', 1, 3)
@@ -177,39 +172,35 @@ def _update_pie_live(n):
 
 
 # Multiple components can update everytime interval gets fired.
-@_app.callback(
-    Output('live-update-loss', 'figure'), [Input('loss-update', 'n_intervals')])
+@_app.callback(Output('live-update-loss', 'figure'), [Input('loss-update', 'n_intervals')])
 def _update_loss_live(n):
     r = redis.Redis()
     data = pickle.loads(r.get('history'))
 
-    fig = plotly.subplots.make_subplots(
-        rows=1, cols=1, subplot_titles=('Loss',))
+    fig = plotly.subplots.make_subplots(rows = 1, cols = 1, subplot_titles = ('Loss', ))
 
     fig['layout']['margin'] = {'l': 20, 'r': 20, 'b': 20, 't': 20}
 
     fig['layout']['legend'] = {'x': 0, 'y': 1, 'xanchor': 'left'}
 
-    fig.update_layout(autosize=True, showlegend=True, height=200)
+    fig.update_layout(autosize = True, showlegend = True, height = 200)
     fig = _add_trace(fig, data, 'train_loss', 'Train Loss', 1, 1)
     fig = _add_trace(fig, data, 'val_loss', 'Validation Loss', 1, 1)
     return fig
 
 
-@_app.callback(
-    Output('live-update-acc', 'figure'), [Input('acc-update', 'n_intervals')])
+@_app.callback(Output('live-update-acc', 'figure'), [Input('acc-update', 'n_intervals')])
 def _update_acc_live(n):
     r = redis.Redis()
     data = pickle.loads(r.get('history'))
 
-    fig = plotly.subplots.make_subplots(
-        rows=1, cols=1, subplot_titles=('Accuracy',))
+    fig = plotly.subplots.make_subplots(rows = 1, cols = 1, subplot_titles = ('Accuracy', ))
 
     fig['layout']['margin'] = {'l': 20, 'r': 20, 'b': 20, 't': 20}
 
     fig['layout']['legend'] = {'x': 0, 'y': 1, 'xanchor': 'left'}
 
-    fig.update_layout(autosize=True, showlegend=True, height=200)
+    fig.update_layout(autosize = True, showlegend = True, height = 200)
 
     fig = _add_trace(fig, data, 'train_acc', 'Train Accuracy', 1, 1)
     fig = _add_trace(fig, data, 'val_acc', 'Validation Accuracy', 1, 1)
@@ -217,18 +208,18 @@ def _update_acc_live(n):
 
 
 class _Dashboard:
-
-    def __init__(self, verbose=False):
+    def __init__(self, verbose = False):
         self.log = logging.getLogger('werkzeug')
         self.log.disabled = not verbose
 
     def start(self):
         os.environ['WERKZEUG_RUN_MAIN'] = 'true'
         self.flask_process = Process(
-            target=_app.run_server, kwargs={
+            target = _app.run_server, kwargs = {
                 'debug': False,
                 'host': '0.0.0.0'
-            })
+            }
+        )
         self.flask_process.start()
 
     def stop(self):
