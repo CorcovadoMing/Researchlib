@@ -102,16 +102,16 @@ class _cifar10:
         from ..models import AutoConvNet, builder, Heads
         model = builder([
             block.VGGBlock(
-                layer.WSConv2d, 3, 64, False, True, False, unit = unit.conv, blur = True
+                layer.Conv2d, 3, 64, False, True, False, unit = unit.conv, blur = True
             ),
             block.DAWNBlock(
-                layer.WSConv2d, 64, 128, True, True, False, unit = unit.conv, blur = True
+                layer.Conv2d, 64, 128, True, True, False, unit = unit.conv, blur = True
             ),
             block.VGGBlock(
-                layer.WSConv2d, 128, 256, True, True, False, unit = unit.conv, blur = True
+                layer.Conv2d, 128, 256, True, True, False, unit = unit.conv, blur = True
             ),
             block.DAWNBlock(
-                layer.WSConv2d, 256, 512, True, True, False, unit = unit.conv, blur = True
+                layer.Conv2d, 256, 512, True, True, False, unit = unit.conv, blur = True
             ),
             layer.AdaptiveAvgPool2d(1),
             layer.Flatten(),
@@ -134,6 +134,7 @@ class _cifar10:
             .preprocessing([Normalizer()]) \
             .augmentation([HFlip(), Crop2d(), Cutout()]) \
             .fit(14,
+                 1e-2,
                  prefetch=True,
                  plot=False)
 

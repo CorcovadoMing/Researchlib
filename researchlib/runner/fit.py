@@ -66,13 +66,8 @@ def fit(
 
 
 @register_method
-def _process_type(self, data_pack, inputs):
-    # DALI
-    if type(data_pack[0]) == dict:
-        data, target = data_pack[0]['data'], data_pack[0]['label']
-    else:
-        data, target = data_pack[:inputs], data_pack[inputs:]
-
+def _process_type(self, data_pack):
+    data, target = data_pack
     if type(data) != list and type(data) != tuple:
         data = [data]
     if type(target) != list and type(target) != tuple:
@@ -91,8 +86,7 @@ def _process_data(self, data, target, inference):
     # On the fly augmentation
     if not inference:
         random.shuffle(self.augmentation_list)
-        for augmentation_fn in self.augmentation_list[:3
-                                                      ]:  # at most 3 of augmentations in a minibatch
+        for augmentation_fn in self.augmentation_list[:3]:  # at most 3 of augmentations in a minibatch
             data, target = augmentation_fn._forward(data, target, 0.5, random.random())
     return data, target
 
@@ -100,7 +94,7 @@ def _process_data(self, data, target, inference):
 @register_method
 def _iteration_pipeline(self, loader, inference = False):
     for batch_idx, data_pack in inifinity_loop(loader):
-        x, y = self._process_type(data_pack, self.inputs)
+        x, y = self._process_type(data_pack)
         x, y = self._process_data(x, y, inference)
         yield x, y
 
@@ -167,7 +161,7 @@ def _fit(
     else:
         self.optimizer.zero_grad()
 
-    liveplot = Liveplot(self.model, len(self.train_loader), plot)
+    liveplot = Liveplot(self.model, iterations, plot)
 
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
