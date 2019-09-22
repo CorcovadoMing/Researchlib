@@ -78,24 +78,9 @@ def _process_type(self, data_pack):
 
 
 @register_method
-def _process_data(self, data, target, inference):
-    # On the fly preprocessing
-    for preprocessing_fn in self.preprocessing_list:
-        data, target = preprocessing_fn._forward(data, target)
-
-    # On the fly augmentation
-    if not inference:
-        random.shuffle(self.augmentation_list)
-        for augmentation_fn in self.augmentation_list[:3]:  # at most 3 of augmentations in a minibatch
-            data, target = augmentation_fn._forward(data, target, 0.5, random.random())
-    return data, target
-
-
-@register_method
-def _iteration_pipeline(self, loader, inference = False):
+def _iteration_pipeline(self, loader):
     for batch_idx, data_pack in inifinity_loop(loader):
         x, y = self._process_type(data_pack)
-        x, y = self._process_data(x, y, inference)
         yield x, y
 
 
@@ -126,6 +111,19 @@ def _fit(
 ):
 
     parameter_manager = ParameterManager(**kwargs)
+    
+    train_loader = self.train_loader.get_generator()
+    self.train_loader_length = len(train_loader)
+    train_loader = self._iteration_pipeline(train_loader)
+    train_loader = BackgroundGenerator(train_loader) if prefetch else train_loader
+    if self.test_loader:
+        test_loader = self.test_loader.get_generator()
+        self.test_loader_length = len(test_loader)
+        test_loader = self._iteration_pipeline(test_loader)
+        test_loader = BackgroundGenerator(test_loader) if prefetch else test_loader
+        
+    if iterations == 0:
+        iterations = self.train_loader_length
 
     # Manifold Mixup
     fixed_mmixup = parameter_manager.get_param(
@@ -137,9 +135,6 @@ def _fit(
     mmixup_alpha = parameter_manager.get_param(
         'mmixup_alpha', validator = lambda x: type(x) == float
     )
-
-    if iterations == 0:
-        iterations = len(self.train_loader)
 
     weight_decay = parameter_manager.get_param('weight_decay', 1)
     if weight_decay > 0:
@@ -185,14 +180,6 @@ def _fit(
     try:
         if len(self.default_metrics):
             metrics = self.default_metrics + metrics
-
-        train_loader = self._iteration_pipeline(self.train_loader)
-        if prefetch:
-            train_loader = BackgroundGenerator(train_loader)
-        if self.test_loader:
-            test_loader = self._iteration_pipeline(self.test_loader, inference = True)
-            if prefetch:
-                test_loader = BackgroundGenerator(test_loader)
 
         for epoch in range(1, epochs + 1):
             # Switch point

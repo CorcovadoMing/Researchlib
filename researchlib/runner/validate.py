@@ -32,7 +32,6 @@ def validate_fn(self, **kwargs):
         m.reset()
 
     test_loss = 0
-    total = len(self.test_loader)
     with torch.no_grad():
         for batch_idx, (x, y) in enumerate(test_loader):
             if self.is_cuda:
@@ -70,10 +69,10 @@ def validate_fn(self, **kwargs):
             for callback_func in callbacks:
                 kwargs = callback_func.on_iteration_end(**kwargs)
 
-            if batch_idx + 1 == total:
+            if batch_idx + 1 == self.test_loader_length:
                 break
 
-    test_loss /= total
+    test_loss /= self.test_loader_length
 
     for callback_func in callbacks:
         kwargs = callback_func.on_validation_end(**kwargs)

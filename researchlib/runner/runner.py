@@ -2,7 +2,6 @@ from ..loss import loss_mapping, loss_ensemble
 from .history import History
 from ..models import GANModel
 from .validate import validate_fn
-from .preprocessing import PreprocessingDebugger
 from .export import _Export
 from ..utils import *
 from ..utils import _add_methods_from, ParameterManager
@@ -92,9 +91,6 @@ class Runner:
         self.multigpu = parameter_manager.get_param('multigpu', False)
 
         self.default_callbacks = []
-        self.preprocessing_list = []
-        self.postprocessing_list = []
-        self.augmentation_list = []
 
         # Assign loss function
         self.loss_fn = []
@@ -187,7 +183,9 @@ class Runner:
         _switch_swa_mode(self.optimzier)
 
     def validate(self, metrics = [], callbacks = [], **kwargs):
-        test_loader = self._iteration_pipeline(self.test_loader, inference = True)
+        test_loader = self.test_loader.get_generator()
+        self.test_loader_length = len(test_loader)
+        test_loader = self._iteration_pipeline(test_loader)
         self.preload_gpu()
         try:
             if len(self.default_metrics):
@@ -218,48 +216,20 @@ class Runner:
 
     def save(self, path):
         _save_model(self.model, path)
-        with open(path + '_preprocessing.pkl', 'wb') as f:
-            pickle.dump(self.preprocessing_list, f)
         # TODO: more efficient to save optimizer (save only the last/best?)
         #_save_optimizer(self.optimizer, path)
 
     def load(self, path):
         self.model = _load_model(self.model, path, self.multigpu)
-        with open(path + '_preprocessing.pkl', 'rb') as f:
-            self.preprocessing_list = pickle.load(f)
-        self.preprocessing(self.preprocessing_list)
-
-    def preprocessing(self, preprocessing_list, debug = False):
-        self.preprocessing_list = preprocessing_list
-        for i in self.preprocessing_list:
-            try:
-                if i.static_auto:
-                    print('Calculated statistics in dataset')
-                    if type(self.train_loader.dataset) == torch.utils.data.dataset.TensorDataset:
-                        tensors = self.train_loader.dataset.tensors[0]
-                        mean = tensors.mean([0] + list(range(2, tensors.dim())))
-                        std = tensors.std([0] + list(range(2, tensors.dim())))
-                    else:
-                        mean = self.train_loader.dataset.data.mean((0, 1, 2)) / 255.
-                        std = self.train_loader.dataset.data.std((0, 1, 2)) / 255.
-                    print('Mean:', mean)
-                    print('Std:', std)
-                    i.static_normalizer = transforms.Normalize(mean = mean, std = std)
-            except:
-                pass
-        if debug:
-            self.preprocessing_list.append(PreprocessingDebugger())
+        
+    def normalize(self):
+        self.train_loader._set_normalizer()
+        if self.test_loader:
+            self.test_loader._set_normalizer()
         return self
 
-    def postprocessing(self, postprocessing_list, debug = False):
-        self.postprocessing_list = postprocessing_list
-        return self
-
-    def augmentation(self, augmentation_list, debug = False):
-        self.augmentation_list = augmentation_list
-        if debug:
-            for i in self.augmentation_list:
-                i._debug_flag = True
+    def augmentation(self, augmentation_list):
+        self.train_loader._set_augmentor(augmentation_list)
         return self
 
     # =======================================================================================================
