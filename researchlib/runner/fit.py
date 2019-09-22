@@ -211,7 +211,9 @@ def _fit(
             iteration_break = iterations
             liveplot.redis.set('stage', 'train')
             liveplot.timer.clear()
+            
             self.model.train()
+            
             for batch_idx, (x, y) in enumerate(train_loader):
                 if mmixup_alpha is not None:
                     batch_size = x[0].size()[0]
@@ -351,7 +353,6 @@ def _fit(
                     epoch = self.epoch,
                     metrics = metrics,
                     callbacks = callbacks,
-                    inputs = self.inputs
                 )
 
                 self.history_.add(loss_records, prefix = 'val')

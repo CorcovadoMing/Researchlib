@@ -14,7 +14,7 @@ def _worker(generator, queue):
 
 
 class BackgroundGenerator:
-    def __init__(self, generator, max_prefetch = 2):
+    def __init__(self, generator, max_prefetch = 3):
         self.queue = Queue.Queue(max_prefetch)
         self.generator = generator
         self.worker_thread = threading.Thread(

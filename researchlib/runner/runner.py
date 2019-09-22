@@ -3,6 +3,7 @@ from .history import History
 from ..models import GANModel
 from .validate import validate_fn
 from .export import _Export
+from .prefetch import *
 from ..utils import *
 from ..utils import _add_methods_from, ParameterManager
 from ..benchmark import benchmark
@@ -182,10 +183,11 @@ class Runner:
         self.model.train()
         _switch_swa_mode(self.optimzier)
 
-    def validate(self, metrics = [], callbacks = [], **kwargs):
+    def validate(self, metrics = [], callbacks = [], prefetch=True, **kwargs):
         test_loader = self.test_loader.get_generator()
         self.test_loader_length = len(test_loader)
         test_loader = self._iteration_pipeline(test_loader)
+        test_loader = BackgroundGenerator(test_loader)
         self.preload_gpu()
         try:
             if len(self.default_metrics):
@@ -199,7 +201,6 @@ class Runner:
                 epoch = self.epoch,
                 metrics = metrics,
                 callbacks = callbacks,
-                inputs = self.inputs,
                 **kwargs
             )
 

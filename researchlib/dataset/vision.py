@@ -6,9 +6,8 @@ from tensorpack import imgaug
 class _CIFAR10:
     def __init__(self, is_train):
         self.is_train = is_train
-        shuffle = True if is_train else False
         phase = 'train' if is_train else 'test'
-        self.ds = dataset.Cifar10(phase, shuffle=shuffle)
+        self.ds = dataset.Cifar10(phase, shuffle=is_train)
         
         if is_train:
             # Record the statistic for normalizer 
@@ -47,7 +46,7 @@ class _CIFAR10:
             ops = self.augmentor + self.normalizer
         else:
             ops = self.normalizer
-        
+
         ds = AugmentImageComponent(self.ds, ops)
 
         def mapf(dp):
@@ -56,6 +55,8 @@ class _CIFAR10:
 
         ds = MapData(ds, mapf)
         ds = BatchData(ds, batch_size, remainder=True)
-        ds = MultiProcessPrefetchData(ds, 32, 8)
+        if self.is_train:
+            ds = MultiProcessPrefetchData(ds, 8, 8)
         ds = PrintData(ds)
+        ds.reset_state()
         return ds
