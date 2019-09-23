@@ -1,9 +1,9 @@
-# Dataset Wrapper
-from .from_numpy import FromNumpy
+# RL Dataset
 from .environment import GymEnv
 
-# Dataset
-from .vision import _CIFAR10
+# Vision Dataset
+from .vision import _CIFAR10, _NumpyDataset
 
 class vision(object):
     CIFAR10 = _CIFAR10
+    NumpyDataset = _NumpyDataset

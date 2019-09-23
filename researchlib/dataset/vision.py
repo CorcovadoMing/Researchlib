@@ -3,16 +3,15 @@ from tensorpack.dataflow import *
 from tensorpack import imgaug
 
 
-class _CIFAR10:
-    def __init__(self, is_train):
+class _VISION_GENERAL_LOADER:
+    def __init__(self, is_train, ds):
         self.is_train = is_train
-        phase = 'train' if is_train else 'test'
-        self.ds = dataset.Cifar10(phase, shuffle=is_train)
+        self.ds = ds
         
         if is_train:
             # Record the statistic for normalizer 
             l = np.array([i[0] for i in self.ds.data])
-            _CIFAR10.mean, _CIFAR10.std = np.mean(l, axis=tuple(range(l.ndim-1))), np.std(l, axis=tuple(range(l.ndim-1)))
+            _VISION_GENERAL_LOADER.mean, _VISION_GENERAL_LOADER.std = np.mean(l, axis=tuple(range(l.ndim-1))), np.std(l, axis=tuple(range(l.ndim-1)))
             del l
         
         self.normalizer = []
@@ -20,7 +19,7 @@ class _CIFAR10:
         
         
     def _set_normalizer(self):
-        self.normalizer = [imgaug.MapImage(lambda x: (x - _CIFAR10.mean)/_CIFAR10.std)]
+        self.normalizer = [imgaug.MapImage(lambda x: (x - _VISION_GENERAL_LOADER.mean)/_VISION_GENERAL_LOADER.std)]
     
     
     def _set_augmentor(self, augmentor):
@@ -56,7 +55,19 @@ class _CIFAR10:
         ds = MapData(ds, mapf)
         ds = BatchData(ds, batch_size, remainder=True)
         if self.is_train:
-            ds = MultiProcessPrefetchData(ds, 8, 8)
+            ds = MultiProcessPrefetchData(ds, 4, 4)
         ds = PrintData(ds)
         ds.reset_state()
         return ds
+    
+    
+    
+def _CIFAR10(is_train=True):
+    phase = 'train' if is_train else 'test'
+    return _VISION_GENERAL_LOADER(is_train, dataset.Cifar10(phase, shuffle=is_train))
+
+
+def _NumpyDataset(x, y, is_train=True):
+    _inner_gen = DataFromList(list(zip(x, y)), shuffle=is_train)
+    _inner_gen.data = x
+    return _VISION_GENERAL_LOADER(is_train, _inner_gen)
