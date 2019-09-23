@@ -62,7 +62,7 @@ def AutoConvNet(
                     in_dim,
                     out_dim,
                     do_pool = False,
-                    do_norm = do_norm,
+                    do_norm = False if preact else True,
                     preact = False,
                     id = id,
                     total_blocks = stem_layers,
