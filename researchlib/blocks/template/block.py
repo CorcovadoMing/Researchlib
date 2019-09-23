@@ -175,6 +175,7 @@ class _Block(nn.Module):
         is_transpose = self._is_transpose()
         stride = self._get_param('pool_factor', 2) if self.do_pool else 1
         shortcut_type = self._get_param('shortcut', 'projection')
+        norm_type = self._get_param('norm_type', 'BatchNorm')
         if shortcut_type not in ['projection', 'padding']:
             raise ('Shortcut type is not supported')
         if shortcut_type == 'projection':
@@ -182,12 +183,15 @@ class _Block(nn.Module):
             shortcut_stride = 1 if blur else stride
             if self.in_dim != self.out_dim or self.do_pool:
                 reduction_op = [
+                    self._get_norm_layer(norm_type, self.in_dim) if self.preact else None,
                     self.op(
                         self.in_dim,
                         self.out_dim,
                         kernel_size = shortcut_kernel_size,
-                        stride = shortcut_stride
-                    )
+                        stride = shortcut_stride,
+                        bias = False
+                    ),
+                    self._get_norm_layer(norm_type, self.out_dim) if not self.preact else None
                 ]
                 if blur:
                     reduction_op.append(
