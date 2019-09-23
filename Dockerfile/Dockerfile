@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/pytorch:19.07-py3
+FROM nvcr.io/nvidia/pytorch:19.08-py3
 
 ARG ONNXRUNTIME_REPO=https://github.com/Microsoft/onnxruntime
 ARG ONNXRUNTIME_SERVER_BRANCH=master
@@ -12,8 +12,9 @@ ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:/code/cmake-3.14.3-Linux-x86_
 
 # Prepare onnxruntime repository & build onnxruntime with TensorRT
 COPY onnxruntime ./onnxruntime
-RUN /bin/sh onnxruntime/dockerfiles/install_common_deps.sh &&\
+RUN /bin/sh onnxruntime/dockerfiles/scripts/install_common_deps.sh &&\
     cp onnxruntime/dockerfiles/LICENSE-IMAGE.txt /code/LICENSE-IMAGE.txt &&\
+    cp onnxruntime/ThirdPartyNotices.txt /code/ThirdPartyNotices.txt &&\
     cd onnxruntime &&\
     /bin/sh ./build.sh --cuda_home /usr/local/cuda --cudnn_home /usr/lib/x86_64-linux-gnu/ --use_tensorrt --tensorrt_home /usr/src/tensorrt --config Release --build_wheel --update --build --cmake_extra_defines ONNXRUNTIME_VERSION=$(cat ./VERSION_NUMBER) &&\
     pip install /code/onnxruntime/build/Linux/Release/dist/*.whl &&\
@@ -139,6 +140,15 @@ RUN pip install hyperopt
 
 RUN git clone https://github.com/NVIDIA/apex && cd apex && pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" .
 
+RUN pip install tensorpack
+RUN apt-get update && apt-get install -y build-essential libcap-dev
+RUN pip install python-prctl
+
+RUN conda remove wrapt -y
+RUN pip install tensorflow-gpu
+RUN pip install tensorflow-datasets
+RUN pip install -U numpy
+RUN pip install -U gast==0.2.2
 # Version tag
-ENV _RESEARCHLIB_IMAGE_TAG 19.09
+ENV _RESEARCHLIB_IMAGE_TAG 19.09.1
 
