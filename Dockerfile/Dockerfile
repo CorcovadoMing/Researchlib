@@ -148,7 +148,8 @@ RUN conda remove wrapt -y
 RUN pip install tensorflow-gpu
 RUN pip install tensorflow-datasets
 RUN pip install -U numpy
-RUN pip install -U gast==0.2.2
+RUN pip install gast==0.2.2
+RUN pip install numpy==1.16.4
 # Version tag
 ENV _RESEARCHLIB_IMAGE_TAG 19.09.1
 
