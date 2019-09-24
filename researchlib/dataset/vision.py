@@ -41,21 +41,25 @@ class _VISION_GENERAL_LOADER:
         
         
     def get_generator(self, batch_size=512):
+        
+        def batch_mapf(dp):
+            x = dp[0].copy()
+            y = dp[1]
+            
+            if self.is_train:
+                for i in range(len(x)):
+                    for op in self.augmentor:
+                        x[i] = op.augment(x[i])
+            
+            for op in self.normalizer:
+                x = op.augment(x)
+            
+            return np.moveaxis(x, -1, 1).astype(np.float32), np.array(y).astype(np.int64)
+
+        ds = BatchData(self.ds, batch_size, remainder=True)
+        ds = MultiProcessMapDataZMQ(ds, 4, batch_mapf)
         if self.is_train:
-            ops = self.augmentor + self.normalizer
-        else:
-            ops = self.normalizer
-
-        ds = AugmentImageComponent(self.ds, ops)
-
-        def mapf(dp):
-            x, y = dp
-            return np.moveaxis(x, -1, 0).astype(np.float32), np.array(y).astype(np.int64)
-
-        ds = MapData(ds, mapf)
-        ds = BatchData(ds, batch_size, remainder=True)
-        if self.is_train:
-            ds = MultiProcessPrefetchData(ds, 4, 4)
+            ds = MultiProcessPrefetchData(ds, 2048//batch_size, 4)
         ds = PrintData(ds)
         ds.reset_state()
         return ds

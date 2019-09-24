@@ -111,13 +111,15 @@ def _fit(
 ):
 
     parameter_manager = ParameterManager(**kwargs)
+    batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
     
-    train_loader = self.train_loader.get_generator()
+    train_loader = self.train_loader.get_generator(batch_size)
     self.train_loader_length = len(train_loader)
+    liveplot = Liveplot(self.model, self.train_loader_length, plot)
     train_loader = self._iteration_pipeline(train_loader)
     train_loader = BackgroundGenerator(train_loader) if prefetch else train_loader
     if self.test_loader:
-        test_loader = self.test_loader.get_generator()
+        test_loader = self.test_loader.get_generator(batch_size)
         self.test_loader_length = len(test_loader)
         test_loader = self._iteration_pipeline(test_loader)
         test_loader = BackgroundGenerator(test_loader) if prefetch else test_loader
@@ -155,8 +157,7 @@ def _fit(
             i.zero_grad()
     else:
         self.optimizer.zero_grad()
-
-    liveplot = Liveplot(self.model, iterations, plot)
+        
 
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
