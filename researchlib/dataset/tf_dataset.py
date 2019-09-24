@@ -1,5 +1,6 @@
-import warnings
-warnings.filterwarnings("ignore")
+import logging, os
+logging.disable(logging.WARNING)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import tensorflow_datasets as tfds
 import tensorflow as tf
@@ -7,8 +8,6 @@ tf.enable_eager_execution()
 from tensorpack.dataflow import *
 import numpy as np
 import math
-
-warnings.filterwarnings("default")
 
 
 class _TFDataset:
