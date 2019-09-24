@@ -184,9 +184,10 @@ class Runner:
         _switch_swa_mode(self.optimzier)
 
     def validate(self, metrics = [], callbacks = [], prefetch=True, **kwargs):
-        test_loader = self.test_loader.get_generator(epochs=1)
+        buffered_epochs = 2
+        test_loader = self.test_loader.get_generator(epochs=buffered_epochs)
         self.test_loader_length = len(test_loader)
-        test_loader = self._iteration_pipeline(test_loader, 1)
+        test_loader = self._iteration_pipeline(test_loader, buffered_epochs)
         test_loader = BackgroundGenerator(test_loader)
         self.preload_gpu()
         try:
