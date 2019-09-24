@@ -1,25 +1,34 @@
-import numpy as np
+import warnings
+warnings.filterwarnings("ignore")
+
+import tensorflow_datasets as tfds
+import tensorflow as tf
+tf.enable_eager_execution()
 from tensorpack.dataflow import *
-from tensorpack import imgaug
+import numpy as np
+import math
+
+warnings.filterwarnings("default")
 
 
-class _VISION_GENERAL_LOADER:
-    def __init__(self, is_train, ds):
+class _TFDataset:
+    def __init__(self, name, is_train):
         self.is_train = is_train
-        self.ds = ds
         
-        if is_train:
-            # Record the statistic for normalizer 
-            l = np.array([i[0] for i in self.ds.data])
-            _VISION_GENERAL_LOADER.mean, _VISION_GENERAL_LOADER.std = np.mean(l, axis=tuple(range(l.ndim-1))), np.std(l, axis=tuple(range(l.ndim-1)))
-            del l
+        split = tfds.Split.TRAIN if is_train else tfds.Split.TEST
+        phase = 'train' if is_train else 'test'
+        ds = tfds.builder(name)
+        info = ds.info
+        self.length = info.splits[phase].num_examples
+        ds.download_and_prepare()
+        self.ds = ds.as_dataset(split=split, shuffle_files=False)
         
         self.normalizer = []
         self.augmentor = []
         
         
     def _set_normalizer(self):
-        self.normalizer = [imgaug.MapImage(lambda x: (x - _VISION_GENERAL_LOADER.mean)/_VISION_GENERAL_LOADER.std)]
+        self.normalizer = []
     
     
     def _set_augmentor(self, augmentor):
@@ -38,13 +47,17 @@ class _VISION_GENERAL_LOADER:
         for i in augmentor:
             _aug.append(mapping[i])
         self.augmentor = [imgaug.RandomOrderAug(_aug)]
-        
-        
+    
+    
     def get_generator(self, batch_size=512, **kwargs):
         
+        ds = self.ds.shuffle(10240).repeat(kwargs['epochs']).batch(batch_size).prefetch(2048)
+        ds = DataFromGenerator(tfds.as_numpy(ds))
+        ds.__len__ = lambda: math.ceil(self.length / batch_size)
+        
         def batch_mapf(dp):
-            x = dp[0].copy()
-            y = dp[1]
+            x = dp['image'].copy()
+            y = dp['label']
             
             if self.is_train:
                 for i in range(len(x)):
@@ -55,23 +68,8 @@ class _VISION_GENERAL_LOADER:
                 x = op.augment(x)
             
             return np.moveaxis(x, -1, 1).astype(np.float32), np.array(y).astype(np.int64)
-
-        ds = BatchData(self.ds, batch_size, remainder=True)
-        ds = MultiProcessMapDataZMQ(ds, 4, batch_mapf)
-        if self.is_train:
-            ds = MultiProcessPrefetchData(ds, 2048//batch_size, 4)
-        ds = PrintData(ds)
+        
+        
+        ds = MapData(ds, batch_mapf)
         ds.reset_state()
         return ds
-    
-    
-    
-def _CIFAR10(is_train=True):
-    phase = 'train' if is_train else 'test'
-    return _VISION_GENERAL_LOADER(is_train, dataset.Cifar10(phase, shuffle=is_train))
-
-
-def _NumpyDataset(x, y, is_train=True):
-    _inner_gen = DataFromList(list(zip(x, y)), shuffle=is_train)
-    _inner_gen.data = x
-    return _VISION_GENERAL_LOADER(is_train, _inner_gen)

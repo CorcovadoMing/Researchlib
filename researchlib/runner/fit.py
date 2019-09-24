@@ -78,8 +78,8 @@ def _process_type(self, data_pack):
 
 
 @register_method
-def _iteration_pipeline(self, loader):
-    for batch_idx, data_pack in inifinity_loop(loader):
+def _iteration_pipeline(self, loader, epochs):
+    for batch_idx, data_pack in inifinity_loop(loader, epochs):
         x, y = self._process_type(data_pack)
         yield x, y
 
@@ -113,15 +113,15 @@ def _fit(
     parameter_manager = ParameterManager(**kwargs)
     batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
     
-    train_loader = self.train_loader.get_generator(batch_size)
+    train_loader = self.train_loader.get_generator(batch_size, epochs=epochs)
     self.train_loader_length = len(train_loader)
     liveplot = Liveplot(self.model, self.train_loader_length, plot)
-    train_loader = self._iteration_pipeline(train_loader)
+    train_loader = self._iteration_pipeline(train_loader, epochs)
     train_loader = BackgroundGenerator(train_loader) if prefetch else train_loader
     if self.test_loader:
-        test_loader = self.test_loader.get_generator(batch_size)
+        test_loader = self.test_loader.get_generator(batch_size, epochs=epochs)
         self.test_loader_length = len(test_loader)
-        test_loader = self._iteration_pipeline(test_loader)
+        test_loader = self._iteration_pipeline(test_loader, epochs)
         test_loader = BackgroundGenerator(test_loader) if prefetch else test_loader
         
     if iterations == 0:
