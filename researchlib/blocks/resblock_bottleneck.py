@@ -27,7 +27,7 @@ class _ResBottleneckBlock(_Block):
         ) if self.do_norm and self.preact else None
 
         # Layers
-        blur = self._get_param('blur', False) and self.do_pool
+        blur = self._get_param('blur', False) and self.do_pool and not is_transpose
         hidden_size = self.out_dim // 4
         stride = self._get_param('pool_factor', 2) if self.do_pool else 1
         kernel_size = 2 if is_transpose and self.do_pool else self._get_param('kernel_size', 3)

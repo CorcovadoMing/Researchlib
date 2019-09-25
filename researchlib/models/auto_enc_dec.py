@@ -149,7 +149,7 @@ def AutoEncDec(
         # End of TODO
 
         cache_id, in_dim, out_dim, do_pool = dim_cache.pop()
-        end_in_dim = out_dim if skip_type == 'add' else 2 * out_dim
+        end_in_dim = 2 * out_dim if skip_type == 'concat' and skip_connection else out_dim
         print(2 * total_blocks + 1 - cache_id + stem_layers, end_in_dim, in_dim, do_pool)
         kwargs['non_local'] = id >= non_local_start
         structure = _RecurrentBlock(
