@@ -26,7 +26,7 @@ class _ResBlock(_Block):
             norm_type, self.out_dim
         ) if self.do_norm and self.preact else None
 
-        blur = self._get_param('blur', False) and self.do_pool and not is_transpose
+        blur = self._get_param('blur', False) and self.do_pool
         stride = self._get_param('pool_factor', 2) if self.do_pool else 1
         kernel_size = self._get_param(
             'kernel_size', 2
