@@ -224,10 +224,10 @@ class Runner:
     def load(self, path):
         self.model = _load_model(self.model, path, self.multigpu)
         
-    def normalize(self):
-        self.train_loader._set_normalizer()
+    def normalize(self, local=False):
+        self.train_loader._set_normalizer(local)
         if self.test_loader:
-            self.test_loader._set_normalizer()
+            self.test_loader._set_normalizer(local)
         return self
 
     def augmentation(self, augmentation_list):

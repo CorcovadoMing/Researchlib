@@ -18,8 +18,11 @@ class _VISION_GENERAL_LOADER:
         self.augmentor = []
         
         
-    def _set_normalizer(self):
-        self.normalizer = [imgaug.MapImage(lambda x: (x - _VISION_GENERAL_LOADER.mean)/_VISION_GENERAL_LOADER.std)]
+    def _set_normalizer(self, local=False):
+        if not local:            
+            self.normalizer = [imgaug.MapImage(lambda x: (x - _VISION_GENERAL_LOADER.mean)/_VISION_GENERAL_LOADER.std)]
+        else:
+            self.normalizer = [imgaug.MeanVarianceNormalize()]
     
     
     def _set_augmentor(self, augmentor):
@@ -46,6 +49,12 @@ class _VISION_GENERAL_LOADER:
             x = dp[0].copy()
             y = dp[1]
             
+            y_type = str(y.dtype)
+            if 'int' in y_type:
+                y_type = np.int64
+            else:
+                y_type = np.float32
+            
             if self.is_train:
                 for i in range(len(x)):
                     for op in self.augmentor:
@@ -54,7 +63,7 @@ class _VISION_GENERAL_LOADER:
             for op in self.normalizer:
                 x = op.augment(x)
             
-            return np.moveaxis(x, -1, 1).astype(np.float32), np.array(y).astype(np.int64)
+            return np.moveaxis(x, -1, 1).astype(np.float32), np.array(y).astype(y_type)
 
         ds = BatchData(self.ds, batch_size, remainder=True)
         ds = MultiProcessMapDataZMQ(ds, 4, batch_mapf)
