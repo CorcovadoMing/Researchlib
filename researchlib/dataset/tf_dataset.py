@@ -70,5 +70,6 @@ class _TFDataset:
         
         
         ds = MapData(ds, batch_mapf)
+        ds = PrintData(ds)
         ds.reset_state()
         return ds
