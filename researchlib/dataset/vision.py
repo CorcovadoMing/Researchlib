@@ -34,7 +34,8 @@ class _VISION_GENERAL_LOADER:
                             imgaug.RandomCrop((32, 32)),
                         ]),
                     0.5),
-            'cutout': imgaug.RandomApplyAug(imgaug.RandomCutout(8, 8), 0.5)
+            'cutout': imgaug.RandomApplyAug(imgaug.RandomCutout(8, 8), 0.5),
+            'rotate': imgaug.RandomApplyAug(imgaug.Rotation(180), 0.5)
         }
         
         _aug = []
