@@ -64,9 +64,7 @@ _app.layout = html.Div(
             ),
         ]),
         dcc.Interval(id = 'text-update', interval = 1000, n_intervals = 0),
-        dcc.Interval(id = 'pie-update', interval = 1000, n_intervals = 0),
-        dcc.Interval(id = 'loss-update', interval = 1000, n_intervals = 0),
-        dcc.Interval(id = 'acc-update', interval = 1000, n_intervals = 0)
+        dcc.Interval(id = 'chart-update', interval = 10000, n_intervals = 0)
     ])
 )
 
@@ -103,8 +101,8 @@ def _update_desc(n):
 def _add_trace(fig, data, key, name, row_index, col_index):
     try:
         fig.append_trace({
-            'x': list(range(len(data[key]))),
-            'y': data[key],
+            'x': [0]+list(range(1, len(data[key])+1)),
+            'y': [0]+data[key],
             'name': name,
             'mode': 'lines+markers',
             'type': 'scatter',
@@ -135,21 +133,13 @@ def _get_gpu_monitor():
 
 
 # Multiple components can update everytime interval gets fired.
-@_app.callback(Output('live-update-pie', 'figure'), [Input('pie-update', 'n_intervals')])
+@_app.callback(Output('live-update-pie', 'figure'), [Input('chart-update', 'n_intervals')])
 def _update_pie_live(n):
     fig = plotly.subplots.make_subplots(
         rows = 1,
         cols = 4,
         subplot_titles = ('CPU Memory', 'CPU Utilization', 'GPU Memory', 'GPU Utilization'),
-        specs = [[{
-            'type': 'domain'
-        }, {
-            'type': 'domain'
-        }, {
-            'type': 'domain'
-        }, {
-            'type': 'domain'
-        }]]
+        specs = [[{'type': 'domain'}, {'type': 'domain'}, {'type': 'domain'}, {'type': 'domain'}]]
     )
 
     fig['layout']['margin'] = {'l': 20, 'r': 20, 'b': 20, 't': 20}
@@ -172,7 +162,7 @@ def _update_pie_live(n):
 
 
 # Multiple components can update everytime interval gets fired.
-@_app.callback(Output('live-update-loss', 'figure'), [Input('loss-update', 'n_intervals')])
+@_app.callback(Output('live-update-loss', 'figure'), [Input('chart-update', 'n_intervals')])
 def _update_loss_live(n):
     r = redis.Redis()
     data = pickle.loads(r.get('history'))
@@ -189,7 +179,7 @@ def _update_loss_live(n):
     return fig
 
 
-@_app.callback(Output('live-update-acc', 'figure'), [Input('acc-update', 'n_intervals')])
+@_app.callback(Output('live-update-acc', 'figure'), [Input('chart-update', 'n_intervals')])
 def _update_acc_live(n):
     r = redis.Redis()
     data = pickle.loads(r.get('history'))
