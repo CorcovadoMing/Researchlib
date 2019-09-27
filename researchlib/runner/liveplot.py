@@ -137,12 +137,14 @@ class Liveplot:
     def update_progressbar(self, value):
         self.progress_bar.value = value
 
-    def update_loss_desc(self, epoch, g_loss_history, d_loss_history, loss_history):
+    def update_desc(self, epoch, g_loss_history, d_loss_history, loss_history, metrics, track_best):
+        metrics_collection = [''.join(['%s: %.5s' % (key.capitalize(), float(value)) for (key, value) in m.output().items()]) for m in metrics]
+        metrics_collection = ''.join(metrics_collection) 
         misc, progress = self.timer.output()
         if self._gan:
-            self.progress_label_text.value = f'Epoch: {epoch}, G Loss: {_list_avg(g_loss_history):.4f}, D Loss: {_list_avg(d_loss_history):.4f}, {misc}'
+            self.progress_label_text.value = f'Epoch: {epoch}, G Loss: {_list_avg(g_loss_history):.5f}, D Loss: {_list_avg(d_loss_history):.5f}, {metrics_collection}, Track best: {track_best:2.5f}, {misc}'
         else:
-            self.progress_label_text.value = f'Epoch: {epoch}, Loss: {_list_avg(loss_history):.4f}, {misc}'
+            self.progress_label_text.value = f'Epoch: {epoch}, Loss: {_list_avg(loss_history):.5f}, {metrics_collection}, Track best: {track_best:.5f}, {misc}'
         self.redis.set('desc', self.progress_label_text.value)
         self.redis.set('progress', progress)
 

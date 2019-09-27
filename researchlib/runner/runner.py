@@ -230,8 +230,8 @@ class Runner:
             self.test_loader._set_normalizer(local)
         return self
 
-    def augmentation(self, augmentation_list):
-        self.train_loader._set_augmentor(augmentation_list)
+    def augmentation(self, augmentation_list, include_y=False):
+        self.train_loader._set_augmentor(augmentation_list, include_y)
         return self
 
     # =======================================================================================================

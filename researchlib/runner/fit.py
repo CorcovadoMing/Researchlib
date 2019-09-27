@@ -271,7 +271,7 @@ def _fit(
                     bar = None
                 )
 
-                liveplot.update_loss_desc(self.epoch, g_loss_history, d_loss_history, loss_history)
+                liveplot.update_desc(self.epoch, g_loss_history, d_loss_history, loss_history, metrics, self.monitor)
 
                 # Global iteration annealling
                 Annealer._iteration_step()

@@ -50,9 +50,7 @@ def AutoConvNet(
                 stem_kwargs = copy.deepcopy(kwargs)
                 stem_kwargs['erased_activator'] = True if preact else False
             _type = _parse_type(i, type)
-            wide_scale = parameter_manager.get_param(
-                'wide_scale', 10
-            ) if _type == 'wide-residual' else 1
+            wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
             out_dim *= wide_scale
             _op_type = _get_op_type(stem_type, id, stem_layers, False, in_dim == out_dim)
             print(id, in_dim, out_dim, stem_type)
