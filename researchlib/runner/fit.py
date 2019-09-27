@@ -78,8 +78,8 @@ def _process_type(self, data_pack):
 
 
 @register_method
-def _iteration_pipeline(self, loader, epochs):
-    for batch_idx, data_pack in inifinity_loop(loader, epochs):
+def _iteration_pipeline(self, loader):
+    for batch_idx, data_pack in inifinity_loop(loader):
         x, y = self._process_type(data_pack)
         yield x, y
 
@@ -117,12 +117,12 @@ def _fit(
     train_loader = self.train_loader.get_generator(batch_size, epochs=buffered_epochs)
     self.train_loader_length = len(train_loader)
     liveplot = Liveplot(self.model, self.train_loader_length, plot)
-    train_loader = self._iteration_pipeline(train_loader, buffered_epochs)
+    train_loader = self._iteration_pipeline(train_loader)
     train_loader = BackgroundGenerator(train_loader) if prefetch else train_loader
     if self.test_loader:
         test_loader = self.test_loader.get_generator(batch_size, epochs=buffered_epochs)
         self.test_loader_length = len(test_loader)
-        test_loader = self._iteration_pipeline(test_loader, buffered_epochs)
+        test_loader = self._iteration_pipeline(test_loader)
         test_loader = BackgroundGenerator(test_loader) if prefetch else test_loader
         
     if iterations == 0:
@@ -152,12 +152,6 @@ def _fit(
             'warmup_lr', warmup * iterations, [0, lr], 'iteration', _anneal_policy(warmup_policy)
         )
         Annealer._iteration_step(key = 'warmup_lr')
-
-    if type(self.optimizer) == list:
-        for i in self.optimizer:
-            i.zero_grad()
-    else:
-        self.optimizer.zero_grad()
         
 
     if len(self.experiment_name) == 0:
@@ -186,7 +180,7 @@ def _fit(
         for epoch in range(1, epochs + 1):
             # Switch point
             if epoch == (warmup + 1):
-                regular_lr = Annealer.set_trace(
+                Annealer.set_trace(
                     'regular_lr', (epochs - warmup) * iterations, [lr, 0], 'iteration',
                     _anneal_policy(policy)
                 )
@@ -222,20 +216,17 @@ def _fit(
                     # Set default as random sample mmixup
                     if fixed_mmixup is None and random_mmixup is None:
                         random_mmixup = [0, layer.ManifoldMixup.block_counter]
-                    lam = layer.ManifoldMixup.setup_batch(
-                        mmixup_alpha, batch_size, fixed_mmixup, random_mmixup
-                    )
+                    lam = layer.ManifoldMixup.setup_batch(mmixup_alpha, batch_size, fixed_mmixup, random_mmixup)
                     y, y_res = layer.ManifoldMixup.get_y(y)
                 else:
                     y_res = None
                     lam = None
 
                 if epoch <= warmup:
-                    warmup_lr = Annealer.get_trace('warmup_lr')
-                    set_lr(self.optimizer, warmup_lr)
+                    cur_lr = Annealer.get_trace('warmup_lr')
                 else:
-                    regular_lr = Annealer.get_trace('regular_lr')
-                    set_lr(self.optimizer, regular_lr)
+                    cur_lr = Annealer.get_trace('regular_lr')
+                set_lr(self.optimizer, cur_lr)
 
                 # weight decay
                 if weight_decay > 0:
@@ -268,7 +259,6 @@ def _fit(
                     d_loss_history = d_loss_history,
                     norm = norm,
                     matrix_records = matrix_records,
-                    bar = None
                 )
 
                 liveplot.update_desc(self.epoch, g_loss_history, d_loss_history, loss_history, metrics, self.monitor)

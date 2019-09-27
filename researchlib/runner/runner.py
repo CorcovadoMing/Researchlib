@@ -59,7 +59,6 @@ class Runner:
 
         self.experiment_name = ''
         self.checkpoint_path = ''
-        self.scheduler = None
         self.optimizer = None
         self.epoch = 1
         self.is_cuda = is_available()
@@ -187,7 +186,7 @@ class Runner:
         buffered_epochs = 2
         test_loader = self.test_loader.get_generator(epochs=buffered_epochs)
         self.test_loader_length = len(test_loader)
-        test_loader = self._iteration_pipeline(test_loader, buffered_epochs)
+        test_loader = self._iteration_pipeline(test_loader)
         test_loader = BackgroundGenerator(test_loader)
         self.preload_gpu()
         try:

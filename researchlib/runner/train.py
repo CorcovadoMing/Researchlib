@@ -44,7 +44,7 @@ def train_fn(self, train = True, **kwargs):
         model_ffn = self.model.forward_d
         loss_ffn = [i.forward_d if isinstance(i, nn.Module) else i for i in self.loss_fn]
         _loss, _norm = _train_minibatch(
-            model, model_ffn, loss_ffn, self.optimizer[0], self.scheduler, 'unsupervise',
+            model, model_ffn, loss_ffn, self.optimizer[0], 'unsupervise',
             condition, train, True, False, **kwargs
         )
         for m in kwargs['metrics']:
@@ -64,7 +64,7 @@ def train_fn(self, train = True, **kwargs):
         model_ffn = self.model.forward_g
         loss_ffn = [i.forward_g if isinstance(i, nn.Module) else i for i in self.loss_fn]
         _loss, _norm = _train_minibatch(
-            model, model_ffn, loss_ffn, self.optimizer[1], self.scheduler, 'unsupervise',
+            model, model_ffn, loss_ffn, self.optimizer[1], 'unsupervise',
             condition, train, False, False, **kwargs
         )
         for m in kwargs['metrics']:
@@ -83,7 +83,7 @@ def train_fn(self, train = True, **kwargs):
         model_ffn = self.model.forward
         loss_ffn = [i.forward if isinstance(i, nn.Module) else i for i in self.loss_fn]
         _loss, _norm = _train_minibatch(
-            model, model_ffn, loss_ffn, self.optimizer, self.scheduler, learning_type, False,
+            model, model_ffn, loss_ffn, self.optimizer, learning_type, False,
             train, False, False, **kwargs
         )
 
@@ -114,7 +114,7 @@ def _cal_regularization(_model, **kwargs):
 
 
 def _train_minibatch(
-    _model, model_ffn, loss_ffn, optim, scheduler, learning_type, condition, train, retain_graph,
+    _model, model_ffn, loss_ffn, optim, learning_type, condition, train, retain_graph,
     orthogonal_reg, **kwargs
 ):
     # Forward
@@ -135,6 +135,7 @@ def _train_minibatch(
         loss_ffn.append(loss_ffn[-1])
 
     # Calulate loss
+    optim.zero_grad()
     loss = 0
     auxout = [i.view(i.size(0), -1) for i in auxout]
     if learning_type == 'supervise':
@@ -180,23 +181,13 @@ def _train_minibatch(
     for callback_func in kwargs['callbacks']:
         kwargs = callback_func.on_update_begin(**kwargs)
 
-    # Update
     norm = 0
     if train:
+        # Update
+        optim.step()
+        
+        # Calculate norm
         with torch.no_grad():
-            if orthogonal_reg:
-                for param in _model.parameters():
-                    # Only apply this to parameters with at least 2 axes, and not in the blacklist
-                    if len(param.shape) < 2:
-                        continue
-                    w = param.view(param.shape[0], -1)
-                    grad = (
-                        2 * torch.mm(
-                            torch.mm(w, w.t()) * (1. - torch.eye(w.shape[0], device = w.device)), w
-                        )
-                    )
-                    param.grad.data += 1e-4 * grad.view(param.shape)
-
             for param in _model.parameters():
                 try:
                     norm += param.grad.data.norm(2) ** 2
@@ -204,11 +195,6 @@ def _train_minibatch(
                     pass
             norm = norm ** 0.5
             norm = norm.cpu()
-
-        optim.step()
-        if scheduler is not None:
-            scheduler.step()
-        optim.zero_grad()
 
     for callback_func in kwargs['callbacks']:
         kwargs = callback_func.on_update_end(**kwargs)
