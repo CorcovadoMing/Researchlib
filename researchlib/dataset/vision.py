@@ -16,6 +16,7 @@ class _VISION_GENERAL_LOADER:
         
         self.normalizer = []
         self.augmentor = []
+        self.include_y = False
         
         
     def _set_normalizer(self, local=False):
@@ -25,23 +26,22 @@ class _VISION_GENERAL_LOADER:
             self.normalizer = [imgaug.MeanVarianceNormalize()]
     
     
-    def _set_augmentor(self, augmentor):
+    def _set_augmentor(self, augmentor, include_y=False):
         mapping = {
             'hflip': imgaug.Flip(horiz=True),
-            'crop': imgaug.RandomApplyAug(
-                        imgaug.AugmentorList([
-                            imgaug.CenterPaste((40, 40)),
-                            imgaug.RandomCrop((32, 32)),
-                        ]),
-                    0.5),
-            'cutout': imgaug.RandomApplyAug(imgaug.RandomCutout(8, 8), 0.5),
-            'rotate': imgaug.RandomApplyAug(imgaug.Rotation(180), 0.5)
+            'crop': imgaug.AugmentorList([
+                        imgaug.CenterPaste((40, 40)),
+                        imgaug.RandomCrop((32, 32)),
+                    ]),
+            'cutout': imgaug.RandomCutout(8, 8),
+            'rotate': imgaug.Rotation(180)
         }
         
         _aug = []
         for i in augmentor:
             _aug.append(mapping[i])
         self.augmentor = [imgaug.RandomOrderAug(_aug)]
+        self.include_y = include_y
         
         
     def get_generator(self, batch_size=512, **kwargs):
@@ -49,6 +49,8 @@ class _VISION_GENERAL_LOADER:
         def batch_mapf(dp):
             x = dp[0].copy()
             y = dp[1]
+            if self.include_y:
+                y = y.copy()
             
             y_type = str(y.dtype)
             if 'int' in y_type:
@@ -60,13 +62,16 @@ class _VISION_GENERAL_LOADER:
                 for i in range(len(x)):
                     for op in self.augmentor:
                         x[i] = op.augment(x[i])
+                        if self.include_y:
+                            y[i] = op.augment(y[i])
             
             for op in self.normalizer:
                 x = op.augment(x)
             
             return np.moveaxis(x, -1, 1).astype(np.float32), np.array(y).astype(y_type)
 
-        ds = BatchData(self.ds, batch_size, remainder=True)
+        ds = LocallyShuffleData(self.ds, 10240)
+        ds = BatchData(ds, batch_size, remainder=True)
         ds = MultiProcessMapDataZMQ(ds, 4, batch_mapf)
         if self.is_train:
             ds = MultiProcessPrefetchData(ds, 2048//batch_size, 4)
