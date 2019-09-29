@@ -54,5 +54,4 @@ class _TorchDataset:
             tf = [transforms.ToTensor()] + self.normalizer
         tf = transforms.Compose(tf)
         ds = self.dataset_fn(transform=tf)
-        shuffle = True if self.is_train else False
-        return torch.utils.data.DataLoader(ds, batch_size=batch_size, shuffle=shuffle)
+        return torch.utils.data.DataLoader(ds, batch_size=batch_size, shuffle=self.is_train)
