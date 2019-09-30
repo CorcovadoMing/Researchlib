@@ -9,6 +9,7 @@ from texttable import Texttable
 from ..utils import Timer
 import redis
 import pickle
+from tqdm.auto import tqdm
 
 
 def _get_gpu_monitor(index):
@@ -34,16 +35,11 @@ def _gpu_monitor_worker(membar, utilsbar):
                     m
                 ) + '%', 'U' + str(i) + ': ' + str(u) + '%'
             time.sleep(1)
-
-
-def _list_avg(l):
-    return sum(l) / len(l)
-
+            
 
 class Liveplot:
-    def __init__(self, model, total_iteration, _plot = False):
+    def __init__(self, total_iteration, _plot = False):
         self._plot = _plot
-        self._gan = True if type(model) == GANModel else False
         self.history = hl.History()
         self.text_table = Texttable(max_width = 0)  #unlimited
         self.timer = Timer(total_iteration)
@@ -74,6 +70,7 @@ class Liveplot:
             self.progress_label_text = Label(value = "Initialization")
             display(self.progress_label_text)
 
+        # Plots
         if self._plot:
             # 4 chartplots
             self.loss_plot = Output()
@@ -82,12 +79,6 @@ class Liveplot:
             self.lr_plot = Output()
             self.norm_plot = Output()
             display(HBox([self.lr_plot, self.norm_plot]))
-
-            # GAN visualization
-            if self._gan:
-                self.gan_gallary = Output()
-                display(self.gan_gallary)
-                self.gan_canvas = hl.Canvas()
 
             # Canvas
             self.loss_canvas = hl.Canvas()
@@ -137,69 +128,40 @@ class Liveplot:
     def update_progressbar(self, value):
         self.progress_bar.value = value
 
-    def update_desc(self, epoch, g_loss_history, d_loss_history, loss_history, metrics, track_best):
+    def update_desc(self, epoch, loss_record, metrics, track_best):
         metrics_collection = [''.join(['%s: %.5s' % (key.capitalize(), float(value)) for (key, value) in m.output().items()]) for m in metrics]
         metrics_collection = ''.join(metrics_collection) 
         misc, progress = self.timer.output()
-        if self._gan:
-            self.progress_label_text.value = f'Epoch: {epoch}, G Loss: {_list_avg(g_loss_history):.5f}, D Loss: {_list_avg(d_loss_history):.5f}, {metrics_collection}, Track best: {track_best:2.5f}, {misc}'
-        else:
-            self.progress_label_text.value = f'Epoch: {epoch}, Loss: {_list_avg(loss_history):.5f}, {metrics_collection}, Track best: {track_best:.5f}, {misc}'
+        self.progress_label_text.value = f'Epoch: {epoch}, Loss: {loss_record:.5f}, {metrics_collection}, Track best: {track_best:.5f}, {misc}'
         self.redis.set('desc', self.progress_label_text.value)
         self.redis.set('progress', progress)
 
     def record(self, epoch, key, value, mode = ''):
-        if mode == 'gan' and self._gan == True:
-            self.history.log(epoch, **{key: value})
-        elif mode == 'non-gan' and self._gan == False:
-            self.history.log(epoch, **{key: value})
-        else:
-            self.history.log(epoch, **{key: value})
+        self.history.log(epoch, **{key: value})
 
     def plot(self, epoch, history_, epoch_str):
         self.redis.set('history', pickle.dumps(history_.records))
         if self._plot:
-            if self._gan:
-                with self.gan_gallary:
-                    self.gan_canvas.draw_image(self.history['image'])
-
             with self.loss_plot:
-                if self._gan:
-                    self.loss_canvas.draw_plot([
-                        self.history["train_g_loss"], self.history['train_d_loss']
-                    ])
-                else:
-                    self.loss_canvas.draw_plot([
-                        self.history["train_loss"], self.history['val_loss']
-                    ])
+                self.loss_canvas.draw_plot([
+                    self.history["train_loss"], self.history['val_loss']
+                ])
 
             with self.matrix_plot:
-                if self._gan:
-                    self.matrix_canvas.draw_plot([
-                        self.history['inception_score'], self.history['fid']
-                    ])
-                else:
-                    self.matrix_canvas.draw_plot([
-                        self.history['train_acc'], self.history['val_acc']
-                    ])
+                self.matrix_canvas.draw_plot([
+                    self.history['train_acc'], self.history['val_acc']
+                ])
 
             with self.lr_plot:
-                if self._gan:
-                    self.lr_canvas.draw_plot([self.history['g_lr'], self.history['d_lr']])
-                else:
-                    self.lr_canvas.draw_plot([self.history['lr']])
+                self.lr_canvas.draw_plot([self.history['lr']])
 
             with self.norm_plot:
                 self.norm_canvas.draw_plot([self.history['norm']])
 
         with self.text_log:
             if epoch == 1:
-                self.text_table.add_row(['Epochs'] + list(history_.records.keys())[:-1])
-                self.text_table.set_cols_width([
-                    6,
-                ] + [len(format(i[-1], '.4f')) for i in list(history_.records.values())[:-1]])
-            self.text_table.add_row(
-                [epoch_str] + [format(i[-1], '.4f') for i in list(history_.records.values())[:-1]]
-            )
+                self.text_table.add_row(['Epochs'] + list(history_.records.keys()))
+                self.text_table.set_cols_width([6] + [len(format(i[-1], '.4f')) for i in list(history_.records.values())])
+            self.text_table.add_row([epoch_str] + [format(i[-1], '.4f') for i in list(history_.records.values())])
             _display.clear_output(wait = True)
             print(self.text_table.draw())

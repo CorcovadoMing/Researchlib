@@ -24,3 +24,13 @@ class History:
                 self.records[ckey].append(float(d[key]))
             except:
                 self.records[ckey].append(str(d[key]))
+    
+    def record_matrix(self, metrics, prefix = None):
+        for matrix in metrics:
+            key, value = list(matrix.output().items())[0]
+            if prefix is not None:
+                prefix_str = prefix + '_' + str(key)
+            else:
+                predix_str = str(key)
+            self.records.setdefault(prefix_str, [])
+            self.records[prefix_str].append(float(value))

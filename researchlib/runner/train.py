@@ -162,7 +162,7 @@ def _train_minibatch(
                 loss += (1 - kwargs['lam']
                          ) * loss_ffn[loss_i](auxout[i], kwargs['target_res'][target_res_i])
             else:
-                loss += loss_ffn[loss_i](auxout[i], kwargs['target'][target_i])
+                loss += loss_ffn[loss_i](auxout[i], kwargs['target'][target_i].view(-1))
     elif learning_type == 'self_supervise':
         for i in range(len(auxout)):
             loss += loss_ffn[i](auxout[i], *kwargs['data'])

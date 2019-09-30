@@ -9,30 +9,30 @@ register_method = _register_method(__methods__)
 
 @register_method
 def validate_fn(self, **kwargs):
-    parameter_manager = ParameterManager(**kwargs)
-
-    metrics = parameter_manager.get_param('metrics', [])
-    callbacks = parameter_manager.get_param('callbacks', [])
-    test_loader = parameter_manager.get_param('test_loader', required = True)
-    loss_fn = parameter_manager.get_param('loss_fn', required = True)
-    auxiliary_ensemble = parameter_manager.get_param('auxiliary_ensemble', False)
-
-    self.model.eval()
-    matrix_records = History()
-
-    if self.swa and self.epoch >= self.swa_start:
-        _switch_swa_mode(self.optimzier)
-        if type(self.optimizer) == list:
-            i.bn_update(self.train_loader, self.model, device = 'cuda')
-        else:
-            self.optimizer.bn_update(self.train_loader, self.model, device = 'cuda')
-
-    # Reset metrics
-    for m in metrics:
-        m.reset()
-
-    test_loss = 0
     with torch.no_grad():
+        parameter_manager = ParameterManager(**kwargs)
+
+        metrics = parameter_manager.get_param('metrics', [])
+        callbacks = parameter_manager.get_param('callbacks', [])
+        test_loader = parameter_manager.get_param('test_loader', required = True)
+        loss_fn = parameter_manager.get_param('loss_fn', required = True)
+        auxiliary_ensemble = parameter_manager.get_param('auxiliary_ensemble', False)
+
+        self.model.eval()
+        matrix_records = History()
+
+        if self.swa and self.epoch >= self.swa_start:
+            _switch_swa_mode(self.optimzier)
+            if type(self.optimizer) == list:
+                i.bn_update(self.train_loader, self.model, device = 'cuda')
+            else:
+                self.optimizer.bn_update(self.train_loader, self.model, device = 'cuda')
+
+        # Reset metrics
+        for m in metrics:
+            m.reset()
+
+        test_loss = 0
         for batch_idx, (x, y) in enumerate(test_loader):
             if self.is_cuda:
                 x, y = [i.cuda() for i in x], [i.cuda() for i in y]
@@ -56,7 +56,7 @@ def validate_fn(self, **kwargs):
                 else:
                     loss_i = i if len(loss_fn) > i else loss_i
                     target_i = i if len(y) > i else target_i
-                test_loss += loss_fn[loss_i](auxout[i], y[target_i]).item()
+                test_loss += loss_fn[loss_i](auxout[i], y[target_i].view(-1)).item()
 
             if auxiliary_ensemble:
                 output = reduce(lambda a, b: a + b, auxout)
@@ -72,16 +72,16 @@ def validate_fn(self, **kwargs):
             if batch_idx + 1 == self.test_loader_length:
                 break
 
-    test_loss /= self.test_loader_length
+        test_loss /= self.test_loader_length
 
-    for callback_func in callbacks:
-        kwargs = callback_func.on_validation_end(**kwargs)
+        for callback_func in callbacks:
+            kwargs = callback_func.on_validation_end(**kwargs)
 
-    # Output metrics
-    for m in metrics:
-        matrix_records.add(m.output(), prefix = 'val')
+        # Output metrics
+        for m in metrics:
+            matrix_records.add(m.output(), prefix = 'val')
 
-    if self.swa and self.epoch >= self.swa_start:
-        _switch_swa_mode(self.optimzier)
+        if self.swa and self.epoch >= self.swa_start:
+            _switch_swa_mode(self.optimzier)
 
-    return {'loss': test_loss}, matrix_records
+        return {'loss': test_loss}, matrix_records

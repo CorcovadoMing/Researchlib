@@ -17,6 +17,26 @@ register_method = _register_method(__methods__)
 
 
 @register_method
+def _iteration_pipeline(self, loader):
+    for batch_idx, (x, y) in inifinity_loop(loader):
+        if type(x) != torch.Tensor:
+            x = torch.from_numpy(x)
+        if type(y) != torch.Tensor:
+            y = torch.from_numpy(y)
+        yield x, y
+
+
+def _anneal_policy(anneal_type):
+    if anneal_type == 'cosine':
+        anneal_policy = Annealer.Cosine
+    elif anneal_type == 'linear':
+        anneal_policy = Annealer.Linear
+    else:
+        anneal_policy = Annealer.Fixed
+    return anneal_policy
+
+
+@register_method
 def fit(
     self,
     epochs,
@@ -35,88 +55,30 @@ def fit(
     init_optim = True,
     **kwargs
 ):
-
+    
     self.__class__.__fit_settings__[f'epoch_{self.epoch}-{self.epoch+epochs-1}'] = locals()
+    
+    parameter_manager = ParameterManager(**kwargs)
+    
 
-    if init_optim:
-        self.set_optimizer()
-
-    self.multisteps = multisteps
-
-    # Fix issue the dashboard is down while training is interrupted
+    # ----------------------------------------------
+    # Dashboard
+    # ----------------------------------------------
     if not _is_port_in_use(8050):
         dash = _Dashboard(verbose = False)
         dash.start()
 
-    self._fit(
-        epochs,
-        lr,
-        metrics,
-        callbacks,
-        _id,
-        self_iterative,
-        iterations = iterations,
-        policy = policy,
-        plot = plot,
-        prefetch = prefetch,
-        warmup = max(0, warmup),
-        warmup_policy = warmup_policy,
-        **kwargs
-    )
-
-
-@register_method
-def _process_type(self, data_pack):
-    data, target = data_pack
-    if type(data) != list and type(data) != tuple:
-        data = [data]
-    if type(target) != list and type(target) != tuple:
-        target = [target]
-    if type(data[0]) != torch.Tensor:
-        data, target = [torch.from_numpy(i) for i in data], [torch.from_numpy(i) for i in target]
-    return data, target
-
-
-@register_method
-def _iteration_pipeline(self, loader):
-    for batch_idx, data_pack in inifinity_loop(loader):
-        x, y = self._process_type(data_pack)
-        yield x, y
-
-
-#==================================================================================
-
-
-def _list_avg(l):
-    return sum(l) / len(l)
-
-
-#==================================================================================
-
-
-def _anneal_policy(anneal_type):
-    if anneal_type == 'cosine':
-        anneal_policy = Annealer.Cosine
-    elif anneal_type == 'linear':
-        anneal_policy = Annealer.Linear
-    else:
-        anneal_policy = Annealer.Fixed
-    return anneal_policy
-
-
-@register_method
-def _fit(
-    self, epochs, lr, metrics, callbacks, _id, self_iterative, iterations, policy, warmup,
-    warmup_policy, prefetch, plot, **kwargs
-):
-
     parameter_manager = ParameterManager(**kwargs)
-    batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
     
+    
+    # ----------------------------------------------
+    # Setting loaders
+    # ----------------------------------------------
+    batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
     buffered_epochs = epochs + 1
     train_loader = self.train_loader.get_generator(batch_size, epochs=buffered_epochs)
     self.train_loader_length = len(train_loader)
-    liveplot = Liveplot(self.model, self.train_loader_length, plot)
+    liveplot = Liveplot(self.train_loader_length, plot)
     train_loader = self._iteration_pipeline(train_loader)
     train_loader = BackgroundGenerator(train_loader) if prefetch else train_loader
     if self.test_loader:
@@ -127,65 +89,97 @@ def _fit(
         
     if iterations == 0:
         iterations = self.train_loader_length
-
-    # Manifold Mixup
-    fixed_mmixup = parameter_manager.get_param(
-        'fixed_mmixup', validator = lambda x: type(x) == list
-    )
-    random_mmixup = parameter_manager.get_param(
-        'random_mmixup', validator = lambda x: len(x) == 2 and type(x) == list
-    )
-    mmixup_alpha = parameter_manager.get_param(
-        'mmixup_alpha', validator = lambda x: type(x) == float
-    )
-
-    weight_decay = parameter_manager.get_param('weight_decay', 1)
-    if weight_decay > 0:
-        weight_decay_policy = parameter_manager.get_param('weight_decay_policy', 'cosine')
-        Annealer.set_trace(
-            'weight_decay', epochs * iterations, [0, weight_decay], 'iteration',
-            _anneal_policy(weight_decay_policy)
-        )
-
-    if warmup > 0:
-        Annealer.set_trace(
-            'warmup_lr', warmup * iterations, [0, lr], 'iteration', _anneal_policy(warmup_policy)
-        )
-        Annealer._iteration_step(key = 'warmup_lr')
         
-
+        
+    # ----------------------------------------------
+    # Setting experiments
+    # ----------------------------------------------
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
-
+        
     exist_experiments = pickle.loads(liveplot.redis.get('experiment'))
     if self.experiment_name not in exist_experiments:
         exist_experiments.append(self.experiment_name)
+        
     liveplot.redis.set('experiment', pickle.dumps(exist_experiments))
-
+    
+    
+    
+    # ----------------------------------------------
+    # Metrics
+    # ----------------------------------------------
+    if len(self.default_metrics):
+        metrics = self.default_metrics + metrics
+    
+    
+    # ----------------------------------------------
+    # MISC
+    # ----------------------------------------------
+    fixed_mmixup = parameter_manager.get_param('fixed_mmixup', validator = lambda x: type(x) == list)
+    random_mmixup = parameter_manager.get_param('random_mmixup', validator = lambda x: len(x) == 2 and type(x) == list)
+    mmixup_alpha = parameter_manager.get_param('mmixup_alpha', validator = lambda x: type(x) == float)
+    
+    
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # Initialization should be completed before this line
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     self.preload_gpu()
+    
+    
+    # ----------------------------------------------
+    # optimizers, (LR, warmup, weight_decay, etc.,)
+    # ----------------------------------------------
+    if init_optim:
+        self.set_optimizer()
+    
+    self.multisteps = multisteps
 
+    # Weight decay
+    weight_decay = parameter_manager.get_param('weight_decay', 1)
+    if weight_decay > 0:
+        weight_decay_policy = parameter_manager.get_param('weight_decay_policy', 'cosine')
+        Annealer.set_trace('weight_decay', epochs * iterations, [0, weight_decay], 'iteration',_anneal_policy(weight_decay_policy))
+        Annealer._iteration_step(key = 'weight_decay')
+        
+    # Warmup
+    warmup = max(0, warmup)
+    if warmup > 0:
+        Annealer.set_trace('warmup_lr', warmup * iterations, [0, lr], 'iteration', _anneal_policy(warmup_policy))
+        Annealer._iteration_step(key = 'warmup_lr')
+    
+    # FP16
     fp16 = parameter_manager.get_param('fp16', False)
     loss_scale = parameter_manager.get_param('loss_scale', 1)
-    self.model, self.optimizer = amp.initialize(
-        self.model, self.optimizer, opt_level = 'O1', enabled = fp16, loss_scale = loss_scale
-    )
-
-    # must verify after all keys get registered
+    self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level = 'O1', enabled = fp16, loss_scale = loss_scale)
+    
+    
+    # ----------------------------------------------
+    # Final verification
+    # ----------------------------------------------
     ParameterManager.verify_kwargs(**kwargs)
-
+    
     try:
-        if len(self.default_metrics):
-            metrics = self.default_metrics + metrics
-
-        for epoch in range(1, epochs + 1):
-            # Switch point
+        for epoch in range(1, epochs+1):
+            
+            # ----------------------------------------------
+            # Pre-config
+            # ----------------------------------------------
             if epoch == (warmup + 1):
-                Annealer.set_trace(
-                    'regular_lr', (epochs - warmup) * iterations, [lr, 0], 'iteration',
-                    _anneal_policy(policy)
-                )
+                Annealer.set_trace('regular_lr', (epochs - warmup) * iterations, [lr, 0], 'iteration', _anneal_policy(policy))
                 Annealer._iteration_step(key = 'regular_lr')
-
+                
+            # Set LR
+            if epoch <= warmup:
+                cur_lr = Annealer.get_trace('warmup_lr')
+            else:
+                cur_lr = Annealer.get_trace('regular_lr')
+            set_lr(self.optimizer, cur_lr)
+            
+            # Set weight decay
+            if weight_decay > 0:
+                weight_decay = Annealer.get_trace('weight_decay')
+                update_optim(self.optimizer, weight_decay, key = 'weight_decay')
+            
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(
                     model = self.model,
@@ -194,169 +188,107 @@ def _fit(
                     epoch = self.epoch
                 )
 
-            loss_history = []
-            g_loss_history = []
-            d_loss_history = []
-            norm = []
-            inception_score = []
-            matrix_records = History()
-
-            for m in metrics:
-                m.reset()
-
-            iteration_break = iterations
-            liveplot.redis.set('stage', 'train')
-            liveplot.timer.clear()
             
+            # ----------------------------------------------
+            # Training stage
+            # ----------------------------------------------
+            
+            liveplot.redis.set('stage', 'train')
+            liveplot.timer.clear()            
             self.model.train()
             
-            for batch_idx, (x, y) in enumerate(train_loader):
+            for m in metrics:
+                m.reset()
+            
+            loss_record = 0
+            norm_record = 0
+            for batch_idx, (inputs, targets) in enumerate(train_loader):
                 if mmixup_alpha is not None:
-                    batch_size = x[0].size()[0]
-                    # Set default as random sample mmixup
+                    batch_size = inputs[0].size(0)
                     if fixed_mmixup is None and random_mmixup is None:
                         random_mmixup = [0, layer.ManifoldMixup.block_counter]
                     lam = layer.ManifoldMixup.setup_batch(mmixup_alpha, batch_size, fixed_mmixup, random_mmixup)
-                    y, y_res = layer.ManifoldMixup.get_y(y)
+                    targets, targets_res = layer.ManifoldMixup.get_y(targets)
+                    targets, targets_res = targets.cuda(), targets_res.cuda()
                 else:
-                    y_res = None
+                    targets_res = None
                     lam = None
-
-                if epoch <= warmup:
-                    cur_lr = Annealer.get_trace('warmup_lr')
-                else:
-                    cur_lr = Annealer.get_trace('regular_lr')
-                set_lr(self.optimizer, cur_lr)
-
-                # weight decay
-                if weight_decay > 0:
-                    weight_decay = Annealer.get_trace('weight_decay')
-                    update_optim(self.optimizer, weight_decay, key = 'weight_decay')
-
+                
+                
+                inputs, targets = inputs.cuda(), targets.cuda()
+                self.optimizer.zero_grad()
+                outputs = self.model(inputs)
+                loss = self.loss_fn[0](outputs, targets)
+                loss.backward()
+                self.optimizer.step()
+                
+                # May be a bottleneck for GPU utilization
+                for p in list(filter(lambda p: p.grad is not None, self.model.parameters())):
+                    norm_record += p.grad.data.norm(2).item() ** 2
+    
+                for m in metrics:
+                    m.forward([outputs, targets])
+                    
+                loss_record += loss.item()
+                # May be a bottleneck for GPU utilization
                 liveplot.update_progressbar(batch_idx + 1)
-                if self.is_cuda:
-                    x, y = [i.cuda() for i in x], [i.cuda() for i in y]
-                    if y_res is not None:
-                        # Mixup enabled
-                        y_res = [i.cuda() for i in y_res]
+                liveplot.update_desc(epoch, loss_record / (batch_idx + 1), metrics, self.monitor)
 
-                self.train_fn(
-                    train = True,
-                    model = self.model,
-                    data = x,
-                    target = y,
-                    target_res = y_res,
-                    lam = lam,
-                    optimizer = self.optimizer,
-                    loss_fn = self.loss_fn,
-                    reg_fn = self.reg_fn,
-                    reg_weights = self.reg_weights,
-                    epoch = self.epoch,
-                    callbacks = callbacks,
-                    metrics = metrics,
-                    loss_history = loss_history,
-                    g_loss_history = g_loss_history,
-                    d_loss_history = d_loss_history,
-                    norm = norm,
-                    matrix_records = matrix_records,
-                )
-
-                liveplot.update_desc(self.epoch, g_loss_history, d_loss_history, loss_history, metrics, self.monitor)
-
-                # Global iteration annealling
+                if batch_idx == (self.train_loader_length-1):
+                    break
+                
                 Annealer._iteration_step()
 
-                iteration_break -= 1
-                if iteration_break == 0:
-                    break
-
-            self.model.eval()
-
-            liveplot.record(epoch, 'norm', _list_avg(norm))
-            if liveplot._gan:
-                liveplot.record(
-                    epoch, 'g_lr', [i['lr'] for i in self.optimizer[1].param_groups][-1]
-                )
-                liveplot.record(
-                    epoch, 'd_lr', [i['lr'] for i in self.optimizer[0].param_groups][-1]
-                )
-                liveplot.record(epoch, 'train_g_loss', _list_avg(g_loss_history))
-                liveplot.record(epoch, 'train_d_loss', _list_avg(d_loss_history))
-            else:
-                liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer.param_groups][-1])
-                liveplot.record(epoch, 'train_loss', _list_avg(loss_history))
-
-            # Output metrics
-            for m in metrics:
-                matrix_records.add(m.output(), prefix = 'train')
-
-            if liveplot._gan:
-                loss_records = {
-                    'd_loss': _list_avg(d_loss_history),
-                    'g_loss': _list_avg(g_loss_history)
-                }
-            else:
-                loss_records = {'loss': _list_avg(loss_history)}
-
-            self.history_.add(loss_records, prefix = 'train')
-            self.history_ += matrix_records
-
+            loss_record = loss_record / (batch_idx + 1)
+            norm_record = (norm_record ** 0.5) / (batch_idx + 1)
+            liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer.param_groups][-1])
+            liveplot.record(epoch, 'train_loss', loss_record)
+            liveplot.record(epoch, 'norm', norm_record)
+            self.history_.add({'loss': loss_record}, prefix = 'train')
+            self.history_.record_matrix(metrics, prefix = 'train')
             try:
                 liveplot.record(epoch, 'train_acc', self.history_.records['train_acc'][-1])
             except:
                 pass
-
-            if liveplot._gan:
-                liveplot.record(
-                    epoch, 'inception_score', self.history_.records['train_inception_score'][-1]
-                )
-                liveplot.record(epoch, 'fid', self.history_.records['train_fid'][-1])
-
-            for callback_func in callbacks:
-                callback_func.on_epoch_end(
-                    model = self.model,
-                    train_loader = self.train_loader,
-                    optimizer = self.optimizer,
-                    epoch = epoch
-                )
-
-            if liveplot._gan:
-                _gan_sample = self.model.sample(4, inference = True, gpu = True)
-                _gan_sample = _gan_sample.detach().cpu().numpy().transpose((0, 2, 3, 1))
-                _grid = plot_montage(_gan_sample, 2, 2, False)
-                liveplot.record(epoch, 'image', _grid)
-
-            # SWA
-            if self.swa and self.epoch >= self.swa_start and self.epoch % 2 == 0:
-                if type(self.optimizer) == list:
-                    for i in self.optimizer:
-                        i.update_swa()
-                else:
-                    self.optimizer.update_swa()
-
+                
+            # ----------------------------------------------
+            # Validation stage
+            # ----------------------------------------------
             liveplot.redis.set('stage', 'validate')
-
-            if self.test_loader:
-                loss_records, matrix_records = self.validate_fn(
-                    model = self.model,
-                    test_loader = test_loader,
-                    loss_fn = self.loss_fn,
-                    is_cuda = self.is_cuda,
-                    epoch = self.epoch,
-                    metrics = metrics,
-                    callbacks = callbacks,
-                )
-
-                self.history_.add(loss_records, prefix = 'val')
-                self.history_ += matrix_records
-                try:
-                    liveplot.record(epoch, 'val_acc', self.history_.records['val_acc'][-1])
-                except:
-                    pass
-                liveplot.record(epoch, 'val_loss', self.history_.records['val_loss'][-1])
-
+            self.model.eval()
+            
+            for m in metrics:
+                m.reset()
+            
+            loss_record = 0
+            with torch.no_grad():
+                for batch_idx, (inputs, targets) in enumerate(test_loader):
+                    inputs, targets = inputs.cuda(), targets.cuda()
+                    outputs = self.model(inputs)
+                    loss = self.loss_fn[0](outputs, targets)
+                    
+                    for m in metrics:
+                        m.forward([outputs, targets])
+                        
+                    loss_record += loss.item()
+                    
+                    if batch_idx == (self.test_loader_length-1):
+                        break
+            
+            loss_record = loss_record / (batch_idx + 1)
+            liveplot.record(epoch, 'val_loss', loss_record)
+            liveplot.record(epoch, 'norm', norm_record)
+            self.history_.add({'loss': loss_record / (batch_idx + 1)}, prefix = 'val')
+            self.history_.record_matrix(metrics, prefix = 'val')
+            try:
+                liveplot.record(epoch, 'val_acc', self.history_.records['val_acc'][-1])
+            except:
+                pass
+                        
+            # ----------------------------------------------
+            # Check point
+            # ----------------------------------------------
             epoch_str = str(self.epoch)
-
             monitor_target = 'val_' + self.monitor_state if self.test_loader else 'train_' + self.monitor_state
             if monitor_target in self.history_.records:
                 critic = self.history_.records[monitor_target][-1]
@@ -364,45 +296,46 @@ def _fit(
                 critic = None
 
             # Checkpoint
-            checkpoint_model_name = os.path.join(
-                self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(self.epoch)
-            )
+            checkpoint_model_name = os.path.join(self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(self.epoch))
             self.save(checkpoint_model_name)
             if critic is not None and self.monitor_mode(critic, self.monitor) == critic:
                 self.monitor = critic
                 best_checkpoint_model_name = os.path.join(self.checkpoint_path, 'best_' + _id)
                 self.save(best_checkpoint_model_name)
                 epoch_str += '*'
-                self.history_.add({'saved': '*'})
-            else:
-                self.history_.add({'saved': ''})
 
+            
+            # ----------------------------------------------
+            # Post-config
+            # ----------------------------------------------
+            
             liveplot.plot(self.epoch, self.history_, epoch_str)
-            self.epoch += 1
-
-            # Steps Anneling
-            # This is only works fixed LR scheduler
+            
+            for callback_func in callbacks:
+                callback_func.on_epoch_end(
+                    model = self.model,
+                    train_loader = self.train_loader,
+                    optimizer = self.optimizer,
+                    epoch = self.epoch
+                )
+            
+            # Steps anneling
             if self.epoch in self.multisteps:
                 srange = Annealer.get_srange('regular_lr')
                 srange = [i * 0.1 for i in srange]
                 Annealer.update_attr('regular_lr', 'srange', srange)
-
-            # Self-interative
-            if self_iterative:
-                with torch.no_grad():
-                    for i in tnrange(len(self.train_loader.dataset.tensors[0])):
-                        self.train_loader.dataset.tensors[1][i] = \
-                        self.model(self.train_loader.dataset.tensors[0][i].unsqueeze(0).cuda()).detach().cpu()[0]
-                        torch.cuda.empty_cache()
-
-            # Global epoch annealling
+                
+            # Global epoch annealing
             Annealer._epoch_step()
-
-        liveplot.redis.set('stage', 'stop')
-
+            
+            # Finish this epoch
+            self.epoch += 1
+            
+        
     except:
         raise
 
     finally:
         self.unload_gpu()
         _STOP_GPU_MONITOR_ = True
+        liveplot.redis.set('stage', 'stop')
