@@ -4,7 +4,6 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import tensorflow_datasets as tfds
 import tensorflow as tf
-tf.enable_eager_execution()
 from tensorpack.dataflow import *
 import numpy as np
 import math
@@ -84,7 +83,7 @@ class _TFDataset:
             return np.moveaxis(x, -1, 1).astype(np.float32), np.array(y).astype(y_type)
         
         
-        ds = MapData(ds, batch_mapf)
+        ds = MultiProcessMapDataZMQ(ds, 4, batch_mapf)
         ds = PrintData(ds)
         ds.reset_state()
         return ds

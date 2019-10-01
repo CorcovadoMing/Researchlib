@@ -47,7 +47,6 @@ RUN pip install nvstrings-cuda100
 # Jupyter
 RUN pip install jupyterlab
 RUN pip install ipywidgets
-COPY jupyter /root/.jupyter
 RUN jupyter nbextension enable --py widgetsnbextension
 RUN curl -sL https://deb.nodesource.com/setup_11.x | bash -
 RUN apt install -y nodejs
@@ -78,7 +77,7 @@ RUN pip install graphviz hiddenlayer nvidia-ml-py3 seaborn
 RUN pip install pyro-ppl botorch gpytorch scikit-learn ax-platform --no-deps torch
 
 # QC
-RUN pip install pennylane pennylane-forest bindsnet
+RUN pip install pennylane pennylane-forest bindsnet --no-deps torch
 
 # MISC
 RUN pip install adabound
@@ -92,6 +91,7 @@ RUN ln -s /opt/julia/bin/julia /bin
 RUN julia -e 'using Pkg; Pkg.add("IJulia")'
 
 # Tests
+RUN conda remove -y wrapt
 RUN pip install yapf pylint pytest
 RUN pip install zarr
 
@@ -144,12 +144,14 @@ RUN pip install tensorpack
 RUN apt-get update && apt-get install -y build-essential libcap-dev
 RUN pip install python-prctl
 
-RUN conda remove wrapt -y
 RUN pip install tensorflow-gpu
 RUN pip install tensorflow-datasets
 RUN pip install -U numpy
 RUN pip install gast==0.2.2
 RUN pip install numpy==1.16.4
+
+RUN pip install nibabel
+
 # Version tag
-ENV _RESEARCHLIB_IMAGE_TAG 19.09.1
+ENV _RESEARCHLIB_IMAGE_TAG 19.09.2
 
