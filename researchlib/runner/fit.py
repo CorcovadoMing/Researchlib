@@ -12,6 +12,7 @@ from ..frontend.dashboard import _Dashboard
 from apex import amp
 import numpy as np
 
+
 __methods__ = []
 register_method = _register_method(__methods__)
 
@@ -255,29 +256,8 @@ def fit(
             # Validation stage
             # ----------------------------------------------
             liveplot.redis.set('stage', 'validate')
-            self.model.eval()
-            
-            for m in metrics:
-                m.reset()
-            
-            loss_record = 0
-            with torch.no_grad():
-                for batch_idx, (inputs, targets) in enumerate(test_loader):
-                    inputs, targets = inputs.cuda(), targets.cuda()
-                    outputs = self.model(inputs)
-                    loss = self.loss_fn[0](outputs, targets)
-                    
-                    for m in metrics:
-                        m.forward([outputs, targets])
-                        
-                    loss_record += loss.item()
-                    
-                    if batch_idx == (self.test_loader_length-1):
-                        break
-            
-            loss_record = loss_record / (batch_idx + 1)
+            loss_record = self.validate_fn(test_loader, metrics)
             liveplot.record(epoch, 'val_loss', loss_record)
-            liveplot.record(epoch, 'norm', norm_record)
             self.history_.add({'loss': loss_record / (batch_idx + 1)}, prefix = 'val')
             self.history_.record_matrix(metrics, prefix = 'val')
             try:

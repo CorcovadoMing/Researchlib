@@ -1,7 +1,6 @@
 from ..loss import loss_mapping, loss_ensemble
 from .history import History
 from ..models import GANModel
-from .validate import validate_fn
 from .export import _Export
 from .prefetch import *
 from ..utils import *
@@ -25,7 +24,6 @@ from . import validate
 from . import gpu_resource_management
 from . import predict
 from . import set_optimizer
-
 
 @_add_methods_from(set_optimizer)
 @_add_methods_from(gpu_resource_management)
@@ -193,23 +191,14 @@ class Runner:
             if len(self.default_metrics):
                 metrics = self.default_metrics + metrics
 
-            loss_records, matrix_records = self.validate_fn(
-                model = self.model,
-                test_loader = test_loader,
-                loss_fn = self.loss_fn,
-                is_cuda = self.is_cuda,
-                epoch = self.epoch,
-                metrics = metrics,
-                callbacks = callbacks,
-                **kwargs
-            )
+            loss_record = self.validate_fn(test_loader, metrics)
 
-            for k, v in loss_records.items():
-                print(str(k) + ':', str(v))
-
+            print(loss_record)
+            
             if len(metrics) > 0:
-                for k, v in matrix_records.records.items():
-                    print(str(k) + ':', str(v[-1]))
+                for m in metrics:
+                    for k, v in m.output().items():
+                        print(str(k) + ':', str(v))
         except:
             raise
         finally:
