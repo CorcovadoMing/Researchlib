@@ -31,7 +31,17 @@ def _restore_grad(model):
 
 
 @register_method
-def train_fn(self, epoch, loader, metrics, liveplot, mmixup_alpha, fixed_mmixup, random_mmixup):
+def train_fn(self, loader, metrics, **kwargs):
+    parameter_manager = ParameterManager(**kwargs)
+    
+    liveplot = parameter_manager.get_param('liveplot', required=True)
+    mmixup_alpha = parameter_manager.get_param('mmixup_alpha')
+    fixed_mmixup = parameter_manager.get_param('fixed_mmixup')
+    random_mmixup = parameter_manager.get_param('random_mmixup')
+    epoch = parameter_manager.get_param('epoch')
+    warmup = parameter_manager.get_param('warmup')
+    weight_decay = parameter_manager.get_param('weight_decay')
+    
     self.model.train()
 
     for m in metrics:
@@ -40,6 +50,18 @@ def train_fn(self, epoch, loader, metrics, liveplot, mmixup_alpha, fixed_mmixup,
     loss_record = 0
     norm_record = 0
     for batch_idx, (inputs, targets) in enumerate(loader):
+        # Set LR
+        if epoch <= warmup:
+            cur_lr = Annealer.get_trace('warmup_lr')
+        else:
+            cur_lr = Annealer.get_trace('regular_lr')
+        set_lr(self.optimizer, cur_lr)
+
+        # Set weight decay
+        if weight_decay > 0:
+            cur_weight_decay = Annealer.get_trace('weight_decay')
+            update_optim(self.optimizer, cur_weight_decay, key = 'weight_decay')
+                
         if mmixup_alpha is not None:
             batch_size = inputs[0].size(0)
             if fixed_mmixup is None and random_mmixup is None:

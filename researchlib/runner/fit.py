@@ -164,18 +164,6 @@ def fit(
             if epoch == (warmup + 1):
                 Annealer.set_trace('regular_lr', (epochs - warmup) * iterations, [lr, 0], 'iteration', _anneal_policy(policy))
                 Annealer._iteration_step(key = 'regular_lr')
-                
-            # Set LR
-            if epoch <= warmup:
-                cur_lr = Annealer.get_trace('warmup_lr')
-            else:
-                cur_lr = Annealer.get_trace('regular_lr')
-            set_lr(self.optimizer, cur_lr)
-            
-            # Set weight decay
-            if weight_decay > 0:
-                weight_decay = Annealer.get_trace('weight_decay')
-                update_optim(self.optimizer, weight_decay, key = 'weight_decay')
             
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(
@@ -192,7 +180,14 @@ def fit(
             liveplot.redis.set('stage', 'train')
             liveplot.timer.clear()
             # Training function
-            loss_record, norm_record = self.train_fn(epoch, train_loader, metrics, liveplot, mmixup_alpha, fixed_mmixup, random_mmixup)
+            loss_record, norm_record = self.train_fn(train_loader, metrics, 
+                                                     liveplot=liveplot, 
+                                                     mmixup_alpha=mmixup_alpha, 
+                                                     fixed_mmixup=fixed_mmixup, 
+                                                     random_mmixup=random_mmixup,
+                                                     epoch=epoch,
+                                                     warmup=warmup,
+                                                     weight_decay=weight_decay)
             liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer.param_groups][-1])
             liveplot.record(epoch, 'train_loss', loss_record)
             liveplot.record(epoch, 'norm', norm_record)
