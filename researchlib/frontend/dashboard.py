@@ -35,11 +35,36 @@ _app.layout = html.Div(
         ),
 
         # Resource monitor
-        dbc.Card(
-            dbc.CardBody([
-                dcc.Graph(id = 'live-update-pie', config = {'displayModeBar': False}),
-            ])
-        ),
+        html.Div([
+            dbc.Row(
+                [
+                    dbc.Col(dbc.Card(
+                        dbc.CardBody([
+                            html.H4("CPU Memory", className="card-title"),
+                            html.H1("", id = "cpu_mem", className="card-subtitle")
+                        ]),
+                    )),
+                    dbc.Col(dbc.Card(
+                        dbc.CardBody([
+                            html.H4("CPU Utils", className="card-title"),
+                            html.H1("", id = "cpu_utils", className="card-subtitle")
+                        ]),
+                    )),
+                    dbc.Col(dbc.Card(
+                        dbc.CardBody([
+                            html.H4("GPU Memory", className="card-title"),
+                            html.H1("", id = "gpu_mem", className="card-subtitle")
+                        ]),
+                    )),
+                    dbc.Col(dbc.Card(
+                        dbc.CardBody([
+                            html.H4("GPU Utils", className="card-title"),
+                            html.H1("", id = "gpu_utils", className="card-subtitle")
+                        ]),
+                    )),
+                ],
+            ),
+        ]),
 
         # Experiments choose (TODO)
         html.Div([
@@ -112,18 +137,6 @@ def _add_trace(fig, data, key, name, row_index, col_index):
     return fig
 
 
-def _add_pie(fig, values, name, row_index, col_index):
-    fig.append_trace({
-        'values': values,
-        'labels': ['Occupy', 'Non-Occupy'],
-        'sort': False,
-        'name': name,
-        'type': 'pie',
-        'hole': 0.3,
-    }, row_index, col_index)
-    return fig
-
-
 def _get_gpu_monitor():
     nvmlInit()
     handle = nvmlDeviceGetHandleByIndex(0)
@@ -132,33 +145,19 @@ def _get_gpu_monitor():
     return int(100 * (info.used / info.total)), s.gpu
 
 
-# Multiple components can update everytime interval gets fired.
-@_app.callback(Output('live-update-pie', 'figure'), [Input('chart-update', 'n_intervals')])
-def _update_pie_live(n):
-    fig = plotly.subplots.make_subplots(
-        rows = 1,
-        cols = 4,
-        subplot_titles = ('CPU Memory', 'CPU Utilization', 'GPU Memory', 'GPU Utilization'),
-        specs = [[{'type': 'domain'}, {'type': 'domain'}, {'type': 'domain'}, {'type': 'domain'}]]
-    )
-
-    fig['layout']['margin'] = {'l': 20, 'r': 20, 'b': 20, 't': 20}
-
-    cpu_mem_used = int(psutil.virtual_memory()[3])
-    cpu_mem_free = int(psutil.virtual_memory()[4])
-    cpu_util_used = float(psutil.cpu_percent())
-    cpu_util_free = float(100 - cpu_util_used)
+@_app.callback([
+    Output('cpu_mem', 'children'),
+    Output('cpu_utils', 'children'),
+    Output('gpu_mem', 'children'),
+    Output('gpu_utils', 'children')
+], [Input('chart-update', 'n_intervals')])
+def _update_resources(n):
+    cpu_mem_used, cpu_util_used = int(psutil.virtual_memory()[3]) / int(psutil.virtual_memory()[4]), float(psutil.cpu_percent())
     gpu_mem_used, gpu_util_used = _get_gpu_monitor()
-    gpu_mem_free = float(100 - gpu_mem_used)
-    gpu_util_free = float(100 - gpu_util_used)
-
-    fig.update_layout(autosize = True, showlegend = False, height = 150)
-    fig = _add_pie(fig, [cpu_mem_used, cpu_mem_free], 'CPU Memory', 1, 1)
-    fig = _add_pie(fig, [cpu_util_used, cpu_util_free], 'CPU Utilization', 1, 2)
-    fig = _add_pie(fig, [gpu_mem_used, gpu_mem_free], 'GPU Memory', 1, 3)
-    fig = _add_pie(fig, [gpu_util_used, gpu_util_free], 'GPU Utilization', 1, 4)
-
-    return fig
+    return [str(int(100*cpu_mem_used)) + '%', 
+           str(int(cpu_util_used)) + '%', 
+           str(gpu_mem_used) + '%', 
+           str(gpu_util_used) + '%']
 
 
 # Multiple components can update everytime interval gets fired.
