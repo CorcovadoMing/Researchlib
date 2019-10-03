@@ -18,7 +18,7 @@ class smooth_nll_loss(nn.Module):
     def forward(self, x, target):
         smooth_dist = x.data.clone()
         smooth_dist.fill_(self.smoothing / (x.size(1) - 1))
-        smooth_dist.scatter_(1, target.data, 1 - self.smoothing)
+        smooth_dist.scatter_(1, target.data.view(-1, 1), 1 - self.smoothing)
         return self.criterion(x, Variable(smooth_dist, requires_grad = False))
 
 
