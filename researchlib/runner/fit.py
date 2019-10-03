@@ -1,10 +1,6 @@
 import os
-from tqdm import tnrange
 from ..utils import _register_method, plot_montage, _is_port_in_use, set_lr, inifinity_loop, Annealer, ParameterManager, update_optim
-from ..layers import layer
-from .history import History
 import torch
-import random
 from .liveplot import Liveplot
 from .prefetch import *
 import pickle
@@ -193,55 +189,10 @@ def fit(
             # ----------------------------------------------
             # Training stage
             # ----------------------------------------------
-            
             liveplot.redis.set('stage', 'train')
-            liveplot.timer.clear()            
-            self.model.train()
-            
-            for m in metrics:
-                m.reset()
-            
-            loss_record = 0
-            norm_record = 0
-            for batch_idx, (inputs, targets) in enumerate(train_loader):
-                if mmixup_alpha is not None:
-                    batch_size = inputs[0].size(0)
-                    if fixed_mmixup is None and random_mmixup is None:
-                        random_mmixup = [0, layer.ManifoldMixup.block_counter]
-                    lam = layer.ManifoldMixup.setup_batch(mmixup_alpha, batch_size, fixed_mmixup, random_mmixup)
-                    targets, targets_res = layer.ManifoldMixup.get_y(targets)
-                    targets, targets_res = targets.cuda(), targets_res.cuda()
-                else:
-                    targets_res = None
-                    lam = None
-                
-                
-                inputs, targets = inputs.cuda(), targets.cuda()
-                self.optimizer.zero_grad()
-                outputs = self.model(inputs)
-                loss = self.loss_fn[0](outputs, targets)
-                loss.backward()
-                self.optimizer.step()
-                
-                # May be a bottleneck for GPU utilization
-                for p in list(filter(lambda p: p.grad is not None, self.model.parameters())):
-                    norm_record += p.grad.data.norm(2).item() ** 2
-    
-                for m in metrics:
-                    m.forward([outputs, targets])
-                    
-                loss_record += loss.item()
-                # May be a bottleneck for GPU utilization
-                liveplot.update_progressbar(batch_idx + 1)
-                liveplot.update_desc(epoch, loss_record / (batch_idx + 1), metrics, self.monitor)
-
-                if batch_idx == (self.train_loader_length-1):
-                    break
-                
-                Annealer._iteration_step()
-
-            loss_record = loss_record / (batch_idx + 1)
-            norm_record = (norm_record ** 0.5) / (batch_idx + 1)
+            liveplot.timer.clear()
+            # Training function
+            loss_record, norm_record = self.train_fn(epoch, train_loader, metrics, liveplot, mmixup_alpha, fixed_mmixup, random_mmixup)
             liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer.param_groups][-1])
             liveplot.record(epoch, 'train_loss', loss_record)
             liveplot.record(epoch, 'norm', norm_record)
@@ -255,15 +206,17 @@ def fit(
             # ----------------------------------------------
             # Validation stage
             # ----------------------------------------------
-            liveplot.redis.set('stage', 'validate')
-            loss_record = self.validate_fn(test_loader, metrics)
-            liveplot.record(epoch, 'val_loss', loss_record)
-            self.history_.add({'loss': loss_record / (batch_idx + 1)}, prefix = 'val')
-            self.history_.record_matrix(metrics, prefix = 'val')
-            try:
-                liveplot.record(epoch, 'val_acc', self.history_.records['val_acc'][-1])
-            except:
-                pass
+            if self.test_loader:
+                liveplot.redis.set('stage', 'validate')
+                # Validation function
+                loss_record = self.validate_fn(test_loader, metrics)
+                liveplot.record(epoch, 'val_loss', loss_record)
+                self.history_.add({'loss': loss_record}, prefix = 'val')
+                self.history_.record_matrix(metrics, prefix = 'val')
+                try:
+                    liveplot.record(epoch, 'val_acc', self.history_.records['val_acc'][-1])
+                except:
+                    pass
                         
             # ----------------------------------------------
             # Check point
@@ -288,7 +241,6 @@ def fit(
             # ----------------------------------------------
             # Post-config
             # ----------------------------------------------
-            
             liveplot.plot(self.epoch, self.history_, epoch_str)
             
             for callback_func in callbacks:
