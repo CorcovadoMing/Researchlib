@@ -12,6 +12,7 @@ import math
 class _TFDataset:
     def __init__(self, name, is_train):
         self.is_train = is_train
+        self.name = name
         
         split = tfds.Split.TRAIN if is_train else tfds.Split.TEST
         phase = 'train' if is_train else 'test'
@@ -53,7 +54,6 @@ class _TFDataset:
     
     
     def get_generator(self, batch_size=512, **kwargs):
-        
         ds = self.ds.shuffle(10240).repeat(kwargs['epochs']).batch(batch_size).prefetch(2048)
         ds = DataFromGenerator(tfds.as_numpy(ds))
         ds.__len__ = lambda: math.ceil(self.length / batch_size)
@@ -81,7 +81,6 @@ class _TFDataset:
                 x = op.augment(x)
             
             return np.moveaxis(x, -1, 1).astype(np.float32), np.array(y).astype(y_type)
-        
         
         ds = MultiProcessMapDataZMQ(ds, 4, batch_mapf)
         ds = PrintData(ds)

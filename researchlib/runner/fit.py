@@ -2,7 +2,7 @@ import os
 from ..utils import _register_method, plot_montage, _is_port_in_use, set_lr, inifinity_loop, Annealer, ParameterManager, update_optim
 import torch
 from .liveplot import Liveplot
-from .prefetch import *
+from .prefetch import BackgroundGenerator
 import pickle
 from ..frontend.dashboard import _Dashboard
 from apex import amp
@@ -20,7 +20,7 @@ def _iteration_pipeline(self, loader):
             x = torch.from_numpy(x)
         if type(y) != torch.Tensor:
             y = torch.from_numpy(y)
-        yield x, y
+        yield x.pin_memory(), y.pin_memory()
 
 
 def _anneal_policy(anneal_type):
@@ -70,7 +70,7 @@ def fit(
     # Setting loaders
     # ----------------------------------------------
     batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
-    buffered_epochs = epochs + 1
+    buffered_epochs = epochs + 100
     train_loader = self.train_loader.get_generator(batch_size, epochs=buffered_epochs)
     self.train_loader_length = len(train_loader)
     liveplot = Liveplot(self.train_loader_length, plot)

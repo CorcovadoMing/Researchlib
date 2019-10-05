@@ -1,12 +1,41 @@
 import torch
-from .history import *
 from ..utils import _register_method, get_aux_out, _switch_swa_mode, ParameterManager
 from functools import reduce
+from .prefetch import BackgroundGenerator
 
 __methods__ = []
 register_method = _register_method(__methods__)
 
 
+@register_method
+def validate(self, metrics = [], callbacks = [], prefetch=True, **kwargs):
+    parameter_manager = ParameterManager(**kwargs)
+    batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
+    
+    buffered_epochs = 100
+    test_loader = self.test_loader.get_generator(batch_size, epochs=buffered_epochs)
+    self.test_loader_length = len(test_loader)
+    test_loader = self._iteration_pipeline(test_loader)
+    test_loader = BackgroundGenerator(test_loader)
+    self.preload_gpu()
+    try:
+        if len(self.default_metrics):
+            metrics = self.default_metrics + metrics
+
+        loss_record = self.validate_fn(test_loader, metrics)
+
+        print(loss_record)
+
+        if len(metrics) > 0:
+            for m in metrics:
+                for k, v in m.output().items():
+                    print(str(k) + ':', float(v))
+    except:
+        raise
+    finally:
+        self.unload_gpu()
+            
+            
 @register_method
 def validate_fn(self, loader, metrics):
     self.model.eval()

@@ -13,8 +13,7 @@ from torchvision import transforms
 import torch.backends.cudnn as cudnn
 from apex import amp
 import os
-import pandas as pd
-import pickle
+
 
 from . import init_model
 from . import fit
@@ -164,46 +163,6 @@ class Runner:
         except:
             # The last epoch is not complete
             self.load_epoch(self.epoch - 1)
-
-    def report(self):
-        print('Experiment:', self.experiment_name)
-        print('Checkpoints are saved in', self.checkpoint_path)
-        df = pd.DataFrame.from_dict(self.history_.records)
-        df.index += 1
-        df.columns.name = 'Epoch'
-        return df
-
-    def eval(self):
-        self.model.eval()
-        _switch_swa_mode(self.optimzier)
-
-    def train(self):
-        self.model.train()
-        _switch_swa_mode(self.optimzier)
-
-    def validate(self, metrics = [], callbacks = [], prefetch=True, **kwargs):
-        buffered_epochs = 2
-        test_loader = self.test_loader.get_generator(epochs=buffered_epochs)
-        self.test_loader_length = len(test_loader)
-        test_loader = self._iteration_pipeline(test_loader)
-        test_loader = BackgroundGenerator(test_loader)
-        self.preload_gpu()
-        try:
-            if len(self.default_metrics):
-                metrics = self.default_metrics + metrics
-
-            loss_record = self.validate_fn(test_loader, metrics)
-
-            print(loss_record)
-            
-            if len(metrics) > 0:
-                for m in metrics:
-                    for k, v in m.output().items():
-                        print(str(k) + ':', str(v))
-        except:
-            raise
-        finally:
-            self.unload_gpu()
 
     def save(self, path):
         _save_model(self.model, path)

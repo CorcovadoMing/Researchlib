@@ -12,6 +12,7 @@ from functools import partial
 class _TorchDataset:
     def __init__(self, name, is_train):
         self.is_train = is_train
+        self.name = name
 
         dataset_fn = None
         for i in torchvision.datasets.__dict__:

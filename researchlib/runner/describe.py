@@ -40,7 +40,10 @@ def describe(self):
     query = {}
     for key, value in self.__dict__.items():
         if key in keys:
-            query[key] = copy.deepcopy(value)
+            if key == 'train_loader':
+                query[key] = str(value.__class__.__name__) + ': ' + str(value.name)
+            else:
+                query[key] = copy.deepcopy(value)
     try:
         query['loss_fn'] = query['loss_fn'][0].__name__
     except:
@@ -57,8 +60,6 @@ def describe(self):
             query['preprocessing_list'][i] = j.__class__.__name__
     except:
         pass
-
-    query['train_loader'] = str(query['train_loader'].__class__.__name__) + ': ' + str(query['train_loader'].name)
 
     query['optimizer'] = self.__class__.__runner_settings__['optimizer']
     query['monitor_state'] = self.__class__.__runner_settings__['monitor_state']
