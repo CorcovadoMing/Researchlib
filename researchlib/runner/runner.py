@@ -13,7 +13,6 @@ from torchvision import transforms
 import torch.backends.cudnn as cudnn
 from apex import amp
 import os
-import copy
 import pandas as pd
 import pickle
 
@@ -24,7 +23,9 @@ from . import validate
 from . import gpu_resource_management
 from . import predict
 from . import set_optimizer
+from . import describe
 
+@_add_methods_from(describe)
 @_add_methods_from(set_optimizer)
 @_add_methods_from(gpu_resource_management)
 @_add_methods_from(init_model)
@@ -221,83 +222,6 @@ class Runner:
     def augmentation(self, augmentation_list, include_y=False):
         self.train_loader._set_augmentor(augmentation_list, include_y)
         return self
-
-    # =======================================================================================================
-    # following function need to be refined
-    def describe(self):
-        def _describe_model(model_dict):
-            query = {}
-            keys = [
-                'do_norm', 'pool_freq', 'preact', 'filter_policy', 'filters', 'type',
-                'total_blocks', 'op', 'unit'
-            ]
-            for key, value in model_dict.items():
-                if key in keys:
-                    query[key] = copy.deepcopy(value)
-            target_dict = model_dict['kwargs']
-            for key, value in target_dict.items():
-                query[key] = copy.deepcopy(value)
-            return query
-
-        def _describe_fit(fit_dict):
-            query = {}
-            keys = ['self_iterative', 'mmixup_alpha', 'policy', 'lr', 'epochs']
-            for key, value in fit_dict.items():
-                if key in keys:
-                    query[key] = copy.deepcopy(value)
-            return query
-
-        def _get_best_metrics(runner, metrics):
-            index = runner.history_.records['saved'].index('*', -1)
-            return runner.histroy_.records['val_' + str(metrics)][index]
-
-        keys = [
-            'swa', 'swa_start', 'larc', 'fp16', 'augmentation_list', 'weight_decay',
-            'preprocessing_list', 'loss_fn', 'train_loader'
-        ]
-        query = {}
-        for key, value in self.__dict__.items():
-            if key in keys:
-                query[key] = copy.deepcopy(value)
-        try:
-            query['loss_fn'] = query['loss_fn'][0].__name__
-        except:
-            query['loss_fn'] = query['loss_fn'][0].__class__.__name__
-
-        try:
-            for i, j in enumerate(query['augmentation_list']):
-                query['augmentation_list'][i] = j.__class__.__name__
-        except:
-            pass
-
-        try:
-            for i, j in enumerate(query['preprocessing_list']):
-                query['preprocessing_list'][i] = j.__class__.__name__
-        except:
-            pass
-
-        query['train_loader'] = query['train_loader'].dataset.__class__.__name__
-
-        query['optimizer'] = self.__class__.__runner_settings__['optimizer']
-        query['monitor_state'] = self.__class__.__runner_settings__['monitor_state']
-
-        query['num_params'] = self.num_params
-
-        try:
-            query['best_state'] = self.__dict__['monitor']
-        except:
-            query['best_state'] = _get_best_metrics(self, query['monitor_state'])
-
-        query['model'] = {}
-        for i, j in self.__class__.__model_settings__.items():
-            query['model'].setdefault(i, {})
-            query['model'][i] = _describe_model(j)
-        query['fit'] = {}
-        for i, j in self.__class__.__fit_settings__.items():
-            query['fit'].setdefault(i, {})
-            query['fit'][i] = _describe_fit(j)
-        query.update(ParameterManager.params)
-        return query
 
     def submit_benchmark(self, category, comments = {}, backup = False):
         if type(comments) != dict:

@@ -4,9 +4,10 @@ from tensorpack import imgaug
 
 
 class _VISION_GENERAL_LOADER:
-    def __init__(self, is_train, ds):
+    def __init__(self, is_train, ds, name):
         self.is_train = is_train
         self.ds = ds
+        self.name = name
         
         if is_train:
             # Record the statistic for normalizer 
@@ -83,10 +84,10 @@ class _VISION_GENERAL_LOADER:
     
 def _CIFAR10(is_train=True):
     phase = 'train' if is_train else 'test'
-    return _VISION_GENERAL_LOADER(is_train, dataset.Cifar10(phase, shuffle=is_train))
+    return _VISION_GENERAL_LOADER(is_train, dataset.Cifar10(phase, shuffle=is_train), name='cifar10')
 
 
-def _NumpyDataset(x, y, is_train=True):
+def _NumpyDataset(x, y, is_train=True, name=''):
     _inner_gen = DataFromList(list(zip(x, y)), shuffle=is_train)
     _inner_gen.data = x
-    return _VISION_GENERAL_LOADER(is_train, _inner_gen)
+    return _VISION_GENERAL_LOADER(is_train, _inner_gen, name=name)
