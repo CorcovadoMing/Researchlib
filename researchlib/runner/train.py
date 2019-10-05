@@ -68,13 +68,10 @@ def train_fn(self, loader, metrics, **kwargs):
                 random_mmixup = [0, layer.ManifoldMixup.block_counter]
             lam = layer.ManifoldMixup.setup_batch(mmixup_alpha, batch_size, fixed_mmixup, random_mmixup)
             targets, targets_res = layer.ManifoldMixup.get_y(targets)
-            targets, targets_res = targets.cuda(), targets_res.cuda()
         else:
             targets_res = None
             lam = None
 
-
-        inputs, targets = inputs.cuda(), targets.cuda()
         self.optimizer.zero_grad()
         outputs = self.model(inputs)
         loss = self.loss_fn[0](outputs, targets)

@@ -64,9 +64,7 @@ def fit(
     if not _is_port_in_use(8050):
         dash = _Dashboard(verbose = False)
         dash.start()
-
-    parameter_manager = ParameterManager(**kwargs)
-    
+        
     
     # ----------------------------------------------
     # Setting loaders

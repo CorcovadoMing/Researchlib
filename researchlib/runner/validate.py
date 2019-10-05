@@ -17,7 +17,6 @@ def validate_fn(self, loader, metrics):
     loss_record = 0
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(loader):
-            inputs, targets = inputs.cuda(), targets.cuda()
             outputs = self.model(inputs)
             loss = self.loss_fn[0](outputs, targets)
 
