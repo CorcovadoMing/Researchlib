@@ -1,11 +1,5 @@
-from ..callbacks import *
-import torch
-from torch.nn.utils import *
 from apex import amp
-from torch import nn
-from ..models import GANModel, VAEModel
-from ..utils import *
-from ..utils import _register_method
+from ..utils import _register_method, ParameterManager, Annealer, set_lr, update_optim
 from ..layers import layer
 
 __methods__ = []
@@ -28,8 +22,8 @@ def _restore_grad(model):
             param.grad = param.backup_grad.data.clone()
         except:
             pass
-
-
+        
+        
 @register_method
 def train_fn(self, loader, metrics, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
@@ -78,17 +72,17 @@ def train_fn(self, loader, metrics, **kwargs):
         loss.backward()
         self.optimizer.step()
 
-        # May be a bottleneck for GPU utilization
-        for p in list(filter(lambda p: p.grad is not None, self.model.parameters())):
-            norm_record += p.grad.data.norm(2).item() ** 2
+#         # May be a bottleneck for GPU utilization
+#         for p in list(filter(lambda p: p.grad is not None, self.model.parameters())):
+#             norm_record += p.grad.data.norm(2).item() ** 2
 
         for m in metrics:
             m.forward([outputs, targets])
 
         loss_record += loss.item()
+        
         # May be a bottleneck for GPU utilization
-        liveplot.update_progressbar(batch_idx + 1)
-        liveplot.update_desc(epoch, loss_record / (batch_idx + 1), metrics, self.monitor)
+        liveplot.update_desc(epoch, batch_idx + 1, loss_record / (batch_idx + 1), metrics, self.monitor)
 
         if batch_idx == (self.train_loader_length-1):
             break
