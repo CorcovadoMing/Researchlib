@@ -53,6 +53,7 @@ def validate_fn(self, loader, metrics):
                 m.forward([outputs, targets])
 
             loss_record += loss.item()
+            del loss
 
             if batch_idx == (self.test_loader_length-1):
                 break

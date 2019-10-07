@@ -69,9 +69,12 @@ def train_fn(self, loader, metrics, **kwargs):
         self.optimizer.zero_grad()
         outputs = self.model(inputs)
         loss = self.loss_fn[0](outputs, targets)
-        loss.backward()
+        with amp.scale_loss(loss, self.optimizer) as scaled_loss:
+            scaled_loss.backward()
         self.optimizer.step()
-
+        loss_record += loss.item()
+        del loss
+        
 #         # May be a bottleneck for GPU utilization
 #         for p in list(filter(lambda p: p.grad is not None, self.model.parameters())):
 #             norm_record += p.grad.data.norm(2).item() ** 2
@@ -79,8 +82,6 @@ def train_fn(self, loader, metrics, **kwargs):
         for m in metrics:
             m.forward([outputs, targets])
 
-        loss_record += loss.item()
-        
         if batch_idx % 5 == 0:
             liveplot.update_desc(epoch, batch_idx + 1, loss_record / (batch_idx + 1), metrics, self.monitor)
 
