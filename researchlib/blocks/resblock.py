@@ -36,6 +36,8 @@ class _ResBlock(_Block):
         self.preact_bn_shared = self._get_param('preact_bn_shared', False) and self.preact and (self.in_dim != self.out_dim or self.do_pool)
         if self.preact_bn_shared:
             self.shared_bn_branch = nn.Sequential(self._get_norm_layer(norm_type, self.in_dim), self._get_activator_layer(activator_type))
+        else:
+            self.shared_bn_branch = nn.Sequential()
         
         first_custom_kwargs = self._get_custom_kwargs({
             'kernel_size': kernel_size,
@@ -69,17 +71,18 @@ class _ResBlock(_Block):
         self.branch_attention = self._get_param('branch_attention')
         if self.branch_attention:
             self.attention_branch = self._get_attention_branch()
+        else:
+            self.attention_branch = nn.Sequential()
         self.shakedrop = self._get_param('shakedrop', False)
         if self.shakedrop:
             self.shakedrop_branch = self._get_shake_drop_branch()
+        else:
+            self.shakedrop_branch = nn.Sequential()
 
     def forward(self, x):
-        if self.preact_bn_shared:
-            x = self.shared_bn_branch(x)
+        x = self.shared_bn_branch(x)
         _x = self.conv(x)
-        if self.branch_attention:
-            _x = self.attention_branch(_x)
-        if self.shakedrop:
-            _x = self.shakedrop_branch(_x)
+        _x = self.attention_branch(_x)
+        _x = self.shakedrop_branch(_x)
         x = self.shortcut(x)
         return self.merge_layer(x + _x)
