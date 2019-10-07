@@ -6,7 +6,7 @@ from .prefetch import *
 from ..utils import *
 from ..utils import _add_methods_from, ParameterManager
 from ..benchmark import benchmark
-from .save_load import _save_model, _save_optimizer, _load_model, _load_optimizer
+from .save_load import _save_checkpoint, _load_checkpoint
 from torch.cuda import is_available
 from torch.nn import DataParallel
 from torchvision import transforms
@@ -138,25 +138,31 @@ class Runner:
 
         # Speedup
         cudnn.benchmark = True
-
+        
+        self.set_optimizer()
+        
         # must verify after all keys get registered
         ParameterManager.verify_kwargs(**kwargs)
 
+        
     def start_experiment(self, name):
         self.experiment_name = name
         self.checkpoint_path = os.path.join('.', 'checkpoint', self.experiment_name)
         os.makedirs(self.checkpoint_path, exist_ok = True)
 
+        
     def load_best(self, _id = 'none'):
         if len(self.experiment_name) == 0:
             self.start_experiment('default')
         self.load(os.path.join(self.checkpoint_path, 'best_' + _id))
 
+        
     def load_epoch(self, epoch, _id = 'none'):
         if len(self.experiment_name) == 0:
             self.start_experiment('default')
         self.load(os.path.join(self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(epoch)))
 
+        
     def load_last(self):
         try:
             self.load_epoch(self.epoch)
@@ -164,13 +170,15 @@ class Runner:
             # The last epoch is not complete
             self.load_epoch(self.epoch - 1)
 
+            
     def save(self, path):
-        _save_model(self.model, path)
-        # TODO: more efficient to save optimizer (save only the last/best?)
-        #_save_optimizer(self.optimizer, path)
-
+        _save_checkpoint(self.model, self.optimizer, path)
+        
+        
     def load(self, path):
-        self.model = _load_model(self.model, path, self.multigpu)
+        self.model, self.optimizer = _load_checkpoint(self.model, self.optimizer, self.multigpu, path)
+        
+        
         
     def normalize(self, local=False):
         self.train_loader._set_normalizer(local)

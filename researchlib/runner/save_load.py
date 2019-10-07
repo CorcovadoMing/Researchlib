@@ -1,33 +1,26 @@
 import torch
 from torch import nn
 import warnings
+from apex import amp
 
-
-def _save_model(model, path):
-    path = path + '.model.h5'
+def _save_checkpoint(model, optimizer, path):
+    path = path + '.model.pt'
     warnings.filterwarnings('ignore')
-    if type(model) == nn.DataParallel:
-        torch.save(model.module, path)
-    else:
-        torch.save(model, path)
+    checkpoint = {
+        'model': model.state_dict(),
+        'optimizer': optimizer.state_dict(),
+        'amp': amp.state_dict()
+    }
+    torch.save(checkpoint, path)
     warnings.filterwarnings('once')
 
 
-def _save_optimizer(optimizer, path):
-    path = path + '.optimizer.h5'
-    warnings.filterwarnings('ignore')
-    torch.save(optimizer.state_dict(), path)
-    warnings.filterwarnings('once')
-
-
-def _load_model(model, path, multigpu):
-    path = path + '.model.h5'
-    model = torch.load(path)
+def _load_checkpoint(model, optimizer, multigpu, path):
+    path = path + '.model.pt'
+    checkpoint = torch.load(path)
+    model.load_state_dict(checkpoint['model'])
+    optimizer.load_state_dict(checkpoint['optimizer'])
+    # TODO: may need to load checkpoint['amp']
     if multigpu:
         model = nn.DataParallel(model)
-    return model
-
-
-def _load_optimizer(optimizer, path):
-    path = path + '.optimizer.h5'
-    optimizer.load_state_dict(torch.load(path))
+    return model, optimizer

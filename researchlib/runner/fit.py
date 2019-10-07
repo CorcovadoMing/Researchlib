@@ -132,8 +132,8 @@ def fit(
     # Weight decay
     weight_decay = parameter_manager.get_param('weight_decay', 1)
     if weight_decay > 0:
-        weight_decay_policy = parameter_manager.get_param('weight_decay_policy', 'cosine')
-        Annealer.set_trace('weight_decay', epochs * iterations, [0, weight_decay], 'iteration',_anneal_policy(weight_decay_policy))
+        weight_decay_policy = parameter_manager.get_param('weight_decay_policy', 'linear')
+        Annealer.set_trace('weight_decay', epochs * iterations, [0, weight_decay], 'iteration', _anneal_policy(weight_decay_policy))
         Annealer._iteration_step(key = 'weight_decay')
         
     # Warmup
@@ -144,8 +144,9 @@ def fit(
     
     # FP16
     fp16 = parameter_manager.get_param('fp16', False)
+    opt_level = parameter_manager.get_param('opt_level', 'O2')
     loss_scale = parameter_manager.get_param('loss_scale', 1)
-    self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level = 'O1', enabled = fp16, loss_scale = loss_scale)
+    self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level = opt_level, enabled = fp16, loss_scale = loss_scale)
     
     
     # ----------------------------------------------
