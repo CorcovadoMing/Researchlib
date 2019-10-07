@@ -81,10 +81,11 @@ def train_fn(self, loader, metrics, **kwargs):
 
         loss_record += loss.item()
         
-        # May be a bottleneck for GPU utilization
-        liveplot.update_desc(epoch, batch_idx + 1, loss_record / (batch_idx + 1), metrics, self.monitor)
+        if batch_idx % 5 == 0:
+            liveplot.update_desc(epoch, batch_idx + 1, loss_record / (batch_idx + 1), metrics, self.monitor)
 
         if batch_idx == (self.train_loader_length-1):
+            liveplot.update_desc(epoch, batch_idx + 1, loss_record / (batch_idx + 1), metrics, self.monitor)
             break
 
         Annealer._iteration_step()
