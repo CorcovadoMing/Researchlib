@@ -27,7 +27,7 @@ def _worker(generator, queue, stream):
         
         
 class BackgroundGenerator:
-    def __init__(self, generator, max_prefetch = 2, num_threads = 4):
+    def __init__(self, generator, max_prefetch = 2, num_threads = 2):
         self.queue = Queue.Queue(max_prefetch)
         self.stream = torch.cuda.Stream()
         self.generator = generator
