@@ -13,16 +13,6 @@ __methods__ = []
 register_method = _register_method(__methods__)
 
 
-@register_method
-def _iteration_pipeline(self, loader):
-    for batch_idx, (x, y) in inifinity_loop(loader):
-        if type(x) != torch.Tensor:
-            x = torch.from_numpy(x)
-        if type(y) != torch.Tensor:
-            y = torch.from_numpy(y)
-        yield x.pin_memory(), y.pin_memory()
-
-
 def _anneal_policy(anneal_type):
     if anneal_type == 'cosine':
         anneal_policy = Annealer.Cosine
@@ -73,14 +63,13 @@ def fit(
     buffered_epochs = epochs + 100
     train_loader = self.train_loader.get_generator(batch_size, epochs=buffered_epochs)
     self.train_loader_length = len(train_loader)
-    liveplot = Liveplot(self.train_loader_length, plot)
-    train_loader = self._iteration_pipeline(train_loader)
-    train_loader = BackgroundGenerator(train_loader) if prefetch else train_loader
+    train_loader = BackgroundGenerator(inifinity_loop(train_loader))
     if self.test_loader:
         test_loader = self.test_loader.get_generator(batch_size, epochs=buffered_epochs)
         self.test_loader_length = len(test_loader)
-        test_loader = self._iteration_pipeline(test_loader)
-        test_loader = BackgroundGenerator(test_loader) if prefetch else test_loader
+        test_loader = BackgroundGenerator(inifinity_loop(test_loader))
+    
+    liveplot = Liveplot(self.train_loader_length, plot)
         
     if iterations == 0:
         iterations = self.train_loader_length

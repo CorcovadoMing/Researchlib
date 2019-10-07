@@ -1,5 +1,5 @@
 import torch
-from ..utils import _register_method, get_aux_out, _switch_swa_mode, ParameterManager
+from ..utils import _register_method, get_aux_out, _switch_swa_mode, ParameterManager, inifinity_loop
 from functools import reduce
 from .prefetch import BackgroundGenerator
 
@@ -15,8 +15,7 @@ def validate(self, metrics = [], callbacks = [], prefetch=True, **kwargs):
     buffered_epochs = 100
     test_loader = self.test_loader.get_generator(batch_size, epochs=buffered_epochs)
     self.test_loader_length = len(test_loader)
-    test_loader = self._iteration_pipeline(test_loader)
-    test_loader = BackgroundGenerator(test_loader)
+    test_loader = BackgroundGenerator(inifinity_loop(test_loader))
     self.preload_gpu()
     try:
         if len(self.default_metrics):

@@ -73,7 +73,7 @@ class _VISION_GENERAL_LOADER:
 
         ds = LocallyShuffleData(self.ds, 10240)
         ds = BatchData(ds, batch_size, remainder=True)
-        ds = MultiProcessMapDataZMQ(ds, 4, batch_mapf)
+        ds = MultiProcessMapDataZMQ(ds, 8, batch_mapf)
         if self.is_train:
             ds = MultiProcessPrefetchData(ds, 2048//batch_size, 4)
         ds = PrintData(ds)
