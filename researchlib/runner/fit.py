@@ -1,5 +1,5 @@
 import os
-from ..utils import _register_method, plot_montage, _is_port_in_use, set_lr, inifinity_loop, Annealer, ParameterManager, update_optim
+from ..utils import _register_method, plot_montage, _is_port_in_use, inifinity_loop, Annealer, ParameterManager, update_optim
 import torch
 from .liveplot import Liveplot
 from .prefetch import BackgroundGenerator
@@ -145,7 +145,7 @@ def fit(
     # FP16
     fp16 = parameter_manager.get_param('fp16', False)
     opt_level = parameter_manager.get_param('opt_level', 'O2')
-    loss_scale = parameter_manager.get_param('loss_scale', 1)
+    loss_scale = parameter_manager.get_param('loss_scale', 'dynamic')
     self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level = opt_level, enabled = fp16, loss_scale = loss_scale)
     
     

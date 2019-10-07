@@ -49,7 +49,7 @@ def train_fn(self, loader, metrics, **kwargs):
             cur_lr = Annealer.get_trace('warmup_lr')
         else:
             cur_lr = Annealer.get_trace('regular_lr')
-        set_lr(self.optimizer, cur_lr)
+        update_optim(self.optimizer, cur_lr, key = 'lr')
 
         # Set weight decay
         if weight_decay > 0:
