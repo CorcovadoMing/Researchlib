@@ -64,7 +64,10 @@ class _Block(nn.Module):
             'ReLU', 'ELU', 'PReLU', 'LeakyReLU', 'SELU', 'Swish', 'GeLU', 'CELU', 'DropReLU',
             'Mish'
         ]:
-            raise ValueError('Unknown activator type')
+            if type(activator_type) == str:
+                raise ValueError('Unknown activator type')
+            else:
+                return activator_type
 
         # Inplace
         if activator_type in ['ReLU', 'CELU']:
@@ -74,7 +77,7 @@ class _Block(nn.Module):
 
         # Other specific parameters
         if activator_type in ['CELU']:
-            act_kwargs = {'alpha': 0.075}
+            act_kwargs = {'alpha': 0.3}
         else:
             act_kwargs = {}
 

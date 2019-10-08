@@ -118,9 +118,9 @@ def fit(
     self.multisteps = multisteps
 
     # Weight decay
-    weight_decay = parameter_manager.get_param('weight_decay', 1)
+    weight_decay = parameter_manager.get_param('weight_decay', 5e-4)
     if weight_decay > 0:
-        weight_decay_policy = parameter_manager.get_param('weight_decay_policy', 'linear')
+        weight_decay_policy = parameter_manager.get_param('weight_decay_policy', 'fixed')
         Annealer.set_trace('weight_decay', epochs * iterations, [0, weight_decay], 'iteration', _anneal_policy(weight_decay_policy))
         Annealer._iteration_step(key = 'weight_decay')
         
