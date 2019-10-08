@@ -9,7 +9,7 @@ def _save_checkpoint(model, optimizer, path):
     checkpoint = {
         'model': model.state_dict(),
         'optimizer': optimizer.state_dict(),
-        'amp': amp.state_dict()
+        #'amp': amp.state_dict()
     }
     torch.save(checkpoint, path)
     warnings.filterwarnings('once')

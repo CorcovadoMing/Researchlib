@@ -34,7 +34,6 @@ def fit(
     metrics = [],
     callbacks = [],
     _id = 'none',
-    self_iterative = False,
     iterations = 0,
     multisteps = [],
     prefetch = True,
