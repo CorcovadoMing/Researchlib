@@ -63,8 +63,6 @@ class _VISION_GENERAL_LOADER:
                 for i in range(len(x)):
                     for op in self.augmentor:
                         x[i] = op.augment(x[i])
-                        if self.include_y:
-                            y[i] = op.augment(y[i])
             
             for op in self.normalizer:
                 x = op.augment(x)
