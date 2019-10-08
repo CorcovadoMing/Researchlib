@@ -29,6 +29,8 @@ def set_optimizer(self):
 
         if optimizer == 'adam':
             optimizer = Adam(list(model.parameters()) + loss_params, betas = (0.9, 0.999))
+        elif optimizer == 'fusedadam':
+            optimizer = FusedAdam(list(model.parameters()) + loss_params, betas = (0.9, 0.999))
         elif optimizer == 'lamb':
             optimizer = FusedLAMB(list(model.parameters()) + loss_params, betas = (0.9, 0.999))
         elif optimizer == 'novograd':
@@ -43,6 +45,8 @@ def set_optimizer(self):
             optimizer = AdamW(list(model.parameters()) + loss_params, betas = (0.9, 0.999))
         elif optimizer == 'sgd':
             optimizer = SGD(list(model.parameters()) + loss_params, lr = 1e-1, momentum = 0.9)
+        elif optimizer == 'fusedsgd':
+            optimizer = FusedSGD(list(model.parameters()) + loss_params, lr = 1e-1, momentum = 0.9, wd_after_momentum=True)
         elif optimizer == 'nesterov':
             optimizer = SGD(
                 list(model.parameters()) + loss_params, lr = 1e-2, momentum = 0.9, nesterov = True

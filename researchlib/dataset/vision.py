@@ -71,8 +71,7 @@ class _VISION_GENERAL_LOADER:
             
             return np.moveaxis(x, -1, 1).astype(np.float32), np.array(y).astype(y_type)
 
-        ds = LocallyShuffleData(self.ds, 10240)
-        ds = BatchData(ds, batch_size, remainder=True)
+        ds = BatchData(self.ds, batch_size, remainder=True)
         ds = MultiProcessMapDataZMQ(ds, 8, batch_mapf)
         if self.is_train:
             ds = MultiProcessPrefetchData(ds, 2048//batch_size, 4)

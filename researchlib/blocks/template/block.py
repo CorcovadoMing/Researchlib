@@ -81,9 +81,6 @@ class _Block(nn.Module):
         return layer.__dict__[activator_type](**inplace_kwargs, **act_kwargs)
 
     def _get_norm_layer(self, norm_type, dim = None):
-        if norm_type not in ['BatchNorm', 'InstanceNorm', 'GroupNorm', 'ShakeBatchNorm']:
-            raise ValueError(f'Unknown norm type {norm_type}')
-
         if dim is None:
             if self.preact:
                 dim = [self.in_dim]
@@ -91,6 +88,12 @@ class _Block(nn.Module):
                 dim = [self.out_dim]
         else:
             dim = [dim]
+            
+        if norm_type not in ['BatchNorm', 'InstanceNorm', 'GroupNorm', 'ShakeBatchNorm']:
+            if type(norm_type) == str:
+                raise ValueError(f'Unknown norm type {norm_type}')
+            else:
+                return norm_type(*dim)
 
         if norm_type is not 'GroupNorm':
             dim_str = self._get_dim_type()
