@@ -36,6 +36,10 @@ def train_fn(self, loader, metrics, **kwargs):
     warmup = parameter_manager.get_param('warmup')
     weight_decay = parameter_manager.get_param('weight_decay')
     bias_scale = parameter_manager.get_param('bias_scale')
+    ema = parameter_manager.get_param('ema')
+    ema_freq = parameter_manager.get_param('ema_freq')
+    ema_momentum = parameter_manager.get_param('ema_momentum')
+    rho = ema_momentum ** ema_freq    
     
     self.model.train()
 
@@ -45,11 +49,9 @@ def train_fn(self, loader, metrics, **kwargs):
     loss_record = 0
     norm_record = 0
     for batch_idx, (inputs, targets) in enumerate(loader):
+        
         # Set LR
-        if epoch <= warmup:
-            cur_lr = Annealer.get_trace('warmup_lr')
-        else:
-            cur_lr = Annealer.get_trace('regular_lr')
+        cur_lr = Annealer.get_trace('lr')
         update_optim(self.optimizer, [cur_lr, cur_lr * bias_scale], key = 'lr')
 
         # Set weight decay
@@ -81,6 +83,12 @@ def train_fn(self, loader, metrics, **kwargs):
 #         # May be a bottleneck for GPU utilization
 #         for p in list(filter(lambda p: p.grad is not None, self.model.parameters())):
 #             norm_record += p.grad.data.norm(2).item() ** 2
+
+        if ema and (batch_idx + 1) % ema_freq == 0:
+            for v, ema_v in zip(self.model.state_dict().values(), self.val_model.state_dict().values()):
+                ema_v *= rho
+                ema_v += (1-rho) * v
+
 
         for m in metrics:
             m.forward([outputs, targets])

@@ -7,6 +7,7 @@ import pickle
 from ..frontend.dashboard import _Dashboard
 from apex import amp
 import numpy as np
+import copy
 
 
 __methods__ = []
@@ -31,6 +32,8 @@ def fit(
     policy = 'linear',
     warmup = 5,
     warmup_policy = 'linear',
+    flatten = 0,
+    flatten_lr = 0,
     metrics = [],
     callbacks = [],
     _id = 'none',
@@ -127,8 +130,8 @@ def fit(
     # Warmup
     warmup = max(0, warmup)
     if warmup > 0:
-        Annealer.set_trace('warmup_lr', warmup * iterations, [0, lr], 'iteration', _anneal_policy(warmup_policy))
-        Annealer._iteration_step(key = 'warmup_lr')
+        Annealer.set_trace('lr', warmup * iterations, [0, lr], 'iteration', _anneal_policy(warmup_policy))
+        Annealer._iteration_step(key = 'lr')
     
     # FP16
     fp16 = parameter_manager.get_param('fp16', False)
@@ -137,7 +140,13 @@ def fit(
     self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level = opt_level, enabled = fp16, loss_scale = loss_scale)
     
     # For convergence
-    bias_scale = parameter_manager.get_param('bias_scale', 16)
+    bias_scale = parameter_manager.get_param('bias_scale', 64)
+    
+    # EMA
+    ema_freq = max(0, parameter_manager.get_param('ema_freq', 0))
+    ema_momentum = parameter_manager.get_param('ema_momentum', 0.99)
+    ema = True if ema_freq > 0 else False
+    self.val_model = copy.deepcopy(self.model) if ema else self.model
     
     # ----------------------------------------------
     # Final verification
@@ -145,15 +154,19 @@ def fit(
     ParameterManager.verify_kwargs(**kwargs)
     
     try:
-        for epoch in range(1, epochs+1):
+        for epoch in range(1, epochs + 1):
             
             # ----------------------------------------------
             # Pre-config
             # ----------------------------------------------
             if epoch == (warmup + 1):
-                Annealer.set_trace('regular_lr', (epochs - warmup) * iterations, [lr, 0], 'iteration', _anneal_policy(policy))
-                Annealer._iteration_step(key = 'regular_lr')
+                Annealer.set_trace('lr', (epochs - warmup - flatten) * iterations, [lr, flatten_lr], 'iteration', _anneal_policy(policy))
+                Annealer._iteration_step(key = 'lr')
             
+            if epoch == (epochs - flatten + 1):
+                Annealer.set_trace('lr', flatten * iterations, [flatten_lr, flatten_lr], 'iteration', _anneal_policy('fixed'))
+                Annealer._iteration_step(key = 'lr')
+                
             for callback_func in callbacks:
                 callback_func.on_epoch_begin(
                     model = self.model,
@@ -170,14 +183,17 @@ def fit(
             liveplot.timer.clear()
             # Training function
             loss_record, norm_record = self.train_fn(train_loader, metrics, 
-                                                     liveplot=liveplot, 
+                                                     liveplot=liveplot,
                                                      mmixup_alpha=mmixup_alpha, 
                                                      fixed_mmixup=fixed_mmixup, 
                                                      random_mmixup=random_mmixup,
                                                      epoch=epoch,
                                                      warmup=warmup,
                                                      weight_decay=weight_decay,
-                                                     bias_scale=bias_scale)
+                                                     bias_scale=bias_scale,
+                                                     ema=ema,
+                                                     ema_freq=ema_freq,
+                                                     ema_momentum=ema_momentum)
             liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer[0].param_groups][-1])
             liveplot.record(epoch, 'train_loss', loss_record)
             liveplot.record(epoch, 'norm', norm_record)

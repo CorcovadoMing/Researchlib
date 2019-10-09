@@ -37,7 +37,7 @@ def validate(self, metrics = [], callbacks = [], prefetch=True, **kwargs):
             
 @register_method
 def validate_fn(self, loader, metrics):
-    self.model.eval()
+    self.val_model.eval()
 
     for m in metrics:
         m.reset()
@@ -45,7 +45,7 @@ def validate_fn(self, loader, metrics):
     loss_record = 0
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(loader):
-            outputs = self.model(inputs)
+            outputs = self.val_model(inputs)
             loss = self.loss_fn[0](outputs, targets)
 
             for m in metrics:
