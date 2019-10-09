@@ -96,18 +96,23 @@ class _Block(nn.Module):
             if type(norm_type) == str:
                 raise ValueError(f'Unknown norm type {norm_type}')
             else:
-                return norm_type(*dim)
-
-        if norm_type is not 'GroupNorm':
-            dim_str = self._get_dim_type()
+                result = norm_type(*dim)
         else:
-            dim_str = ''
-            group_num = self._get_param('groupnorm_group', 4)
-            dim.insert(0, group_num)
+            if norm_type is not 'GroupNorm':
+                dim_str = self._get_dim_type()
+            else:
+                dim_str = ''
+                group_num = self._get_param('groupnorm_group', 4)
+                dim.insert(0, group_num)
 
-        norm_op_str = norm_type + dim_str
-        norm_op = layer.__dict__[norm_op_str]
-        return norm_op(*dim)
+            norm_op_str = norm_type + dim_str
+            norm_op = layer.__dict__[norm_op_str]
+            result = norm_op(*dim)
+        
+        freeze_scale = self._get_param('freeze_scale', False)
+        result.weight.requires_grad = not freeze_scale
+        
+        return result
 
     def _get_pool_layer(self, pool_type, pool_factor, dim):
         if pool_type not in ['MaxPool', 'AvgPool', 'Combined', 'Upsample']:
