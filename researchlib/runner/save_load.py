@@ -8,7 +8,8 @@ def _save_checkpoint(model, optimizer, path):
     warnings.filterwarnings('ignore')
     checkpoint = {
         'model': model.state_dict(),
-        'optimizer': optimizer.state_dict(),
+        'optimizer_weight': optimizer[0].state_dict(),
+        'optimizer_bias': optimizer[1].state_dict(),
         #'amp': amp.state_dict()
     }
     torch.save(checkpoint, path)
@@ -19,7 +20,8 @@ def _load_checkpoint(model, optimizer, multigpu, path):
     path = path + '.model.pt'
     checkpoint = torch.load(path)
     model.load_state_dict(checkpoint['model'])
-    optimizer.load_state_dict(checkpoint['optimizer'])
+    optimizer[0].load_state_dict(checkpoint['optimizer_weight'])
+    optimizer[1].load_state_dict(checkpoint['optimizer_bias'])
     # TODO: may need to load checkpoint['amp']
     if multigpu:
         model = nn.DataParallel(model)

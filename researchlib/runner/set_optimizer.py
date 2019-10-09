@@ -10,77 +10,54 @@ from adabound import AdaBound
 from ..models import GANModel
 from ..utils import _register_method, update_optim
 import torchcontrib
-from functools import partial
+from functools import partial, reduce
+from .trainable_params_utils import is_bias, num_list_params
 
 __methods__ = []
 register_method = _register_method(__methods__)
 
 
+opt_mapping = {
+    'adam': partial(Adam, betas = (0.9, 0.999)),
+    'adamw': partial(AdamW, betas = (0.9, 0.999)),
+    'lamb': partial(FusedLAMB, betas = (0.9, 0.999)),
+    'novograd': FusedNovoGrad,
+    'cocob': Cocob,
+    'radam-plain': partial(PlainRAdam, betas = (0.9, 0.999)),
+    'radam': partial(RAdam, betas = (0.9, 0.999)),
+    'sgd': partial(SGD, lr = 1e-1, momentum = 0.9),
+    'nesterov': partial(SGD, lr = 1e-2, momentum = 0.9, nesterov = True),
+    'rmsprop': RMSprop,
+    'adabound': partial(AdaBound, lr = 1e-3, final_lr = 0.1),
+    'adagrad': Adagrad,
+    'adafactor': partial(Adafactor, lr = 1e-3)
+}
+
 @register_method
 def set_optimizer(self):
-    def _assign_optim(model, optimizer, larc, swa, lookahead):
-        # if there are learnable loss parameters
-        loss_params = []
-        for i in self.loss_fn:
-            try:
-                loss_params += i.parameters()
-            except:
-                pass
-
-        if optimizer == 'adam':
-            optimizer = Adam(list(model.parameters()) + loss_params, betas = (0.9, 0.999))
-        elif optimizer == 'fusedadam':
-            optimizer = FusedAdam(list(model.parameters()) + loss_params, betas = (0.9, 0.999))
-        elif optimizer == 'lamb':
-            optimizer = FusedLAMB(list(model.parameters()) + loss_params, betas = (0.9, 0.999))
-        elif optimizer == 'novograd':
-            optimizer = FusedNovoGrad(list(model.parameters()) + loss_params)
-        elif optimizer == 'cocob':
-            optimizer = Cocob(list(model.parameters()) + loss_params)
-        elif optimizer == 'radam-plain':
-            optimizer = PlainRAdam(list(model.parameters()) + loss_params, betas = (0.9, 0.999))
-        elif optimizer == 'radam':
-            optimizer = RAdam(list(model.parameters()) + loss_params, betas = (0.9, 0.999))
-        elif optimizer == 'adamw':
-            optimizer = AdamW(list(model.parameters()) + loss_params, betas = (0.9, 0.999))
-        elif optimizer == 'sgd':
-            optimizer = SGD(list(model.parameters()) + loss_params, lr = 1e-1, momentum = 0.9)
-        elif optimizer == 'fusedsgd':
-            optimizer = FusedSGD(list(model.parameters()) + loss_params, lr = 1e-1, momentum = 0.9, wd_after_momentum=True)
-        elif optimizer == 'nesterov':
-            optimizer = SGD(
-                list(model.parameters()) + loss_params, lr = 1e-2, momentum = 0.9, nesterov = True
-            )
-        elif optimizer == 'rmsprop':
-            optimizer = RMSprop(list(model.parameters()) + loss_params)
-        elif optimizer == 'adabound':
-            optimizer = AdaBound(list(model.parameters()) + loss_params, lr = 1e-3, final_lr = 0.1)
-        elif optimizer == 'adagrad':
-            optimizer = Adagrad(list(model.parameters()) + loss_params)
-        elif optimizer == 'adafactor':
-            optimizer = Adafactor(list(model.parameters()) + loss_params, lr = 1e-3)
-
-        if lookahead:
-            optimizer = Lookahead(optimizer)
-        if swa:
-            optimizer = torchcontrib.optim.SWA(optimizer)
-        if larc:
-            optimizer = LARC(optimizer)
-        return optimizer
-
-    _assign_optim_fn = partial(
-        _assign_optim, larc = self.larc, swa = self.swa, lookahead = self.lookahead
-    )
-    if type(self.model) == GANModel:
-        if type(self.optimizer_choice) == list or type(self.optimizer_choice) == tuple:
-            self.optimizer = [
-                _assign_optim_fn(self.model.discriminator, self.optimizer_choice[1]),
-                _assign_optim_fn(self.model.generator, self.optimizer_choice[0])
-            ]
-        else:
-            self.optimizer = [
-                _assign_optim_fn(self.model.discriminator, self.optimizer_choice),
-                _assign_optim_fn(self.model.generator, self.optimizer_choice)
-            ]
-    else:
-        self.optimizer = _assign_optim_fn(self.model, self.optimizer_choice)
+    loss_params = []
+    for i in self.loss_fn:
+        try:
+            loss_params += [p for p in i.parameters() if p.requires_grad]
+        except:
+            pass
+    
+    model_weight_params = is_bias(self.model)[False]
+    model_bias_params = is_bias(self.model)[True]
+    
+    print(reduce(num_list_params, loss_params, 0))
+    print(num_list_params(model_weight_params))
+    print(num_list_params(model_bias_params))
+    
+    opt_fn = opt_mapping[self.optimizer_choice]
+    
+    self.optimizer = [opt_fn(model_weight_params + loss_params), 
+                      opt_fn(model_bias_params)]
+    
+    for i in range(len(self.optimizer)):
+        if self.lookahead:
+            self.optimizer[i] = Lookahead(self.optimizer[i])
+        if self.swa:
+            self.optimizer[i] = torchcontrib.optim.SWA(self.optimizer[i])
+        if self.larc:
+            self.optimizer[i] = LARC(self.optimizer[i])

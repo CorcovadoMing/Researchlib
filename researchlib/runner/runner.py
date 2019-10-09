@@ -7,6 +7,7 @@ from ..utils import *
 from ..utils import _add_methods_from, ParameterManager
 from ..benchmark import benchmark
 from .save_load import _save_checkpoint, _load_checkpoint
+from .trainable_params_utils import num_model_params
 from torch.cuda import is_available
 from torch.nn import DataParallel
 from torchvision import transforms
@@ -68,7 +69,7 @@ class Runner:
         self._date_id = self.bencher.get_date()
 
         self.model = model
-        self.num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        self.num_params = num_model_params(model)
 
         self.train_loader = train_loader
         self.test_loader = test_loader

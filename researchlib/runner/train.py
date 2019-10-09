@@ -35,6 +35,7 @@ def train_fn(self, loader, metrics, **kwargs):
     epoch = parameter_manager.get_param('epoch')
     warmup = parameter_manager.get_param('warmup')
     weight_decay = parameter_manager.get_param('weight_decay')
+    bias_scale = parameter_manager.get_param('bias_scale')
     
     self.model.train()
 
@@ -49,12 +50,12 @@ def train_fn(self, loader, metrics, **kwargs):
             cur_lr = Annealer.get_trace('warmup_lr')
         else:
             cur_lr = Annealer.get_trace('regular_lr')
-        update_optim(self.optimizer, cur_lr, key = 'lr')
+        update_optim(self.optimizer, [cur_lr, cur_lr * bias_scale], key = 'lr')
 
         # Set weight decay
         if weight_decay > 0:
             cur_weight_decay = Annealer.get_trace('weight_decay')
-            update_optim(self.optimizer, cur_weight_decay, key = 'weight_decay')
+            update_optim(self.optimizer, [cur_weight_decay, cur_weight_decay / bias_scale], key = 'weight_decay')
                 
         if mmixup_alpha is not None:
             batch_size = inputs[0].size(0)
@@ -66,12 +67,14 @@ def train_fn(self, loader, metrics, **kwargs):
             targets_res = None
             lam = None
 
-        self.optimizer.zero_grad()
+        for i in self.optimizer:
+            i.zero_grad()
         outputs = self.model(inputs)
         loss = self.loss_fn[0](outputs, targets)
         with amp.scale_loss(loss, self.optimizer) as scaled_loss:
             scaled_loss.backward()
-        self.optimizer.step()
+        for i in self.optimizer:
+            i.step()
         loss_record += loss.item()
         del loss
         

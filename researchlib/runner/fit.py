@@ -136,6 +136,8 @@ def fit(
     loss_scale = parameter_manager.get_param('loss_scale', 'dynamic')
     self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level = opt_level, enabled = fp16, loss_scale = loss_scale)
     
+    # For convergence
+    bias_scale = parameter_manager.get_param('bias_scale', 16)
     
     # ----------------------------------------------
     # Final verification
@@ -174,8 +176,9 @@ def fit(
                                                      random_mmixup=random_mmixup,
                                                      epoch=epoch,
                                                      warmup=warmup,
-                                                     weight_decay=weight_decay)
-            liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer.param_groups][-1])
+                                                     weight_decay=weight_decay,
+                                                     bias_scale=bias_scale)
+            liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer[0].param_groups][-1])
             liveplot.record(epoch, 'train_loss', loss_record)
             liveplot.record(epoch, 'norm', norm_record)
             self.history_.add({'loss': loss_record}, prefix = 'train')
