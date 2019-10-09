@@ -8,6 +8,9 @@ from tensorpack.dataflow import *
 import numpy as np
 import math
 
+from functools import partial
+from .process_single import _process_single
+
 
 class _TFDataset:
     def __init__(self, name, is_train):
@@ -57,30 +60,11 @@ class _TFDataset:
         ds = self.ds.shuffle(10240).repeat(kwargs['epochs']).batch(batch_size).prefetch(2048)
         ds = DataFromGenerator(tfds.as_numpy(ds))
         ds.__len__ = lambda: math.ceil(self.length / batch_size)
-        
-        def batch_mapf(dp):
-            x = dp['image'].copy()
-            y = dp['label']
-            if self.include_y:
-                y = y.copy()
-            
-            y_type = str(y.dtype)
-            if 'int' in y_type:
-                y_type = np.int64
-            else:
-                y_type = np.float32
-            
-            if self.is_train:
-                for i in range(len(x)):
-                    for op in self.augmentor:
-                        x[i] = op.augment(x[i])
-            
-            for op in self.normalizer:
-                x = op.augment(x)
-            
-            return np.moveaxis(x, -1, 1).astype(np.float32), np.array(y).astype(y_type)
-        
-        ds = MultiProcessMapDataZMQ(ds, 4, batch_mapf)
+        process_single_fn = partial(_process_single, 
+                                    is_train=self.is_train, include_y=self.include_y, 
+                                    normalizer=self.normalizer, augmentor=self.augmentor, 
+                                    data_key='image', label_key='label')
+        ds = MultiProcessMapDataZMQ(ds, 4, process_single_fn)
         ds = PrintData(ds)
         ds.reset_state()
         return ds

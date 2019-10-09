@@ -1,7 +1,9 @@
 import numpy as np
 from tensorpack.dataflow import *
 from tensorpack import imgaug
-
+import random
+from functools import partial
+from .process_single import _process_single
 
 class _VISION_GENERAL_LOADER:
     def __init__(self, is_train, ds, name):
@@ -59,18 +61,23 @@ class _VISION_GENERAL_LOADER:
             else:
                 y_type = np.float32
             
-            if self.is_train:
-                for i in range(len(x)):
-                    for op in self.augmentor:
-                        x[i] = op.augment(x[i])
-            
             for op in self.normalizer:
                 x = op.augment(x)
+            
+            if self.is_train:
+                shuffled_augmentations = self.augmentor[:]
+                random.shuffle(shuffled_augmentations)
+                for i in range(len(x)):
+                    for op in shuffled_augmentations:
+                        x[i] = op.augment(x[i])
             
             return np.moveaxis(x, -1, 1).astype(np.float32), np.array(y).astype(y_type)
 
         ds = BatchData(self.ds, batch_size, remainder=True)
-        ds = MultiProcessMapDataZMQ(ds, 8, batch_mapf)
+        process_single_fn = partial(_process_single, 
+                                    is_train=self.is_train, include_y=self.include_y, 
+                                    normalizer=self.normalizer, augmentor=self.augmentor)
+        ds = MultiProcessMapDataZMQ(ds, 4, process_single_fn)
         if self.is_train:
             ds = MultiProcessPrefetchData(ds, 2048//batch_size, 4)
         ds = PrintData(ds)

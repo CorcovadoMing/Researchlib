@@ -32,7 +32,7 @@ class _TorchDataset:
         
     def _set_normalizer(self, local=False):
         if not local:
-            self.normalizer = [transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))]
+            self.normalizer = [transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616))]
         else:
             self.normalizer = [transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
     
