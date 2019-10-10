@@ -45,7 +45,7 @@ def validate_fn(self, loader, metrics):
     loss_record = 0
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(loader):
-            outputs = self.val_model(inputs)
+            outputs = (self.val_model(inputs) + self.val_model(torch.flip(inputs, [-1]))) / 2
             loss = self.loss_fn[0](outputs, targets)
 
             for m in metrics:

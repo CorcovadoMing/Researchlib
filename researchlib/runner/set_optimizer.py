@@ -6,6 +6,7 @@ from .optimizer.adamw import AdamW
 from .optimizer.cocob import Cocob
 from .optimizer.lookahead import Lookahead
 from .optimizer.larc import LARC
+from .optimizer.nag import NAG
 from adabound import AdaBound
 from ..models import GANModel
 from ..utils import _register_method, update_optim
@@ -27,6 +28,7 @@ opt_mapping = {
     'radam': partial(RAdam, betas = (0.9, 0.999)),
     'sgd': partial(SGD, lr = 1e-1, momentum = 0.9),
     'nesterov': partial(SGD, lr = 1e-2, momentum = 0.9, nesterov = True),
+    'nag': partial(NAG, lr = 1e-1),
     'rmsprop': RMSprop,
     'adabound': partial(AdaBound, lr = 1e-3, final_lr = 0.1),
     'adagrad': Adagrad,

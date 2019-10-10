@@ -22,8 +22,8 @@ def _restore_grad(model):
             param.grad = param.backup_grad.data.clone()
         except:
             pass
-        
-        
+
+    
 @register_method
 def train_fn(self, loader, metrics, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
@@ -71,12 +71,15 @@ def train_fn(self, loader, metrics, **kwargs):
 
         for i in self.optimizer:
             i.zero_grad()
+            
         outputs = self.model(inputs)
         loss = self.loss_fn[0](outputs, targets)
         with amp.scale_loss(loss, self.optimizer) as scaled_loss:
             scaled_loss.backward()
+        
         for i in self.optimizer:
-            i.step()
+            i.step()    
+        
         loss_record += loss.item()
         del loss
         
