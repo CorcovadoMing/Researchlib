@@ -40,7 +40,7 @@ class _TorchDataset:
     def _set_augmentor(self, augmentor, include_y=False):
         mapping = {
             'hflip': transforms.RandomHorizontalFlip(),
-            'crop': transforms.RandomCrop(32, padding=4)
+            'crop': transforms.RandomCrop(32, padding=4, padding_mode='reflect')
         }
         _aug = []
         for i in augmentor:
@@ -50,7 +50,7 @@ class _TorchDataset:
     
     def get_generator(self, batch_size=512, **kwargs):
         if self.is_train:
-            tf = self.augmentor + [transforms.ToTensor()] + self.normalizer
+            tf = [transforms.RandomOrder(self.augmentor)] + [transforms.ToTensor()] + self.normalizer
         else:
             tf = [transforms.ToTensor()] + self.normalizer
         tf = transforms.Compose(tf)
