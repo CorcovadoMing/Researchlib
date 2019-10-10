@@ -141,7 +141,7 @@ def fit(
         self.model.apply(_to_half)
     
     # For convergence
-    bias_scale = parameter_manager.get_param('bias_scale', 64)
+    bias_scale = parameter_manager.get_param('bias_scale', 1)
     
     # EMA
     ema_freq = max(0, parameter_manager.get_param('ema_freq', 0))
