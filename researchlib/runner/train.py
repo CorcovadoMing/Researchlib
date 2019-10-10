@@ -49,7 +49,6 @@ def train_fn(self, loader, metrics, **kwargs):
     loss_record = 0
     norm_record = 0
     for batch_idx, (inputs, targets) in enumerate(loader):
-        
         # Set LR
         cur_lr = Annealer.get_trace('lr')
         update_optim(self.optimizer, [cur_lr, cur_lr * bias_scale], key = 'lr')
@@ -74,8 +73,7 @@ def train_fn(self, loader, metrics, **kwargs):
             
         outputs = self.model(inputs)
         loss = self.loss_fn[0](outputs, targets)
-        with amp.scale_loss(loss, self.optimizer) as scaled_loss:
-            scaled_loss.backward()
+        loss.backward()
         
         for i in self.optimizer:
             i.step()    

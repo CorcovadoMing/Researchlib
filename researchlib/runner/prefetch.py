@@ -9,9 +9,8 @@ else:
     import Queue
 
 
-def _worker(generator, queue, stream):
+def _worker(generator, queue, stream, fp16):
     for x, y in generator:
-        
         if type(x) != torch.Tensor:
             x = torch.from_numpy(x)
         if type(y) != torch.Tensor:
@@ -22,16 +21,19 @@ def _worker(generator, queue, stream):
         with torch.cuda.stream(stream):
             x = x.cuda(non_blocking=True)
             y = y.cuda(non_blocking=True)
-            
+            if fp16:
+                x = x.half()
+
         queue.put((x, y))
         
         
 class BackgroundGenerator:
-    def __init__(self, generator, max_prefetch = 2, num_threads = 2):
+    def __init__(self, generator, max_prefetch = 2, num_threads = 2, fp16 = False):
         self.queue = Queue.Queue(max_prefetch)
         self.stream = torch.cuda.Stream()
+        self.fp16 = fp16
         self.generator = generator
-        self.worker_thread = [threading.Thread(target = _worker, args = (self.generator, self.queue, self.stream)) for _ in range(num_threads)]
+        self.worker_thread = [threading.Thread(target = _worker, args = (self.generator, self.queue, self.stream, self.fp16)) for _ in range(num_threads)]
         for i in self.worker_thread:
             i.start()
 

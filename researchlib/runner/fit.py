@@ -5,7 +5,6 @@ from .liveplot import Liveplot
 from .prefetch import BackgroundGenerator
 import pickle
 from ..frontend.dashboard import _Dashboard
-from apex import amp
 import numpy as np
 import copy
 
@@ -61,15 +60,16 @@ def fit(
     # ----------------------------------------------
     # Setting loaders
     # ----------------------------------------------
+    fp16 = parameter_manager.get_param('fp16', False)
     batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
     buffered_epochs = epochs + 100
     train_loader = self.train_loader.get_generator(batch_size, epochs=buffered_epochs)
     self.train_loader_length = len(train_loader)
-    train_loader = BackgroundGenerator(inifinity_loop(train_loader))
+    train_loader = BackgroundGenerator(inifinity_loop(train_loader), fp16=fp16)
     if self.test_loader:
         test_loader = self.test_loader.get_generator(batch_size, epochs=buffered_epochs)
         self.test_loader_length = len(test_loader)
-        test_loader = BackgroundGenerator(inifinity_loop(test_loader))
+        test_loader = BackgroundGenerator(inifinity_loop(test_loader), fp16=fp16)
     
     liveplot = Liveplot(self.train_loader_length, plot)
         
@@ -134,10 +134,11 @@ def fit(
         Annealer._iteration_step(key = 'lr')
     
     # FP16
-    fp16 = parameter_manager.get_param('fp16', False)
-    opt_level = parameter_manager.get_param('opt_level', 'O2')
-    loss_scale = parameter_manager.get_param('loss_scale', 'dynamic')
-    self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level = opt_level, enabled = fp16, loss_scale = loss_scale)
+    def _to_half(m):
+        if isinstance(m, torch.nn.Module) and not isinstance(m, torch.nn.BatchNorm2d):
+            m.half()
+    if fp16:
+        self.model.apply(_to_half)
     
     # For convergence
     bias_scale = parameter_manager.get_param('bias_scale', 64)
