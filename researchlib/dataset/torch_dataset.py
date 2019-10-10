@@ -55,4 +55,4 @@ class _TorchDataset:
             tf = [transforms.ToTensor()] + self.normalizer
         tf = transforms.Compose(tf)
         ds = self.dataset_fn(transform=tf)
-        return torch.utils.data.DataLoader(ds, batch_size=batch_size, shuffle=self.is_train, num_workers=4)
+        return torch.utils.data.DataLoader(ds, batch_size=batch_size, shuffle=self.is_train, num_workers=1)
