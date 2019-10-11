@@ -255,9 +255,9 @@ def fit(
             
             # Steps anneling
             if self.epoch in self.multisteps:
-                srange = Annealer.get_srange('regular_lr')
+                srange = Annealer.get_srange('lr')
                 srange = [i * 0.1 for i in srange]
-                Annealer.update_attr('regular_lr', 'srange', srange)
+                Annealer.update_attr('lr', 'srange', srange)
                 
             # Global epoch annealing
             Annealer._epoch_step()
