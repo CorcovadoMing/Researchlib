@@ -4,6 +4,8 @@ from tensorpack import imgaug
 import random
 from functools import partial
 from .process_single import _process_single
+from .preprocessing import preprocessing
+from .augmentations import augmentations
 
 class _VISION_GENERAL_LOADER:
     def __init__(self, is_train, ds, name):
@@ -14,7 +16,8 @@ class _VISION_GENERAL_LOADER:
         if is_train:
             # Record the statistic for normalizer 
             l = np.array([i[0] for i in self.ds.data])
-            _VISION_GENERAL_LOADER.mean, _VISION_GENERAL_LOADER.std = np.mean(l, axis=tuple(range(l.ndim-1))), np.std(l, axis=tuple(range(l.ndim-1)))
+            _VISION_GENERAL_LOADER.mean = np.mean(l, axis=tuple(range(l.ndim-1))) 
+            _VISION_GENERAL_LOADER.std = np.std(l, axis=tuple(range(l.ndim-1)))
             del l
         
         self.normalizer = []
@@ -23,56 +26,27 @@ class _VISION_GENERAL_LOADER:
         
         
     def _set_normalizer(self, local=False):
-        if not local:            
-            self.normalizer = [imgaug.MapImage(lambda x: (x - _VISION_GENERAL_LOADER.mean)/_VISION_GENERAL_LOADER.std)]
+        if local:
+            pass
         else:
-            self.normalizer = [imgaug.MeanVarianceNormalize()]
+            self.normalizer = [partial(preprocessing.normalize, 
+                                       mean = _VISION_GENERAL_LOADER.mean, 
+                                       std = _VISION_GENERAL_LOADER.std)]
     
     
     def _set_augmentor(self, augmentor, include_y=False):
         mapping = {
-            'hflip': imgaug.Flip(horiz=True),
-            'crop': imgaug.AugmentorList([
-                        imgaug.CenterPaste((40, 40)),
-                        imgaug.RandomCrop((32, 32)),
-                    ]),
-            'cutout': imgaug.RandomCutout(8, 8),
-            'rotate': imgaug.Rotation(180)
+            'hflip': augmentations.HFlip(),
+            'crop': augmentations.Crop(32, 32, 4)
         }
         
-        _aug = []
+        self.augmentor = []
         for i in augmentor:
-            _aug.append(mapping[i])
-        self.augmentor = [imgaug.RandomOrderAug(_aug)]
+            self.augmentor.append(mapping[i])
         self.include_y = include_y
         
         
     def get_generator(self, batch_size=512, **kwargs):
-        
-        def batch_mapf(dp):
-            x = dp[0].copy()
-            y = dp[1]
-            if self.include_y:
-                y = y.copy()
-            
-            y_type = str(y.dtype)
-            if 'int' in y_type:
-                y_type = np.int64
-            else:
-                y_type = np.float32
-            
-            for op in self.normalizer:
-                x = op.augment(x)
-            
-            if self.is_train:
-                shuffled_augmentations = self.augmentor[:]
-                random.shuffle(shuffled_augmentations)
-                for i in range(len(x)):
-                    for op in shuffled_augmentations:
-                        x[i] = op.augment(x[i])
-            
-            return np.moveaxis(x, -1, 1).astype(np.float32), np.array(y).astype(y_type)
-
         ds = BatchData(self.ds, batch_size, remainder=True)
         process_single_fn = partial(_process_single, 
                                     is_train=self.is_train, include_y=self.include_y, 

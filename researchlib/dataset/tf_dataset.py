@@ -10,6 +10,7 @@ import math
 
 from functools import partial
 from .process_single import _process_single
+from .augmentations import augmentations
 
 
 class _TFDataset:
@@ -32,27 +33,22 @@ class _TFDataset:
         
     def _set_normalizer(self, local=False):
         if not local:
-            print("TensorFlow dataset didn't support the global initialization yet, consider to use local (per minibatch) normalization if needs")
+            print("TensorFlow dataset didn't support the global initialization yet, \
+            consider to use local (per minibatch) normalization if needs")
             self.normalizer = []
         else:
-            self.normalizer = [imgaug.MeanVarianceNormalize()]
+            self.normalizer = []
     
     
     def _set_augmentor(self, augmentor, include_y=False):
         mapping = {
-            'hflip': imgaug.Flip(horiz=True),
-            'crop': imgaug.AugmentorList([
-                        imgaug.CenterPaste((40, 40)),
-                        imgaug.RandomCrop((32, 32)),
-                    ]),
-            'cutout': imgaug.RandomCutout(8, 8),
-            'rotate': imgaug.Rotation(180)
+            'hflip': augmentations.HFlip(),
+            'crop': augmentations.Crop(32, 32, 4)
         }
         
-        _aug = []
+        self.augmentor = []
         for i in augmentor:
-            _aug.append(mapping[i])
-        self.augmentor = [imgaug.RandomOrderAug(_aug)]
+            self.augmentor.append(mapping[i])
         self.include_y = include_y
     
     
