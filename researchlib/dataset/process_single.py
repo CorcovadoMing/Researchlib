@@ -4,9 +4,9 @@ from .preprocessing import preprocessing
 
 
 def _process_single(dp, is_train, include_y, normalizer, augmentor, data_key=0, label_key=1):
-    x = dp[data_key].astype(np.float32).copy()
-    y = dp[label_key]
-    
+    x = np.array(dp[data_key]).astype(np.float32).copy()
+    y = np.array(dp[label_key])
+
     # Deal with y type
     y_type = str(y.dtype)
     if 'int' in y_type:

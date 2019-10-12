@@ -1,13 +1,19 @@
 import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-import torch.backends.cudnn as cudnn
-
 import torchvision
-import torchvision.transforms as transforms
+import numpy as np
 from functools import partial
+from tensorpack.dataflow import *
+from .process_single import _process_single
+from .augmentations import augmentations
 
+class ToNumpy:
+    def __call__(self, img):
+        return np.array(img)
+
+def my_collate(batch):
+    x = [i[0] for i in batch]
+    y = [i[1] for i in batch]
+    return x, y
 
 class _TorchDataset:
     def __init__(self, name, is_train):
@@ -23,7 +29,7 @@ class _TorchDataset:
         if dataset_fn is None:
             raise ValueError(f'No dataset {name} founded')
             
-        self.dataset_fn = partial(dataset_fn, train=is_train, download=True, root='./data')
+        self.ds = dataset_fn(train=is_train, download=True, root='./data', transform=ToNumpy())
         
         self.normalizer = []
         self.augmentor = []
@@ -31,28 +37,36 @@ class _TorchDataset:
         
         
     def _set_normalizer(self, local=False):
-        if not local:
-            self.normalizer = [transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616))]
+        if local:
+            self.normalizer = []
         else:
-            self.normalizer = [transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+            self.normalizer = []
     
     
     def _set_augmentor(self, augmentor, include_y=False):
         mapping = {
-            'hflip': transforms.RandomHorizontalFlip(),
-            'crop': transforms.RandomCrop(32, padding=4, padding_mode='reflect')
+            'hflip': augmentations.HFlip(),
+            'crop': augmentations.Crop(32, 32, 4)
         }
-        _aug = []
+        
+        self.augmentor = []
         for i in augmentor:
-            _aug.append(mapping[i])
-        self.augmentor = _aug
+            self.augmentor.append(mapping[i])
         self.include_y = include_y
     
     def get_generator(self, batch_size=512, **kwargs):
-        if self.is_train:
-            tf = [transforms.RandomOrder(self.augmentor)] + [transforms.ToTensor()] + self.normalizer
-        else:
-            tf = [transforms.ToTensor()] + self.normalizer
-        tf = transforms.Compose(tf)
-        ds = self.dataset_fn(transform=tf)
-        return torch.utils.data.DataLoader(ds, batch_size=batch_size, shuffle=self.is_train, num_workers=1)
+        ds = torch.utils.data.DataLoader(self.ds, 
+                                         batch_size=batch_size, 
+                                         shuffle=self.is_train, 
+                                         collate_fn=my_collate,
+                                         num_workers=1)
+        length = len(ds)
+        ds = DataFromGenerator(ds)
+        ds.__len__ = lambda: length
+        process_single_fn = partial(_process_single, 
+                                    is_train=self.is_train, include_y=self.include_y, 
+                                    normalizer=self.normalizer, augmentor=self.augmentor)
+        ds = MultiProcessMapDataZMQ(ds, 4, process_single_fn)
+        ds = PrintData(ds)
+        ds.reset_state()
+        return ds

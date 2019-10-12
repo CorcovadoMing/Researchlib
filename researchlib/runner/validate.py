@@ -11,11 +11,12 @@ register_method = _register_method(__methods__)
 def validate(self, metrics = [], callbacks = [], prefetch=True, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
     batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
+    fp16 = parameter_manager.get_param('fp16', False)
     
     buffered_epochs = 100
     test_loader = self.test_loader.get_generator(batch_size, epochs=buffered_epochs)
     self.test_loader_length = len(test_loader)
-    test_loader = BackgroundGenerator(inifinity_loop(test_loader))
+    test_loader = BackgroundGenerator(inifinity_loop(test_loader), fp16=fp16)
     self.preload_gpu()
     try:
         if len(self.default_metrics):

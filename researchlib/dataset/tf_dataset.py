@@ -1,13 +1,11 @@
 import logging, os
 logging.disable(logging.WARNING)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
 import tensorflow_datasets as tfds
 import tensorflow as tf
 from tensorpack.dataflow import *
 import numpy as np
 import math
-
 from functools import partial
 from .process_single import _process_single
 from .augmentations import augmentations
