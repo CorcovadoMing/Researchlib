@@ -3,7 +3,7 @@ import numpy as np
 from functools import singledispatch
 
 @singledispatch
-def normalize(x, mean, std):
+def normalize(x, mean, std, **kwargs):
     raise NotImplementedError
 
 @normalize.register(torch.Tensor)

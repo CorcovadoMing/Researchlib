@@ -5,6 +5,8 @@ from functools import partial
 from tensorpack.dataflow import *
 from .process_single import _process_single
 from .augmentations import augmentations
+from .preprocessing import preprocessing
+
 
 class ToNumpy:
     def __call__(self, img):
@@ -14,6 +16,7 @@ def my_collate(batch):
     x = [i[0] for i in batch]
     y = [i[1] for i in batch]
     return x, y
+
 
 class _TorchDataset:
     def __init__(self, name, is_train):
@@ -37,10 +40,7 @@ class _TorchDataset:
         
         
     def _set_normalizer(self, local=False):
-        if local:
-            self.normalizer = []
-        else:
-            self.normalizer = []
+        self.normalizer = [preprocessing.DynamicNormalize()]
     
     
     def _set_augmentor(self, augmentor, include_y=False):

@@ -9,6 +9,7 @@ import math
 from functools import partial
 from .process_single import _process_single
 from .augmentations import augmentations
+from .preprocessing import preprocessing
 
 
 class _TFDataset:
@@ -30,13 +31,8 @@ class _TFDataset:
         
         
     def _set_normalizer(self, local=False):
-        if not local:
-            print("TensorFlow dataset didn't support the global initialization yet, \
-            consider to use local (per minibatch) normalization if needs")
-            self.normalizer = []
-        else:
-            self.normalizer = []
-    
+        self.normalizer = [preprocessing.DynamicNormalize()]
+        
     
     def _set_augmentor(self, augmentor, include_y=False):
         mapping = {
