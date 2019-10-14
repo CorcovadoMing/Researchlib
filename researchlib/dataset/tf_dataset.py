@@ -30,8 +30,8 @@ class _TFDataset:
         self.include_y = False
         
         
-    def _set_normalizer(self, local=False):
-        self.normalizer = [preprocessing.DynamicNormalize()]
+    def set_normalizer(self, type, mean, std):
+        self.normalizer = preprocessing.set_normalizer(type, mean, std)
         
     
     def _set_augmentor(self, augmentor, include_y=False):

@@ -22,6 +22,42 @@ def _anneal_policy(anneal_type):
         anneal_policy = Annealer.Fixed
     return anneal_policy
 
+def cov(X):
+    X = X/np.sqrt(X.size(0) - 1)
+    return X.t() @ X
+
+def patches(data, patch_size=(3, 3), dtype=torch.float32):
+    h, w = patch_size
+    c = data.size(1)
+    return data.unfold(2,h,1).unfold(3,w,1).transpose(1,3).reshape(-1, c, h, w).to(dtype)
+
+def eigens(patches):
+    n,c,h,w = patches.shape
+    Σ = cov(patches.reshape(n, c*h*w))
+    Λ, V = torch.symeig(Σ, eigenvectors=True)
+    return Λ.flip(0), V.t().reshape(c*h*w, c, h, w).flip(0)
+
+@register_method
+def preloop(self, 
+            iterations=20):
+    
+    running_e1, running_e2 = 0, 0
+    
+    batch_size = 512
+    train_loader = self.train_loader.get_generator(batch_size, epochs=3)
+    
+    for i, (x, y) in enumerate(train_loader):
+        if i == iterations:
+            break
+            
+        e1, e2 = eigens(patches(torch.from_numpy(x)))
+        running_e1 = 0.9 * running_e1 + 0.1 * e1
+        running_e2 = 0.9 * running_e2 + 0.1 * e2
+    
+    ParameterManager.save_buffer('e1', running_e1)
+    ParameterManager.save_buffer('e2', running_e2)
+    return self
+    
 
 @register_method
 def fit(

@@ -181,10 +181,10 @@ class Runner:
         
         
         
-    def normalize(self, local=False):
-        self.train_loader._set_normalizer(local)
+    def normalize(self, type=None, mean=None, std=None):
+        self.train_loader.set_normalizer(type, mean, std)
         if self.test_loader:
-            self.test_loader._set_normalizer(local)
+            self.test_loader.set_normalizer(type, mean, std)
         return self
 
     def augmentation(self, augmentation_list, include_y=False):

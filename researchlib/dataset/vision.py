@@ -25,13 +25,8 @@ class _VISION_GENERAL_LOADER:
         self.include_y = False
         
         
-    def _set_normalizer(self, local=False):
-        if local:
-            pass
-        else:
-            self.normalizer = [partial(preprocessing.normalize, 
-                                       mean = _VISION_GENERAL_LOADER.mean, 
-                                       std = _VISION_GENERAL_LOADER.std)]
+    def set_normalizer(self, type, mean, std):
+        self.normalizer = preprocessing.set_normalizer(type, mean, std)
     
     
     def _set_augmentor(self, augmentor, include_y=False):
