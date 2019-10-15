@@ -1,24 +1,38 @@
 from torch import nn
 from ..wrapper import _MultiscaleOutput, _MultiscaleInput
 from ..layers import layer
+import torch
 
 
-class builder(nn.Module):
-    # Static builder queue
-    queue = []
-
-    def __init__(self, nnlist):
+class MultiApply(nn.Module):
+    def __init__(self, model):
         super().__init__()
-        #         layer.ManifoldMixup.reset_counter()
-        self.nnlist = nn.ModuleList(nnlist)
+        self.model = model
+    
+    def forward(self, *x):
+        return [self.model(i) for i in x]
 
-    def forward(self, x):
-        for i in range(len(self.nnlist)):
-            if type(self.nnlist[i]) == _MultiscaleOutput:
-                x = self.nnlist[i](x)
-                builder.queue.append(x)
-            elif type(self.nnlist[i]) == _MultiscaleInput:
-                x = self.nnlist[i](x, builder.queue.pop())
+    
+class SupportFeatureConcat(nn.Module):
+    def __init__(self):
+        super().__init__()
+    
+    def forward(self, x1, x2):
+        x2 = x2.expand(x1.size(0), *[-1 for _ in range(x2.dim())])
+        x1 = x1.unsqueeze(1).expand_as(x2)
+        x2 = torch.cat([x1, x2], dim=2)
+        return x2
+
+    
+class Builder(nn.Module):
+    def __init__(self, *models):
+        super().__init__()
+        self.models = nn.ModuleList([nn.Sequential(*model) if type(model) == list else model for model in models])
+
+    def forward(self, *x):
+        for model in self.models:
+            if type(x) != torch.Tensor:
+                x = model(*x)
             else:
-                x = self.nnlist[i](x)
+                x = model(x)
         return x

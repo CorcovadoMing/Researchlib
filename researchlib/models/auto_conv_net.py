@@ -3,7 +3,7 @@ from .heads import Heads
 from ..runner import Runner
 from ..layers import layer
 from ..wrapper import wrapper
-from .builder import builder
+from .builder import Builder
 from ..utils import ParameterManager
 from ..blocks import block
 import copy
@@ -99,7 +99,7 @@ def AutoConvNet(
             parameter_manager.save_buffer('last_dim', in_dim)
             layers.append(
                 wrapper.Auxiliary(
-                    builder([
+                    Builder([
                         Heads(auxiliary_classifier),
                         layer.LogSoftmax(
                             -1
@@ -130,4 +130,4 @@ def AutoConvNet(
     ParameterManager.verify_kwargs(**kwargs)
     parameter_manager.save_buffer('dim_type', _get_dim_type(op))
     parameter_manager.save_buffer('last_dim', out_dim)
-    return builder(layers)
+    return Builder(layers)

@@ -1,4 +1,4 @@
-from .builder import builder
+from .builder import Builder, MultiApply, SupportFeatureConcat
 from .gan import GANModel
 from .vae import VAEModel
 from .auto_conv_net import AutoConvNet

@@ -1,5 +1,5 @@
 from ..layers import layer
-from .builder import builder
+from .builder import Builder
 from ..utils import ParameterManager
 from ..blocks.unit import unit
 
@@ -40,4 +40,4 @@ def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', **
     ]
 
     layers = list(filter(None, layers))
-    return builder(layers)
+    return Builder(layers)
