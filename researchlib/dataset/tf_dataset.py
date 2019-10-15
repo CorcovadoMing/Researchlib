@@ -58,3 +58,18 @@ class _TFDataset:
         ds = PrintData(ds)
         ds.reset_state()
         return ds
+    
+    def get_support_set(self, classes=[], shot=5):
+        data, label = [], []
+        collect = {k: 0 for k in classes}
+        g = self.get_generator(1, epochs=3)
+        for x, y in g:
+            x = x[0]
+            y = y[0]
+            if y in classes and collect[y] < shot:
+                data.append(x)
+                label.append(y)
+                collect[y] += 1
+            if sum(collect.values()) == len(classes) * shot:
+                break
+        return np.array(data), np.array(label)
