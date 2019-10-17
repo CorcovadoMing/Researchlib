@@ -1,4 +1,4 @@
-from apex import amp
+import torch
 from ..utils import _register_method, ParameterManager, Annealer, set_lr, update_optim
 from ..layers import layer
 
@@ -39,6 +39,9 @@ def train_fn(self, loader, metrics, **kwargs):
     ema = parameter_manager.get_param('ema')
     ema_freq = parameter_manager.get_param('ema_freq')
     ema_momentum = parameter_manager.get_param('ema_momentum')
+    support_set = parameter_manager.get_param('support_set')
+    way = parameter_manager.get_param('way')
+    shot = parameter_manager.get_param('shot')
     rho = ema_momentum ** ema_freq    
     
     self.model.train()
@@ -71,7 +74,20 @@ def train_fn(self, loader, metrics, **kwargs):
         for i in self.optimizer:
             i.zero_grad()
             
-        outputs = self.model(inputs)
+        if support_set is not None:
+            support_x, support_y = support_set
+            support_x = torch.from_numpy(support_x).to(inputs.device).to(inputs.dtype)
+            support_x = support_x.view(-1, *inputs.shape[1:])
+            outputs = self.model(inputs, support_x) # Batch, shot, way
+            
+            # Deal with labels
+            support_y = torch.from_numpy(support_y).to(targets.device).to(targets.dtype)
+            support_y = support_y.expand(targets.size(0), -1, -1).transpose(-1, -2) # Batch, shot, way
+            targets = targets.unsqueeze(1).unsqueeze(2).expand(-1, shot, len(way))
+            targets = targets.eq(support_y).to(inputs.dtype)
+        else:
+            outputs = self.model(inputs)
+        
         loss = self.loss_fn[0](outputs, targets)
         loss.backward()
         

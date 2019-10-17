@@ -96,6 +96,18 @@ def fit(
     # ----------------------------------------------
     # Setting loaders
     # ----------------------------------------------
+    
+    # Few shot learning
+    way = parameter_manager.get_param('way', None)
+    shot = parameter_manager.get_param('shot', None)
+    if way is not None and shot is not None:
+        if type(way) == int:
+            way = list(range(way))
+        support_set = self.train_loader.get_support_set(classes=way, shot=shot)
+    else:
+        support_set = None
+    
+    # Load loader
     fp16 = parameter_manager.get_param('fp16', False)
     batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
     buffered_epochs = epochs + 100
@@ -230,7 +242,10 @@ def fit(
                                                      bias_scale=bias_scale,
                                                      ema=ema,
                                                      ema_freq=ema_freq,
-                                                     ema_momentum=ema_momentum)
+                                                     ema_momentum=ema_momentum,
+                                                     support_set=support_set,
+                                                     way=way,
+                                                     shot=shot)
             liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer[0].param_groups][-1])
             liveplot.record(epoch, 'train_loss', loss_record)
             liveplot.record(epoch, 'norm', norm_record)
@@ -247,7 +262,10 @@ def fit(
             if self.test_loader:
                 liveplot.redis.set('stage', 'validate')
                 # Validation function
-                loss_record = self.validate_fn(test_loader, metrics)
+                loss_record = self.validate_fn(test_loader, metrics,
+                                               support_set=support_set,
+                                               way=way,
+                                               shot=shot)
                 liveplot.record(epoch, 'val_loss', loss_record)
                 self.history_.add({'loss': loss_record}, prefix = 'val')
                 self.history_.record_matrix(metrics, prefix = 'val')

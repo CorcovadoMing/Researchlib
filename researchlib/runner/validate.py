@@ -37,7 +37,13 @@ def validate(self, metrics = [], callbacks = [], prefetch=True, **kwargs):
             
             
 @register_method
-def validate_fn(self, loader, metrics):
+def validate_fn(self, loader, metrics, **kwargs):
+    parameter_manager = ParameterManager(**kwargs)
+
+    support_set = parameter_manager.get_param('support_set')
+    way = parameter_manager.get_param('way')
+    shot = parameter_manager.get_param('shot')
+    
     self.val_model.eval()
 
     for m in metrics:
@@ -46,7 +52,21 @@ def validate_fn(self, loader, metrics):
     loss_record = 0
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(loader):
-            outputs = (self.val_model(inputs) + self.val_model(torch.flip(inputs, [-1]))) / 2
+            if support_set is not None:
+                support_x, support_y = support_set
+                support_x = torch.from_numpy(support_x).to(inputs.device).to(inputs.dtype)
+                support_x = support_x.view(-1, *inputs.shape[1:])
+                outputs = self.val_model(inputs, support_x) # Batch, shot, way
+
+                # Deal with labels
+                support_y = torch.from_numpy(support_y).to(targets.device).to(targets.dtype)
+                support_y = support_y.expand(targets.size(0), -1, -1).transpose(-1, -2) # Batch, shot, way
+                targets = targets.unsqueeze(1).unsqueeze(2).expand(-1, shot, len(way))
+                targets = targets.eq(support_y).to(inputs.dtype)
+            else:
+                outputs = self.val_model(inputs)
+                #outputs = (self.val_model(inputs) + self.val_model(torch.flip(inputs, [-1]))) / 2
+            
             loss = self.loss_fn[0](outputs, targets)
 
             for m in metrics:
