@@ -8,7 +8,7 @@ from .preprocessing import preprocessing
 from .augmentations import augmentations
 
 class _VISION_GENERAL_LOADER:
-    def __init__(self, is_train, ds, name):
+    def __init__(self, is_train, ds, name, transpose):
         self.is_train = is_train
         self.ds = ds
         self.name = name
@@ -23,6 +23,7 @@ class _VISION_GENERAL_LOADER:
         self.normalizer = []
         self.augmentor = []
         self.include_y = False
+        self.transpose = transpose
         
         
     def set_normalizer(self, type, mean, std):
@@ -45,37 +46,35 @@ class _VISION_GENERAL_LOADER:
         ds = BatchData(self.ds, batch_size, remainder=True)
         process_single_fn = partial(_process_single, 
                                     is_train=self.is_train, include_y=self.include_y, 
-                                    normalizer=self.normalizer, augmentor=self.augmentor)
-        ds = MultiProcessMapDataZMQ(ds, 4, process_single_fn)
-        if self.is_train:
-            ds = MultiProcessPrefetchData(ds, 2048//batch_size, 4)
+                                    normalizer=self.normalizer, augmentor=self.augmentor,
+                                    transpose=self.transpose)
+        ds = MultiProcessMapData(ds, 2, process_single_fn)
         ds = PrintData(ds)
         ds.reset_state()
         return ds
     
     def get_support_set(self, classes=[], shot=5):
-        data, label = [], []
-        collect = {k: 0 for k in classes}
+        collect = {k: [] for k in classes}
         g = self.get_generator(1, epochs=3)
+        count = 0
         for x, y in g:
             x = x[0]
             y = y[0]
-            if y in classes and collect[y] < shot:
-                data.append(x)
-                label.append(y)
-                collect[y] += 1
-            if sum(collect.values()) == len(classes) * shot:
+            if y in classes and len(collect[y]) < shot:
+                collect[y].append(x)
+                count += 1
+            if count == len(classes) * shot:
                 break
-        return np.array(data), np.array(label)
+        return np.stack(list(collect.values())), np.repeat(np.array(list(collect.keys())), shot).reshape(len(classes), shot)
     
     
     
-def _CIFAR10(is_train=True):
+def _CIFAR10(is_train=True, transpose=('NHWC', 'NCHW')):
     phase = 'train' if is_train else 'test'
-    return _VISION_GENERAL_LOADER(is_train, dataset.Cifar10(phase, shuffle=is_train), name='cifar10')
+    return _VISION_GENERAL_LOADER(is_train, dataset.Cifar10(phase, shuffle=is_train), name='cifar10', transpose=transpose)
 
 
-def _NumpyDataset(x, y, is_train=True, name=''):
+def _NumpyDataset(x, y, is_train=True, name='', transpose=None):
     _inner_gen = DataFromList(list(zip(x, y)), shuffle=is_train)
     _inner_gen.data = x
-    return _VISION_GENERAL_LOADER(is_train, _inner_gen, name=name)
+    return _VISION_GENERAL_LOADER(is_train, _inner_gen, name=name, transpose=transpose)

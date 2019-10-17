@@ -19,7 +19,7 @@ def my_collate(batch):
 
 
 class _TorchDataset:
-    def __init__(self, name, is_train):
+    def __init__(self, name, is_train, transpose=('NHWC', 'NCHW')):
         self.is_train = is_train
         self.name = name
 
@@ -37,6 +37,7 @@ class _TorchDataset:
         self.normalizer = []
         self.augmentor = []
         self.include_y = False
+        self.transpose = transpose
         
         
     def set_normalizer(self, type, mean, std):
@@ -65,23 +66,23 @@ class _TorchDataset:
         ds.__len__ = lambda: length
         process_single_fn = partial(_process_single, 
                                     is_train=self.is_train, include_y=self.include_y, 
-                                    normalizer=self.normalizer, augmentor=self.augmentor)
-        ds = MultiProcessMapDataZMQ(ds, 4, process_single_fn)
+                                    normalizer=self.normalizer, augmentor=self.augmentor,
+                                    transpose=self.transpose)
+        ds = MultiProcessMapData(ds, 2, process_single_fn)
         ds = PrintData(ds)
         ds.reset_state()
         return ds
     
     def get_support_set(self, classes=[], shot=5):
-        data, label = [], []
-        collect = {k: 0 for k in classes}
+        collect = {k: [] for k in classes}
         g = self.get_generator(1, epochs=3)
+        count = 0
         for x, y in g:
             x = x[0]
             y = y[0]
-            if y in classes and collect[y] < shot:
-                data.append(x)
-                label.append(y)
-                collect[y] += 1
-            if sum(collect.values()) == len(classes) * shot:
+            if y in classes and len(collect[y]) < shot:
+                collect[y].append(x)
+                count += 1
+            if count == len(classes) * shot:
                 break
-        return np.array(data), np.array(label)
+        return np.stack(list(collect.values())), np.repeat(np.array(list(collect.keys())), shot).reshape(len(classes), shot)

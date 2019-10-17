@@ -3,7 +3,7 @@ import random
 from .preprocessing import preprocessing 
 
 
-def _process_single(dp, is_train, include_y, normalizer, augmentor, data_key=0, label_key=1):
+def _process_single(dp, is_train, include_y, normalizer, augmentor, data_key=0, label_key=1, transpose=('NHWC', 'NCHW')):
     x = np.array(dp[data_key]).astype(np.float32).copy()
     y = np.array(dp[label_key])
 
@@ -20,7 +20,8 @@ def _process_single(dp, is_train, include_y, normalizer, augmentor, data_key=0, 
         x = op(x)
         
     # Transfer to right format for pytorch
-    x = preprocessing.format_transpose(x, 'NHWC', 'NCHW')
+    if transpose is not None:
+        x = preprocessing.format_transpose(x, *transpose)
     
     # Augmentation
     if is_train:
