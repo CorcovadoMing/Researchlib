@@ -33,11 +33,13 @@ from .wsconv import _WSConv1d, _WSConvTranspose1d, _WSConv2d, _WSConvTranspose2d
 from .manifold_mixup import _ManifoldMixup
 from .shake_batchnorm import _ShakeBatchNorm1d, _ShakeBatchNorm2d, _ShakeBatchNorm3d
 from .sasa import _SASA2d
+from .view import _View
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
 
 
 class layer(object):
+    View = _View
     SASA2d = _SASA2d
     
     # Non-Local

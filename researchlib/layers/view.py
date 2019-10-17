@@ -1,10 +1,9 @@
 from torch import nn
 
-
-class _Permute(nn.Module):
+class _View(nn.Module):
     def __init__(self, *shape):
         super().__init__()
         self.shape = shape
-
+    
     def forward(self, x):
-        return x.permute(*self.shape)
+        return x.view(*self.shape)
