@@ -125,11 +125,12 @@ class Liveplot:
         )
         self.thread.start()
 
-    def update_desc(self, epoch, value, loss_record, metrics, track_best):
-        metrics_collection = [''.join(['%s: %.5s' % (key.capitalize(), float(value)) for (key, value) in m.output().items()]) for m in metrics]
+    def update_desc(self, epoch, batch_idx, loss_record, monitor_record, track_best):
+        loss_record /= batch_idx
+        metrics_collection = [''.join(['%s: %.5s' % (key.capitalize(), float(value) / batch_idx) for (key, value) in monitor_record.items()])]
         metrics_collection = ''.join(metrics_collection) 
-        misc, progress = self.timer.output(value)
-        self.progress_bar.value = value
+        misc, progress = self.timer.output(batch_idx)
+        self.progress_bar.value = batch_idx
         self.progress_label_text.value = f'Epoch: {epoch}, Loss: {loss_record:.5f}, {metrics_collection}, Track best: {track_best:.5f}, {misc}'
         self.redis.set('desc', self.progress_label_text.value)
         self.redis.set('progress', progress)

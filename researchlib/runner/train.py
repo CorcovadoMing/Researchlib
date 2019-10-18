@@ -5,27 +5,9 @@ from ..layers import layer
 __methods__ = []
 register_method = _register_method(__methods__)
 
-
-def _backup_grad(model):
-    for param in model.parameters():
-        try:
-            param.backup_grad = param.grad.data.clone()
-        except:
-            if param.requires_grad:
-                param.backup_grad = param.data.clone()
-                param.backup_grad.zero_()
-
-
-def _restore_grad(model):
-    for param in model.parameters():
-        try:
-            param.grad = param.backup_grad.data.clone()
-        except:
-            pass
-
     
 @register_method
-def train_fn(self, loader, metrics, **kwargs):
+def train_fn(self, loader, metrics, monitor, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
     
     liveplot = parameter_manager.get_param('liveplot', required=True)
@@ -46,11 +28,10 @@ def train_fn(self, loader, metrics, **kwargs):
     
     self.model.train()
 
-    for m in metrics:
-        m.reset()
-
     loss_record = 0
     norm_record = 0
+    metrics_record = {key: 0 for key in monitor}
+    
     for batch_idx, (inputs, targets) in enumerate(loader):
         # Set LR
         cur_lr = Annealer.get_trace('lr')
@@ -107,18 +88,21 @@ def train_fn(self, loader, metrics, **kwargs):
                 ema_v += (1-rho) * v
 
 
-        for m in metrics:
-            m.forward([outputs, targets])
+        metrics_result = metrics({'x':outputs, 'y':targets})
+        for i in monitor:
+            metrics_record[i] += metrics_result[i]
+        
 
-        if batch_idx % 5 == 0:
-            liveplot.update_desc(epoch, batch_idx + 1, loss_record / (batch_idx + 1), metrics, self.monitor)
+        if batch_idx % 5 == 0 or batch_idx == (self.train_loader_length-1):
+            liveplot.update_desc(epoch, batch_idx + 1, loss_record, metrics_record, self.monitor)
 
         if batch_idx == (self.train_loader_length-1):
-            liveplot.update_desc(epoch, batch_idx + 1, loss_record / (batch_idx + 1), metrics, self.monitor)
             break
 
         Annealer._iteration_step()
 
     loss_record = loss_record / (batch_idx + 1)
     norm_record = (norm_record ** 0.5) / (batch_idx + 1)
-    return loss_record, norm_record
+    for i in metrics_record:
+        metrics_record[i] /= (batch_idx + 1)
+    return loss_record, norm_record, metrics_record

@@ -37,7 +37,7 @@ def validate(self, metrics = [], callbacks = [], prefetch=True, **kwargs):
             
             
 @register_method
-def validate_fn(self, loader, metrics, **kwargs):
+def validate_fn(self, loader, metrics, monitor, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
 
     support_set = parameter_manager.get_param('support_set')
@@ -46,10 +46,9 @@ def validate_fn(self, loader, metrics, **kwargs):
     
     self.val_model.eval()
 
-    for m in metrics:
-        m.reset()
-
     loss_record = 0
+    metrics_record = {key: 0 for key in monitor}
+    
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(loader):
             if support_set is not None:
@@ -64,13 +63,14 @@ def validate_fn(self, loader, metrics, **kwargs):
                 targets = targets.unsqueeze(1).unsqueeze(2).expand(-1, shot, len(way))
                 targets = targets.eq(support_y).to(inputs.dtype)
             else:
-                outputs = self.val_model(inputs)
-                #outputs = (self.val_model(inputs) + self.val_model(torch.flip(inputs, [-1]))) / 2
+                #outputs = self.val_model(inputs)
+                outputs = (self.val_model(inputs) + self.val_model(torch.flip(inputs, [-1]))) / 2
             
             loss = self.loss_fn[0](outputs, targets)
 
-            for m in metrics:
-                m.forward([outputs, targets])
+            metrics_result = metrics({'x':outputs, 'y':targets})
+            for i in monitor:
+                metrics_record[i] += metrics_result[i]
 
             loss_record += loss.item()
             del loss
@@ -79,4 +79,6 @@ def validate_fn(self, loader, metrics, **kwargs):
                 break
 
     loss_record = loss_record / (batch_idx + 1)
-    return loss_record
+    for i in metrics_record:
+        metrics_record[i] /= (batch_idx + 1)
+    return loss_record, metrics_record

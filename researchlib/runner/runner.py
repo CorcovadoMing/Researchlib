@@ -93,21 +93,17 @@ class Runner:
 
         # Assign loss function
         self.loss_fn = []
-        self.default_metrics = []
-
         def _process_loss_fn(loss_fn):
             process_func = loss_ensemble if type(loss_fn) == dict else loss_mapping
             return process_func(loss_fn)
 
         if type(loss_fn) == list:
             for lf in loss_fn:
-                _loss_fn, _default_metrics = _process_loss_fn(lf)
+                _loss_fn = _process_loss_fn(lf)
                 self.loss_fn.append(_loss_fn)
-                self.default_metrics += _default_metrics
         else:
-            _loss_fn, _default_metrics = _process_loss_fn(loss_fn)
+            _loss_fn = _process_loss_fn(loss_fn)
             self.loss_fn.append(_loss_fn)
-            self.default_metrics += _default_metrics
 
         # Assign monitoring
         self.monitor_mode = monitor_mode

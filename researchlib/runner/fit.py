@@ -77,6 +77,7 @@ def fit(
     prefetch = True,
     plot = False,
     init_optim = True,
+    monitor = [],
     **kwargs
 ):
     
@@ -136,14 +137,6 @@ def fit(
         exist_experiments.append(self.experiment_name)
         
     liveplot.redis.set('experiment', pickle.dumps(exist_experiments))
-    
-    
-    
-    # ----------------------------------------------
-    # Metrics
-    # ----------------------------------------------
-    if len(self.default_metrics):
-        metrics = self.default_metrics + metrics
     
     
     # ----------------------------------------------
@@ -231,26 +224,26 @@ def fit(
             liveplot.redis.set('stage', 'train')
             liveplot.timer.clear()
             # Training function
-            loss_record, norm_record = self.train_fn(train_loader, metrics, 
-                                                     liveplot=liveplot,
-                                                     mmixup_alpha=mmixup_alpha, 
-                                                     fixed_mmixup=fixed_mmixup, 
-                                                     random_mmixup=random_mmixup,
-                                                     epoch=epoch,
-                                                     warmup=warmup,
-                                                     weight_decay=weight_decay,
-                                                     bias_scale=bias_scale,
-                                                     ema=ema,
-                                                     ema_freq=ema_freq,
-                                                     ema_momentum=ema_momentum,
-                                                     support_set=support_set,
-                                                     way=way,
-                                                     shot=shot)
+            loss_record, norm_record, metrics_record = self.train_fn(train_loader, metrics, monitor,
+                                                                     liveplot=liveplot,
+                                                                     mmixup_alpha=mmixup_alpha, 
+                                                                     fixed_mmixup=fixed_mmixup, 
+                                                                     random_mmixup=random_mmixup,
+                                                                     epoch=epoch,
+                                                                     warmup=warmup,
+                                                                     weight_decay=weight_decay,
+                                                                     bias_scale=bias_scale,
+                                                                     ema=ema,
+                                                                     ema_freq=ema_freq,
+                                                                     ema_momentum=ema_momentum,
+                                                                     support_set=support_set,
+                                                                     way=way,
+                                                                     shot=shot)
             liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer[0].param_groups][-1])
             liveplot.record(epoch, 'train_loss', loss_record)
             liveplot.record(epoch, 'norm', norm_record)
             self.history_.add({'loss': loss_record}, prefix = 'train')
-            self.history_.record_matrix(metrics, prefix = 'train')
+            self.history_.add(metrics_record, prefix = 'train')
             try:
                 liveplot.record(epoch, 'train_acc', self.history_.records['train_acc'][-1])
             except:
@@ -262,13 +255,13 @@ def fit(
             if self.test_loader:
                 liveplot.redis.set('stage', 'validate')
                 # Validation function
-                loss_record = self.validate_fn(test_loader, metrics,
-                                               support_set=support_set,
-                                               way=way,
-                                               shot=shot)
+                loss_record, metrics_record = self.validate_fn(test_loader, metrics, monitor,
+                                                               support_set=support_set,
+                                                               way=way,
+                                                               shot=shot)
                 liveplot.record(epoch, 'val_loss', loss_record)
                 self.history_.add({'loss': loss_record}, prefix = 'val')
-                self.history_.record_matrix(metrics, prefix = 'val')
+                self.history_.add(metrics_record, prefix = 'val')
                 try:
                     liveplot.record(epoch, 'val_acc', self.history_.records['val_acc'][-1])
                 except:
