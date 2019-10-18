@@ -21,7 +21,7 @@ class FocalLoss(nn.Module):
 
 
 class AdaptiveFocalLoss(nn.Module):
-    def __init__(self, classes, gamma = 2):
+    def __init__(self, classes = 10, gamma = 2):
         super().__init__()
         self.gamma = gamma
         self.classes = classes
