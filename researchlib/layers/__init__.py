@@ -5,8 +5,6 @@ from .dropblock import _DropBlock2d, _DropBlock3d
 from .capsule_layer import _CapsuleMasked, _RoutingCapsules, _PrimaryCapsules
 from .binarized import _BinarizeLinear, _BinarizeConv2d
 from .octconv import _OctConv2d
-from .swish import _Swish
-from .gelu import _GeLU
 from .norm import _Norm
 from .adaptive_concat_pool import _AdaptiveConcatPool1d, _AdaptiveConcatPool2d
 from .position_encoding import _PositionEncoding
@@ -25,7 +23,6 @@ from .non_local.embedded_gaussian import _EmbeddedGaussianNonLocalBlock1d, _Embe
 from .non_local.gaussian import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _GaussianNonLocalBlock3d
 from .noise_injection import _NoiseInjection
 from .flatten import _Flatten
-from .mish import _Mish
 from .multiply import _Multiply
 from .aaconv import _AAConv2d
 from .blur import Downsample as _Downsample
@@ -36,6 +33,8 @@ from .sasa import _SASA2d
 from .view import _View
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
+
+from .activator import _GeLU, _Mish, _Swish
 
 
 class layer(object):
