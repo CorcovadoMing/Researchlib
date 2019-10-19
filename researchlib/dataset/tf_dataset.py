@@ -56,7 +56,7 @@ class _TFDataset:
                                     normalizer=self.normalizer, augmentor=self.augmentor, 
                                     data_key='image', label_key='label',
                                     transpose=self.transpose)
-        ds = MultiProcessMapData(ds, 2, process_single_fn)
+        ds = MultiProcessMapDataZMQ(ds, 2, process_single_fn, buffer_size=8)
         ds = PrintData(ds)
         ds.reset_state()
         return ds

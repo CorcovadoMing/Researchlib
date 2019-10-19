@@ -48,7 +48,7 @@ class _VISION_GENERAL_LOADER:
                                     is_train=self.is_train, include_y=self.include_y, 
                                     normalizer=self.normalizer, augmentor=self.augmentor,
                                     transpose=self.transpose)
-        ds = MultiProcessMapData(ds, 2, process_single_fn)
+        ds = MultiProcessMapDataZMQ(ds, 2, process_single_fn, buffer_size=8)
         ds = PrintData(ds)
         ds.reset_state()
         return ds
