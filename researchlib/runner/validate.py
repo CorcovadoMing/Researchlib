@@ -8,28 +8,21 @@ register_method = _register_method(__methods__)
 
 
 @register_method
-def validate(self, metrics = [], callbacks = [], prefetch=True, **kwargs):
+def validate(self, metrics=None, monitor=[], prefetch=True, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
     batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
     fp16 = parameter_manager.get_param('fp16', False)
     
-    buffered_epochs = 100
+    buffered_epochs = 1
     test_loader = self.test_loader.get_generator(batch_size, epochs=buffered_epochs)
     self.test_loader_length = len(test_loader)
     test_loader = BackgroundGenerator(inifinity_loop(test_loader), fp16=fp16)
     self.preload_gpu()
     try:
-        if len(self.default_metrics):
-            metrics = self.default_metrics + metrics
-
-        loss_record = self.validate_fn(test_loader, metrics)
-
+        loss_record, metrics_record = self.validate_fn(test_loader, metrics, monitor)
         print(loss_record)
-
-        if len(metrics) > 0:
-            for m in metrics:
-                for k, v in m.output().items():
-                    print(str(k) + ':', float(v))
+        for k, v in metrics_record.items():
+            print(str(k) + ':', float(v))
     except:
         raise
     finally:
@@ -68,7 +61,7 @@ def validate_fn(self, loader, metrics, monitor, **kwargs):
             
             loss = self.loss_fn[0](outputs, targets)
 
-            metrics_result = metrics({'x':outputs, 'y':targets})
+            metrics_result = metrics({'x':outputs, 'y':targets}) if metrics is not None else metrics_record
             for i in monitor:
                 metrics_record[i] += metrics_result[i]
 

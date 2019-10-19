@@ -56,6 +56,8 @@ def preloop(self,
     
     ParameterManager.save_buffer('e1', running_e1)
     ParameterManager.save_buffer('e2', running_e2)
+    
+    del train_loader
     return self
     
 
@@ -69,7 +71,7 @@ def fit(
     warmup_policy = 'linear',
     flatten = 0,
     flatten_lr = 0,
-    metrics = [],
+    metrics = None,
     callbacks = [],
     _id = 'none',
     iterations = 0,
@@ -111,7 +113,7 @@ def fit(
     # Load loader
     fp16 = parameter_manager.get_param('fp16', False)
     batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
-    buffered_epochs = epochs + 100
+    buffered_epochs = epochs + 1
     train_loader = self.train_loader.get_generator(batch_size, epochs=buffered_epochs)
     self.train_loader_length = len(train_loader)
     train_loader = BackgroundGenerator(inifinity_loop(train_loader), fp16=fp16)

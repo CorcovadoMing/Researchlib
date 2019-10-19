@@ -88,7 +88,7 @@ def train_fn(self, loader, metrics, monitor, **kwargs):
                 ema_v += (1-rho) * v
 
 
-        metrics_result = metrics({'x':outputs, 'y':targets})
+        metrics_result = metrics({'x':outputs, 'y':targets}) if metrics is not None else metrics_record
         for i in monitor:
             metrics_record[i] += metrics_result[i]
         
