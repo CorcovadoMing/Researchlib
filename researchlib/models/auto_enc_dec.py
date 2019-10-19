@@ -8,7 +8,7 @@ from ..utils import ParameterManager
 from ..blocks import block
 from torch import nn
 import torch
-from .stem import Stem
+from .stem import push_stem
 
 
 class _RecurrentBlock(nn.Module):
@@ -58,7 +58,6 @@ def AutoEncDec(
     Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
     parameter_manager = ParameterManager(**kwargs)
     auxiliary_classifier = parameter_manager.get_param('auxiliary_classifier', None)
-    wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
     base_dim, max_dim = filters
     block_group = 0
     layers = []
@@ -76,7 +75,7 @@ def AutoEncDec(
     # Stem
     if stem is not None:
         stem_type, stem_layers = list(stem.items())[0]
-        layers, in_dim, out_dim = push_stem(layers, in_dim, out_dim, wide_scale, stem_type, stem_layers, **kwargs) 
+        layers, in_dim, out_dim = push_stem(layers, in_dim, out_dim, stem_type, stem_layers, **kwargs) 
     else:
         stem_layers = 0
         
@@ -86,8 +85,7 @@ def AutoEncDec(
     dim_cache = []
     for i in range(total_blocks):
         id = i + 1
-        if (isinstance(pool_freq, int)
-        and id % pool_freq == 0) 
+        if (isinstance(pool_freq, int) and id % pool_freq == 0) \
         or (isinstance(pool_freq, list) and id in pool_freq):
             block_group += 1
             do_pool = True
@@ -110,6 +108,7 @@ def AutoEncDec(
         # TODO (Ming): Add an option to use different type of blocks in the autoencoder-like architecture
         # Modification targets: _op_type for begin, inner and end
         _type = _parse_type(i, type)
+        wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
         out_dim = wide_scale * _filter_policy(
             id, type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy,
             parameter_manager
