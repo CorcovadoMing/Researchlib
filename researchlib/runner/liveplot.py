@@ -1,4 +1,3 @@
-from ..models import GANModel
 from ipywidgets import IntProgress, Output, HBox, Label
 from IPython import display as _display
 import hiddenlayer as hl

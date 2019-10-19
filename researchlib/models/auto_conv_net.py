@@ -130,4 +130,4 @@ def AutoConvNet(
     ParameterManager.verify_kwargs(**kwargs)
     parameter_manager.save_buffer('dim_type', _get_dim_type(op))
     parameter_manager.save_buffer('last_dim', out_dim)
-    return Builder(layers)
+    return Builder.Seq(layers)

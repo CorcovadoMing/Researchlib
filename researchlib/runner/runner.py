@@ -1,6 +1,5 @@
 from ..loss import loss_mapping, loss_ensemble
 from .history import History
-from ..models import GANModel
 from .export import _Export
 from .prefetch import *
 from ..utils import *
@@ -10,9 +9,7 @@ from .save_load import _save_checkpoint, _load_checkpoint
 from .trainable_params_utils import num_model_params
 from torch.cuda import is_available
 from torch.nn import DataParallel
-from torchvision import transforms
 import torch.backends.cudnn as cudnn
-from apex import amp
 import os
 
 
@@ -125,10 +122,6 @@ class Runner:
                 fn, _, = loss_mapping(reg_fn[key])
                 reg_fn[key] = fn
 
-        # Model
-        if type(model) == GANModel:
-            self.loss_fn[0].set_model(self.model)
-            self.default_metrics = [InceptionScore(), FID()]
 
         if self.multigpu:
             self.model = DataParallel(self.model)

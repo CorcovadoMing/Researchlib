@@ -182,4 +182,4 @@ def AutoEncDec(
     ParameterManager.verify_kwargs(**kwargs)
     parameter_manager.save_buffer('dim_type', _get_dim_type(down_op))
     parameter_manager.save_buffer('last_dim', in_dim)
-    return Builder(layers)
+    return Builder.Seq(layers)

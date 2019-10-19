@@ -40,4 +40,4 @@ def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', **
     ]
 
     layers = list(filter(None, layers))
-    return Builder(layers)
+    return Builder.Seq(layers)

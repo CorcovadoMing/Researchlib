@@ -35,7 +35,7 @@ from .view import _View
 #from .multihead_attention import * (Buggy)
 
 from .activator import _GeLU, _Mish, _Swish
-
+from .meta import _MultiApply, _SupportFeatureConcat
 
 class layer(object):
     View = _View

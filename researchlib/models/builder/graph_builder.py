@@ -28,7 +28,7 @@ def build_graph(net, sep='/'):
     return {path: (node[0], [resolve_input(rel_path, path, idx) for rel_path in node[1]]) for idx, (path, node) in enumerate(flattened)} 
 
 
-class GraphBuilder(nn.Module):
+class _Graph(nn.Module):
     def __init__(self, net):
         super().__init__()
         self.graph = build_graph(net)

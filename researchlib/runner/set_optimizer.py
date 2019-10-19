@@ -8,35 +8,34 @@ from .optimizer.lookahead import Lookahead
 from .optimizer.larc import LARC
 from .optimizer.nag import NAG
 from adabound import AdaBound
-from ..models import GANModel
 from ..utils import _register_method, update_optim
 import torchcontrib
 from functools import partial, reduce
 from .trainable_params_utils import is_bias, num_list_params
 
+
 __methods__ = []
 register_method = _register_method(__methods__)
 
-
-opt_mapping = {
-    'adam': partial(Adam, betas = (0.9, 0.999)),
-    'adamw': partial(AdamW, betas = (0.9, 0.999)),
-    'lamb': partial(FusedLAMB, betas = (0.9, 0.999)),
-    'novograd': FusedNovoGrad,
-    'cocob': Cocob,
-    'radam-plain': partial(PlainRAdam, betas = (0.9, 0.999)),
-    'radam': partial(RAdam, betas = (0.9, 0.999)),
-    'sgd': partial(SGD, lr = 1e-1, momentum = 0.9),
-    'nesterov': partial(SGD, lr = 1e-2, momentum = 0.9, nesterov = True),
-    'nag': partial(NAG, lr = 1e-1),
-    'rmsprop': RMSprop,
-    'adabound': partial(AdaBound, lr = 1e-3, final_lr = 0.1),
-    'adagrad': Adagrad,
-    'adafactor': partial(Adafactor, lr = 1e-3)
-}
-
 @register_method
 def set_optimizer(self):
+    opt_mapping = {
+        'adam': partial(Adam, betas = (0.9, 0.999)),
+        'adamw': partial(AdamW, betas = (0.9, 0.999)),
+        'lamb': partial(FusedLAMB, betas = (0.9, 0.999)),
+        'novograd': FusedNovoGrad,
+        'cocob': Cocob,
+        'radam-plain': partial(PlainRAdam, betas = (0.9, 0.999)),
+        'radam': partial(RAdam, betas = (0.9, 0.999)),
+        'sgd': partial(SGD, lr = 1e-1, momentum = 0.9),
+        'nesterov': partial(SGD, lr = 1e-2, momentum = 0.9, nesterov = True),
+        'nag': partial(NAG, lr = 1e-1),
+        'rmsprop': RMSprop,
+        'adabound': partial(AdaBound, lr = 1e-3, final_lr = 0.1),
+        'adagrad': Adagrad,
+        'adafactor': partial(Adafactor, lr = 1e-3)
+    }
+
     loss_params = []
     for i in self.loss_fn:
         try:
