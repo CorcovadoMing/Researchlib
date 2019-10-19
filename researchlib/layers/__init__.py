@@ -37,10 +37,11 @@ from .view import _View
 from .activator import _GeLU, _Mish, _Swish
 from .meta import _MultiApply, _SupportFeatureConcat
 
+
 class layer(object):
     View = _View
     SASA2d = _SASA2d
-    
+
     # Non-Local
     ConcatNonLocalBlock1d = _ConcatNonLocalBlock1d
     ConcatNonLocalBlock2d = _ConcatNonLocalBlock2d

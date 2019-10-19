@@ -16,7 +16,9 @@ class _ResBlock(_Block):
         unit_fn = self._get_param('unit', unit.conv)
         erased_activator = self._get_param('erased_activator', False)
         activator_type = self._get_param('activator_type', 'ReLU')
-        activator_layer = self._get_activator_layer(activator_type) if not erased_activator and not self.preact else None
+        activator_layer = self._get_activator_layer(
+            activator_type
+        ) if not erased_activator and not self.preact else None
         self.merge_layer = nn.Sequential(*list(filter(None, [activator_layer])))
 
         norm_type = self._get_param('norm_type', 'BatchNorm')
@@ -33,17 +35,26 @@ class _ResBlock(_Block):
             'padding', int((kernel_size - 1) / 2)
         )
 
-        self.preact_bn_shared = self._get_param('preact_bn_shared', False) and self.preact and (self.in_dim != self.out_dim or self.do_pool)
+        self.preact_bn_shared = self._get_param(
+            'preact_bn_shared', False
+        ) and self.preact and (self.in_dim != self.out_dim or self.do_pool)
         if self.preact_bn_shared:
-            self.shared_bn_branch = nn.Sequential(self._get_norm_layer(norm_type, self.in_dim), self._get_activator_layer(activator_type))
+            self.shared_bn_branch = nn.Sequential(
+                self._get_norm_layer(norm_type, self.in_dim),
+                self._get_activator_layer(activator_type)
+            )
         else:
             self.shared_bn_branch = nn.Sequential()
-        
+
         first_custom_kwargs = self._get_custom_kwargs({
-            'kernel_size': kernel_size,
-            'stride': 1 if blur else stride,
-            'padding': padding,
-            'erased_activator': True if (self.preact and erased_activator) or self.preact_bn_shared else False
+            'kernel_size':
+            kernel_size,
+            'stride':
+            1 if blur else stride,
+            'padding':
+            padding,
+            'erased_activator':
+            True if (self.preact and erased_activator) or self.preact_bn_shared else False
         })
 
         second_custom_kwargs = self._get_custom_kwargs({
@@ -53,7 +64,8 @@ class _ResBlock(_Block):
 
         conv_layers = [
             unit_fn(
-                self.op, self.in_dim, self.out_dim, False, False if self.preact_bn_shared else self.do_norm, self.preact,
+                self.op, self.in_dim, self.out_dim, False,
+                False if self.preact_bn_shared else self.do_norm, self.preact,
                 **first_custom_kwargs
             ),
             layer.Downsample(channels = self.out_dim, filt_size = 3, stride = stride)

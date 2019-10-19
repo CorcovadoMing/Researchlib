@@ -12,7 +12,6 @@ from torch.nn import DataParallel
 import torch.backends.cudnn as cudnn
 import os
 
-
 from . import init_model
 from . import fit
 from . import train
@@ -21,6 +20,7 @@ from . import gpu_resource_management
 from . import predict
 from . import set_optimizer
 from . import describe
+
 
 @_add_methods_from(describe)
 @_add_methods_from(set_optimizer)
@@ -90,6 +90,7 @@ class Runner:
 
         # Assign loss function
         self.loss_fn = []
+
         def _process_loss_fn(loss_fn):
             process_func = loss_ensemble if type(loss_fn) == dict else loss_mapping
             return process_func(loss_fn)
@@ -122,37 +123,32 @@ class Runner:
                 fn, _, = loss_mapping(reg_fn[key])
                 reg_fn[key] = fn
 
-
         if self.multigpu:
             self.model = DataParallel(self.model)
 
         # Speedup
         cudnn.benchmark = True
-        
+
         self.set_optimizer()
-        
+
         # must verify after all keys get registered
         ParameterManager.verify_kwargs(**kwargs)
 
-        
     def start_experiment(self, name):
         self.experiment_name = name
         self.checkpoint_path = os.path.join('.', 'checkpoint', self.experiment_name)
         os.makedirs(self.checkpoint_path, exist_ok = True)
 
-        
     def load_best(self, _id = 'none'):
         if len(self.experiment_name) == 0:
             self.start_experiment('default')
         self.load(os.path.join(self.checkpoint_path, 'best_' + _id))
 
-        
     def load_epoch(self, epoch, _id = 'none'):
         if len(self.experiment_name) == 0:
             self.start_experiment('default')
         self.load(os.path.join(self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(epoch)))
 
-        
     def load_last(self):
         try:
             self.load_epoch(self.epoch)
@@ -160,23 +156,21 @@ class Runner:
             # The last epoch is not complete
             self.load_epoch(self.epoch - 1)
 
-            
     def save(self, path):
         _save_checkpoint(self.model, self.optimizer, path)
-        
-        
+
     def load(self, path):
-        self.model, self.optimizer = _load_checkpoint(self.model, self.optimizer, self.multigpu, path)
-        
-        
-        
-    def normalize(self, type=None, mean=None, std=None):
+        self.model, self.optimizer = _load_checkpoint(
+            self.model, self.optimizer, self.multigpu, path
+        )
+
+    def normalize(self, type = None, mean = None, std = None):
         self.train_loader.set_normalizer(type, mean, std)
         if self.test_loader:
             self.test_loader.set_normalizer(type, mean, std)
         return self
 
-    def augmentation(self, augmentation_list, include_y=False):
+    def augmentation(self, augmentation_list, include_y = False):
         self.train_loader._set_augmentor(augmentation_list, include_y)
         return self
 

@@ -4,13 +4,14 @@ from ..utils import _register_method, ParameterManager
 __methods__ = []
 register_method = _register_method(__methods__)
 
+
 @register_method
 def describe(self):
     def _describe_model(model_dict):
         query = {}
         keys = [
-            'do_norm', 'pool_freq', 'preact', 'filter_policy', 'filters', 'type',
-            'total_blocks', 'op', 'unit'
+            'do_norm', 'pool_freq', 'preact', 'filter_policy', 'filters', 'type', 'total_blocks',
+            'op', 'unit'
         ]
         for key, value in model_dict.items():
             if key in keys:
@@ -36,7 +37,7 @@ def describe(self):
         'swa', 'swa_start', 'larc', 'fp16', 'augmentation_list', 'weight_decay',
         'preprocessing_list', 'loss_fn', 'train_loader'
     ]
-    
+
     query = {}
     for key, value in self.__dict__.items():
         if key in keys:

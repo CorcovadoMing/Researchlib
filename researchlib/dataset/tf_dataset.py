@@ -13,57 +13,56 @@ from .preprocessing import preprocessing
 
 
 class _TFDataset:
-    def __init__(self, name, is_train, transpose=('NHWC', 'NCHW')):
+    def __init__(self, name, is_train, transpose = ('NHWC', 'NCHW')):
         self.is_train = is_train
         self.name = name
-        
+
         split = tfds.Split.TRAIN if is_train else tfds.Split.TEST
         phase = 'train' if is_train else 'test'
         ds = tfds.builder(name)
         info = ds.info
         self.length = info.splits[phase].num_examples
         ds.download_and_prepare()
-        self.ds = ds.as_dataset(split=split, shuffle_files=False)
-        
+        self.ds = ds.as_dataset(split = split, shuffle_files = False)
+
         self.normalizer = []
         self.augmentor = []
         self.include_y = False
         self.transpose = transpose
-        
-        
+
     def set_normalizer(self, type, mean, std):
         self.normalizer = preprocessing.set_normalizer(type, mean, std)
-        
-    
-    def _set_augmentor(self, augmentor, include_y=False):
-        mapping = {
-            'hflip': augmentations.HFlip(),
-            'crop': augmentations.Crop(32, 32, 4)
-        }
-        
+
+    def _set_augmentor(self, augmentor, include_y = False):
+        mapping = {'hflip': augmentations.HFlip(), 'crop': augmentations.Crop(32, 32, 4)}
+
         self.augmentor = []
         for i in augmentor:
             self.augmentor.append(mapping[i])
         self.include_y = include_y
-    
-    
-    def get_generator(self, batch_size=512, **kwargs):
+
+    def get_generator(self, batch_size = 512, **kwargs):
         ds = self.ds.shuffle(10240).repeat(kwargs['epochs']).batch(batch_size).prefetch(2048)
         ds = DataFromGenerator(tfds.as_numpy(ds))
         ds.__len__ = lambda: math.ceil(self.length / batch_size)
-        process_single_fn = partial(_process_single, 
-                                    is_train=self.is_train, include_y=self.include_y, 
-                                    normalizer=self.normalizer, augmentor=self.augmentor, 
-                                    data_key='image', label_key='label',
-                                    transpose=self.transpose)
-        ds = MultiProcessMapDataZMQ(ds, 2, process_single_fn, buffer_size=8)
+        process_single_fn = partial(
+            _process_single,
+            is_train = self.is_train,
+            include_y = self.include_y,
+            normalizer = self.normalizer,
+            augmentor = self.augmentor,
+            data_key = 'image',
+            label_key = 'label',
+            transpose = self.transpose
+        )
+        ds = MultiProcessMapDataZMQ(ds, 2, process_single_fn, buffer_size = 8)
         ds = PrintData(ds)
         ds.reset_state()
         return ds
-    
-    def get_support_set(self, classes=[], shot=5):
+
+    def get_support_set(self, classes = [], shot = 5):
         collect = {k: [] for k in classes}
-        g = self.get_generator(1, epochs=3)
+        g = self.get_generator(1, epochs = 3)
         count = 0
         for x, y in g:
             x = x[0]
@@ -73,4 +72,5 @@ class _TFDataset:
                 count += 1
             if count == len(classes) * shot:
                 break
-        return np.stack(list(collect.values())), np.repeat(np.array(list(collect.keys())), shot).reshape(len(classes), shot)
+        return np.stack(list(collect.values())), np.repeat(np.array(list(collect.keys())),
+                                                           shot).reshape(len(classes), shot)

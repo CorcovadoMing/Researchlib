@@ -13,9 +13,9 @@ import torchcontrib
 from functools import partial, reduce
 from .trainable_params_utils import is_bias, num_list_params
 
-
 __methods__ = []
 register_method = _register_method(__methods__)
+
 
 @register_method
 def set_optimizer(self):
@@ -42,19 +42,18 @@ def set_optimizer(self):
             loss_params += [p for p in i.parameters() if p.requires_grad]
         except:
             pass
-    
+
     model_weight_params = is_bias(self.model)[False]
     model_bias_params = is_bias(self.model)[True]
-    
+
     print(reduce(num_list_params, loss_params, 0))
     print(num_list_params(model_weight_params))
     print(num_list_params(model_bias_params))
-    
+
     opt_fn = opt_mapping[self.optimizer_choice]
-    
-    self.optimizer = [opt_fn(model_weight_params + loss_params), 
-                      opt_fn(model_bias_params)]
-    
+
+    self.optimizer = [opt_fn(model_weight_params + loss_params), opt_fn(model_bias_params)]
+
     for i in range(len(self.optimizer)):
         if self.lookahead:
             self.optimizer[i] = Lookahead(self.optimizer[i])

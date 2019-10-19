@@ -34,7 +34,7 @@ def _gpu_monitor_worker(membar, utilsbar):
                     m
                 ) + '%', 'U' + str(i) + ': ' + str(u) + '%'
             time.sleep(1)
-            
+
 
 class Liveplot:
     def __init__(self, total_iteration, _plot = False):
@@ -126,8 +126,13 @@ class Liveplot:
 
     def update_desc(self, epoch, batch_idx, loss_record, monitor_record, track_best):
         loss_record /= batch_idx
-        metrics_collection = [''.join(['%s: %.5s' % (key.capitalize(), float(value) / batch_idx) for (key, value) in monitor_record.items()])]
-        metrics_collection = ''.join(metrics_collection) 
+        metrics_collection = [
+            ''.join([
+                '%s: %.5s' % (key.capitalize(), float(value) / batch_idx)
+                for (key, value) in monitor_record.items()
+            ])
+        ]
+        metrics_collection = ''.join(metrics_collection)
         misc, progress = self.timer.output(batch_idx)
         self.progress_bar.value = batch_idx
         self.progress_label_text.value = f'Epoch: {epoch}, Loss: {loss_record:.5f}, {metrics_collection}, Track best: {track_best:.5f}, {misc}'
@@ -141,14 +146,10 @@ class Liveplot:
         self.redis.set('history', pickle.dumps(history_.records))
         if self._plot:
             with self.loss_plot:
-                self.loss_canvas.draw_plot([
-                    self.history["train_loss"], self.history['val_loss']
-                ])
+                self.loss_canvas.draw_plot([self.history["train_loss"], self.history['val_loss']])
 
             with self.matrix_plot:
-                self.matrix_canvas.draw_plot([
-                    self.history['train_acc'], self.history['val_acc']
-                ])
+                self.matrix_canvas.draw_plot([self.history['train_acc'], self.history['val_acc']])
 
             with self.lr_plot:
                 self.lr_canvas.draw_plot([self.history['lr']])
@@ -159,7 +160,11 @@ class Liveplot:
         with self.text_log:
             if epoch == 1:
                 self.text_table.add_row(['Epochs'] + list(history_.records.keys()))
-                self.text_table.set_cols_width([6] + [len(format(i[-1], '.4f')) for i in list(history_.records.values())])
-            self.text_table.add_row([epoch_str] + [format(i[-1], '.4f') for i in list(history_.records.values())])
+                self.text_table.set_cols_width(
+                    [6] + [len(format(i[-1], '.4f')) for i in list(history_.records.values())]
+                )
+            self.text_table.add_row(
+                [epoch_str] + [format(i[-1], '.4f') for i in list(history_.records.values())]
+            )
             _display.clear_output(wait = True)
             print(self.text_table.draw())

@@ -3,6 +3,7 @@ from torch import nn
 import warnings
 from apex import amp
 
+
 def _save_checkpoint(model, optimizer, path):
     path = path + '.model.pt'
     warnings.filterwarnings('ignore')

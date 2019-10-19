@@ -91,7 +91,7 @@ class _Block(nn.Module):
                 dim = [self.out_dim]
         else:
             dim = [dim]
-            
+
         if norm_type not in ['BatchNorm', 'InstanceNorm', 'GroupNorm', 'ShakeBatchNorm']:
             if type(norm_type) == str:
                 raise ValueError(f'Unknown norm type {norm_type}')
@@ -108,10 +108,10 @@ class _Block(nn.Module):
             norm_op_str = norm_type + dim_str
             norm_op = layer.__dict__[norm_op_str]
             result = norm_op(*dim)
-        
+
         freeze_scale = self._get_param('freeze_scale', False)
         result.weight.requires_grad = not freeze_scale
-        
+
         return result
 
     def _get_pool_layer(self, pool_type, pool_factor, dim):

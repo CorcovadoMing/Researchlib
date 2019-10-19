@@ -2,13 +2,14 @@ from torch import nn
 
 has_inputs = lambda node: type(node) is tuple
 
-def path_iter(nested_dict, pfx=()):
+
+def path_iter(nested_dict, pfx = ()):
     for name, val in nested_dict.items():
         if isinstance(val, dict): yield from path_iter(val, (*pfx, name))
-        else: yield ((*pfx, name), val)  
+        else: yield ((*pfx, name), val)
 
-            
-def normpath(path, sep='/'):
+
+def normpath(path, sep = '/'):
     #simplified os.path.normpath
     parts = []
     for p in path.split(sep):
@@ -18,14 +19,20 @@ def normpath(path, sep='/'):
     return sep.join(parts)
 
 
-def pipeline(net, sep='/'):
-    return [(sep.join(path), (node if has_inputs(node) else (node, [-1]))) for (path, node) in path_iter(net)]
+def pipeline(net, sep = '/'):
+    return [(sep.join(path), (node if has_inputs(node) else (node, [-1])))
+            for (path, node) in path_iter(net)]
 
 
-def build_graph(net, sep='/'):
+def build_graph(net, sep = '/'):
     flattened = pipeline(net)
-    resolve_input = lambda rel_path, path, idx: normpath(sep.join((path, '..', rel_path))) if isinstance(rel_path, str) else flattened[idx+rel_path][0]
-    return {path: (node[0], [resolve_input(rel_path, path, idx) for rel_path in node[1]]) for idx, (path, node) in enumerate(flattened)} 
+    resolve_input = lambda rel_path, path, idx: normpath(sep.join(
+        (path, '..', rel_path)
+    )) if isinstance(rel_path, str) else flattened[idx + rel_path][0]
+    return {
+        path: (node[0], [resolve_input(rel_path, path, idx) for rel_path in node[1]])
+        for idx, (path, node) in enumerate(flattened)
+    }
 
 
 class _Graph(nn.Module):

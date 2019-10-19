@@ -16,12 +16,13 @@ class threadsafe_iter:
         with self.lock:
             return self.it.__next__()
 
-        
+
 def threadsafe_generator(f):
     """A decorator that takes a generator function and makes it thread-safe.
     """
     def g(*a, **kw):
         return threadsafe_iter(f(*a, **kw))
+
     return g
 
 

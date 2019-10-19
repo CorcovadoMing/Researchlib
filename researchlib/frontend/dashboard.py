@@ -36,34 +36,40 @@ _app.layout = html.Div(
 
         # Resource monitor
         html.Div([
-            dbc.Row(
-                [
-                    dbc.Col(dbc.Card(
+            dbc.Row([
+                dbc.Col(
+                    dbc.Card(
                         dbc.CardBody([
-                            html.H4("CPU Memory", className="card-title"),
-                            html.H1("", id = "cpu_mem", className="card-subtitle")
+                            html.H4("CPU Memory", className = "card-title"),
+                            html.H1("", id = "cpu_mem", className = "card-subtitle")
                         ]),
-                    )),
-                    dbc.Col(dbc.Card(
+                    )
+                ),
+                dbc.Col(
+                    dbc.Card(
                         dbc.CardBody([
-                            html.H4("CPU Utils", className="card-title"),
-                            html.H1("", id = "cpu_utils", className="card-subtitle")
+                            html.H4("CPU Utils", className = "card-title"),
+                            html.H1("", id = "cpu_utils", className = "card-subtitle")
                         ]),
-                    )),
-                    dbc.Col(dbc.Card(
+                    )
+                ),
+                dbc.Col(
+                    dbc.Card(
                         dbc.CardBody([
-                            html.H4("GPU Memory", className="card-title"),
-                            html.H1("", id = "gpu_mem", className="card-subtitle")
+                            html.H4("GPU Memory", className = "card-title"),
+                            html.H1("", id = "gpu_mem", className = "card-subtitle")
                         ]),
-                    )),
-                    dbc.Col(dbc.Card(
+                    )
+                ),
+                dbc.Col(
+                    dbc.Card(
                         dbc.CardBody([
-                            html.H4("GPU Utils", className="card-title"),
-                            html.H1("", id = "gpu_utils", className="card-subtitle")
+                            html.H4("GPU Utils", className = "card-title"),
+                            html.H1("", id = "gpu_utils", className = "card-subtitle")
                         ]),
-                    )),
-                ],
-            ),
+                    )
+                ),
+            ], ),
         ]),
 
         # Experiments choose (TODO)
@@ -126,8 +132,9 @@ def _update_desc(n):
 def _add_trace(fig, data, key, name, row_index, col_index):
     try:
         fig.append_trace({
-            'x': [0]+list(range(1, len(data[key])+1)),
-            'y': [0]+data[key],
+            'x': [0] + list(range(1,
+                                  len(data[key]) + 1)),
+            'y': [0] + data[key],
             'name': name,
             'mode': 'lines+markers',
             'type': 'scatter',
@@ -152,12 +159,17 @@ def _get_gpu_monitor():
     Output('gpu_utils', 'children')
 ], [Input('chart-update', 'n_intervals')])
 def _update_resources(n):
-    cpu_mem_used, cpu_util_used = int(psutil.virtual_memory()[3]) / int(psutil.virtual_memory()[4]), float(psutil.cpu_percent())
+    cpu_mem_used, cpu_util_used = int(psutil.virtual_memory()[3]
+                                      ) / int(psutil.virtual_memory()[4]), float(
+                                          psutil.cpu_percent()
+                                      )
     gpu_mem_used, gpu_util_used = _get_gpu_monitor()
-    return [str(int(100*cpu_mem_used)) + '%', 
-           str(int(cpu_util_used)) + '%', 
-           str(gpu_mem_used) + '%', 
-           str(gpu_util_used) + '%']
+    return [
+        str(int(100 * cpu_mem_used)) + '%',
+        str(int(cpu_util_used)) + '%',
+        str(gpu_mem_used) + '%',
+        str(gpu_util_used) + '%'
+    ]
 
 
 # Multiple components can update everytime interval gets fired.

@@ -12,7 +12,9 @@ from .stem import push_stem
 
 
 class _RecurrentBlock(nn.Module):
-    def __init__(self, begin_block, inner_block, end_block, skip_connection = False, skip_type = 'add'):
+    def __init__(
+        self, begin_block, inner_block, end_block, skip_connection = False, skip_type = 'add'
+    ):
         super().__init__()
         self.skip_connection = skip_connection
         self.skip_type = skip_type
@@ -61,7 +63,7 @@ def AutoEncDec(
     base_dim, max_dim = filters
     block_group = 0
     layers = []
-    
+
     # Input mixup
     layers.append(layer.ManifoldMixup())
 
@@ -71,14 +73,14 @@ def AutoEncDec(
     if skip_type not in ['add', 'concat']:
         raise ValueError("skip_type can only be 'add' or 'concat'")
 
-
     # Stem
     if stem is not None:
         stem_type, stem_layers = list(stem.items())[0]
-        layers, in_dim, out_dim = push_stem(layers, in_dim, out_dim, stem_type, stem_layers, **kwargs) 
+        layers, in_dim, out_dim = push_stem(
+            layers, in_dim, out_dim, stem_type, stem_layers, **kwargs
+        )
     else:
         stem_layers = 0
-        
 
     # The builder logic is from the middle blocks and recursive to append the begin and end block
     # We calculate the half-part of the model shape first
@@ -100,7 +102,6 @@ def AutoEncDec(
         dim_cache.append((id + stem_layers, in_dim, out_dim, do_pool))
         in_dim = out_dim
 
-        
     # Start build the model recursively
     for i in range(total_blocks):
         id = i + 1
@@ -108,7 +109,9 @@ def AutoEncDec(
         # TODO (Ming): Add an option to use different type of blocks in the autoencoder-like architecture
         # Modification targets: _op_type for begin, inner and end
         _type = _parse_type(i, type)
-        wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
+        wide_scale = parameter_manager.get_param(
+            'wide_scale', 10
+        ) if _type == 'wide-residual' else 1
         out_dim = wide_scale * _filter_policy(
             id, type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy,
             parameter_manager

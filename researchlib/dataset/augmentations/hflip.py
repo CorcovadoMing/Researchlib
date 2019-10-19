@@ -8,9 +8,11 @@ from collections import namedtuple
 def _hflip(x):
     raise NotImplementedError
 
+
 @_hflip.register(torch.Tensor)
 def _(x):
     return torch.flip(x, [-1])
+
 
 @_hflip.register(np.ndarray)
 def _(x):

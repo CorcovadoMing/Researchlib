@@ -30,7 +30,7 @@ def AutoConvNet(
     base_dim, max_dim = filters
     block_group = 0
     layers = []
-    
+
     # Input mixup
     layers.append(layer.ManifoldMixup())
 
@@ -40,7 +40,9 @@ def AutoConvNet(
     # Stem
     if stem is not None:
         stem_type, stem_layers = list(stem.items())[0]
-        layers, in_dim, out_dim = push_stem(layers, in_dim, out_dim, stem_type, stem_layers, **kwargs) 
+        layers, in_dim, out_dim = push_stem(
+            layers, in_dim, out_dim, stem_type, stem_layers, **kwargs
+        )
     else:
         stem_layers = 0
 
@@ -55,7 +57,9 @@ def AutoConvNet(
             do_pool = False
 
         _type = _parse_type(i, type)
-        wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
+        wide_scale = parameter_manager.get_param(
+            'wide_scale', 10
+        ) if _type == 'wide-residual' else 1
         out_dim = wide_scale * _filter_policy(
             id, type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy,
             parameter_manager
@@ -70,12 +74,12 @@ def AutoConvNet(
                 wrapper.Auxiliary(
                     Builder([
                         Heads(auxiliary_classifier),
-                        layer.LogSoftmax(-1)  
+                        layer.LogSoftmax(-1)
                         # TODO (Ming): if not classification? if using softmax not logsoftmax?
                     ])
                 )
             )
-        
+
         kwargs['non_local'] = id >= non_local_start
         layers.append(
             _op_type(

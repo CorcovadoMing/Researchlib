@@ -7,7 +7,7 @@ class MetaAcc(Matrix):
         super().__init__()
         self.total = 0
         self.correct = 0
-        
+
     def forward(self, loss_input):
         y_pred, y_true = loss_input[0].detach(), loss_input[1].detach()
         _, y_true = torch.max(y_true, -1)

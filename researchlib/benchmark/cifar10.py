@@ -99,9 +99,7 @@ class _cifar10:
         from ..runner import Runner
         from ..models import AutoConvNet, builder, Heads
         model = builder([
-            block.VGGBlock(
-                layer.Conv2d, 3, 64, False, True, False, unit = unit.conv, blur = True
-            ),
+            block.VGGBlock(layer.Conv2d, 3, 64, False, True, False, unit = unit.conv, blur = True),
             block.DAWNBlock(
                 layer.Conv2d, 64, 128, True, True, False, unit = unit.conv, blur = True
             ),
