@@ -39,6 +39,10 @@ from .meta import _MultiApply, _SupportFeatureConcat
 
 
 class layer(object):
+    # Meta Learning
+    MultiApply= _MultiApply
+    SupportFeatureConcat = _SupportFeatureConcat
+    
     View = _View
     SASA2d = _SASA2d
 
