@@ -39,6 +39,8 @@ class _Graph(nn.Module):
     def __init__(self, net):
         super().__init__()
         self.graph = build_graph(net)
+        for path, (val, _) in self.graph.items(): 
+            setattr(self, path.replace('/', '_'), val)
 
     def forward(self, inputs):
         outputs = dict(inputs)
@@ -46,9 +48,22 @@ class _Graph(nn.Module):
             if k not in outputs:
                 inp = []
                 for x in ins:
+                    # has index
+                    if ':' in x:
+                        x, index = x.split(':')
+                        index = int(index)
+                    else:
+                        index = -1
+                    
+                    # Multiple Input
                     if type(outputs[x]) == tuple:
                         inp += list(outputs[x])
                     else:
                         inp.append(outputs[x])
+                    
+                    # has index 
+                    if index >= 0:
+                        inp = [inp[index]]
+
                 outputs[k] = node(*inp)
         return outputs
