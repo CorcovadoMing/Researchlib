@@ -59,7 +59,7 @@ class _TorchDataset:
             batch_size = batch_size,
             shuffle = self.is_train,
             collate_fn = my_collate,
-            num_workers = 1
+            num_workers = 0
         )
         length = len(ds)
         ds = DataFromGenerator(ds)
