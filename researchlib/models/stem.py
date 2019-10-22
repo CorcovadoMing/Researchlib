@@ -4,7 +4,7 @@ from ..layers import layer
 import copy
 
 
-def push_stem(layers, in_dim, out_dim, stem_type, stem_layers, **kwargs):
+def push_stem(layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs):
     for i in range(stem_layers):
         id = i + 1
         if i == 0:

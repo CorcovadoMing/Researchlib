@@ -77,7 +77,7 @@ def AutoEncDec(
     if stem is not None:
         stem_type, stem_layers = list(stem.items())[0]
         layers, in_dim, out_dim = push_stem(
-            layers, in_dim, out_dim, stem_type, stem_layers, **kwargs
+            layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs
         )
     else:
         stem_layers = 0
@@ -94,7 +94,8 @@ def AutoEncDec(
         else:
             do_pool = False
 
-        out_dim = wide_scale * _filter_policy(
+        # TODO: wide_scale
+        out_dim = _filter_policy(
             id, type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy,
             parameter_manager
         )
@@ -105,25 +106,18 @@ def AutoEncDec(
     # Start build the model recursively
     for i in range(total_blocks):
         id = i + 1
+        cache_id, in_dim, out_dim, do_pool = dim_cache.pop()
 
         # TODO (Ming): Add an option to use different type of blocks in the autoencoder-like architecture
         # Modification targets: _op_type for begin, inner and end
         _type = _parse_type(i, type)
-        wide_scale = parameter_manager.get_param(
-            'wide_scale', 10
-        ) if _type == 'wide-residual' else 1
-        out_dim = wide_scale * _filter_policy(
-            id, type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy,
-            parameter_manager
-        )
+        
         _op_type = _get_op_type(type, id, total_blocks, do_pool, in_dim == out_dim)
-
         _op_type_begin = _op_type
         _op_type_inner = _op_type
         _op_type_end = _op_type
         # End of TODO
 
-        cache_id, in_dim, out_dim, do_pool = dim_cache.pop()
         end_in_dim = 2 * out_dim if skip_type == 'concat' and skip_connection else out_dim
         print(2 * total_blocks + 1 - cache_id + stem_layers, end_in_dim, in_dim, do_pool)
         kwargs['non_local'] = id >= non_local_start

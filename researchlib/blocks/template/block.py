@@ -110,7 +110,8 @@ class _Block(nn.Module):
             result = norm_op(*dim)
 
         freeze_scale = self._get_param('freeze_scale', False)
-        result.weight.requires_grad = not freeze_scale
+        if freeze_scale:
+            result.weight.requires_grad = False
 
         return result
 
