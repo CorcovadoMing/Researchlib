@@ -11,6 +11,7 @@ from torch.cuda import is_available
 from torch.nn import DataParallel
 import torch.backends.cudnn as cudnn
 import os
+from ..models import Builder
 
 from . import init_model
 from . import fit
@@ -50,8 +51,8 @@ class Runner:
         reg_weights = {},
         **kwargs
     ):
-
         self.__class__.__runner_settings__ = locals()
+        parameter_manager = ParameterManager(**kwargs)
 
         self.experiment_name = ''
         self.checkpoint_path = ''
@@ -66,19 +67,16 @@ class Runner:
         self._date_id = self.bencher.get_date()
 
         self.model = model
+        if isinstance(self.model, Builder.Graph):
+            self.model_type = 'graph'
+            self.output_node = parameter_manager.get_param('output_node', required=True)
+        else:
+            self.model_type = 'seq'
+            
         self.num_params = num_model_params(model)
 
         self.train_loader = train_loader
         self.test_loader = test_loader
-        self.inputs = 1
-        if type(train_loader) == tuple:
-            self.train_loader = train_loader[0]
-            self.inputs = train_loader[1]
-        if type(test_loader) == tuple:
-            self.test_loader = test_loader[0]
-            self.inputs = test_loader[1]
-
-        parameter_manager = ParameterManager(**kwargs)
 
         self.lookahead = parameter_manager.get_param('lookahead', False)
         self.swa = parameter_manager.get_param('swa', False)
@@ -95,13 +93,16 @@ class Runner:
             process_func = loss_ensemble if type(loss_fn) == dict else loss_mapping
             return process_func(loss_fn)
 
-        if type(loss_fn) == list:
-            for lf in loss_fn:
-                _loss_fn = _process_loss_fn(lf)
-                self.loss_fn.append(_loss_fn)
+        if self.model_type == 'graph':
+            self.loss_fn = loss_fn
         else:
-            _loss_fn = _process_loss_fn(loss_fn)
-            self.loss_fn.append(_loss_fn)
+            if type(loss_fn) == list:
+                for lf in loss_fn:
+                    _loss_fn = _process_loss_fn(lf)
+                    self.loss_fn.append(_loss_fn)
+            else:
+                _loss_fn = _process_loss_fn(loss_fn)
+                self.loss_fn.append(_loss_fn)
 
         # Assign monitoring
         self.monitor_mode = monitor_mode

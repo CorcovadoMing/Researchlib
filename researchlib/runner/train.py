@@ -68,14 +68,19 @@ def train_fn(self, loader, metrics, monitor, **kwargs):
 
             # Deal with labels
             support_y = torch.from_numpy(support_y).to(targets.device).to(targets.dtype)
-            support_y = support_y.expand(targets.size(0), -1,
-                                         -1).transpose(-1, -2)  # Batch, shot, way
+            support_y = support_y.expand(targets.size(0), -1, -1).transpose(-1, -2)  # Batch, shot, way
             targets = targets.unsqueeze(1).unsqueeze(2).expand(-1, shot, len(way))
             targets = targets.eq(support_y).to(inputs.dtype)
         else:
-            outputs = self.model(inputs)
-
-        loss = self.loss_fn[0](outputs, targets)
+            support_x, support_y = None, None
+        
+        if self.model_type == 'graph':
+            results = self.model({'x': inputs, 'y': targets, 'support_x': support_x, 'support_y': support_y})
+            outputs, loss = results[self.output_node], results[self.loss_fn]
+        else:
+            outputs = self.model(*filter(None, [inputs, support_x]))
+            loss = self.loss_fn[0](outputs, targets)
+        
         loss.backward()
 
         for i in self.optimizer:
@@ -100,6 +105,7 @@ def train_fn(self, loader, metrics, monitor, **kwargs):
             'x': outputs,
             'y': targets
         }) if metrics is not None else metrics_record
+        
         for i in monitor:
             metrics_record[i] += metrics_result[i]
 

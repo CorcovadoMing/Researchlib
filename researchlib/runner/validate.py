@@ -50,19 +50,34 @@ def validate_fn(self, loader, metrics, monitor, **kwargs):
                 support_x, support_y = support_set
                 support_x = torch.from_numpy(support_x).to(inputs.device).to(inputs.dtype)
                 support_x = support_x.view(-1, *inputs.shape[1:])
-                outputs = self.val_model(inputs, support_x)  # Batch, shot, way
+                outputs = self.model(inputs, support_x)  # Batch, shot, way
 
                 # Deal with labels
                 support_y = torch.from_numpy(support_y).to(targets.device).to(targets.dtype)
-                support_y = support_y.expand(targets.size(0), -1,
-                                             -1).transpose(-1, -2)  # Batch, shot, way
+                support_y = support_y.expand(targets.size(0), -1, -1).transpose(-1, -2)  # Batch, shot, way
                 targets = targets.unsqueeze(1).unsqueeze(2).expand(-1, shot, len(way))
                 targets = targets.eq(support_y).to(inputs.dtype)
             else:
-                #outputs = self.val_model(inputs)
-                outputs = (self.val_model(inputs) + self.val_model(torch.flip(inputs, [-1]))) / 2
+                support_x, support_y = None, None
 
-            loss = self.loss_fn[0](outputs, targets)
+            if self.model_type == 'graph':
+                results = self.val_model({
+                    'x': inputs, 
+                    'y': targets, 
+                    'support_x': support_x, 
+                    'support_y': support_y
+                })
+                results_tta = self.val_model({
+                    'x': torch.flip(inputs, [-1]), 
+                    'y': targets, 
+                    'support_x': support_x, 
+                    'support_y': support_y
+                })
+                outputs = (results[self.output_node] + results_tta[self.output_node]) / 2
+                loss = (results[self.loss_fn] + results[self.loss_fn]) / 2
+            else:
+                outputs = self.val_model(inputs)
+                loss = self.loss_fn[0](outputs, targets)
 
             metrics_result = metrics({
                 'x': outputs,
