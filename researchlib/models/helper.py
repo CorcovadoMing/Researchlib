@@ -22,7 +22,7 @@ def _get_op_type(type_object, cur_block, total_blocks, do_pool, do_expand):
 
     if _type not in [
         'vgg', 'dawn', 'residual', 'residual-bottleneck', 'wide-residual', 'inverted-bottleneck',
-        'inceptionv3', 'inceptionv4', 'inception-residualv2'
+        'inceptionv3', 'inceptionv4', 'inception-residualv2', 'whitening'
     ]:
         raise ValueError(f'Type {_type} is not supperted')
 
@@ -38,6 +38,8 @@ def _get_op_type(type_object, cur_block, total_blocks, do_pool, do_expand):
         _op_type = block.WideResBlock
     elif _type == 'inverted-bottleneck':
         _op_type = block.InvertedBottleneckBlock
+    elif _type == 'whitening':
+        _op_type = block.WhiteningBlock
     elif _type == 'inceptionv3':
         if (cur_block / total_blocks) <= 0.2:
             _op_type = block.InceptionV3A

@@ -4,13 +4,13 @@ from ..layers import layer
 import copy
 
 
-def push_stem(layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs):
+def push_stem(op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs):
     for i in range(stem_layers):
         id = i + 1
         if i == 0:
             stem_kwargs = copy.deepcopy(kwargs)
             stem_kwargs['erased_activator'] = True if preact else False
-        _type = _parse_type(i, type)
+        _type = _parse_type(i, stem_type)
         wide_scale = parameter_manager.get_param(
             'wide_scale', 10
         ) if _type == 'wide-residual' else 1

@@ -77,7 +77,7 @@ def AutoEncDec(
     if stem is not None:
         stem_type, stem_layers = list(stem.items())[0]
         layers, in_dim, out_dim = push_stem(
-            layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs
+            down_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs
         )
     else:
         stem_layers = 0
