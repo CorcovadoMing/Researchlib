@@ -22,10 +22,14 @@ from .tcnblock import _TCNBlock
 from .gcnblock import _GCNBlock
 from .agcblock import _AGCBlock
 
+from .whitening_block import _WhiteningBlock
+
 
 class block(object):
     TemplateBlock = _TemplateBlock
 
+    WhiteningBlock = _WhiteningBlock
+    
     AGCBlock = _AGCBlock
     TCNBlock = _TCNBlock
     GCNBlock = _GCNBlock
