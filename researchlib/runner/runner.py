@@ -1,7 +1,6 @@
 from ..loss import loss_mapping, loss_ensemble
 from .history import History
 from .export import _Export
-from .prefetch import *
 from ..utils import *
 from ..utils import _add_methods_from, ParameterManager
 from ..benchmark import benchmark
@@ -38,17 +37,13 @@ class Runner:
 
     def __init__(
         self,
-        # Required
         model,
         train_loader,
-        # Optional with defualt values
         test_loader = None,
         optimizer = None,
         loss_fn = None,
         monitor_mode = 'min',
         monitor_state = 'loss',
-        reg_fn = {},
-        reg_weights = {},
         **kwargs
     ):
         self.__class__.__runner_settings__ = locals()
@@ -115,14 +110,6 @@ class Runner:
         elif monitor_mode == 'max':
             self.monitor = -1e9
             self.monitor_mode = max
-
-        # Regulariation (Need to be check)
-        self.reg_fn = reg_fn
-        self.reg_weights = reg_weights
-        for key in self.reg_fn:
-            if type(reg_fn[key]) == str:
-                fn, _, = loss_mapping(reg_fn[key])
-                reg_fn[key] = fn
 
         if self.multigpu:
             self.model = DataParallel(self.model)
