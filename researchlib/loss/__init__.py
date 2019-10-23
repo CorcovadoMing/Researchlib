@@ -25,6 +25,10 @@ class loss(object):
     SSIMLoss = SSIMLoss
     MSSSIMLoss = MSSSIMLoss
     SoftDTWLoss = SoftDTWLoss
+    L1Loss = F.l1_loss
+    L2Loss = F.mse_loss
+    MAELoss = F.l1_loss
+    MSELoss = F.mse_loss
     
 #     'bce': F.binary_cross_entropy
 #     'adaptive_robust': AdaptiveRobustLoss(1),  # need to fix dimensions

@@ -78,7 +78,7 @@ def train_fn(self, loader, metrics, monitor, **kwargs):
             results = self.model({'x': inputs, 'y': targets, 'support_x': support_x, 'support_y': support_y})
             outputs, loss = results[self.output_node], results[self.loss_fn]
         else:
-            outputs = self.model(*filter(None, [inputs, support_x]))
+            outputs = self.model(*[i for i in (inputs, support_x) if i is not None])
             loss = self.loss_fn[0](outputs, targets)
         
         loss.backward()

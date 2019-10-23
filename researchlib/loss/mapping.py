@@ -2,6 +2,14 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
+from .dice import DiceLoss, FlattenDiceLoss
+from .logcosh import LogCoshLoss
+from .huber import HuberLoss
+from .quantile import QuantileLoss
+from .ssim_msssim import SSIMLoss, MSSSIMLoss
+from .adaptive_robust_loss import AdaptiveRobustLoss
+from .soft_dtw import SoftDTWLoss
+
 
 def smooth_nll_loss(x, y, smoothing = 0.2):
     kl = -x.mean(dim = -1)

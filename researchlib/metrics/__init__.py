@@ -10,6 +10,7 @@
 # from .meta_acc import MetaAcc
 
 from .categorical import Categorical
+from .meta_categorical import MetaCategorical
 from .acc import Acc
 from .l1 import L1
 from .l2 import L2

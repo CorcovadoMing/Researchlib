@@ -76,7 +76,7 @@ def validate_fn(self, loader, metrics, monitor, **kwargs):
                 outputs = (results[self.output_node] + results_tta[self.output_node]) / 2
                 loss = (results[self.loss_fn] + results[self.loss_fn]) / 2
             else:
-                outputs = self.val_model(inputs)
+                outputs = self.val_model(*[i for i in (inputs, support_x) if i is not None])
                 loss = self.loss_fn[0](outputs, targets)
 
             metrics_result = metrics({
