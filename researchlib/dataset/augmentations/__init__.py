@@ -2,6 +2,7 @@ from .crop import Crop
 from .hflip import HFlip
 
 
-class augmentations(object):
+class Augmentations(object):
     Crop = Crop
     HFlip = HFlip
+    

@@ -8,7 +8,6 @@ import numpy as np
 import math
 from functools import partial
 from .process_single import _process_single
-from .augmentations import augmentations
 from .preprocessing import preprocessing
 
 
@@ -34,11 +33,7 @@ class _TFDataset:
         self.normalizer = preprocessing.set_normalizer(type, mean, std)
 
     def _set_augmentor(self, augmentor, include_y = False):
-        mapping = {'hflip': augmentations.HFlip(), 'crop': augmentations.Crop(32, 32, 4)}
-
-        self.augmentor = []
-        for i in augmentor:
-            self.augmentor.append(mapping[i])
+        self.augmentor = augmentor
         self.include_y = include_y
 
     def get_generator(self, batch_size = 512, **kwargs):

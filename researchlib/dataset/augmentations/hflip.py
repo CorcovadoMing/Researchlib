@@ -20,7 +20,7 @@ def _(x):
 
 
 # Interface
-class HFlip(namedtuple('FlipLR', ())):
+class HFlip(namedtuple('HFlip', ())):
     def __call__(self, x, choice):
         return _hflip(x) if choice else x
 

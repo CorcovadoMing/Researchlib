@@ -1,11 +1,4 @@
-import torch
 import torchvision
-import numpy as np
-from functools import partial
-from tensorpack.dataflow import *
-from .process_single import _process_single
-from .augmentations import augmentations
-from .preprocessing import preprocessing
 from .vision import _NumpyDataset
 
 
