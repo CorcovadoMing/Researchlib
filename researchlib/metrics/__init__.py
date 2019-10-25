@@ -15,3 +15,12 @@ from .acc import Acc
 from .l1 import L1
 from .l2 import L2
 from .hitrate import Hitrate
+
+
+class Metrics(object):
+    Categorical = Categorical
+    MetaCategorical = MetaCategorical
+    Acc = Acc
+    L1 = L1
+    L2 = L2
+    Hitrate = Hitrate
