@@ -7,7 +7,7 @@ register_method = _register_method(__methods__)
 
 
 @register_method
-def train_fn(self, loader, metrics, monitor, **kwargs):
+def train_fn(self, loader, metrics, monitor, visualize, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
 
     liveplot = parameter_manager.get_param('liveplot', required = True)
@@ -31,6 +31,7 @@ def train_fn(self, loader, metrics, monitor, **kwargs):
     loss_record = 0
     norm_record = 0
     metrics_record = {key: 0 for key in monitor}
+    visualize_record = {key: 0 for key in visualize}
 
     for batch_idx, (inputs, targets) in enumerate(loader):
         # Set LR
@@ -71,6 +72,8 @@ def train_fn(self, loader, metrics, monitor, **kwargs):
             support_y = support_y.expand(targets.size(0), -1, -1).transpose(-1, -2)  # Batch, shot, way
             targets = targets.unsqueeze(1).unsqueeze(2).expand(-1, shot, len(way))
             targets = targets.eq(support_y).to(inputs.dtype)
+            targets *= (1 - 0.2 - (0.2/9))
+            targets += (0.2/9)
         else:
             support_x, support_y = None, None
         
@@ -108,6 +111,9 @@ def train_fn(self, loader, metrics, monitor, **kwargs):
         
         for i in monitor:
             metrics_record[i] += metrics_result[i]
+        
+        for i in visualize:
+            visualize_record[i] += metrics_result[i]
 
         if batch_idx % 5 == 0 or batch_idx == (self.train_loader_length - 1):
             liveplot.update_desc(epoch, batch_idx + 1, loss_record, metrics_record, self.monitor)
@@ -119,6 +125,8 @@ def train_fn(self, loader, metrics, monitor, **kwargs):
 
     loss_record = loss_record / (batch_idx + 1)
     norm_record = (norm_record ** 0.5) / (batch_idx + 1)
+    
     for i in metrics_record:
         metrics_record[i] /= (batch_idx + 1)
-    return loss_record, norm_record, metrics_record
+    
+    return loss_record, norm_record, metrics_record, visualize_record

@@ -40,6 +40,7 @@ class Liveplot:
     def __init__(self, total_iteration, _plot = False):
         self._plot = _plot
         self.history = hl.History()
+        self.custom_msg = {}
         self.text_table = Texttable(max_width = 0)  #unlimited
         self.timer = Timer(total_iteration)
         self.redis = redis.Redis()
@@ -85,15 +86,12 @@ class Liveplot:
             self.lr_canvas = hl.Canvas()
             self.norm_canvas = hl.Canvas()
 
-        # Memory and Log
+        # Memory
         gpu_count = nvmlDeviceGetCount()
         total_bars = [Output() for _ in range(2 * gpu_count)]
         self.gpu_mem_monitor = total_bars[::2]
         self.gpu_utils_monitor = total_bars[1::2]
-        self.text_log = Output()
         display(HBox(total_bars))
-        display(self.text_log)
-
         self.gpu_mem_monitor_bar = []
         self.gpu_utils_monitor_bar = []
         for i, (membar, utilsbar) in enumerate(zip(self.gpu_mem_monitor, self.gpu_utils_monitor)):
@@ -114,6 +112,16 @@ class Liveplot:
                 self.gpu_utils_monitor_bar[-1].min = 0
                 self.gpu_utils_monitor_bar[-1].max = 100
                 display(self.gpu_utils_monitor_bar[-1])
+        
+        
+        # Customize
+        self.custom_output = Output()
+        display(self.custom_output)
+        
+        # Log
+        self.text_log = Output()
+        display(self.text_log)
+
 
         # Start monitor thread
         global _STOP_GPU_MONITOR_
@@ -138,6 +146,9 @@ class Liveplot:
         self.progress_label_text.value = f'Epoch: {epoch}, Loss: {loss_record:.5f}, {metrics_collection}, Track best: {track_best:.5f}, {misc}'
         self.redis.set('desc', self.progress_label_text.value)
         self.redis.set('progress', progress)
+    
+    def update_custom_output(self, msg, prefix):
+        self.custom_msg[prefix] = msg
 
     def record(self, epoch, key, value, mode = ''):
         self.history.log(epoch, **{key: value})
@@ -156,6 +167,14 @@ class Liveplot:
 
             with self.norm_plot:
                 self.norm_canvas.draw_plot([self.history['norm']])
+                
+        with self.custom_output:
+            _display.clear_output(wait = True)
+            for prefix in self.custom_msg:
+                print(prefix)
+                for i in self.custom_msg[prefix]:
+                    print(self.custom_msg[prefix][i])
+            self.custom_msg = {}
 
         with self.text_log:
             if epoch == 1:

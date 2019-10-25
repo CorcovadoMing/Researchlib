@@ -80,6 +80,7 @@ def fit(
     plot = False,
     init_optim = True,
     monitor = [],
+    visualize = [],
     **kwargs
 ):
     
@@ -116,14 +117,13 @@ def fit(
     buffered_epochs = epochs + 1
     train_loader = self.train_loader.get_generator(batch_size, epochs=buffered_epochs)
     self.train_loader_length = len(train_loader)
+    liveplot = Liveplot(self.train_loader_length, plot)
     train_loader = BackgroundGenerator(inifinity_loop(train_loader), fp16=fp16)
     if self.test_loader:
         test_loader = self.test_loader.get_generator(batch_size, epochs=buffered_epochs)
         self.test_loader_length = len(test_loader)
         test_loader = BackgroundGenerator(inifinity_loop(test_loader), fp16=fp16)
     
-    liveplot = Liveplot(self.train_loader_length, plot)
-        
     if iterations == 0:
         iterations = self.train_loader_length
         
@@ -226,7 +226,8 @@ def fit(
             liveplot.redis.set('stage', 'train')
             liveplot.timer.clear()
             # Training function
-            loss_record, norm_record, metrics_record = self.train_fn(train_loader, metrics, monitor,
+            loss_record, norm_record, metrics_record, visualize_record = self.train_fn(
+                                                                     train_loader, metrics, monitor, visualize,
                                                                      liveplot=liveplot,
                                                                      mmixup_alpha=mmixup_alpha, 
                                                                      fixed_mmixup=fixed_mmixup, 
@@ -244,6 +245,7 @@ def fit(
             liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer[0].param_groups][-1])
             liveplot.record(epoch, 'train_loss', loss_record)
             liveplot.record(epoch, 'norm', norm_record)
+            liveplot.update_custom_output(visualize_record, prefix = 'train')
             self.history_.add({'loss': loss_record}, prefix = 'train')
             self.history_.add(metrics_record, prefix = 'train')
             try:
@@ -257,11 +259,13 @@ def fit(
             if self.test_loader:
                 liveplot.redis.set('stage', 'validate')
                 # Validation function
-                loss_record, metrics_record = self.validate_fn(test_loader, metrics, monitor,
-                                                               support_set=support_set,
-                                                               way=way,
-                                                               shot=shot)
+                loss_record, metrics_record, visualize_record = self.validate_fn(
+                                                                           test_loader, metrics, monitor, visualize,
+                                                                           support_set=support_set,
+                                                                           way=way,
+                                                                           shot=shot)
                 liveplot.record(epoch, 'val_loss', loss_record)
+                liveplot.update_custom_output(visualize_record, prefix = 'val')
                 self.history_.add({'loss': loss_record}, prefix = 'val')
                 self.history_.add(metrics_record, prefix = 'val')
                 try:
@@ -280,7 +284,9 @@ def fit(
                 critic = None
 
             # Checkpoint
-            checkpoint_model_name = os.path.join(self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(self.epoch))
+            checkpoint_model_name = os.path.join(
+                self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(self.epoch)
+            )
             self.save(checkpoint_model_name)
             if critic is not None and self.monitor_mode(critic, self.monitor) == critic:
                 self.monitor = critic

@@ -8,7 +8,7 @@ register_method = _register_method(__methods__)
 
 
 @register_method
-def validate(self, metrics = None, monitor = [], prefetch = True, **kwargs):
+def validate(self, metrics = None, monitor = [], visualize = [], prefetch = True, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
     batch_size = parameter_manager.get_param(
         'batch_size', 512, validator = lambda x: x > 0 and type(x) == int
@@ -21,7 +21,7 @@ def validate(self, metrics = None, monitor = [], prefetch = True, **kwargs):
     test_loader = BackgroundGenerator(inifinity_loop(test_loader), fp16 = fp16)
     self.preload_gpu()
     try:
-        loss_record, metrics_record = self.validate_fn(test_loader, metrics, monitor)
+        loss_record, metrics_record = self.validate_fn(test_loader, metrics, monitor, visualize, **kwargs)
         print(loss_record)
         for k, v in metrics_record.items():
             print(str(k) + ':', float(v))
@@ -32,7 +32,7 @@ def validate(self, metrics = None, monitor = [], prefetch = True, **kwargs):
 
 
 @register_method
-def validate_fn(self, loader, metrics, monitor, **kwargs):
+def validate_fn(self, loader, metrics, monitor, visualize, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
 
     support_set = parameter_manager.get_param('support_set')
@@ -43,6 +43,7 @@ def validate_fn(self, loader, metrics, monitor, **kwargs):
 
     loss_record = 0
     metrics_record = {key: 0 for key in monitor}
+    visualize_record = {key: 0 for key in visualize}
 
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(loader):
@@ -83,9 +84,13 @@ def validate_fn(self, loader, metrics, monitor, **kwargs):
                 'x': outputs,
                 'y': targets
             }) if metrics is not None else metrics_record
+            
             for i in monitor:
                 metrics_record[i] += metrics_result[i]
 
+            for i in visualize:
+                visualize_record[i] += metrics_result[i]
+                
             loss_record += loss.item()
             del loss
 
@@ -93,6 +98,8 @@ def validate_fn(self, loader, metrics, monitor, **kwargs):
                 break
 
     loss_record = loss_record / (batch_idx + 1)
+    
     for i in metrics_record:
         metrics_record[i] /= (batch_idx + 1)
-    return loss_record, metrics_record
+    
+    return loss_record, metrics_record, visualize_record
