@@ -21,7 +21,7 @@ def validate(self, metrics = None, monitor = [], visualize = [], prefetch = True
     test_loader = BackgroundGenerator(inifinity_loop(test_loader), fp16 = fp16)
     self.preload_gpu()
     try:
-        loss_record, metrics_record = self.validate_fn(test_loader, metrics, monitor, visualize, **kwargs)
+        loss_record, metrics_record, visualize_record = self.validate_fn(test_loader, metrics, monitor, visualize, **kwargs)
         print(loss_record)
         for k, v in metrics_record.items():
             print(str(k) + ':', float(v))
