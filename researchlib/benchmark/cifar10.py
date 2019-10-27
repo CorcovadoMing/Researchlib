@@ -1,6 +1,6 @@
 from ..dataset import *
 from ..blocks import block, unit
-from ..layers import layer
+from ..ops import op
 import torch
 from torchvision import datasets
 from torchvision import transforms
@@ -42,7 +42,7 @@ class _cifar10:
         self.model = builder([
             # group 1, 2 and 3
             AutoConvNet(
-                layer.Conv2d,
+                op.Conv2d,
                 unit.conv,
                 input_dim,
                 num_block,
@@ -58,12 +58,12 @@ class _cifar10:
                 pyramid_alpha = 200,
                 shortcut = 'padding'
             ),
-            layer.BatchNorm2d(out_dim),
-            layer.ReLU(inplace = True),
-            layer.AdaptiveAvgPool2d(1),
-            layer.Flatten(),
-            layer.Linear(out_dim, 10),
-            layer.LogSoftmax(-1)
+            op.BatchNorm2d(out_dim),
+            op.ReLU(inplace = True),
+            op.AdaptiveAvgPool2d(1),
+            op.Flatten(),
+            op.Linear(out_dim, 10),
+            op.LogSoftmax(-1)
         ])
 
         self.runner = Runner(
@@ -99,20 +99,20 @@ class _cifar10:
         from ..runner import Runner
         from ..models import AutoConvNet, builder, Heads
         model = builder([
-            block.VGGBlock(layer.Conv2d, 3, 64, False, True, False, unit = unit.conv, blur = True),
+            block.VGGBlock(op.Conv2d, 3, 64, False, True, False, unit = unit.conv, blur = True),
             block.DAWNBlock(
-                layer.Conv2d, 64, 128, True, True, False, unit = unit.conv, blur = True
+                op.Conv2d, 64, 128, True, True, False, unit = unit.conv, blur = True
             ),
             block.VGGBlock(
-                layer.Conv2d, 128, 256, True, True, False, unit = unit.conv, blur = True
+                op.Conv2d, 128, 256, True, True, False, unit = unit.conv, blur = True
             ),
             block.DAWNBlock(
-                layer.Conv2d, 256, 512, True, True, False, unit = unit.conv, blur = True
+                op.Conv2d, 256, 512, True, True, False, unit = unit.conv, blur = True
             ),
-            layer.AdaptiveAvgPool2d(1),
-            layer.Flatten(),
-            layer.Linear(512, 10),
-            layer.LogSoftmax(-1)
+            op.AdaptiveAvgPool2d(1),
+            op.Flatten(),
+            op.Linear(512, 10),
+            op.LogSoftmax(-1)
         ])
 
         self.runner = Runner(
@@ -138,9 +138,9 @@ class _cifar10:
         from ..runner import Runner
         from ..models import AutoConvNet, builder, Heads
         model = builder([
-            layer.ManifoldMixup(),
+            op.ManifoldMixup(),
             block.VGGBlock(
-                layer.WSConv2d,
+                op.WSConv2d,
                 3,
                 64,
                 False,
@@ -153,9 +153,9 @@ class _cifar10:
                 beta_range = self.get_param('beta_range'),
                 blur = True
             ),
-            layer.ManifoldMixup(),
+            op.ManifoldMixup(),
             block.DAWNBlock(
-                layer.WSConv2d,
+                op.WSConv2d,
                 64,
                 128,
                 True,
@@ -168,9 +168,9 @@ class _cifar10:
                 beta_range = self.get_param('beta_range'),
                 blur = True
             ),
-            layer.ManifoldMixup(),
+            op.ManifoldMixup(),
             block.VGGBlock(
-                layer.WSConv2d,
+                op.WSConv2d,
                 128,
                 256,
                 True,
@@ -183,9 +183,9 @@ class _cifar10:
                 beta_range = self.get_param('beta_range'),
                 blur = True
             ),
-            layer.ManifoldMixup(),
+            op.ManifoldMixup(),
             block.DAWNBlock(
-                layer.WSConv2d,
+                op.WSConv2d,
                 256,
                 512,
                 True,
@@ -198,11 +198,11 @@ class _cifar10:
                 beta_range = self.get_param('beta_range'),
                 blur = True
             ),
-            layer.ManifoldMixup(),
-            layer.AdaptiveAvgPool2d(1),
-            layer.Flatten(),
-            layer.Linear(512, 10),
-            layer.LogSoftmax(-1)
+            op.ManifoldMixup(),
+            op.AdaptiveAvgPool2d(1),
+            op.Flatten(),
+            op.Linear(512, 10),
+            op.LogSoftmax(-1)
         ])
 
         self.runner = Runner(

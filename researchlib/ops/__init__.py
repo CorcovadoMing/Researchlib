@@ -9,10 +9,8 @@ from .norm import _Norm
 from .adaptive_concat_pool import _AdaptiveConcatPool1d, _AdaptiveConcatPool2d
 from .position_encoding import _PositionEncoding
 from .noisy_linear import _NoisyLinear
-from .reshape import _Reshape
 from .condition_projection import _ConditionProjection
 from .spatial_transform import _SpatialTransform
-from .permute import _Permute
 from .shakedrop import _ShakeDrop
 from .pixel_norm import _PixelNorm
 from .drop_relu import _DropReLU
@@ -22,7 +20,6 @@ from .non_local.dot_product import _DotNonLocalBlock1d, _DotNonLocalBlock2d, _Do
 from .non_local.embedded_gaussian import _EmbeddedGaussianNonLocalBlock1d, _EmbeddedGaussianNonLocalBlock2d, _EmbeddedGaussianNonLocalBlock3d
 from .non_local.gaussian import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _GaussianNonLocalBlock3d
 from .noise_injection import _NoiseInjection
-from .flatten import _Flatten
 from .multiply import _Multiply
 from .aaconv import _AAConv2d
 from .blur import Downsample as _Downsample
@@ -30,20 +27,27 @@ from .wsconv import _WSConv1d, _WSConvTranspose1d, _WSConv2d, _WSConvTranspose2d
 from .manifold_mixup import _ManifoldMixup
 from .shake_batchnorm import _ShakeBatchNorm1d, _ShakeBatchNorm2d, _ShakeBatchNorm3d
 from .sasa import _SASA2d
-from .view import _View
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
 
 from .activator import _GeLU, _Mish, _Swish
 from .meta import _MultiApply, _SupportFeatureConcat
+from .shaping import _Flatten, _Reshape, _Resize, _View, _Permute
 
 
-class layer(object):
+class op(object):
     # Meta Learning
     MultiApply= _MultiApply
     SupportFeatureConcat = _SupportFeatureConcat
     
+    # Shaping
     View = _View
+    Reshape = _Reshape
+    Permute = _Permute
+    Flatten = _Flatten
+    Resize = _Resize
+    
+    
     SASA2d = _SASA2d
 
     # Non-Local
@@ -117,16 +121,12 @@ class layer(object):
     ShakeBatchNorm2d = _ShakeBatchNorm2d
     ShakeBatchNorm3d = _ShakeBatchNorm3d
 
-    Reshape = _Reshape
-    Permute = _Permute
-
     ConditionProjection = _ConditionProjection
     SpatialTransform = _SpatialTransform
 
     DropReLU = _DropReLU
 
     NoiseInjection = _NoiseInjection
-    Flatten = _Flatten
 
 
 # Merge nn and layer module if it didn't cause conflict
@@ -135,8 +135,8 @@ for i, j in nn.__dict__.items():
     try:
         if 'torch.nn.modules' in str(j) and str(i)[0].isupper():
             try:
-                getattr(layer, i)
+                getattr(op, i)
             except:
-                setattr(layer, i, j)
+                setattr(op, i, j)
     except:
         pass

@@ -1,7 +1,7 @@
 from .helper import _get_dim_type, _filter_policy, _get_op_type, _parse_type
 from .heads import Heads
 from ..runner import Runner
-from ..layers import layer
+from ..ops import op
 from ..wrapper import wrapper
 from .builder import Builder
 from ..utils import ParameterManager
@@ -95,7 +95,7 @@ def AutoConvNet(
                 **kwargs
             )
         )
-        layers.append(layer.ManifoldMixup())
+        layers.append(op.ManifoldMixup())
 
         in_dim = out_dim
 

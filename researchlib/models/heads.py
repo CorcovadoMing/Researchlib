@@ -1,4 +1,4 @@
-from ..layers import layer
+from ..ops import op
 from .builder import Builder
 from ..utils import ParameterManager
 from ..blocks.unit import unit
@@ -25,18 +25,18 @@ def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', **
 
     layers = [
         # Preact
-        layer.__dict__[f'BatchNorm{dim_type}'](last_dim) if preact else None,
-        layer.ReLU() if preact else None,
+        op.__dict__[f'BatchNorm{dim_type}'](last_dim) if preact else None,
+        op.ReLU() if preact else None,
 
         # Attention
-        layer.__dict__[f'DotNonLocalBlock{dim_type}'](last_dim) if attention else None,
-        unit.conv(layer.__dict__['Conv' + str(dim_type)], last_dim, last_dim, False, True, False)
+        op.__dict__[f'DotNonLocalBlock{dim_type}'](last_dim) if attention else None,
+        unit.conv(op.__dict__['Conv' + str(dim_type)], last_dim, last_dim, False, True, False)
         if attention else None,
 
         # Normal heads
-        layer.__dict__[f'Adaptive{_reduce_name}Pool{dim_type}'](1),
-        layer.Flatten(),
-        layer.Linear(_reduce_dim_calibrate * last_dim, out_dim, bias = False)
+        op.__dict__[f'Adaptive{_reduce_name}Pool{dim_type}'](1),
+        op.Flatten(),
+        op.Linear(_reduce_dim_calibrate * last_dim, out_dim, bias = False)
     ]
 
     layers = list(filter(None, layers))

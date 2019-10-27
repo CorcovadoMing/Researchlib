@@ -1,6 +1,6 @@
 from .helper import _get_dim_type, _filter_policy, _get_op_type, _parse_type
 from ..utils import ParameterManager
-from ..layers import layer
+from ..ops import op
 import copy
 
 
@@ -32,6 +32,6 @@ def push_stem(op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact,
                 **stem_kwargs
             )
         )
-        layers.append(layer.ManifoldMixup())
+        layers.append(op.ManifoldMixup())
         in_dim = out_dim
     return layers, in_dim, out_dim

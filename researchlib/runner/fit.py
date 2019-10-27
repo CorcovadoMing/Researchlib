@@ -1,12 +1,12 @@
-import os
 from ..utils import _register_method, plot_montage, _is_port_in_use, inifinity_loop, Annealer, ParameterManager, update_optim
-import torch
 from .liveplot import Liveplot
 from .prefetch import BackgroundGenerator
-import pickle
 from ..frontend.dashboard import _Dashboard
 import numpy as np
 import copy
+import pickle
+import os
+import torch
 
 
 __methods__ = []

@@ -3,7 +3,7 @@ from ..models import *
 from ..runner import *
 from ..callbacks import *
 from ..utils import *
-from ..layers import *
+from ..ops import *
 from ..blocks import *
 from ..loss import *
 from ..metrics import *

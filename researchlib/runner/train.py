@@ -1,6 +1,6 @@
 import torch
 from ..utils import _register_method, ParameterManager, Annealer, set_lr, update_optim
-from ..layers import layer
+from ..ops import op
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -49,11 +49,11 @@ def train_fn(self, loader, metrics, monitor, visualize, **kwargs):
         if mmixup_alpha is not None:
             batch_size = inputs[0].size(0)
             if fixed_mmixup is None and random_mmixup is None:
-                random_mmixup = [0, layer.ManifoldMixup.block_counter]
-            lam = layer.ManifoldMixup.setup_batch(
+                random_mmixup = [0, op.ManifoldMixup.block_counter]
+            lam = op.ManifoldMixup.setup_batch(
                 mmixup_alpha, batch_size, fixed_mmixup, random_mmixup
             )
-            targets, targets_res = layer.ManifoldMixup.get_y(targets)
+            targets, targets_res = op.ManifoldMixup.get_y(targets)
         else:
             targets_res = None
             lam = None

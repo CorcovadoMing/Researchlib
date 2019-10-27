@@ -1,7 +1,6 @@
 from .template.block import _Block
-from ..layers import layer
+from ..ops import op
 from torch import nn
-import torch
 from .unit import unit
 
 
@@ -68,7 +67,7 @@ class _ResBlock(_Block):
                 False if self.preact_bn_shared else self.do_norm, self.preact,
                 **first_custom_kwargs
             ),
-            layer.Downsample(channels = self.out_dim, filt_size = 3, stride = stride)
+            op.Downsample(channels = self.out_dim, filt_size = 3, stride = stride)
             if blur else None,
             unit_fn(
                 self.op, self.out_dim, self.out_dim, False, self.do_norm, self.preact,

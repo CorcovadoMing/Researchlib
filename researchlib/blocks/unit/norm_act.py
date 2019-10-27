@@ -1,5 +1,5 @@
 from ..template.block import _Block
-from ...layers import layer
+from ...ops import op
 from torch import nn
 
 

@@ -1,5 +1,5 @@
 from ..template.block import _Block
-from ...layers import layer
+from ...ops import op
 from torch import nn
 import torch.nn.utils.spectral_norm as sn
 from .norm_act import _norm_act
@@ -14,7 +14,7 @@ class _conv(_Block):
         pool_factor = self._get_param('pool_factor', 2)
         non_local = self._get_param('non_local', False) and self._get_param('kernel_size', 3) != 1
         non_local_type = self._get_param('non_local_type', 'EmbeddedGaussian')
-        non_local_layer = layer.__dict__[non_local_type + 'NonLocalBlock' +
+        non_local_layer = op.__dict__[non_local_type + 'NonLocalBlock' +
                                          self._get_dim_type()](self.in_dim) if non_local else None
         spectral_norm = self._get_param('sn', False)
         erased_activator = self._get_param('erased_activator', False)

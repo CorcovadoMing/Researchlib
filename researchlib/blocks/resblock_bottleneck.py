@@ -1,7 +1,6 @@
 from .template.block import _Block
-from ..layers import layer
+from ..ops import op
 from torch import nn
-import torch
 from .unit import unit
 
 
@@ -62,17 +61,17 @@ class _ResBottleneckBlock(_Block):
         })
         conv_layers = [
             unit_fn(
-                layer.__dict__['Conv' + self._get_dim_type()], self.in_dim, hidden_size, False,
+                op.__dict__['Conv' + self._get_dim_type()], self.in_dim, hidden_size, False,
                 self.do_norm, self.preact, **first_custom_kwargs
             ),
             unit_fn(
                 self.op, hidden_size, hidden_size, False, self.do_norm, self.preact,
                 **second_custom_kwargs
             ),
-            layer.Downsample(channels = hidden_size, filt_size = 3, stride = stride)
+            op.Downsample(channels = hidden_size, filt_size = 3, stride = stride)
             if blur else None,
             unit_fn(
-                layer.__dict__['Conv' + self._get_dim_type()], hidden_size, self.out_dim, False,
+                op.__dict__['Conv' + self._get_dim_type()], hidden_size, self.out_dim, False,
                 self.do_norm, self.preact, **third_custom_kwargs
             ), preact_final_norm_layer
         ]

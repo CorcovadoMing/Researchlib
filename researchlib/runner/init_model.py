@@ -40,9 +40,9 @@ def init_model(
                 pass
         else:
             if type(m) == nn.ModuleList or \
-                        'researchlib.layers.block' in str(type(m)) or \
+                        'researchlib.blocks' in str(type(m)) or \
                         'researchlib.models' in str(type(m)) or \
-                        'researchlib.layers.condition_projection' in str(type(m)):
+                        'researchlib.ops.condition_projection' in str(type(m)):
                 pass
             else:
                 for i in m.parameters():
@@ -62,9 +62,9 @@ def init_model(
 
     def _lsuv(m):
         if type(m) == nn.ModuleList or \
-                    'researchlib.layers.block' in str(type(m)) or \
+                    'researchlib.blocks' in str(type(m)) or \
                     'researchlib.models' in str(type(m)) or \
-                    'researchlib.layers.condition_projection' in str(type(m)):
+                    'researchlib.ops.condition_projection' in str(type(m)):
             pass
         else:
             if len(list(m.parameters())) > 0:

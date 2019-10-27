@@ -1,7 +1,7 @@
 from .helper import _get_dim_type, _filter_policy, _get_op_type, _parse_type
 from .heads import Heads
 from ..runner import Runner
-from ..layers import layer
+from ..ops import op
 from ..wrapper import wrapper
 from .builder import Builder
 from ..utils import ParameterManager
@@ -21,9 +21,9 @@ class _RecurrentBlock(nn.Module):
         self.begin = begin_block
         self.inner = inner_block
         self.end = end_block
-        self.begin_mmixup = layer.ManifoldMixup()
-        self.inner_mmixup = layer.ManifoldMixup()
-        self.end_mmixup = layer.ManifoldMixup()
+        self.begin_mmixup = op.ManifoldMixup()
+        self.inner_mmixup = op.ManifoldMixup()
+        self.end_mmixup = op.ManifoldMixup()
 
     def forward(self, x):
         x = self.begin(x)
@@ -65,7 +65,7 @@ def AutoEncDec(
     layers = []
 
     # Input mixup
-    layers.append(layer.ManifoldMixup())
+    layers.append(op.ManifoldMixup())
 
     in_dim = input_dim
     out_dim = base_dim

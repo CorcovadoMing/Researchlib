@@ -1,7 +1,5 @@
 from .template.block import _Block
-from ..layers import layer
 from torch import nn
-import torch
 from .unit import unit
 
 

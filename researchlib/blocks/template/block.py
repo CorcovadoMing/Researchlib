@@ -2,7 +2,7 @@ import re
 import torch
 import copy
 from torch import nn
-from ...layers import layer
+from ...ops import op
 from ...utils import ParameterManager
 from .attention import _SE_Attention, _CBAM_Attention
 from .shortcut import _padding_shortcut
@@ -81,7 +81,7 @@ class _Block(nn.Module):
         else:
             act_kwargs = {}
 
-        return layer.__dict__[activator_type](**inplace_kwargs, **act_kwargs)
+        return op.__dict__[activator_type](**inplace_kwargs, **act_kwargs)
 
     def _get_norm_layer(self, norm_type, dim = None):
         if dim is None:
@@ -106,7 +106,7 @@ class _Block(nn.Module):
                 dim.insert(0, group_num)
 
             norm_op_str = norm_type + dim_str
-            norm_op = layer.__dict__[norm_op_str]
+            norm_op = op.__dict__[norm_op_str]
             result = norm_op(*dim)
 
         freeze_scale = self._get_param('freeze_scale', False)
@@ -124,22 +124,22 @@ class _Block(nn.Module):
 
         dim_str = self._get_dim_type()
         if pool_type is 'Upsample':
-            pool_op = layer.__dict__[pool_type]
+            pool_op = op.__dict__[pool_type]
             return pool_op(scale_factor = pool_factor)
 
         elif pool_type is not 'Combined':
             pool_op_str = pool_type + dim_str
-            pool_op = layer.__dict__[pool_op_str]
+            pool_op = op.__dict__[pool_op_str]
 
             blur = self._get_param('blur', False)
             if pool_type == 'MaxPool' and blur:
                 pool_layer = nn.Sequential(
                     pool_op(pool_factor, stride = 1),
-                    layer.Downsample(channels = dim, filt_size = 3, stride = pool_factor)
+                    op.Downsample(channels = dim, filt_size = 3, stride = pool_factor)
                 )
             elif pool_type == 'AvgPool' and blur:
                 pool_layer = nn.Sequential(
-                    layer.Downsample(channels = dim, filt_size = 3, stride = pool_factor)
+                    op.Downsample(channels = dim, filt_size = 3, stride = pool_factor)
                 )
             else:
                 pool_layer = pool_op(pool_factor)
@@ -147,13 +147,13 @@ class _Block(nn.Module):
             return pool_layer
 
         else:
-            max_pool_op = layer.__dict__['MaxPool' + dim_str](pool_factor)
-            avg_pool_op = layer.__dict__['AvgPool' + dim_str](pool_factor)
+            max_pool_op = op.__dict__['MaxPool' + dim_str](pool_factor)
+            avg_pool_op = op.__dict__['AvgPool' + dim_str](pool_factor)
             conv_pool_op = nn.Sequential(
-                layer.__dict__['Conv' + dim_str](self.out_dim, self.out_dim, 4, 2, 1),
+                op.__dict__['Conv' + dim_str](self.out_dim, self.out_dim, 4, 2, 1),
                 nn.LeakyReLU(0.5)
             )  # Special case
-            reduction_op = layer.__dict__['Conv' + dim_str](self.out_dim * 3, self.out_dim, 1)
+            reduction_op = op.__dict__['Conv' + dim_str](self.out_dim * 3, self.out_dim, 1)
             return _Combined([max_pool_op, avg_pool_op, conv_pool_op], reduction_op, self.preact)
 
     def _get_attention_branch(self, ratio = 16, dim = None):
@@ -176,7 +176,7 @@ class _Block(nn.Module):
         mode_mapping = {'batch': 0, 'sample': 1, 'channel': 2, 'pixel': 3}
         mode = self._get_param('shakedrop_mode', 'pixel')
         mode = mode_mapping[mode]
-        return layer.ShakeDrop(
+        return op.ShakeDrop(
             id,
             total_blocks,
             alpha_range = alpha_range,
@@ -207,7 +207,7 @@ class _Block(nn.Module):
                 ]
                 if blur:
                     reduction_op.append(
-                        layer.Downsample(channels = self.out_dim, filt_size = 3, stride = stride)
+                        op.Downsample(channels = self.out_dim, filt_size = 3, stride = stride)
                     )
             else:
                 reduction_op = [None]
