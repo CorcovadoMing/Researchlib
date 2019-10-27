@@ -1,6 +1,14 @@
 import torchvision.models as models
 from functools import partial
+from .efficientnet import EfficientNet
 
+
+def load_efficientnet(name, pretrained):
+    if pretrained:
+        return EfficientNet.from_pretrained(name)
+    else:
+        return EfficientNet.from_name(name)
+    
 
 class ImageNet(object):
     AlexNet = partial(models.alexnet, pretrained=True, progress=False)
@@ -44,3 +52,12 @@ class ImageNet(object):
     ShuffleNetV2x1_0 = partial(models.shufflenetv2.shufflenet_v2_x1_0, pretrained=True, progress=False)
     ShuffleNetV2x1_5 = partial(models.shufflenetv2.shufflenet_v2_x1_5, pretrained=True, progress=False)
     ShuffleNetV2x2_0 = partial(models.shufflenetv2.shufflenet_v2_x2_0, pretrained=True, progress=False)
+    
+    EfficientNetB0 = partial(load_efficientnet, 'efficientnet-b0', pretrained=True)
+    EfficientNetB1 = partial(load_efficientnet, 'efficientnet-b1', pretrained=True)
+    EfficientNetB2 = partial(load_efficientnet, 'efficientnet-b2', pretrained=True)
+    EfficientNetB3 = partial(load_efficientnet, 'efficientnet-b3', pretrained=True)
+    EfficientNetB4 = partial(load_efficientnet, 'efficientnet-b4', pretrained=True)
+    EfficientNetB5 = partial(load_efficientnet, 'efficientnet-b5', pretrained=True)
+    EfficientNetB6 = partial(load_efficientnet, 'efficientnet-b6', pretrained=True)
+    EfficientNetB7 = partial(load_efficientnet, 'efficientnet-b7', pretrained=True)
