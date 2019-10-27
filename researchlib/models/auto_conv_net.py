@@ -10,7 +10,7 @@ from .stem import push_stem
 
 
 def AutoConvNet(
-    op,
+    _op,
     unit,
     input_dim,
     total_blocks,
@@ -32,7 +32,7 @@ def AutoConvNet(
     layers = []
 
     # Input mixup
-    layers.append(layer.ManifoldMixup())
+    layers.append(op.ManifoldMixup())
 
     in_dim = input_dim
     out_dim = base_dim
@@ -41,7 +41,7 @@ def AutoConvNet(
     if stem is not None:
         stem_type, stem_layers = list(stem.items())[0]
         layers, in_dim, out_dim = push_stem(
-            op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs
+            _op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs
         )
     else:
         stem_layers = 0
@@ -68,7 +68,7 @@ def AutoConvNet(
         print(id + stem_layers, in_dim, out_dim, do_pool)
 
         if do_pool and auxiliary_classifier is not None:
-            parameter_manager.save_buffer('dim_type', _get_dim_type(op))
+            parameter_manager.save_buffer('dim_type', _get_dim_type(_op))
             parameter_manager.save_buffer('last_dim', in_dim)
             layers.append(
                 wrapper.Auxiliary(
@@ -83,7 +83,7 @@ def AutoConvNet(
         kwargs['non_local'] = id >= non_local_start
         layers.append(
             _op_type(
-                op,
+                _op,
                 in_dim,
                 out_dim,
                 do_pool = do_pool,
@@ -101,6 +101,6 @@ def AutoConvNet(
 
     # must verify after all keys get registered
     ParameterManager.verify_kwargs(**kwargs)
-    parameter_manager.save_buffer('dim_type', _get_dim_type(op))
+    parameter_manager.save_buffer('dim_type', _get_dim_type(_op))
     parameter_manager.save_buffer('last_dim', out_dim)
     return Builder.Seq(layers)

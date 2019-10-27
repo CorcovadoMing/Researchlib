@@ -4,7 +4,7 @@ from ..ops import op
 import copy
 
 
-def push_stem(op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs):
+def push_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs):
     for i in range(stem_layers):
         id = i + 1
         if i == 0:
@@ -20,7 +20,7 @@ def push_stem(op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact,
         print(id, in_dim, out_dim, stem_type)
         layers.append(
             _op_type(
-                op,
+                _op,
                 in_dim,
                 out_dim,
                 do_pool = False,
