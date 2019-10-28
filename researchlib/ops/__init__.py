@@ -40,6 +40,7 @@ from .sequence import Conv1dRNNCell, Conv1dLSTMCell, Conv1dPeepholeLSTMCell, Con
 from .sequence import Conv2dRNNCell, Conv2dLSTMCell, Conv2dPeepholeLSTMCell, Conv2dGRUCell
 from .sequence import Conv3dRNNCell, Conv3dLSTMCell, Conv3dPeepholeLSTMCell, Conv3dGRUCell
 
+from .active_noise import _ActiveNoise
 
 
 class op(object):
@@ -80,6 +81,7 @@ class op(object):
     Conv3dPeepholeLSTMCell = Conv3dPeepholeLSTMCell 
     Conv3dGRUCell = Conv3dGRUCell
     
+    ActiveNoise = _ActiveNoise
     
     SASA2d = _SASA2d
 
