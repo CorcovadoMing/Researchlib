@@ -33,6 +33,13 @@ from .sasa import _SASA2d
 from .activator import _GeLU, _Mish, _Swish
 from .meta import _MultiApply, _SupportFeatureConcat
 from .shaping import _Flatten, _Reshape, _Resize, _View, _Permute
+from .sequence import Conv1dRNN, Conv1dLSTM, Conv1dPeepholeLSTM, Conv1dGRU
+from .sequence import Conv2dRNN, Conv2dLSTM, Conv2dPeepholeLSTM, Conv2dGRU
+from .sequence import Conv3dRNN, Conv3dLSTM, Conv3dPeepholeLSTM, Conv3dGRU
+from .sequence import Conv1dRNNCell, Conv1dLSTMCell, Conv1dPeepholeLSTMCell, Conv1dGRUCell
+from .sequence import Conv2dRNNCell, Conv2dLSTMCell, Conv2dPeepholeLSTMCell, Conv2dGRUCell
+from .sequence import Conv3dRNNCell, Conv3dLSTMCell, Conv3dPeepholeLSTMCell, Conv3dGRUCell
+
 
 
 class op(object):
@@ -46,6 +53,32 @@ class op(object):
     Permute = _Permute
     Flatten = _Flatten
     Resize = _Resize
+    
+    # Sequence
+    Conv1dRNN = Conv1dRNN
+    Conv1dLSTM = Conv1dLSTM
+    Conv1dPeepholeLSTM = Conv1dPeepholeLSTM
+    Conv1dGRU = Conv1dGRU
+    Conv2dRNN = Conv2dRNN 
+    Conv2dLSTM = Conv2dLSTM
+    Conv2dPeepholeLSTM = Conv2dPeepholeLSTM
+    Conv2dGRU = Conv2dGRU
+    Conv3dRNN = Conv3dRNN
+    Conv3dLSTM = Conv3dLSTM
+    Conv3dPeepholeLSTM = Conv3dPeepholeLSTM
+    Conv3dGRU = Conv3dGRU
+    Conv1dRNNCell = Conv1dRNNCell
+    Conv1dLSTMCell = Conv1dLSTMCell
+    Conv1dPeepholeLSTMCell = Conv1dPeepholeLSTMCell
+    Conv1dGRUCell = Conv1dGRUCell
+    Conv2dRNNCell = Conv2dRNNCell
+    Conv2dLSTMCell = Conv2dLSTMCell 
+    Conv2dPeepholeLSTMCell = Conv2dPeepholeLSTMCell
+    Conv2dGRUCell = Conv2dGRUCell
+    Conv3dRNNCell = Conv3dRNNCell
+    Conv3dLSTMCell = Conv3dLSTMCell
+    Conv3dPeepholeLSTMCell = Conv3dPeepholeLSTMCell 
+    Conv3dGRUCell = Conv3dGRUCell
     
     
     SASA2d = _SASA2d
