@@ -26,8 +26,6 @@ def train_fn(self, loader, metrics, monitor, visualize, **kwargs):
     shot = parameter_manager.get_param('shot')
     rho = ema_momentum ** ema_freq
 
-    self.model.train()
-
     loss_record = 0
     norm_record = 0
     metrics_record = {key: 0 for key in monitor}

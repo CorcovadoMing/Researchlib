@@ -20,13 +20,13 @@ register_method = _register_method(__methods__)
 @register_method
 def set_optimizer(self):
     opt_mapping = {
-        'adam': partial(Adam, betas = (0.9, 0.999)),
-        'adamw': partial(AdamW, betas = (0.9, 0.999)),
-        'lamb': partial(FusedLAMB, betas = (0.9, 0.999)),
+        'adam': partial(Adam, betas = (0.9, 0.999), eps = 1e-4),
+        'adamw': partial(AdamW, betas = (0.9, 0.999), eps = 1e-4),
+        'lamb': partial(FusedLAMB, betas = (0.9, 0.999), eps = 1e-4),
         'novograd': FusedNovoGrad,
         'cocob': Cocob,
-        'radam-plain': partial(PlainRAdam, betas = (0.9, 0.999)),
-        'radam': partial(RAdam, betas = (0.9, 0.999)),
+        'radam-plain': partial(PlainRAdam, betas = (0.9, 0.999), eps = 1e-4),
+        'radam': partial(RAdam, betas = (0.9, 0.999), eps = 1e-4),
         'sgd': partial(SGD, lr = 1e-1, momentum = 0.9),
         'nesterov': partial(SGD, lr = 1e-2, momentum = 0.9, nesterov = True),
         'nag': partial(NAG, lr = 1e-1),

@@ -210,11 +210,14 @@ def fit(
             # ----------------------------------------------
             # Pre-config
             # ----------------------------------------------
+            self.model.train()
             
             # Adjust freeze schedule
             for module in freeze:
-                start, end = freeze[module]
+                start, end, freeze_bn = freeze[module]
                 if epoch >= start and epoch < end:
+                    if freeze_bn:
+                        module.eval()
                     for p in module.parameters():
                         p.requires_grad = False
                 else:
