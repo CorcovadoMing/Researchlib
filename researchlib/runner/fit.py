@@ -81,6 +81,7 @@ def fit(
     init_optim = True,
     monitor = [],
     visualize = [],
+    freeze = {},
     **kwargs
 ):
     
@@ -209,6 +210,19 @@ def fit(
             # ----------------------------------------------
             # Pre-config
             # ----------------------------------------------
+            
+            # Adjust freeze schedule
+            for module in freeze:
+                start, end = freeze[module]
+                if epoch >= start and epoch < end:
+                    for p in module.parameters():
+                        p.requires_grad = False
+                else:
+                    for p in module.parameters():
+                        p.requires_grad = True
+            
+            
+            # Adjust lr schedule
             if epoch == (warmup + 1):
                 Annealer.set_trace('lr', (epochs - warmup - flatten) * iterations, [lr, flatten_lr], 'iteration', _anneal_policy(policy))
                 Annealer._iteration_step(key = 'lr')
@@ -224,7 +238,6 @@ def fit(
                     optimizer = self.optimizer,
                     epoch = self.epoch
                 )
-
             
             # ----------------------------------------------
             # Training stage
