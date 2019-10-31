@@ -5,6 +5,7 @@ from ..runner import Runner
 from ..models import AutoConvNet, Builder, Heads
 from ..loss import loss
 from ..metrics import Metrics
+from .uploader import uploader
 
 
 class _cifar10:
@@ -14,9 +15,10 @@ class _cifar10:
         self.train_loader = loader.TorchDataset('cifar10', True)
         self.test_loader = loader.TorchDataset('cifar10', False)
         self.kwargs = kwargs
+        self.runner = None
 
         try:
-            getattr(self, model_name)()
+            _ = getattr(self, model_name)()
         except:
             raise ValueError(
                 '{} has not implemented, available models are: {}'.format(
@@ -25,8 +27,10 @@ class _cifar10:
             )
 
         if upload:
-            uploader = uploader()
-            uploader.submit('Classification', comments = {'comments': model_name})
+            if self.runner is None:
+                raise ValueError("Runner didn't run yet")
+            _uploader = uploader()
+            _uploader.submit(self.runner, 'Classification', comments = {'comments': model_name})
 
     def pyramidnet_272(self, shakedrop = False):
         input_dim = 3
@@ -99,7 +103,8 @@ class _cifar10:
         model = Builder.Graph({
             'l1': (AutoConvNet(op.Conv2d, unit.conv, 3, 3, stem={'whitening': 1},
                         type={'order':['dawn', 'vgg'], 'type':'alternative'}, 
-                        filters=(64, 512), activator_type='CELU', prepool=True, freeze_scale=True), 
+                        filters=(64, 512), activator_type='CELU', prepool=True, freeze_scale=True, 
+                        norm_type=op.GhostBatchNorm2d), 
                    ['x']),
             'l2': (Heads(10, reduce_type='avg'), ['l1']),
             'l3': (op.Multiply(1/4), ['l2']),

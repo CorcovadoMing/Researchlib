@@ -24,6 +24,8 @@ from .sasa import _SASA2d
 
 from .activator import _GeLU, _Mish, _Swish, _DropReLU
 
+from .ghost_batchnorm import _GhostBatchNorm2d
+
 from .meta import _MultiApply, _SupportFeatureConcat
 
 from .shaping import _Flatten, _Reshape, _Resize, _View, _Permute
@@ -165,6 +167,7 @@ class op(object):
     ShakeBatchNorm3d = _ShakeBatchNorm3d
     ConditionProjection = _ConditionProjection
     SpatialTransform = _SpatialTransform
+    GhostBatchNorm2d = _GhostBatchNorm2d
 
 
 
