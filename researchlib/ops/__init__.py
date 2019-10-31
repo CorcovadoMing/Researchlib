@@ -13,7 +13,6 @@ from .pixel_norm import _PixelNorm
 from .multiply import _Multiply
 from .aaconv import _AAConv2d
 from .blur import Downsample as _Downsample
-from .wsconv import _WSConv1d, _WSConvTranspose1d, _WSConv2d, _WSConvTranspose2d, _WSConv3d, _WSConvTranspose3d
 from .manifold_mixup import _ManifoldMixup
 from .shake_batchnorm import _ShakeBatchNorm1d, _ShakeBatchNorm2d, _ShakeBatchNorm3d
 from .sasa import _SASA2d
@@ -120,13 +119,6 @@ class op(object):
     GaussianNonLocalBlock1d = _GaussianNonLocalBlock1d
     GaussianNonLocalBlock2d = _GaussianNonLocalBlock2d
     GaussianNonLocalBlock3d = _GaussianNonLocalBlock3d
-
-    WSConv1d = _WSConv1d
-    WSConvTranspose1d = _WSConvTranspose1d
-    WSConv2d = _WSConv2d
-    WSConvTranspose2d = _WSConvTranspose2d
-    WSConv3d = _WSConv3d
-    WSConvTranspose3d = _WSConvTranspose3d
 
     Multiply = _Multiply
 
