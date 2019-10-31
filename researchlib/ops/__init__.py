@@ -40,11 +40,16 @@ from .sequence import Conv1dRNNCell, Conv1dLSTMCell, Conv1dPeepholeLSTMCell, Con
 from .sequence import Conv2dRNNCell, Conv2dLSTMCell, Conv2dPeepholeLSTMCell, Conv2dGRUCell
 from .sequence import Conv3dRNNCell, Conv3dLSTMCell, Conv3dPeepholeLSTMCell, Conv3dGRUCell
 
+from .encoding import _PositionalEncoding1d
+
 from .active_noise import _ActiveNoise
 from .rcl import _RConv2d
 
 
 class op(object):
+    # Encoding
+    PositionalEncoding1d = _PositionalEncoding1d
+    
     # Meta Learning
     MultiApply= _MultiApply
     SupportFeatureConcat = _SupportFeatureConcat
