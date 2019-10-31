@@ -3,7 +3,6 @@ from .history import History
 from .export import _Export
 from ..utils import *
 from ..utils import _add_methods_from, ParameterManager
-from ..benchmark import benchmark
 from .save_load import _save_checkpoint, _load_checkpoint
 from .trainable_params_utils import num_model_params
 from torch.cuda import is_available
@@ -58,8 +57,6 @@ class Runner:
         self.optimizer_choice = optimizer
         self.export = _Export(self)
         self.history_ = History()
-        self.bencher = benchmark()
-        self._date_id = self.bencher.get_date()
 
         self.model = model
         if isinstance(self.model, Builder.Graph):
@@ -161,13 +158,3 @@ class Runner:
     def augmentation(self, augmentation_list, include_y = False):
         self.train_loader._set_augmentor(augmentation_list, include_y)
         return self
-
-    def submit_benchmark(self, category, comments = {}, backup = False):
-        if type(comments) != dict:
-            raise ValueError("Type Error")
-        dict_ = self.describe()
-        for k, v in comments.items():
-            if k in dict_.keys():
-                raise ValueError("key is overlapped: {}".forat(k))
-            dict_[k] = v
-        self.bencher.update_from_runner(category, self._date_id, dict_, backup = backup)

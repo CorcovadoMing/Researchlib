@@ -5,9 +5,6 @@ from pytz import timezone
 from ..utils.decorator import Singleton
 import pygsheets
 
-from ..utils.class_lib import _register_method
-__methods__ = []
-register_method = _register_method(__methods__)
 
 module_path = os.path.dirname(os.path.abspath(__file__))
 client_secret_path = os.path.join(
@@ -18,7 +15,7 @@ sheetnames2ids_path = os.path.join(module_path, '../.credential/sheetnames2ids.j
 
 
 @Singleton
-class benchmark(object):
+class uploader(object):
     """ Document the best practice on Google sheet
     
     Attrs:
@@ -217,3 +214,14 @@ class benchmark(object):
 
         if backup:
             self.backup(sheetname)
+    
+    def submit(self, runner, category, comments = {}, backup = False):
+        if type(comments) != dict:
+            raise ValueError("Type Error")
+        dict_ = runner.describe()
+        for k, v in comments.items():
+            if k in dict_.keys():
+                raise ValueError("key is overlapped: {}".forat(k))
+            dict_[k] = v
+        self.update_from_runner(category, self.get_date(), dict_, backup = backup)
+

@@ -13,7 +13,7 @@ from ..pipeline import *
 from ..vistool import *
 from ..datatool import *
 from ..wrapper import *
-from ..benchmark import *
+from ..reproducer import *
 from pynvml import *
 import seaborn as sns
 import subprocess
@@ -22,7 +22,7 @@ import redis
 import pickle
 
 # google api authorization
-benchmark()
+uploader()
 
 sns.set()
 sns.set_style("whitegrid", {'axes.grid': False})
