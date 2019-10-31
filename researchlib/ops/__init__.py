@@ -47,9 +47,14 @@ from .non_local import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _Gaus
 
 from .active_noise import _ActiveNoise
 from .rcl import _RConv2d
+from .io import _SetVariable, _UpdateVariable, _GetVariable
 
 
 class op(object):
+    SetVariable = _SetVariable
+    UpdateVariable = _UpdateVariable
+    GetVariable = _GetVariable
+    
     # Encoding
     PositionalEncoding1d = _PositionalEncoding1d
     CoordinatesEncoding2d = _CoordinatesEncoding2d
