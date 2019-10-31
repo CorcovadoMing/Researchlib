@@ -15,9 +15,9 @@ class _ActiveNoise(nn.Module):
     
     def forward(self, x):
         if self.training:
-            noise = torch.empty_like(x).to(x.device).uniform_()
+            noise = torch.empty_like(x).to(x.device)
             if self.type == 'mul' or self.type == 'mixed':
-                return x * noise * self.alpha.expand_as(x)
+                return x * noise.uniform_() * self.alpha.expand_as(x)
             if self.type == 'add' or self.type == 'mixed':
-                return x + (noise - 0.5) * self.beta.expand_as(x)
+                return x + (noise.uniform_() - 0.5) * self.beta.expand_as(x)
         return x

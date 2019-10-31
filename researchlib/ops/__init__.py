@@ -41,6 +41,7 @@ from .sequence import Conv2dRNNCell, Conv2dLSTMCell, Conv2dPeepholeLSTMCell, Con
 from .sequence import Conv3dRNNCell, Conv3dLSTMCell, Conv3dPeepholeLSTMCell, Conv3dGRUCell
 
 from .active_noise import _ActiveNoise
+from .rcl import _RConv2d
 
 
 class op(object):
@@ -84,6 +85,7 @@ class op(object):
     ActiveNoise = _ActiveNoise
     
     SASA2d = _SASA2d
+    RConv2d = _RConv2d
 
     # Non-Local
     ConcatNonLocalBlock1d = _ConcatNonLocalBlock1d
