@@ -1,7 +1,11 @@
+import torch
+
+
 class ParameterManager:
     keys_whitelist = []
     buffer = {}
     params = {}
+    variable = {}
 
     @classmethod
     def verify_kwargs(cls, **kwargs):
@@ -50,3 +54,28 @@ class ParameterManager:
         if clear:
             del ParameterManager.buffer[key]
         return result
+    
+    @classmethod
+    def set_variable(cls, key, value):
+        ParameterManager.variable[key] = value
+
+    @classmethod
+    def get_variable(cls, key):
+        if key not in ParameterManager.variable:
+            raise ValueError("Key {} is not in variable".format(key))
+        result = ParameterManager.variable[key]
+        return result
+    
+    @classmethod
+    def dump(cls, path):
+        torch.save({
+            'buffer': ParameterManager.buffer,
+            'variable': ParameterManager.variable,
+            }, path)
+    
+    @classmethod
+    def load(cls, path):
+        var = torch.load(path)
+        ParameterManager.buffer = var['buffer']
+        ParameterManager.variable = var['variable']
+        
