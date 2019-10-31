@@ -34,7 +34,7 @@ from .sequence import Conv3dRNN, Conv3dLSTM, Conv3dPeepholeLSTM, Conv3dGRU
 from .sequence import Conv1dRNNCell, Conv1dLSTMCell, Conv1dPeepholeLSTMCell, Conv1dGRUCell
 from .sequence import Conv2dRNNCell, Conv2dLSTMCell, Conv2dPeepholeLSTMCell, Conv2dGRUCell
 from .sequence import Conv3dRNNCell, Conv3dLSTMCell, Conv3dPeepholeLSTMCell, Conv3dGRUCell
-from .sequence import _QRNN, _LSTM
+from .sequence import _QRNN, _LSTM, _Seq2Seq, _Set2Set
 
 from .encoding import _PositionalEncoding1d, _CoordinatesEncoding2d
 
@@ -89,6 +89,12 @@ class op(object):
     Conv3dPeepholeLSTMCell = Conv3dPeepholeLSTMCell 
     Conv3dGRUCell = Conv3dGRUCell
     
+    LSTM = _LSTM
+    QRNN = _QRNN
+    
+    Seq2Seq = _Seq2Seq
+    Set2Set = _Set2Set
+    
     ActiveNoise = _ActiveNoise
     
     SASA2d = _SASA2d
@@ -120,14 +126,11 @@ class op(object):
     AAConv2d = _AAConv2d
     Downsample = _Downsample
 
-    # Recurrent
-    LSTM = _LSTM
-    QRNN = _QRNN
-
     # Activator
     Swish = _Swish
     GeLU = _GeLU
     Mish = _Mish
+    DropReLU = _DropReLU
 
     # DropBlock
     DropBlock2d = _DropBlock2d
@@ -160,11 +163,9 @@ class op(object):
     ShakeBatchNorm1d = _ShakeBatchNorm1d
     ShakeBatchNorm2d = _ShakeBatchNorm2d
     ShakeBatchNorm3d = _ShakeBatchNorm3d
-
     ConditionProjection = _ConditionProjection
     SpatialTransform = _SpatialTransform
 
-    DropReLU = _DropReLU
 
 
 # Merge nn and layer module if it didn't cause conflict
