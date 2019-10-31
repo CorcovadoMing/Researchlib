@@ -9,7 +9,6 @@ from .condition_projection import _ConditionProjection
 from .spatial_transform import _SpatialTransform
 from .shakedrop import _ShakeDrop
 from .pixel_norm import _PixelNorm
-from .coord_conv import _CoordConvTranspose2d, _CoordConv2d
 
 from .multiply import _Multiply
 from .aaconv import _AAConv2d
@@ -37,7 +36,7 @@ from .sequence import Conv2dRNNCell, Conv2dLSTMCell, Conv2dPeepholeLSTMCell, Con
 from .sequence import Conv3dRNNCell, Conv3dLSTMCell, Conv3dPeepholeLSTMCell, Conv3dGRUCell
 from .sequence import _QRNN, _LSTM
 
-from .encoding import _PositionalEncoding1d
+from .encoding import _PositionalEncoding1d, _CoordinatesEncoding2d
 
 from .non_local import _ConcatNonLocalBlock1d, _ConcatNonLocalBlock2d, _ConcatNonLocalBlock3d
 from .non_local import _DotNonLocalBlock1d, _DotNonLocalBlock2d, _DotNonLocalBlock3d
@@ -51,6 +50,7 @@ from .rcl import _RConv2d
 class op(object):
     # Encoding
     PositionalEncoding1d = _PositionalEncoding1d
+    CoordinatesEncoding2d = _CoordinatesEncoding2d
     
     # Meta Learning
     MultiApply= _MultiApply
@@ -107,9 +107,6 @@ class op(object):
     GaussianNonLocalBlock1d = _GaussianNonLocalBlock1d
     GaussianNonLocalBlock2d = _GaussianNonLocalBlock2d
     GaussianNonLocalBlock3d = _GaussianNonLocalBlock3d
-
-    CoordConvTranspose2d = _CoordConvTranspose2d
-    CoordConv2d = _CoordConv2d
 
     WSConv1d = _WSConv1d
     WSConvTranspose1d = _WSConvTranspose1d
