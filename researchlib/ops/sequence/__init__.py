@@ -28,3 +28,8 @@ from .convrnn import Conv3dLSTMCell
 from .convrnn import Conv3dPeepholeLSTMCell
 from .convrnn import Conv3dGRUCell
 
+
+#------------------------------------
+
+from .qrnn import _QRNN
+from .lstm import _LSTM

@@ -1,25 +1,16 @@
-# Layers
-from .lstm import _LSTM
-from .qrnn import _QRNN
 from .dropblock import _DropBlock2d, _DropBlock3d
 from .capsule_layer import _CapsuleMasked, _RoutingCapsules, _PrimaryCapsules
 from .binarized import _BinarizeLinear, _BinarizeConv2d
 from .octconv import _OctConv2d
 from .norm import _Norm
 from .adaptive_concat_pool import _AdaptiveConcatPool1d, _AdaptiveConcatPool2d
-from .position_encoding import _PositionEncoding
 from .noisy_linear import _NoisyLinear
 from .condition_projection import _ConditionProjection
 from .spatial_transform import _SpatialTransform
 from .shakedrop import _ShakeDrop
 from .pixel_norm import _PixelNorm
-from .drop_relu import _DropReLU
 from .coord_conv import _CoordConvTranspose2d, _CoordConv2d
-from .non_local.concatenation import _ConcatNonLocalBlock1d, _ConcatNonLocalBlock2d, _ConcatNonLocalBlock3d
-from .non_local.dot_product import _DotNonLocalBlock1d, _DotNonLocalBlock2d, _DotNonLocalBlock3d
-from .non_local.embedded_gaussian import _EmbeddedGaussianNonLocalBlock1d, _EmbeddedGaussianNonLocalBlock2d, _EmbeddedGaussianNonLocalBlock3d
-from .non_local.gaussian import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _GaussianNonLocalBlock3d
-from .noise_injection import _NoiseInjection
+
 from .multiply import _Multiply
 from .aaconv import _AAConv2d
 from .blur import Downsample as _Downsample
@@ -30,17 +21,28 @@ from .sasa import _SASA2d
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
 
-from .activator import _GeLU, _Mish, _Swish
+#============================================================================
+
+from .activator import _GeLU, _Mish, _Swish, _DropReLU
+
 from .meta import _MultiApply, _SupportFeatureConcat
+
 from .shaping import _Flatten, _Reshape, _Resize, _View, _Permute
+
 from .sequence import Conv1dRNN, Conv1dLSTM, Conv1dPeepholeLSTM, Conv1dGRU
 from .sequence import Conv2dRNN, Conv2dLSTM, Conv2dPeepholeLSTM, Conv2dGRU
 from .sequence import Conv3dRNN, Conv3dLSTM, Conv3dPeepholeLSTM, Conv3dGRU
 from .sequence import Conv1dRNNCell, Conv1dLSTMCell, Conv1dPeepholeLSTMCell, Conv1dGRUCell
 from .sequence import Conv2dRNNCell, Conv2dLSTMCell, Conv2dPeepholeLSTMCell, Conv2dGRUCell
 from .sequence import Conv3dRNNCell, Conv3dLSTMCell, Conv3dPeepholeLSTMCell, Conv3dGRUCell
+from .sequence import _QRNN, _LSTM
 
 from .encoding import _PositionalEncoding1d
+
+from .non_local import _ConcatNonLocalBlock1d, _ConcatNonLocalBlock2d, _ConcatNonLocalBlock3d
+from .non_local import _DotNonLocalBlock1d, _DotNonLocalBlock2d, _DotNonLocalBlock3d
+from .non_local import _EmbeddedGaussianNonLocalBlock1d, _EmbeddedGaussianNonLocalBlock2d, _EmbeddedGaussianNonLocalBlock3d
+from .non_local import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _GaussianNonLocalBlock3d
 
 from .active_noise import _ActiveNoise
 from .rcl import _RConv2d
@@ -156,7 +158,6 @@ class op(object):
     Norm = _Norm
     AdaptiveConcatPool1d = _AdaptiveConcatPool1d
     AdaptiveConcatPool2d = _AdaptiveConcatPool2d
-    PositionEncoding = _PositionEncoding
     NoisyLinear = _NoisyLinear
     PixelNorm = _PixelNorm
     ShakeBatchNorm1d = _ShakeBatchNorm1d
@@ -167,8 +168,6 @@ class op(object):
     SpatialTransform = _SpatialTransform
 
     DropReLU = _DropReLU
-
-    NoiseInjection = _NoiseInjection
 
 
 # Merge nn and layer module if it didn't cause conflict
