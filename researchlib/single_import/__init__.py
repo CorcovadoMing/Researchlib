@@ -14,6 +14,8 @@ from ..vistool import *
 from ..datatool import *
 from ..wrapper import *
 from ..reproducer import *
+from ..experiments import *
+
 from pynvml import *
 import seaborn as sns
 import subprocess
