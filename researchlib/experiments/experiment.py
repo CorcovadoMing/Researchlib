@@ -1,5 +1,6 @@
 import numpy as np
 from .pack import _pack, _unpack
+from ..runner import Runner
 
         
 class Experiment:
@@ -19,5 +20,8 @@ class Experiment:
     def start(self):
         for i in range(self.total_runs):
             single_run_setting = {k: _unpack(v[i]) for k, v in self.settings.items()}
-            self.runner(**single_run_setting)
+            if type(self.runner) == Runner:
+                self.runner.fit(**single_run_setting)
+            else:
+                self.runner(**single_run_setting)
         

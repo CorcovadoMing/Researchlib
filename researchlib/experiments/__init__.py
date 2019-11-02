@@ -1,2 +1,2 @@
-from .hparam import Sweep
+from .hparam import Sweep, Predef
 from .experiment import Experiment
