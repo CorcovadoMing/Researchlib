@@ -76,9 +76,8 @@ def fit(
     _id = 'none',
     iterations = 0,
     multisteps = [],
-    prefetch = True,
     plot = False,
-    init_optim = True,
+    init = None,
     monitor = [],
     visualize = [],
     freeze = {},
@@ -159,8 +158,9 @@ def fit(
     # ----------------------------------------------
     # optimizers, (LR, warmup, weight_decay, etc.,)
     # ----------------------------------------------
-    if init_optim:
-        self.set_optimizer()
+    if init is not None:
+        self.init_model(init)
+        self.epoch = 1
     
     self.multisteps = multisteps
 
