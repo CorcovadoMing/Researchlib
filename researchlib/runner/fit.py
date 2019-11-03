@@ -78,6 +78,7 @@ def fit(
     multisteps = [],
     plot = False,
     init = None,
+    same_init = False,
     monitor = [],
     visualize = [],
     freeze = {},
@@ -144,6 +145,20 @@ def fit(
     # ----------------------------------------------
     # MISC
     # ----------------------------------------------
+    if init is not None:
+        self.init_model(init)
+        self.set_optimizer()
+        self.epoch = 1
+    
+    if same_init:
+        init_model = os.path.join(self.checkpoint_path, 'init_model_' + _id)
+        if os.path.exists(str(init_model) + '.model.pt'):
+            self.load(init_model)
+        else:
+            self.save(init_model)
+        self.set_optimizer()
+        self.epoch = 1
+    
     fixed_mmixup = parameter_manager.get_param('fixed_mmixup', validator = lambda x: type(x) == list)
     random_mmixup = parameter_manager.get_param('random_mmixup', validator = lambda x: len(x) == 2 and type(x) == list)
     mmixup_alpha = parameter_manager.get_param('mmixup_alpha', validator = lambda x: type(x) == float)
@@ -158,10 +173,6 @@ def fit(
     # ----------------------------------------------
     # optimizers, (LR, warmup, weight_decay, etc.,)
     # ----------------------------------------------
-    if init is not None:
-        self.init_model(init)
-        self.epoch = 1
-    
     self.multisteps = multisteps
 
     # Weight decay

@@ -1,6 +1,7 @@
 import numpy as np
 from .pack import _pack, _unpack
 from ..runner import Runner
+import torch
 
         
 class Experiment:
@@ -17,7 +18,12 @@ class Experiment:
         self.settings = {key: value for key, value in zip(total_key, all_combination)}
         self.total_runs = len(all_combination[0])
     
-    def start(self):
+    def start(self, seed=None):
+        if seed is not None:
+            torch.manual_seed(int(seed))
+            np.random.seed(int(seed))
+            torch.cuda.manual_seed(int(seed))
+            torch.cuda.manual_seed_all(int(seed))
         for i in range(self.total_runs):
             single_run_setting = {k: _unpack(v[i]) for k, v in self.settings.items()}
             if type(self.runner) == Runner:
