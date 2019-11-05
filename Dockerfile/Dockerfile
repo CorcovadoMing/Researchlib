@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/pytorch:19.09-py3
+FROM nvcr.io/nvidia/pytorch:19.10-py3
 
 ARG ONNXRUNTIME_REPO=https://github.com/Microsoft/onnxruntime
 ARG ONNXRUNTIME_SERVER_BRANCH=master
@@ -35,15 +35,9 @@ RUN pip install torch-scatter torch-sparse torch-cluster torch-spline-conv torch
 RUN pip install cupy
 RUN pip install git+https://github.com/CorcovadoMing/pynvrtc.git
 
-# DALI
-RUN pip install --extra-index-url https://developer.download.nvidia.com/compute/redist/cuda/10.0 nvidia-dali
-
 # RAPIDS
-RUN pip install cudf-cuda100
-RUN apt update && apt install -y libopenblas-base libomp-dev
-RUN pip install cuml-cuda100
-RUN pip install cugraph-cuda100
-RUN pip install nvstrings-cuda100
+RUN conda install -c rapidsai -c nvidia -c conda-forge \
+    -c defaults rapids=0.10 python=3.6 cudatoolkit=10.1
 
 # Jupyter
 RUN pip install jupyterlab
@@ -94,7 +88,6 @@ RUN julia -e 'using Pkg; Pkg.add("IJulia")'
 # Tests
 RUN conda remove -y wrapt
 RUN pip install yapf pylint pytest
-RUN pip install zarr
 
 # Augmentation and preprocessing
 RUN pip install albumentations
@@ -103,7 +96,7 @@ RUN pip install texttable
 
 
 # Fontend
-RUN conda remove -y PyYAML
+#RUN conda remove -y PyYAML
 RUN pip install flask_compress pyyaml dash dash-daq dash-bootstrap-components pytz
 RUN pip install psutil
 
@@ -133,13 +126,7 @@ VOLUME ["/data"]
 RUN pip install pytorch-nlp pygsheets
 RUN apt update && apt install -y sox libsox-dev libsox-fmt-all
 RUN pip install http://download.pytorch.org/whl/torchaudio-0.2-cp36-cp36m-linux_x86_64.whl
-
-RUN pip install mmcv
-RUN git clone https://github.com/open-mmlab/mmdetection.git
-RUN cd mmdetection && pip install -v -e .
 RUN pip install hyperopt
-
-RUN git clone https://github.com/NVIDIA/apex && cd apex && pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" .
 
 RUN pip install tensorpack
 RUN apt-get update && apt-get install -y build-essential libcap-dev
@@ -154,5 +141,5 @@ RUN pip install numpy==1.16.4
 RUN pip install nibabel
 
 # Version tag
-ENV _RESEARCHLIB_IMAGE_TAG 19.09.2
+ENV _RESEARCHLIB_IMAGE_TAG 19.10.0
 
