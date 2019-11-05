@@ -94,13 +94,18 @@ def train_fn(self, loader, metrics, monitor, visualize, **kwargs):
         #         for p in list(filter(lambda p: p.grad is not None, self.model.parameters())):
         #             norm_record += p.grad.data.norm(2).item() ** 2
 
-        if ema and (batch_idx + 1) % ema_freq == 0:
-            for v, ema_v in zip(
-                self.model.state_dict().values(),
-                self.val_model.state_dict().values()
-            ):
-                ema_v *= rho
-                ema_v += (1 - rho) * v
+        with torch.no_grad():
+            if ema and (batch_idx + 1) % ema_freq == 0:
+                for v, ema_v in zip(
+                    self.model.state_dict().values(),
+                    self.val_model.state_dict().values()
+                ):
+                    if ema_v.dtype == torch.int64:
+                        # due to the precision issue, the effect is equal to zero (keep the same behavior from pytorch 1.2)
+                        ema_v.mul_(0)
+                    else:
+                        ema_v.mul_(rho)
+                        ema_v.add_(1-rho, v)
 
         metrics_result = metrics({
             'x': outputs,
