@@ -8,7 +8,7 @@ from ..blocks import *
 from ..loss import *
 from ..metrics import *
 from ..search import *
-from ..ml import *
+from ..mlkit import *
 from ..pipeline import *
 from ..vistool import *
 from ..datatool import *
