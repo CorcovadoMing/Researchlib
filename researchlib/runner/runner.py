@@ -9,6 +9,7 @@ from torch.cuda import is_available
 from torch.nn import DataParallel
 import torch.backends.cudnn as cudnn
 import os
+import shutil
 from ..models import Builder
 
 from . import init_model
@@ -122,6 +123,7 @@ class Runner:
     def start_experiment(self, name):
         self.experiment_name = name
         self.checkpoint_path = os.path.join('.', 'checkpoint', self.experiment_name)
+        shutil.rmtree(self.checkpoint_path, ignore_errors = True)
         os.makedirs(self.checkpoint_path, exist_ok = True)
 
     def load_best(self, _id = 'none'):
