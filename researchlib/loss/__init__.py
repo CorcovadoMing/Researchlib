@@ -12,7 +12,7 @@ from .ssim_msssim import SSIMLoss, MSSSIMLoss
 from .adaptive_robust_loss import AdaptiveRobustLoss
 from .soft_dtw import SoftDTWLoss
 
-class loss(object):
+class Loss(object):
     NegativeLogLikelyhood = nll_loss
     NegativeLikelyhood = nl_loss
     SmoothNegativeLogLikelyhood = smooth_nll_loss
