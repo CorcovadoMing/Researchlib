@@ -3,7 +3,7 @@ from ..blocks import block, unit
 from ..ops import op
 from ..runner import Runner
 from ..models import AutoConvNet, Builder, Heads
-from ..loss import loss
+from ..loss import Loss
 from ..metrics import Metrics
 from .uploader import uploader
 
@@ -109,7 +109,7 @@ class _cifar10:
             'l2': (Heads(10, reduce_type='avg'), ['l1']),
             'l3': (op.Multiply(1/4), ['l2']),
             'out': (op.LogSoftmax(-1), ['l3']),
-            'loss': (loss.SmoothNegativeLogLikelyhood, ['out', 'y'])
+            'loss': (Loss.SmoothNegativeLogLikelyhood, ['out', 'y'])
         })
 
         metrics = Builder.Graph({
