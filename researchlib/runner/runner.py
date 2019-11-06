@@ -56,7 +56,7 @@ class Runner:
 
         self.optimizer_choice = optimizer
         self.export = _Export(self)
-        self.history_ = History()
+        self.history = History()
 
         self.model = model
         if isinstance(self.model, Builder.Graph):

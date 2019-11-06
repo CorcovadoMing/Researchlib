@@ -138,6 +138,7 @@ def fit(
     exist_experiments = pickle.loads(liveplot.redis.get('experiment'))
     if self.experiment_name not in exist_experiments:
         exist_experiments.append(self.experiment_name)
+    self.history.start_logfile(self.checkpoint_path)
         
     liveplot.redis.set('experiment', pickle.dumps(exist_experiments))
     
@@ -279,10 +280,10 @@ def fit(
             liveplot.record(epoch, 'train_loss', loss_record)
             liveplot.record(epoch, 'norm', norm_record)
             liveplot.update_custom_output(visualize_record, prefix = 'train')
-            self.history_.add({'loss': loss_record}, prefix = 'train')
-            self.history_.add(metrics_record, prefix = 'train')
+            self.history.add({'loss': loss_record}, prefix = 'train')
+            self.history.add(metrics_record, prefix = 'train')
             try:
-                liveplot.record(epoch, 'train_acc', self.history_.records['train_acc'][-1])
+                liveplot.record(epoch, 'train_acc', self.history.records['train_acc'][-1])
             except:
                 pass
                 
@@ -299,10 +300,10 @@ def fit(
                                                                            shot=shot)
                 liveplot.record(epoch, 'val_loss', loss_record)
                 liveplot.update_custom_output(visualize_record, prefix = 'val')
-                self.history_.add({'loss': loss_record}, prefix = 'val')
-                self.history_.add(metrics_record, prefix = 'val')
+                self.history.add({'loss': loss_record}, prefix = 'val')
+                self.history.add(metrics_record, prefix = 'val')
                 try:
-                    liveplot.record(epoch, 'val_acc', self.history_.records['val_acc'][-1])
+                    liveplot.record(epoch, 'val_acc', self.history.records['val_acc'][-1])
                 except:
                     pass
                         
@@ -311,8 +312,8 @@ def fit(
             # ----------------------------------------------
             epoch_str = str(self.epoch)
             monitor_target = 'val_' + self.monitor_state if self.test_loader else 'train_' + self.monitor_state
-            if monitor_target in self.history_.records:
-                critic = self.history_.records[monitor_target][-1]
+            if monitor_target in self.history.records:
+                critic = self.history.records[monitor_target][-1]
             else:
                 critic = None
 
@@ -331,7 +332,7 @@ def fit(
             # ----------------------------------------------
             # Post-config
             # ----------------------------------------------
-            liveplot.plot(self.epoch, self.history_, epoch_str)
+            liveplot.plot(self.epoch, self.history, epoch_str)
             
             for callback_func in callbacks:
                 callback_func.on_epoch_end(
@@ -352,6 +353,9 @@ def fit(
             
             # Finish this epoch
             self.epoch += 1
+            
+            # Update logfile
+            self.history.update_logfile()
             
         
     except:

@@ -1,3 +1,6 @@
+import os
+
+
 class History:
     def __init__(self, records = None):
         self.records = {}
@@ -24,3 +27,18 @@ class History:
                 self.records[ckey].append(float(d[key]))
             except:
                 self.records[ckey].append(str(d[key]))
+    
+    def start_logfile(self, file_path):
+        self.logfilename = os.path.join(file_path, 'log.csv')
+    
+    def update_logfile(self):
+        recent = list(self.records.items())
+        epoch = len(recent[0][1])
+        if epoch == 1:
+            with open(self.logfilename, 'a') as f:
+                f.write(','.join(['epoch'] + list(self.records.keys())) + '\n')
+        recent = [str(epoch)] + [str(j[-1]) for i, j in recent]
+        recent = ','.join(recent)
+        with open(self.logfilename, 'a') as f:
+            f.write(recent + '\n')
+        
