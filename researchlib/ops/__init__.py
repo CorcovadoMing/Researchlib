@@ -27,7 +27,7 @@ from .ghost_batchnorm import _GhostBatchNorm2d
 
 from .meta import _MultiApply, _SupportFeatureConcat
 
-from .shaping import _Flatten, _Reshape, _Resize, _View, _Permute
+from .shaping import _Flatten, _FlattenExcept, _Reshape, _Resize, _View, _Permute, _OneHot
 
 from .sequence import Conv1dRNN, Conv1dLSTM, Conv1dPeepholeLSTM, Conv1dGRU
 from .sequence import Conv2dRNN, Conv2dLSTM, Conv2dPeepholeLSTM, Conv2dGRU
@@ -47,6 +47,7 @@ from .non_local import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _Gaus
 from .active_noise import _ActiveNoise
 from .rcl import _RConv2d
 from .io import _SetVariable, _UpdateVariable, _GetVariable
+from .node import _To
 
 
 class op(object):
@@ -62,12 +63,17 @@ class op(object):
     MultiApply= _MultiApply
     SupportFeatureConcat = _SupportFeatureConcat
     
+    # Node
+    To = _To
+    
     # Shaping
     View = _View
     Reshape = _Reshape
     Permute = _Permute
     Flatten = _Flatten
+    FlattenExcept = _FlattenExcept
     Resize = _Resize
+    OneHot = _OneHot
     
     # Sequence
     Conv1dRNN = Conv1dRNN

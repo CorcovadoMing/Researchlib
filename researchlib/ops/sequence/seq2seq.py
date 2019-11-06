@@ -15,12 +15,13 @@ class _Seq2Seq(nn.Module):
     
     def forward(self, x):
         _, (h, c) = self.encoder(x)
-        h, c = h.squeeze(1), c.squeeze(1)        
+        h, c = h.squeeze(0), c.squeeze(0)
         out = []
-        inp = torch.zeros((x.size(0), self.hidden))
+        inp = torch.zeros((x.size(0), self.hidden)).to(x.device)
         for _ in range(self.max_length):
             h, c = self.decoder(inp, (h, c))
             inp = h
             pred = self.out(inp)
             out.append(pred)
-        return torch.stack(out, dim=1)
+        result = torch.stack(out, dim=1)
+        return result
