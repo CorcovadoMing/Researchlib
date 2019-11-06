@@ -101,8 +101,8 @@ def train_fn(self, loader, metrics, monitor, visualize, **kwargs):
                     self.val_model.state_dict().values()
                 ):
                     if ema_v.dtype == torch.int64:
-                        # due to the precision issue, the effect is equal to zero (keep the same behavior from pytorch 1.2)
-                        ema_v.mul_(0)
+                        # do not ema on int data for precision (underflow) issue
+                        pass
                     else:
                         ema_v.mul_(rho)
                         ema_v.add_(1-rho, v)
