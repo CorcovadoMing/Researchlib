@@ -163,7 +163,7 @@ def fit(
     fixed_mmixup = parameter_manager.get_param('fixed_mmixup', validator = lambda x: type(x) == list)
     random_mmixup = parameter_manager.get_param('random_mmixup', validator = lambda x: len(x) == 2 and type(x) == list)
     mmixup_alpha = parameter_manager.get_param('mmixup_alpha', validator = lambda x: type(x) == float)
-    
+    tta = parameter_manager.get_param('tta', validator = lambda x: type(x) == bool)
     
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Initialization should be completed before this line
@@ -297,7 +297,8 @@ def fit(
                                                                            test_loader, metrics, monitor, visualize,
                                                                            support_set=support_set,
                                                                            way=way,
-                                                                           shot=shot)
+                                                                           shot=shot,
+                                                                           tta=tta)
                 liveplot.record(epoch, 'val_loss', loss_record)
                 liveplot.update_custom_output(visualize_record, prefix = 'val')
                 self.history.add({'loss': loss_record}, prefix = 'val')

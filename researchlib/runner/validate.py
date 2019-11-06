@@ -13,6 +13,7 @@ def validate(self, metrics = None, monitor = [], visualize = [], prefetch = True
     batch_size = parameter_manager.get_param(
         'batch_size', 512, validator = lambda x: x > 0 and type(x) == int
     )
+    
     fp16 = parameter_manager.get_param('fp16', False)
 
     buffered_epochs = 1
@@ -21,7 +22,9 @@ def validate(self, metrics = None, monitor = [], visualize = [], prefetch = True
     test_loader = BackgroundGenerator(inifinity_loop(test_loader), fp16 = fp16)
     self.preload_gpu()
     try:
-        loss_record, metrics_record, visualize_record = self.validate_fn(test_loader, metrics, monitor, visualize, **kwargs)
+        loss_record, metrics_record, visualize_record = self.validate_fn(
+            test_loader, metrics, monitor, visualize, **kwargs
+        )
         print(loss_record)
         for k, v in metrics_record.items():
             print(str(k) + ':', float(v))
@@ -38,6 +41,7 @@ def validate_fn(self, loader, metrics, monitor, visualize, **kwargs):
     support_set = parameter_manager.get_param('support_set')
     way = parameter_manager.get_param('way')
     shot = parameter_manager.get_param('shot')
+    tta = parameter_manager.get_param('tta', False)
 
     self.val_model.eval()
 
@@ -68,18 +72,28 @@ def validate_fn(self, loader, metrics, monitor, visualize, **kwargs):
                     'support_x': support_x, 
                     'support_y': support_y
                 })
-                results_tta = self.val_model({
-                    'x': torch.flip(inputs, [-1]), 
-                    'y': targets, 
-                    'support_x': support_x, 
-                    'support_y': support_y
-                })
-                outputs = (results[self.output_node] + results_tta[self.output_node]) / 2
-                loss = (results[self.loss_fn] + results[self.loss_fn]) / 2
+                
+                if tta:
+                    results_tta = self.val_model({
+                        'x': torch.flip(inputs, [-1]), 
+                        'y': targets, 
+                        'support_x': support_x, 
+                        'support_y': support_y
+                    })
+                    outputs = (results[self.output_node] + results_tta[self.output_node]) / 2
+                    loss = (results[self.loss_fn] + results_tta[self.loss_fn]) / 2
+                else:
+                    outputs = results[self.output_node]
+                    loss = results[self.loss_fn]
             else:
                 outputs = self.val_model(*[i for i in (inputs, support_x) if i is not None])
                 loss = self.loss_fn[0](outputs, targets)
-
+                if tta:
+                    outputs_tta = self.val_model(*[i for i in (torch.flip(inputs, [-1]), support_x) if i is not None])
+                    loss_tta = self.loss_fn[0](outputs_tta, targets)
+                    outputs = (outputs + outputs_tta) / 2
+                    loss = (loss + loss_tta) / 2
+                
             metrics_result = metrics({
                 'x': outputs,
                 'y': targets
