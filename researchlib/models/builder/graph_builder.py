@@ -1,7 +1,54 @@
 from torch import nn
+from graphviz import Digraph
+
+#====================================================================================================
+
+def split(path, sep = '/'):
+    i = path.rfind(sep) + 1
+    return path[:i].rstrip(sep), path[i:]
+
+def find_merge_point(edges, target):
+    for i, j in enumerate(edges):
+        if j[0] == target:
+            return i
+
+def make_dot_graph(nodes, edges):
+    g = Digraph('G')
+    subgraph = {}
+    for name, attr in nodes:
+        if type(attr) == _Graph:
+            subgraph[name] = DotGraph(attr.graph, dryrun=True).edges
+    
+    for key in subgraph:
+        merge_point = find_merge_point(edges, key)
+        edges[merge_point-1] = (edges[merge_point-1][0], subgraph[key][0][1], {}) 
+        edges[merge_point:merge_point+1] = subgraph[key][1:] + [(subgraph[key][-1][1], 
+                                                             edges[merge_point+1][0], 
+                                                             {'dryrun': False})]
+        with g.subgraph(name='cluster_0') as c:
+            c.attr(style='filled', color='lightgrey')
+            c.node_attr.update(style='filled', color='white')
+            sub_edges = [(i[0], i[1]) for i in subgraph[key][1:]]
+            c.edges(sub_edges)
+            c.attr(label=key)
+    
+    for src, dst, attr in edges:
+        ignore = attr['dryrun'] if 'dryrun' in attr else False
+        if not ignore:
+            g.edge(src, dst)
+    return g
+
+class DotGraph():
+    def __init__(self, graph, dryrun=False):
+        self.nodes = [(k, v) for k, (v,_) in graph.items()]
+        self.edges = [(src, dst, {'dryrun': dryrun}) for dst, (_, inputs) in graph.items() for src in inputs]
+        if not dryrun:
+            self.g = make_dot_graph(self.nodes, self.edges)
+            
+#====================================================================================================
+
 
 has_inputs = lambda node: type(node) is tuple
-
 
 def path_iter(nested_dict, pfx = ()):
     for name, val in nested_dict.items():
@@ -67,3 +114,7 @@ class _Graph(nn.Module):
 
                 outputs[k] = node(*inp)
         return outputs
+
+    def show(self):
+        return DotGraph(self.graph).g
+        
