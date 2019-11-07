@@ -9,7 +9,7 @@ def split(path, sep = '/'):
 
 def find_merge_point(edges, target):
     for i, j in enumerate(edges):
-        if j[0] == target:
+        if j[1] == target:
             return i
 
 def make_dot_graph(nodes, edges):
@@ -21,10 +21,8 @@ def make_dot_graph(nodes, edges):
     
     for key in subgraph:
         merge_point = find_merge_point(edges, key)
-        edges[merge_point-1] = (edges[merge_point-1][0], subgraph[key][0][1], {}) 
-        edges[merge_point:merge_point+1] = subgraph[key][1:] + [(subgraph[key][-1][1], 
-                                                             edges[merge_point+1][0], 
-                                                             {'dryrun': False})]
+        edges[merge_point] = (edges[merge_point][0], subgraph[key][0][1], {}) 
+        edges[merge_point+1] = (subgraph[key][-1][1], edges[merge_point+1][1], {})
         with g.subgraph(name='cluster_0') as c:
             c.attr(style='filled', color='lightgrey')
             c.node_attr.update(style='filled', color='white')
@@ -83,14 +81,18 @@ def build_graph(net, sep = '/'):
 
 
 class _Graph(nn.Module):
-    def __init__(self, net):
+    def __init__(self, net, in_node='x', out_node=None):
         super().__init__()
         self.graph = build_graph(net)
+        self.in_node = in_node
+        self.out_node = out_node
         for path, (val, _) in self.graph.items(): 
             setattr(self, path.replace('/', '_'), val)
 
     def forward(self, inputs):
-        outputs = dict(inputs)
+        if type(inputs) != dict:
+            inputs = {self.in_node: inputs}
+        outputs = inputs
         for k, (node, ins) in self.graph.items():
             if k not in outputs:
                 inp = []
@@ -113,7 +115,11 @@ class _Graph(nn.Module):
                         inp = [inp[index]]
 
                 outputs[k] = node(*inp)
-        return outputs
+                
+        if self.out_node is not None:
+            return outputs[self.out_node]
+        else:
+            return outputs
 
     def show(self):
         return DotGraph(self.graph).g
