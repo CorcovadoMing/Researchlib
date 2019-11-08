@@ -48,6 +48,7 @@ class DotGraph():
         self.edges = [(prefix_name(src, prefix), prefix_name(dst, prefix), {'dryrun': dryrun}) for dst, (_, inputs) in graph.items() for src in inputs]
         if not dryrun:
             self.g = make_dot_graph(self.nodes, self.edges)
+            self.g.attr(rankdir='LR')
             
             
 #====================================================================================================
