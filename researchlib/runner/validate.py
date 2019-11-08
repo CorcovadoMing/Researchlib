@@ -50,7 +50,6 @@ def validate_fn(self, loader, monitor, visualize, **kwargs):
     support_set = parameter_manager.get_param('support_set')
     way = parameter_manager.get_param('way')
     shot = parameter_manager.get_param('shot')
-    tta = parameter_manager.get_param('tta', False)
 
     self.val_model.eval()
 
@@ -81,18 +80,8 @@ def validate_fn(self, loader, monitor, visualize, **kwargs):
                 'support_y': support_y
             })
 
-            if tta:
-                results_tta = self.val_model({
-                    'x': torch.flip(inputs, [-1]), 
-                    'y': targets, 
-                    'support_x': support_x, 
-                    'support_y': support_y
-                })
-                outputs = (results[self.output_node] + results_tta[self.output_node]) / 2
-                loss = (results[self.loss_fn] + results_tta[self.loss_fn]) / 2
-            else:
-                outputs = results[self.output_node]
-                loss = results[self.loss_fn]
+            outputs = results[self.output_node]
+            loss = results[self.loss_fn]
                 
 
             for i in monitor:
