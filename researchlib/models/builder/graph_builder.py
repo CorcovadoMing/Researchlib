@@ -8,14 +8,21 @@ def split(path, sep = '/'):
     return path[:i].rstrip(sep), path[i:]
 
 def prefix_name(name, prefix):
+    if name[0] == '*':
+        name = name[1:]
     if len(prefix) > 0:
         return str(prefix) + '_' + str(name)
     else:
         return name
 
-def find_merge_point(edges, target):
+def find_merge_endpoint(edges, target):
     for i, j in enumerate(edges):
         if j[1] == target:
+            return i
+
+def find_merge_startpoint(edges, target):
+    for i, j in enumerate(edges):
+        if j[0] == target:
             return i
 
 def make_dot_graph(nodes, edges):
@@ -26,15 +33,16 @@ def make_dot_graph(nodes, edges):
             subgraph[name] = DotGraph(attr.graph, dryrun=True, prefix=name).edges
     
     for key in subgraph:
-        merge_point = find_merge_point(edges, key)
+        merge_point = find_merge_endpoint(edges, key)
         edges[merge_point] = (edges[merge_point][0], subgraph[key][0][1], {}) 
-        edges[merge_point+1] = (subgraph[key][-1][1], edges[merge_point+1][1], {})
         with g.subgraph(name='cluster_'+key) as c:
             c.attr(style='filled', color='lightgrey')
             c.node_attr.update(style='filled', color='white')
             sub_edges = [(i[0], i[1]) for i in subgraph[key][1:]]
             c.edges(sub_edges)
             c.attr(label=key)
+        merge_point = find_merge_startpoint(edges, key)
+        edges[merge_point] = (subgraph[key][-1][1], edges[merge_point][1], {})
     
     for src, dst, attr in edges:
         ignore = attr['dryrun'] if 'dryrun' in attr else False
@@ -94,35 +102,62 @@ class _Graph(nn.Module):
         self.graph = build_graph(net)
         self.in_node = in_node
         self.out_node = out_node
+        self.train_mode = True
         for path, (val, _) in self.graph.items(): 
             setattr(self, path.replace('/', '_'), val)
+            
+            
+    def prepare_inp(self, ins, outputs):
+        inp = []
+        for x in ins:
+            # has index
+            if ':' in x:
+                x, index = x.split(':')
+                index = int(index)
+            else:
+                index = -1
 
+            # Multiple Input
+            if type(outputs[x]) == tuple:
+                inp += list(outputs[x])
+            else:
+                inp.append(outputs[x])
+
+            # has index 
+            if index >= 0:
+                inp = [inp[index]]
+        return inp
+    
+                
     def forward(self, inputs):
         if type(inputs) != dict:
             inputs = {self.in_node: inputs}
+        
         outputs = inputs
-        for k, (node, ins) in self.graph.items():
+        for k, (node, inp) in self.graph.items():
+            
+            # Test-time operation
+            if k[0] == '*':
+                k = k[1:]
+                if self.train_mode:
+                    outputs[k] = None
+                    continue
+                    
+            # Shared operation
+            if type(node) == list or type(node) == tuple:
+                node = [self.graph[i][0] for i in node]
+            
             if k not in outputs:
-                inp = []
-                for x in ins:
-                    # has index
-                    if ':' in x:
-                        x, index = x.split(':')
-                        index = int(index)
-                    else:
-                        index = -1
-                    
-                    # Multiple Input
-                    if type(outputs[x]) == tuple:
-                        inp += list(outputs[x])
-                    else:
-                        inp.append(outputs[x])
-                    
-                    # has index 
-                    if index >= 0:
-                        inp = [inp[index]]
-
-                outputs[k] = node(*inp)
+                inp = self.prepare_inp(inp, outputs)
+                
+                # No cache in pipeline of shared models
+                if type(node) == list:
+                    for op in node:
+                        inp = op(*inp)
+                        inp = [inp]
+                    outputs[k] = inp[0]
+                else:
+                    outputs[k] = node(*inp)
                 
         if self.out_node is not None:
             return outputs[self.out_node]

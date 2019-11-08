@@ -2,13 +2,20 @@ import torch
 from ..utils import _register_method, get_aux_out, _switch_swa_mode, ParameterManager, inifinity_loop
 from functools import reduce
 from .prefetch import BackgroundGenerator
+from ..models import Builder
+
 
 __methods__ = []
 register_method = _register_method(__methods__)
 
 
+def to_eval_mode(m):
+    if isinstance(m, Builder.Graph):
+        m.train_mode = False
+        
+        
 @register_method
-def validate(self, metrics = None, monitor = [], visualize = [], prefetch = True, **kwargs):
+def validate(self, monitor = [], visualize = [], prefetch = True, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
     batch_size = parameter_manager.get_param(
         'batch_size', 512, validator = lambda x: x > 0 and type(x) == int
@@ -23,7 +30,7 @@ def validate(self, metrics = None, monitor = [], visualize = [], prefetch = True
     self.preload_gpu()
     try:
         loss_record, metrics_record, visualize_record = self.validate_fn(
-            test_loader, metrics, monitor, visualize, **kwargs
+            test_loader, monitor, visualize, **kwargs
         )
         print(loss_record)
         for k, v in metrics_record.items():
@@ -35,7 +42,9 @@ def validate(self, metrics = None, monitor = [], visualize = [], prefetch = True
 
 
 @register_method
-def validate_fn(self, loader, metrics, monitor, visualize, **kwargs):
+def validate_fn(self, loader, monitor, visualize, **kwargs):
+    self.val_model.apply(to_eval_mode)
+    
     parameter_manager = ParameterManager(**kwargs)
 
     support_set = parameter_manager.get_param('support_set')
@@ -65,45 +74,32 @@ def validate_fn(self, loader, metrics, monitor, visualize, **kwargs):
             else:
                 support_x, support_y = None, None
 
-            if self.model_type == 'graph':
-                results = self.val_model({
-                    'x': inputs, 
+            results = self.val_model({
+                'x': inputs, 
+                'y': targets, 
+                'support_x': support_x, 
+                'support_y': support_y
+            })
+
+            if tta:
+                results_tta = self.val_model({
+                    'x': torch.flip(inputs, [-1]), 
                     'y': targets, 
                     'support_x': support_x, 
                     'support_y': support_y
                 })
-                
-                if tta:
-                    results_tta = self.val_model({
-                        'x': torch.flip(inputs, [-1]), 
-                        'y': targets, 
-                        'support_x': support_x, 
-                        'support_y': support_y
-                    })
-                    outputs = (results[self.output_node] + results_tta[self.output_node]) / 2
-                    loss = (results[self.loss_fn] + results_tta[self.loss_fn]) / 2
-                else:
-                    outputs = results[self.output_node]
-                    loss = results[self.loss_fn]
+                outputs = (results[self.output_node] + results_tta[self.output_node]) / 2
+                loss = (results[self.loss_fn] + results_tta[self.loss_fn]) / 2
             else:
-                outputs = self.val_model(*[i for i in (inputs, support_x) if i is not None])
-                loss = self.loss_fn[0](outputs, targets)
-                if tta:
-                    outputs_tta = self.val_model(*[i for i in (torch.flip(inputs, [-1]), support_x) if i is not None])
-                    loss_tta = self.loss_fn[0](outputs_tta, targets)
-                    outputs = (outputs + outputs_tta) / 2
-                    loss = (loss + loss_tta) / 2
+                outputs = results[self.output_node]
+                loss = results[self.loss_fn]
                 
-            metrics_result = metrics({
-                'x': outputs,
-                'y': targets
-            }) if metrics is not None else metrics_record
-            
+
             for i in monitor:
-                metrics_record[i] += metrics_result[i]
+                metrics_record[i] += results[i]
 
             for i in visualize:
-                visualize_record[i] += metrics_result[i]
+                visualize_record[i] += results[i]
                 
             loss_record += loss.item()
             del loss

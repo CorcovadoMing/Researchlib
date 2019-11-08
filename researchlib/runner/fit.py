@@ -71,7 +71,6 @@ def fit(
     warmup_policy = 'linear',
     flatten = 0,
     flatten_lr = 0,
-    metrics = None,
     callbacks = [],
     _id = 'none',
     iterations = 0,
@@ -261,7 +260,7 @@ def fit(
             liveplot.timer.clear()
             # Training function
             loss_record, norm_record, metrics_record, visualize_record = self.train_fn(
-                                                                     train_loader, metrics, monitor, visualize,
+                                                                     train_loader, monitor, visualize,
                                                                      liveplot=liveplot,
                                                                      mmixup_alpha=mmixup_alpha, 
                                                                      fixed_mmixup=fixed_mmixup, 
@@ -294,7 +293,7 @@ def fit(
                 liveplot.redis.set('stage', 'validate')
                 # Validation function
                 loss_record, metrics_record, visualize_record = self.validate_fn(
-                                                                           test_loader, metrics, monitor, visualize,
+                                                                           test_loader, monitor, visualize,
                                                                            support_set=support_set,
                                                                            way=way,
                                                                            shot=shot,

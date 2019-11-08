@@ -1,13 +1,22 @@
 import torch
 from ..utils import _register_method, ParameterManager, Annealer, set_lr, update_optim
 from ..ops import op
+from ..models import Builder
+
 
 __methods__ = []
 register_method = _register_method(__methods__)
 
 
+def to_train_mode(m):
+    if isinstance(m, Builder.Graph):
+        m.train_mode = True
+
+        
 @register_method
-def train_fn(self, loader, metrics, monitor, visualize, **kwargs):
+def train_fn(self, loader, monitor, visualize, **kwargs):
+    self.model.apply(to_train_mode)
+    
     parameter_manager = ParameterManager(**kwargs)
 
     liveplot = parameter_manager.get_param('liveplot', required = True)
@@ -75,13 +84,9 @@ def train_fn(self, loader, metrics, monitor, visualize, **kwargs):
         else:
             support_x, support_y = None, None
         
-        if self.model_type == 'graph':
-            results = self.model({'x': inputs, 'y': targets, 'support_x': support_x, 'support_y': support_y})
-            outputs, loss = results[self.output_node], results[self.loss_fn]
-        else:
-            outputs = self.model(*[i for i in (inputs, support_x) if i is not None])
-            loss = self.loss_fn[0](outputs, targets)
-        
+        results = self.model({'x': inputs, 'y': targets, 'support_x': support_x, 'support_y': support_y})
+        outputs, loss = results[self.output_node], results[self.loss_fn]
+
         loss.backward()
 
         for i in self.optimizer:
@@ -94,29 +99,23 @@ def train_fn(self, loader, metrics, monitor, visualize, **kwargs):
         #         for p in list(filter(lambda p: p.grad is not None, self.model.parameters())):
         #             norm_record += p.grad.data.norm(2).item() ** 2
 
-        with torch.no_grad():
-            if ema and (batch_idx + 1) % ema_freq == 0:
-                for v, ema_v in zip(
-                    self.model.state_dict().values(),
-                    self.val_model.state_dict().values()
-                ):
-                    if ema_v.dtype == torch.int64:
-                        # do not ema on int data for precision (underflow) issue
-                        pass
-                    else:
-                        ema_v.mul_(rho)
-                        ema_v.add_(1-rho, v)
+        if ema and (batch_idx + 1) % ema_freq == 0:
+            for v, ema_v in zip(
+                self.model.state_dict().values(),
+                self.val_model.state_dict().values()
+            ):
+                if ema_v.dtype == torch.int64:
+                    # do not ema on int data for precision (underflow) issue
+                    pass
+                else:
+                    ema_v.mul_(rho)
+                    ema_v.add_(1-rho, v)
 
-        metrics_result = metrics({
-            'x': outputs,
-            'y': targets
-        }) if metrics is not None else metrics_record
-        
         for i in monitor:
-            metrics_record[i] += metrics_result[i]
+            metrics_record[i] += results[i]
         
         for i in visualize:
-            visualize_record[i] += metrics_result[i]
+            visualize_record[i] += results[i]
 
         if batch_idx % 5 == 0 or batch_idx == (self.train_loader_length - 1):
             liveplot.update_desc(epoch, batch_idx + 1, loss_record, metrics_record, self.monitor)
