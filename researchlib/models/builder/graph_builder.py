@@ -7,6 +7,12 @@ def split(path, sep = '/'):
     i = path.rfind(sep) + 1
     return path[:i].rstrip(sep), path[i:]
 
+def prefix_name(name, prefix):
+    if len(prefix) > 0:
+        return str(prefix) + '_' + str(name)
+    else:
+        return name
+
 def find_merge_point(edges, target):
     for i, j in enumerate(edges):
         if j[1] == target:
@@ -17,13 +23,13 @@ def make_dot_graph(nodes, edges):
     subgraph = {}
     for name, attr in nodes:
         if type(attr) == _Graph:
-            subgraph[name] = DotGraph(attr.graph, dryrun=True).edges
+            subgraph[name] = DotGraph(attr.graph, dryrun=True, prefix=name).edges
     
     for key in subgraph:
         merge_point = find_merge_point(edges, key)
         edges[merge_point] = (edges[merge_point][0], subgraph[key][0][1], {}) 
         edges[merge_point+1] = (subgraph[key][-1][1], edges[merge_point+1][1], {})
-        with g.subgraph(name='cluster_0') as c:
+        with g.subgraph(name='cluster_'+key) as c:
             c.attr(style='filled', color='lightgrey')
             c.node_attr.update(style='filled', color='white')
             sub_edges = [(i[0], i[1]) for i in subgraph[key][1:]]
@@ -37,11 +43,12 @@ def make_dot_graph(nodes, edges):
     return g
 
 class DotGraph():
-    def __init__(self, graph, dryrun=False):
+    def __init__(self, graph, dryrun=False, prefix=''):
         self.nodes = [(k, v) for k, (v,_) in graph.items()]
-        self.edges = [(src, dst, {'dryrun': dryrun}) for dst, (_, inputs) in graph.items() for src in inputs]
+        self.edges = [(prefix_name(src, prefix), prefix_name(dst, prefix), {'dryrun': dryrun}) for dst, (_, inputs) in graph.items() for src in inputs]
         if not dryrun:
             self.g = make_dot_graph(self.nodes, self.edges)
+            
             
 #====================================================================================================
 

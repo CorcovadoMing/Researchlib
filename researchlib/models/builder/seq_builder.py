@@ -1,18 +1,15 @@
 from torch import nn
 import torch
+from .graph_builder import _Graph
 
 
-class _Seq(nn.Module):
-    def __init__(self, *models):
-        super().__init__()
-        self.models = nn.ModuleList([
-            nn.Sequential(*model) if type(model) == list else model for model in models
-        ])
-
-    def forward(self, *x):
-        for model in self.models:
-            if type(x) != torch.Tensor:
-                x = model(*x)
-            else:
-                x = model(x)
-        return x
+def _Seq(*models):
+    model_list = []
+    for i in models:
+        if type(i) == list:
+            model_list += i
+        else:
+            model_list.append(i)
+    
+    flow = {str(i): (j, ['input'] if i == 0 else [str(i-1)]) for i, j in enumerate(model_list)}
+    return _Graph(flow, in_node='input', out_node=str(len(model_list)-1))
