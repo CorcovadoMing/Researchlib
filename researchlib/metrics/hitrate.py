@@ -4,6 +4,7 @@ import numpy as np
 
 class Hitrate(namedtuple('Hitrate', ['classes'])):
     def __call__(self, x, y):
+        x, y = x.detach(), y.detach()
         matrix = np.zeros((2, self.classes))
         for i in range(len(x)):
             if x[i] == y[i]:
