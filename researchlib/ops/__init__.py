@@ -47,7 +47,7 @@ from .non_local import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _Gaus
 from .active_noise import _ActiveNoise
 from .rcl import _RConv2d
 from .io import _SetVariable, _UpdateVariable, _GetVariable
-from .node import _To, _Subgraph
+from .node import _To, _Subgraph, _Detach
 
 
 class op(object):
@@ -66,6 +66,7 @@ class op(object):
     # Node
     To = _To
     Subgraph = _Subgraph
+    Detach = _Detach
     
     # Shaping
     View = _View
