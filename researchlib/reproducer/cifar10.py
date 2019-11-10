@@ -101,20 +101,22 @@ class _cifar10:
 
     def dawnfast(self):
         model = Builder.Graph({
-            'l1': (AutoConvNet(op.Conv2d, unit.conv, 3, 3, stem={'whitening': 1},
+            'l2': (AutoConvNet(op.Conv2d, unit.conv, 3, 3, stem={'whitening': 1},
                         type={'order':['dawn', 'vgg'], 'type':'alternative'}, 
-                        filters=(64, 512), activator_type='CELU', prepool=True, freeze_scale=True, 
-                        norm_type=op.GhostBatchNorm2d), 
+                        filters=(64, 512), activator_type='CELU', prepool=True, freeze_scale=True, norm_type=op.GhostBatchNorm2d), 
                    ['x']),
-            'l2': (Heads(10, reduce_type='avg'), ['l1']),
-            'l3': (op.Multiply(1/4), ['l2']),
-            'out': (op.LogSoftmax(-1), ['l3']),
-            'loss': (Loss.SmoothNegativeLogLikelyhood, ['out', 'y'])
-        })
+            'l3': (Heads(10, reduce_type='avg'), ['l2']),
+            'l4': (op.Multiply(1/2), ['l3']),
+            'out': (op.LogSoftmax(-1), ['l4']),
+            'loss': (Loss.SmoothNLL(), ['out', 'y']),
 
-        metrics = Builder.Graph({
-            'categorical': (Metrics.Categorical(), ['x', 'y']),
-            'acc': (Metrics.Acc(), ['categorical'])
+            '*x_flip': (op.Flip, ['x']),
+            '*shared': (['l2', 'l3', 'l4'], ['x_flip']),
+            '*out_tta': (op.LogSoftmax(-1), ['shared']),
+            'out_avg': (op.Average, ['out', 'out_tta']),
+
+            'categorical': (Metrics.Categorical(), ['out_avg']),
+            'acc': (Metrics.Acc(), ['categorical', 'y'])
         })
 
         self.runner = Runner(model, 
@@ -140,5 +142,4 @@ class _cifar10:
                    fp16=True, 
                    ema_freq=5, 
                    bias_scale=64, 
-                   metrics=metrics, 
                    monitor=['acc'])
