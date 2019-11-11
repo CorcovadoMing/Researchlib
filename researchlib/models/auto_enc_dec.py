@@ -59,6 +59,7 @@ def AutoEncDec(
 ):
     Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
     parameter_manager = ParameterManager(**kwargs)
+    parameter_manager.allow_param('stem_pool')
     auxiliary_classifier = parameter_manager.get_param('auxiliary_classifier', None)
     base_dim, max_dim = filters
     block_group = 0

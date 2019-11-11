@@ -42,8 +42,10 @@ class ParameterManager:
         ParameterManager.params[key] = query
         return query
     
-    def set_param(self, key, value):
-        self.kwargs[key] = value
+    @classmethod
+    def allow_param(cls, key):
+        if key not in ParameterManager.keys_whitelist:
+            ParameterManager.keys_whitelist.append(key)
 
     @classmethod
     def save_buffer(cls, key, value):
