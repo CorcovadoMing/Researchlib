@@ -41,6 +41,9 @@ class ParameterManager:
 
         ParameterManager.params[key] = query
         return query
+    
+    def set_param(self, key, value):
+        self.kwargs[key] = value
 
     @classmethod
     def save_buffer(cls, key, value):
