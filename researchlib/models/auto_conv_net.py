@@ -58,9 +58,8 @@ def AutoConvNet(
             do_pool = False
 
         _type = _parse_type(i, type)
-        wide_scale = parameter_manager.get_param(
-            'wide_scale', 10
-        ) if _type == 'wide-residual' else 1
+        wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
+        
         out_dim = wide_scale * _filter_policy(
             id, type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy,
             parameter_manager
@@ -84,15 +83,16 @@ def AutoConvNet(
         kwargs['non_local'] = id >= non_local_start
         layers.append(
             _op_type(
+                f'{_op_type.__name__}_{id}',
+                unit,
                 _op,
-                in_dim,
-                out_dim,
+                in_dim = in_dim,
+                out_dim = out_dim,
                 do_pool = do_pool,
                 do_norm = do_norm,
                 preact = preact,
                 id = id,
                 total_blocks = total_blocks,
-                unit = unit,
                 **kwargs
             )
         )
@@ -101,6 +101,8 @@ def AutoConvNet(
         in_dim = out_dim
 
     # must verify after all keys get registered
+    parameter_manager.allow_param('non_local')
+    
     ParameterManager.verify_kwargs(**kwargs)
     parameter_manager.save_buffer('dim_type', _get_dim_type(_op))
     parameter_manager.save_buffer('last_dim', out_dim)

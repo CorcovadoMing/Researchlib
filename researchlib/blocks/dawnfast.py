@@ -1,34 +1,65 @@
-from .template.block import _Block
-from .unit import unit
+from .utils import get_conv_config, SE_Attention, CBAM_Attention
+from ..utils import ParameterManager
+from ..ops import op
+from torch import nn
 
 
-class _DAWNBlock(_Block):
+def _DAWNBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
     '''
         https://myrtle.ai/how-to-train-your-resnet-4-architecture/
     '''
-    def __postinit__(self):
-        is_transpose = self._is_transpose()
-        unit_fn = self._get_param('unit', unit.conv)
-        self.stem = unit_fn(
-            self.op, self.in_dim, self.out_dim, self.do_pool, self.do_norm, False,
-            **self._get_custom_kwargs()
+    parameter_manager = ParameterManager(**kwargs)
+    
+    first_conv_kwargs = get_conv_config()
+    first_conv_kwargs.update(**kwargs)
+    first_conv_kwargs.update(preact=False)
+    
+    remains_conv_kwargs = get_conv_config()
+    remains_conv_kwargs.update(**kwargs)
+    remains_conv_kwargs.update(preact=False, do_pool=False)
+    
+    op1 = _unit(f'{prefix}_m1', _op, in_dim, out_dim, **first_conv_kwargs)
+    op2 = _unit(f'{prefix}_m2', _op, out_dim, out_dim, **remains_conv_kwargs)
+    op3 = _unit(f'{prefix}_m3', _op, out_dim, out_dim, **remains_conv_kwargs)
+    
+    # Branch attention
+    branch_attention = parameter_manager.get_param('branch_attention')
+    if branch_attention == 'se':
+        attention_op = SE_Attention(out_dim, dim)
+    elif branch_attention == 'cbam':
+        attention_op = CBAM_Attention(out_dim, dim)
+    else:
+        attention_op = nn.Sequential()
+         
+    # Shakedrop
+    shakedrop = parameter_manager.get_param('shakedrop', False)
+    if shakedrop:
+        id = parameter_manager.get_param('id', required = True)
+        total_blocks = parameter_manager.get_param('total_blocks', required = True)
+        alpha_range = parameter_manager.get_param('alpha_range', init_value = [-1, 1])
+        beta_range = parameter_manager.get_param('beta_range', init_value = [0, 1])
+        shakedrop_prob = parameter_manager.get_param('shakedrop_prob', init_value = 0.5)
+        mode_mapping = {'batch': 0, 'sample': 1, 'channel': 2, 'pixel': 3}
+        mode = parameter_manager.get_param('shakedrop_mode', 'pixel')
+        mode = mode_mapping[mode]
+        shakedrop_op = op.ShakeDrop(
+            id,
+            total_blocks,
+            alpha_range = alpha_range,
+            beta_range = beta_range,
+            shakedrop_prob = shakedrop_prob,
+            mode = mode
         )
-        self.res1 = unit_fn(
-            self.op, self.out_dim, self.out_dim, False, self.do_norm, False,
-            **self._get_custom_kwargs()
-        )
-        self.res2 = unit_fn(
-            self.op, self.out_dim, self.out_dim, False, self.do_norm, False,
-            **self._get_custom_kwargs()
-        )
-        self.branch_attention = self._get_param('branch_attention')
-        if self.branch_attention:
-            self.attention_branch = self._get_attention_branch()
+    else:
+        shakedrop_op = nn.Sequential()
+    
+    flow = {
+        f'{prefix}_op1': (op1, [f'{prefix}_input']),
+        f'{prefix}_op2': op2,
+        f'{prefix}_op3': op3,
+        f'{prefix}_attention': attention_op,
+        f'{prefix}_shakedrop': shakedrop_op,
+        f'{prefix}_output': (op.Add, [f'{prefix}_op1', f'{prefix}_shakedrop'])
+    }
 
-    def forward(self, x):
-        x = self.stem(x)
-        _x = self.res1(x)
-        _x = self.res2(_x)
-        if self.branch_attention:
-            _x = self.attention_branch(_x)
-        return x + _x
+    return op.Subgraph(flow, f'{prefix}_input', f'{prefix}_output')

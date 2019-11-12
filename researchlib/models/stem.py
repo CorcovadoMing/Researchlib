@@ -20,15 +20,16 @@ def push_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact
         print(id, in_dim, out_dim, stem_type)
         layers.append(
             _op_type(
+                f'{_op_type.__name__}_stem_{id}',
+                unit,
                 _op,
-                in_dim,
-                out_dim,
+                in_dim = in_dim,
+                out_dim = out_dim,
                 do_pool = stem_kwargs['stem_pool'],
                 do_norm = False if preact else True,
                 preact = False,
                 id = id,
                 total_blocks = stem_layers,
-                unit = unit,
                 **stem_kwargs
             )
         )
