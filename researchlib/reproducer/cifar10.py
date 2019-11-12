@@ -101,12 +101,12 @@ class _cifar10:
 
     def dawnfast(self):
         model = Builder.Graph({
-            'l2': (AutoConvNet(op.Conv2d, unit.conv, 3, 3, stem={'whitening': 1},
+            'l2': (AutoConvNet(op.Conv2d, unit.Conv, 3, 3, stem={'whitening': 1},
                         type={'order':['dawn', 'vgg'], 'type':'alternative'}, 
-                        filters=(64, 512), activator_type='CELU', prepool=True, freeze_scale=True, norm_type=op.GhostBatchNorm2d), 
+                        filters=(64, 512), act_type='celu', prepool=True, freeze_scale=True, norm_type=op.GhostBatchNorm2d), 
                    ['x']),
             'l3': (Heads(10, reduce_type='avg'), ['l2']),
-            'l4': (op.Multiply(1/2), ['l3']),
+            'l4': (op.Multiply(1/4), ['l3']),
             'out': (op.LogSoftmax(-1), ['l4']),
             'loss': (Loss.SmoothNLL(), ['out', 'y']),
 
