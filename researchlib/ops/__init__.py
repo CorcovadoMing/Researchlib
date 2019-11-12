@@ -49,7 +49,7 @@ from .rcl import _RConv2d
 from .io import _SetVariable, _UpdateVariable, _GetVariable
 from .node import _To, _Subgraph, _Detach
 
-from .nonparams import _Flip, _Average
+from .nonparams import _Flip, _Average, _Add, _Sum
 
 
 class op(object):
@@ -57,6 +57,8 @@ class op(object):
     # Non-Params
     Flip = _Flip
     Average = _Average
+    Sum = _Sum
+    Add = _Add
     
     # IO
     SetVariable = _SetVariable
