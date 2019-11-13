@@ -3,18 +3,29 @@ import glob
 import matplotlib.pyplot as plt
 import os
 import numpy as np
+import pickle
 
 
 def _summary(experiment_name):
     count = 0
     arr = None
+    exp_dir = os.path.join('checkpoint', 'experiments', str(experiment_name))
+    with open(os.path.join(exp_dir, 'exp_var.pkl'), 'rb') as f:
+        exp_var = pickle.load(f)
+        
+    exp_var_collect = []
     
     while True:
-        path = glob.glob(os.path.join('checkpoint', 'experiments', str(experiment_name)) + f'/runs_{count}*/*.csv')
+        path = glob.glob(exp_dir + f'/runs_{count}*/*.csv')
         if not len(path):
             break
         count += 1
         
+        with open(os.path.join(exp_dir, f'runs_{count-1}_repeat_0', 'exp_settings.pkl'), 'rb') as f:
+            exp_settings = pickle.load(f)
+        current_var = {k: exp_settings[k] for k in exp_var}
+        exp_var_collect.append(current_var)
+            
         name_col = pd.read_csv(path[0]).columns.values
         split_col = int((len(name_col)-1)/2)
         total = np.stack([pd.read_csv(i).values for i in path])
@@ -44,5 +55,9 @@ def _summary(experiment_name):
     if not len(path) and count == 0:
         print(f'{count} experiment found in "{experiment_name}"')
     else:
-        arr[0, 0].legend([f'Experiments {i}' for i in range(1, count+1)], bbox_to_anchor=(0., 1.1, 2.2, .102), ncol=count, mode="expand", borderaxespad=0)  
+        arr[0, 0].legend([f'{k}={v}' for i in range(count) for k, v in exp_var_collect[i].items()], 
+                         bbox_to_anchor=(0., 1.1, 2.2, .102), 
+                         ncol=count, 
+                         mode="expand", 
+                         borderaxespad=0)  
         plt.show()
