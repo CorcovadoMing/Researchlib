@@ -126,21 +126,6 @@ def fit(
     
     if iterations == 0:
         iterations = self.train_loader_length
-        
-        
-    # ----------------------------------------------
-    # Setting experiments
-    # ----------------------------------------------
-    if len(self.experiment_name) == 0:
-        self.start_experiment('default')
-        
-    exist_experiments = pickle.loads(liveplot.redis.get('experiment'))
-    if self.experiment_name not in exist_experiments:
-        exist_experiments.append(self.experiment_name)
-    self.history.start_logfile(self.checkpoint_path)
-        
-    liveplot.redis.set('experiment', pickle.dumps(exist_experiments))
-    
     
     # ----------------------------------------------
     # MISC
@@ -163,6 +148,24 @@ def fit(
     fixed_mmixup = parameter_manager.get_param('fixed_mmixup', validator = lambda x: type(x) == list)
     random_mmixup = parameter_manager.get_param('random_mmixup', validator = lambda x: len(x) == 2 and type(x) == list)
     mmixup_alpha = parameter_manager.get_param('mmixup_alpha', validator = lambda x: type(x) == float)
+    
+    
+    
+    # ----------------------------------------------
+    # Setting experiments
+    # ----------------------------------------------
+    if len(self.experiment_name) == 0:
+        self.start_experiment('default')
+        
+    exist_experiments = pickle.loads(liveplot.redis.get('experiment'))
+    if self.experiment_name not in exist_experiments:
+        exist_experiments.append(self.experiment_name)
+    self.history.start_logfile(self.checkpoint_path)
+        
+    liveplot.redis.set('experiment', pickle.dumps(exist_experiments))
+    
+    
+    
     
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Initialization should be completed before this line

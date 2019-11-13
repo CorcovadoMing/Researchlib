@@ -20,6 +20,8 @@ def init_model(
     elif self.monitor_mode == max:
         self.monitor = -1e5
     
+    self.history.records = {}
+    
     if init_algorithm == 'lsuv':
         init_distribution = 'orthogonal'
     else:
