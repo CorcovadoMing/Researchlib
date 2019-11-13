@@ -103,10 +103,10 @@ class Runner:
         self.monitor = None
 
         if monitor_mode == 'min':
-            self.monitor = 1e9
+            self.monitor = 1e5
             self.monitor_mode = min
         elif monitor_mode == 'max':
-            self.monitor = -1e9
+            self.monitor = -1e5
             self.monitor_mode = max
 
         if self.multigpu:

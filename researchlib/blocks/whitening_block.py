@@ -22,5 +22,11 @@ class _WhiteningBlock(nn.Module):
         if self.e1 is None or self.e2 is None:
             self.e1 = ParameterManager.get_buffer('e1', clear=False)
             self.e2 = ParameterManager.get_buffer('e2', clear=False)
-            self.inner_op.weight.data = (self.e2 / torch.sqrt(self.e1 + 1e-2)[:, None, None, None]).to(x.device).to(x.dtype)
+            self.inner_op.weight.data = (self.e2 / torch.sqrt(self.e1 + 1e-4)[:, None, None, None]).to(x.device).to(x.dtype)
+            self.inner_op.weight.requires_grad = False
+            
         return self.unit(self.inner_op(x))
+    
+    def reset_parameters(self):
+        self.e1 = None
+        self.e2 = None

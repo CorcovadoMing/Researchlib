@@ -39,6 +39,10 @@ class Annealer:
     Fixed = _Fixed
 
     @classmethod
+    def reset(cls):
+        cls.tracker = {}
+    
+    @classmethod
     def set_trace(
         cls, name, max_step, srange = [0, 1], anneal_when = 'iteration', anneal_fn = lambda x: x
     ):

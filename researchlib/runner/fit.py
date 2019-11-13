@@ -158,6 +158,7 @@ def fit(
             self.save(init_model)
         self.set_optimizer()
         self.epoch = 1
+        
     
     fixed_mmixup = parameter_manager.get_param('fixed_mmixup', validator = lambda x: type(x) == list)
     random_mmixup = parameter_manager.get_param('random_mmixup', validator = lambda x: len(x) == 2 and type(x) == list)
@@ -331,6 +332,7 @@ def fit(
             # Post-config
             # ----------------------------------------------
             liveplot.plot(self.epoch, self.history, epoch_str)
+            liveplot.cali_desc(self.monitor)
             
             for callback_func in callbacks:
                 callback_func.on_epoch_end(

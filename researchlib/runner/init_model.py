@@ -13,6 +13,13 @@ register_method = _register_method(__methods__)
 def init_model(
     self, init_algorithm = 'default', lsuv_dummy = False, lsuv_trials = 50, verbose = False
 ):
+    
+    # Reset the metrics
+    if self.monitor_mode == min:
+        self.monitor = 1e5
+    elif self.monitor_mode == max:
+        self.monitor = -1e5
+    
     if init_algorithm == 'lsuv':
         init_distribution = 'orthogonal'
     else:
@@ -31,6 +38,10 @@ def init_model(
                 for i in module.parameters():
                     if i.dim() > 1:
                         i /= out
+    
+    def _to_fp32(m):
+        if isinstance(m, torch.nn.Module) and not isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
+            m.float()
 
     def _init(m):
         if init_distribution == 'default':
@@ -71,6 +82,7 @@ def init_model(
                 handler = m.register_forward_hook(hook_fn)
                 hook.append(handler)
 
+    self.model.apply(_to_fp32)
     self.model.apply(_init)
 
     if init_algorithm == 'lsuv':

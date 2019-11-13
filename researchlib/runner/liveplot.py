@@ -142,10 +142,17 @@ class Liveplot:
         ]
         metrics_collection = ''.join(metrics_collection)
         misc, progress = self.timer.output(batch_idx)
+        self.cache = (epoch, loss_record, metrics_collection, track_best, misc)
         self.progress_bar.value = batch_idx
         self.progress_label_text.value = f'Epoch: {epoch}, Loss: {loss_record:.5f}, {metrics_collection}, Track best: {track_best:.5f}, {misc}'
         self.redis.set('desc', self.progress_label_text.value)
         self.redis.set('progress', progress)
+    
+    
+    def cali_desc(self, track_best):
+        (epoch, loss_record, metrics_collection, _, misc) = self.cache
+        self.progress_label_text.value = f'Epoch: {epoch}, Loss: {loss_record:.5f}, {metrics_collection}, Track best: {track_best:.5f}, {misc}'
+        self.redis.set('desc', self.progress_label_text.value)
     
     def update_custom_output(self, msg, prefix):
         self.custom_msg[prefix] = msg
