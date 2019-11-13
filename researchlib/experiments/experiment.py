@@ -7,7 +7,8 @@ from tqdm.auto import tqdm
 from ..utils import Annealer
     
 class Experiment:
-    def __init__(self, runner, **kwargs):
+    def __init__(self, name, runner, **kwargs):
+        self.name = name
         self.runner = runner
         for key in kwargs:
             if type(kwargs[key]) != np.ndarray:
@@ -31,7 +32,7 @@ class Experiment:
                 single_run_setting = {k: _unpack(v[i]) for k, v in self.settings.items()}
                 if type(self.runner) == Runner:
                     Annealer.reset()
-                    self.runner.start_experiment(os.path.join('experiments', f'runs_{i}_repeat_{j}'))
+                    self.runner.start_experiment(os.path.join('experiments', str(self.name), f'runs_{i}_repeat_{j}'))
                     self.runner.init_model('default')
                     self.runner.fit(**single_run_setting)
                 else:

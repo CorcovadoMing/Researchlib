@@ -10,7 +10,7 @@ from ..metrics import *
 from ..search import *
 from ..mlkit import *
 from ..pipeline import *
-from ..vistool import *
+from ..viskit import *
 from ..datatool import *
 from ..wrapper import *
 from ..reproducer import *
