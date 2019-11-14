@@ -1,8 +1,7 @@
 from .conv import _Conv
-
-#from .randwire import _randwire
+from .depthwise_separable_conv import _DepthwiseSeparableConv
 
 
 class unit(object):
     Conv = _Conv
-    #randwire = _randwire
+    DepthwiseSeparableConv = _DepthwiseSeparableConv

@@ -6,6 +6,7 @@ from ..wrapper import wrapper
 from .builder import Builder
 from ..utils import ParameterManager
 from ..blocks import block
+from ..blocks import unit as _unit
 from .stem import push_stem
 
 
@@ -42,7 +43,7 @@ def AutoConvNet(
     if stem is not None:
         stem_type, stem_layers = list(stem.items())[0]
         layers, in_dim, out_dim = push_stem(
-            _op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs
+            _op, _unit.Conv, layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs
         )
     else:
         stem_layers = 0
