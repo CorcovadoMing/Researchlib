@@ -43,10 +43,10 @@ def _summary(experiment_name, xscale='linear', yscale='linear'):
                              alpha=0.3)
             arr[index, 0].set_title(f'{name_col[index_train]}')
             arr[index, 0].grid()
-            if 'acc' in name_col[index_train]:
-                arr[index, 0].set_yticks(np.linspace(0, 1, 11))
             arr[index, 0].set_xscale(xscale)
             arr[index, 0].set_yscale(yscale)
+            if 'acc' in name_col[index_train]:
+                arr[index, 0].set_yticks(np.linspace(0, 1, 11))
             
             index_val = index + split_col + 1
             mean, std = total.mean(0)[:, index_val], total.std(0)[:, index_val]
@@ -57,10 +57,10 @@ def _summary(experiment_name, xscale='linear', yscale='linear'):
                              alpha=0.3)
             arr[index, 1].set_title(f'{name_col[index_val]}')
             arr[index, 1].grid()
-            if 'acc' in name_col[index_val]:
-                arr[index, 1].set_yticks(np.linspace(0, 1, 11))
             arr[index, 1].set_xscale(xscale)
             arr[index, 1].set_yscale(yscale)
+            if 'acc' in name_col[index_val]:
+                arr[index, 1].set_yticks(np.linspace(0, 1, 11))
     
     if not len(path) and count == 0:
         print(f'{count} experiment found in "{experiment_name}"')
