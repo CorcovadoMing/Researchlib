@@ -1,6 +1,6 @@
 from ..ops import op
 from torch import nn
-from .unit.utils import get_act_op, is_transpose, get_dim
+from .unit.utils import get_act_op, get_norm_op, is_transpose, get_dim
 from ..utils import ParameterManager
 from .utils import get_conv_config, padding_shortcut, projection_shortcut, SE_Attention, CBAM_Attention
 
@@ -68,10 +68,11 @@ def _ResBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
 
     # Shortcut
     shortcut_type = parameter_manager.get_param('shortcut', 'projection')
+    shortcut_norm = parameter_manager.get_param('shortcut_norm', False)
     if shortcut_type == 'padding':
-        shortcut = padding_shortcut(_op, in_dim, out_dim, do_pool, pool_factor, blur, transpose, stride)
+        shortcut = padding_shortcut(_op, in_dim, out_dim, get_norm_op(norm_type, dim, out_dim), shortcut_norm, do_pool, pool_factor, blur, transpose, stride)
     else:
-        shortcut = projection_shortcut(_op, in_dim, out_dim, do_pool, pool_factor, blur, transpose, stride)
+        shortcut = projection_shortcut(_op, in_dim, out_dim, get_norm_op(norm_type, dim, out_dim), shortcut_norm, do_pool, pool_factor, blur, transpose, stride)
 
     # Branch attention
     branch_attention = parameter_manager.get_param('branch_attention')

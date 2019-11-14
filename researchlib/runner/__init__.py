@@ -1,4 +1,4 @@
-from .runner import *
+from .runner import Runner
 from .reinforcement_runner import *
 from .history import *
 #from .template import *

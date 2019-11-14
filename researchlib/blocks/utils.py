@@ -19,7 +19,7 @@ def get_conv_config(**custom_kwargs):
 
 
 class padding_shortcut(nn.Module):
-    def __init__(self, _op, in_dim, out_dim, do_pool, pool_factor, blur, transpose, stride):
+    def __init__(self, _op, in_dim, out_dim, norm_op, shortcut_norm, do_pool, pool_factor, blur, transpose, stride):
         super().__init__()
         self.in_dim = in_dim
         self.out_dim = out_dim
@@ -39,7 +39,7 @@ class padding_shortcut(nn.Module):
         
         
 class projection_shortcut(nn.Module):
-    def __init__(self, _op, in_dim, out_dim, do_pool, pool_factor, blur, transpose, stride):
+    def __init__(self, _op, in_dim, out_dim, norm_op, shortcut_norm, do_pool, pool_factor, blur, transpose, stride):
         super().__init__()
         if in_dim != out_dim or do_pool:
             shortcut_kernel_size = 2 if transpose and do_pool else 1
@@ -52,6 +52,7 @@ class projection_shortcut(nn.Module):
                     stride = shortcut_stride,
                     bias = False
                 ),
+                norm_op if shortcut_norm else None
             ]
             if blur:
                 reduction_op.append(

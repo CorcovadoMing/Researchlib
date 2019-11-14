@@ -46,7 +46,7 @@ from .non_local import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _Gaus
 
 from .active_noise import _ActiveNoise
 from .rcl import _RConv2d
-from .io import _SetVariable, _UpdateVariable, _GetVariable
+from .io import _SetVariable, _UpdateVariable, _GetVariable, _Source
 from .node import _To, _Subgraph, _Detach
 
 from .nonparams import _Flip, _Average, _Add, _Sum
@@ -64,6 +64,7 @@ class op(object):
     SetVariable = _SetVariable
     UpdateVariable = _UpdateVariable
     GetVariable = _GetVariable
+    Source = _Source
     
     # Encoding
     PositionalEncoding1d = _PositionalEncoding1d
