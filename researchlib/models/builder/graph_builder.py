@@ -1,6 +1,7 @@
 from torch import nn
 from graphviz import Digraph
 
+
 #====================================================================================================
 
 def split(path, sep = '/'):
@@ -8,6 +9,8 @@ def split(path, sep = '/'):
     return path[:i].rstrip(sep), path[i:]
 
 def prefix_name(name, prefix):
+    if ':' in name:
+        name = name[:name.index(':')]
     if name[0] == '*':
         name = name[1:]
     if len(prefix) > 0:
@@ -87,13 +90,23 @@ def pipeline(net, sep = '/'):
 
 def build_graph(net, sep = '/'):
     flattened = pipeline(net)
+    
     resolve_input = lambda rel_path, path, idx: normpath(sep.join(
         (path, '..', rel_path)
     )) if isinstance(rel_path, str) else flattened[idx + rel_path][0]
-    return {
+    
+    result = {
         path: (node[0], [resolve_input(rel_path, path, idx) for rel_path in node[1]])
         for idx, (path, node) in enumerate(flattened)
     }
+    
+    # Post-fix
+    from ...ops import op
+    for k, v in result.items():
+        if type(v[0]) == op.Source:
+            result[k] = (v[0], ['phase'])
+    
+    return result
 
 
 class _Graph(nn.Module):

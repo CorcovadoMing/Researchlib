@@ -46,8 +46,8 @@ from .non_local import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _Gaus
 
 from .active_noise import _ActiveNoise
 from .rcl import _RConv2d
-from .io import _SetVariable, _UpdateVariable, _GetVariable, _Source
-from .node import _To, _Subgraph, _Detach
+from .io import _SetVariable, _UpdateVariable, _GetVariable, _Source, _Normalize, _Augmentation, _Generator
+from .node import _To, _Subgraph, _Detach, _Name
 
 from .nonparams import _Flip, _Average, _Add, _Sum
 
@@ -65,6 +65,9 @@ class op(object):
     UpdateVariable = _UpdateVariable
     GetVariable = _GetVariable
     Source = _Source
+    Normalize = _Normalize
+    Augmentation = _Augmentation
+    Generator = _Generator
     
     # Encoding
     PositionalEncoding1d = _PositionalEncoding1d
@@ -78,6 +81,7 @@ class op(object):
     To = _To
     Subgraph = _Subgraph
     Detach = _Detach
+    Name = _Name
     
     # Shaping
     View = _View

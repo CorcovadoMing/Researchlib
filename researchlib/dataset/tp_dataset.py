@@ -4,6 +4,7 @@ from tensorpack import imgaug
 import random
 from functools import partial
 from .process_single import _process_single
+from .process_augment import _process_augment
 from .preprocessing import preprocessing
 
 
@@ -12,39 +13,10 @@ class _VISION_GENERAL_LOADER:
         self.is_train = is_train
         self.ds = ds
         self.name = name
-
-        if is_train:
-            # Record the statistic for normalizer
-            l = np.array([i[0] for i in self.ds.data])
-            _VISION_GENERAL_LOADER.mean = np.mean(l, axis = tuple(range(l.ndim - 1)))
-            _VISION_GENERAL_LOADER.std = np.std(l, axis = tuple(range(l.ndim - 1)))
-            del l
-
-        self.normalizer = []
-        self.augmentor = []
-        self.include_y = False
         self.transpose = transpose
-
-    def set_normalizer(self, type, mean, std):
-        self.normalizer = preprocessing.set_normalizer(type, mean, std)
-
-    def _set_augmentor(self, augmentor, include_y = False):
-        self.augmentor = augmentor
-        self.include_y = include_y
 
     def get_generator(self, batch_size = 512, **kwargs):
         ds = BatchData(self.ds, batch_size, remainder = True)
-        process_single_fn = partial(
-            _process_single,
-            is_train = self.is_train,
-            include_y = self.include_y,
-            normalizer = self.normalizer,
-            augmentor = self.augmentor,
-            transpose = self.transpose
-        )
-        ds = MultiProcessMapDataZMQ(ds, 2, process_single_fn, buffer_size = 8)
-        ds = PrintData(ds)
-        ds.reset_state()
         return ds
 
     def get_support_set(self, classes = [], shot = 5):

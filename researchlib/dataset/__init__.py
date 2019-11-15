@@ -4,7 +4,7 @@ from .utils import utils
 from .environment import GymEnv
 
 # Vision Dataset
-from .vision import _CIFAR10, _NumpyDataset
+from .tp_dataset import _CIFAR10, _NumpyDataset
 from .tf_dataset import _TFDataset
 from .torch_dataset import _TorchDataset
 

@@ -38,8 +38,6 @@ class Runner:
     def __init__(
         self,
         model,
-        train_loader,
-        test_loader = None,
         optimizer = None,
         loss_fn = None,
         monitor_mode = 'min',
@@ -54,22 +52,18 @@ class Runner:
         self.optimizer = None
         self.epoch = 1
         self.is_cuda = is_available()
+        
+        self._augmentation = None
+        self._normalize = None
 
         self.optimizer_choice = optimizer
         self.export = _Export(self)
         self.history = History()
 
         self.model = model
-        if isinstance(self.model, Builder.Graph):
-            self.model_type = 'graph'
-            self.output_node = parameter_manager.get_param('output_node', required=True)
-        else:
-            self.model_type = 'seq'
+        self.output_node = parameter_manager.get_param('output_node', required=True)
             
         self.num_params = num_model_params(model)
-
-        self.train_loader = train_loader
-        self.test_loader = test_loader
 
         self.lookahead = parameter_manager.get_param('lookahead', False)
         self.swa = parameter_manager.get_param('swa', False)
@@ -79,23 +73,7 @@ class Runner:
 
         self.default_callbacks = []
 
-        # Assign loss function
-        self.loss_fn = []
-
-        def _process_loss_fn(loss_fn):
-            process_func = loss_ensemble if type(loss_fn) == dict else loss_mapping
-            return process_func(loss_fn)
-
-        if self.model_type == 'graph':
-            self.loss_fn = loss_fn
-        else:
-            if type(loss_fn) == list:
-                for lf in loss_fn:
-                    _loss_fn = _process_loss_fn(lf)
-                    self.loss_fn.append(_loss_fn)
-            else:
-                _loss_fn = _process_loss_fn(loss_fn)
-                self.loss_fn.append(_loss_fn)
+        self.loss_fn = loss_fn
 
         # Assign monitoring
         self.monitor_mode = monitor_mode
@@ -152,11 +130,9 @@ class Runner:
         )
 
     def normalize(self, type = None, mean = None, std = None):
-        self.train_loader.set_normalizer(type, mean, std)
-        if self.test_loader:
-            self.test_loader.set_normalizer(type, mean, std)
+        self._normalize = (type, mean, std)
         return self
 
     def augmentation(self, augmentation_list, include_y = False):
-        self.train_loader._set_augmentor(augmentation_list, include_y)
+        self._augmentation = (augmentation_list, include_y)
         return self

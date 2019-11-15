@@ -1,7 +1,7 @@
-from ..utils import _register_method, plot_montage, _is_port_in_use, inifinity_loop, Annealer, ParameterManager, update_optim
+from ..utils import _register_method, plot_montage, _is_port_in_use, Annealer, ParameterManager, update_optim
 from .liveplot import Liveplot
-from .prefetch import BackgroundGenerator
 from ..frontend.dashboard import _Dashboard
+from ..ops import op
 import numpy as np
 import copy
 import pickle
@@ -107,25 +107,30 @@ def fit(
     if way is not None and shot is not None:
         if type(way) == int:
             way = list(range(way))
-        support_set = self.train_loader.get_support_set(classes=way, shot=shot)
+#         support_set = self.train_loader.get_support_set(classes=way, shot=shot)
+        support_set = None
     else:
         support_set = None
     
-    # Load loader
     fp16 = parameter_manager.get_param('fp16', False)
     batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
     buffered_epochs = epochs + 1
-    train_loader = self.train_loader.get_generator(batch_size, epochs=buffered_epochs)
-    self.train_loader_length = len(train_loader)
-    liveplot = Liveplot(self.train_loader_length, plot)
-    train_loader = BackgroundGenerator(inifinity_loop(train_loader), fp16=fp16)
-    if self.test_loader:
-        test_loader = self.test_loader.get_generator(batch_size, epochs=buffered_epochs)
-        self.test_loader_length = len(test_loader)
-        test_loader = BackgroundGenerator(inifinity_loop(test_loader), fp16=fp16)
+    
+    for k, v in self.model.graph.items():
+        if type(v[0]) == op.Source:
+            v[0].prepare_generator(batch_size, buffered_epochs)
+            self.train_loader_length = v[0].train_source_generator.__len__()
+            if v[0].val_source is not None:
+                self.test_loader_length = v[0].val_source_generator.__len__()
+            else:
+                self.test_loader_length = None
+        if type(v[0]) == op.Generator:
+            v[0].prepare_state(fp16)
     
     if iterations == 0:
         iterations = self.train_loader_length
+    
+    liveplot = Liveplot(self.train_loader_length, plot)
     
     # ----------------------------------------------
     # MISC
@@ -248,14 +253,7 @@ def fit(
                 Annealer.set_trace('lr', flatten * iterations, [flatten_lr, flatten_lr], 'iteration', _anneal_policy('fixed'))
                 Annealer._iteration_step(key = 'lr')
                 
-            for callback_func in callbacks:
-                callback_func.on_epoch_begin(
-                    model = self.model,
-                    train_loader = self.train_loader,
-                    optimizer = self.optimizer,
-                    epoch = self.epoch
-                )
-            
+
             # ----------------------------------------------
             # Training stage
             # ----------------------------------------------
@@ -263,7 +261,7 @@ def fit(
             liveplot.timer.clear()
             # Training function
             loss_record, norm_record, metrics_record, visualize_record = self.train_fn(
-                                                                     train_loader, monitor, visualize,
+                                                                     monitor, visualize,
                                                                      liveplot=liveplot,
                                                                      mmixup_alpha=mmixup_alpha, 
                                                                      fixed_mmixup=fixed_mmixup, 
@@ -292,14 +290,14 @@ def fit(
             # ----------------------------------------------
             # Validation stage
             # ----------------------------------------------
-            if self.test_loader:
+            if self.test_loader_length is not None:
                 liveplot.redis.set('stage', 'validate')
                 # Validation function
                 loss_record, metrics_record, visualize_record = self.validate_fn(
-                                                                           test_loader, monitor, visualize,
-                                                                           support_set=support_set,
-                                                                           way=way,
-                                                                           shot=shot)
+                                                                   monitor, visualize,
+                                                                   support_set=support_set,
+                                                                   way=way,
+                                                                   shot=shot)
                 liveplot.record(epoch, 'val_loss', loss_record)
                 liveplot.update_custom_output(visualize_record, prefix = 'val')
                 self.history.add({'loss': loss_record}, prefix = 'val')
@@ -313,7 +311,7 @@ def fit(
             # Check point
             # ----------------------------------------------
             epoch_str = str(self.epoch)
-            monitor_target = 'val_' + self.monitor_state if self.test_loader else 'train_' + self.monitor_state
+            monitor_target = 'val_' + self.monitor_state if self.test_loader_length is not None else 'train_' + self.monitor_state
             if monitor_target in self.history.records:
                 critic = self.history.records[monitor_target][-1]
             else:
@@ -337,13 +335,6 @@ def fit(
             liveplot.plot(self.epoch, self.history, epoch_str)
             liveplot.cali_desc(self.monitor)
             
-            for callback_func in callbacks:
-                callback_func.on_epoch_end(
-                    model = self.model,
-                    train_loader = self.train_loader,
-                    optimizer = self.optimizer,
-                    epoch = self.epoch
-                )
             
             # Steps anneling
             if self.epoch in self.multisteps:

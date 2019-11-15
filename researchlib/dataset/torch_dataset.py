@@ -1,5 +1,5 @@
 import torchvision
-from .vision import _NumpyDataset
+from .tp_dataset import _NumpyDataset
 
 
 def _TorchDataset(name, is_train, transpose = ('NHWC', 'NCHW')):

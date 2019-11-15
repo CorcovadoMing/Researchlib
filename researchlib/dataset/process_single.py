@@ -5,10 +5,7 @@ from .preprocessing import preprocessing
 
 def _process_single(
     dp,
-    is_train,
-    include_y,
     normalizer,
-    augmentor,
     data_key = 0,
     label_key = 1,
     transpose = ('NHWC', 'NCHW')
@@ -31,12 +28,5 @@ def _process_single(
     # Transfer to right format for pytorch
     if transpose is not None:
         x = preprocessing.format_transpose(x, *transpose)
-
-    # Augmentation
-    if is_train:
-        for op in augmentor:
-            options = op.options()
-            for i in range(len(x)):
-                x[i] = op(x[i], **random.choice(options))
-
+        
     return x, y

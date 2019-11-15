@@ -11,6 +11,9 @@ from .process_single import _process_single
 from .preprocessing import preprocessing
 
 
+def rename_fn(dp):
+    return dp['image'], dp['label']
+
 class _TFDataset:
     def __init__(self, name, is_train, transpose = ('NHWC', 'NCHW')):
         self.is_train = is_train
@@ -23,36 +26,13 @@ class _TFDataset:
         self.length = info.splits[phase].num_examples
         ds.download_and_prepare()
         self.ds = ds.as_dataset(split = split, shuffle_files = False)
-
-        self.normalizer = []
-        self.augmentor = []
-        self.include_y = False
         self.transpose = transpose
-
-    def set_normalizer(self, type, mean, std):
-        self.normalizer = preprocessing.set_normalizer(type, mean, std)
-
-    def _set_augmentor(self, augmentor, include_y = False):
-        self.augmentor = augmentor
-        self.include_y = include_y
 
     def get_generator(self, batch_size = 512, **kwargs):
         ds = self.ds.shuffle(10240).repeat(kwargs['epochs']).batch(batch_size).prefetch(2048)
         ds = DataFromGenerator(tfds.as_numpy(ds))
         ds.__len__ = lambda: math.ceil(self.length / batch_size)
-        process_single_fn = partial(
-            _process_single,
-            is_train = self.is_train,
-            include_y = self.include_y,
-            normalizer = self.normalizer,
-            augmentor = self.augmentor,
-            data_key = 'image',
-            label_key = 'label',
-            transpose = self.transpose
-        )
-        ds = MultiProcessMapDataZMQ(ds, 2, process_single_fn, buffer_size = 8)
-        ds = PrintData(ds)
-        ds.reset_state()
+        ds = MultiProcessMapDataZMQ(ds, 2, rename_fn, buffer_size = 8)
         return ds
 
     def get_support_set(self, classes = [], shot = 5):

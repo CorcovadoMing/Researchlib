@@ -11,10 +11,12 @@ register_method = _register_method(__methods__)
 def to_train_mode(m):
     if isinstance(m, Builder.Graph):
         m.train_mode = True
+    if isinstance(m, op.Normalize) or isinstance(m, op.Augmentation) or isinstance(m, op.Generator):
+        m.set_phase(0)
 
         
 @register_method
-def train_fn(self, loader, monitor, visualize, **kwargs):
+def train_fn(self, monitor, visualize, **kwargs):
     self.model.apply(to_train_mode)
     
     parameter_manager = ParameterManager(**kwargs)
@@ -40,7 +42,8 @@ def train_fn(self, loader, monitor, visualize, **kwargs):
     metrics_record = {key: 0 for key in monitor}
     visualize_record = {key: 0 for key in visualize}
 
-    for batch_idx, (inputs, targets) in enumerate(loader):
+    batch_idx = 0
+    while True:
         # Set LR
         cur_lr = Annealer.get_trace('lr')
         update_optim(self.optimizer, [cur_lr, cur_lr * bias_scale], key = 'lr')
@@ -67,24 +70,8 @@ def train_fn(self, loader, monitor, visualize, **kwargs):
 
         for i in self.optimizer:
             i.zero_grad()
-
-        if support_set is not None:
-            support_x, support_y = support_set
-            support_x = torch.from_numpy(support_x).to(inputs.device).to(inputs.dtype)
-            support_x = support_x.view(-1, *inputs.shape[1:])
-            outputs = self.model(inputs, support_x)  # Batch, shot, way
-
-            # Deal with labels
-            support_y = torch.from_numpy(support_y).to(targets.device).to(targets.dtype)
-            support_y = support_y.expand(targets.size(0), -1, -1).transpose(-1, -2)  # Batch, shot, way
-            targets = targets.unsqueeze(1).unsqueeze(2).expand(-1, shot, len(way))
-            targets = targets.eq(support_y).to(inputs.dtype)
-            targets *= (1 - 0.2 - (0.2/9))
-            targets += (0.2/9)
-        else:
-            support_x, support_y = None, None
         
-        results = self.model({'x': inputs, 'y': targets, 'support_x': support_x, 'support_y': support_y})
+        results = self.model({'phase': 0}) # 0: train, 1: val, 2: custom
         outputs, loss = results[self.output_node], results[self.loss_fn]
 
         loss.backward()
@@ -94,10 +81,6 @@ def train_fn(self, loader, monitor, visualize, **kwargs):
 
         loss_record += loss.item()
         del loss
-
-        #         # May be a bottleneck for GPU utilization
-        #         for p in list(filter(lambda p: p.grad is not None, self.model.parameters())):
-        #             norm_record += p.grad.data.norm(2).item() ** 2
 
         if ema and (batch_idx + 1) % ema_freq == 0:
             for v, ema_v in zip(
@@ -124,6 +107,8 @@ def train_fn(self, loader, monitor, visualize, **kwargs):
             break
 
         Annealer._iteration_step()
+        
+        batch_idx += 1
 
     loss_record = loss_record / (batch_idx + 1)
     norm_record = (norm_record ** 0.5) / (batch_idx + 1)
@@ -132,3 +117,21 @@ def train_fn(self, loader, monitor, visualize, **kwargs):
         metrics_record[i] /= (batch_idx + 1)
     
     return loss_record, norm_record, metrics_record, visualize_record
+
+
+
+#         if support_set is not None:
+#             support_x, support_y = support_set
+#             support_x = torch.from_numpy(support_x).to(inputs.device).to(inputs.dtype)
+#             support_x = support_x.view(-1, *inputs.shape[1:])
+#             outputs = self.model(inputs, support_x)  # Batch, shot, way
+
+#             # Deal with labels
+#             support_y = torch.from_numpy(support_y).to(targets.device).to(targets.dtype)
+#             support_y = support_y.expand(targets.size(0), -1, -1).transpose(-1, -2)  # Batch, shot, way
+#             targets = targets.unsqueeze(1).unsqueeze(2).expand(-1, shot, len(way))
+#             targets = targets.eq(support_y).to(inputs.dtype)
+#             targets *= (1 - 0.2 - (0.2/9))
+#             targets += (0.2/9)
+#         else:
+#             support_x, support_y = None, None
