@@ -128,11 +128,3 @@ class Runner:
         self.model, self.optimizer = _load_checkpoint(
             self.model, self.optimizer, self.multigpu, path
         )
-
-    def normalize(self, type = None, mean = None, std = None):
-        self._normalize = (type, mean, std)
-        return self
-
-    def augmentation(self, augmentation_list, include_y = False):
-        self._augmentation = (augmentation_list, include_y)
-        return self
