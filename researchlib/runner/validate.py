@@ -11,8 +11,10 @@ register_method = _register_method(__methods__)
 def to_eval_mode(m):
     if isinstance(m, Builder.Graph):
         m.train_mode = False
-    if isinstance(m, op.Normalize) or isinstance(m, op.Augmentation) or isinstance(m, op.Generator):
+    try:
         m.set_phase(1)
+    except:
+        pass
         
         
 @register_method

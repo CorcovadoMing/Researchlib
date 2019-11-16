@@ -17,6 +17,20 @@ class _Generator(nn.Module):
     def set_phase(self, phase):
         self.phase = phase
     
+    def reset_parameters(self):
+        try:
+            del self.train_ds
+        except:
+            pass
+        
+        try:
+            del self.val_ds
+        except:
+            pass
+            
+        self.train_ds = None
+        self.val_ds = None
+    
     def forward(self, ds):
         if self.train_ds is None and self.phase == 0:
             ds = PrintData(ds)
