@@ -22,7 +22,10 @@ class _Rotation42d(nn.Module):
             return r270
     
     def forward(self, x):
-        label = torch.randint(0, 4, [x.size(0)]).to(x.device)
+        if self.training:
+            label = torch.randint(0, 4, [x.size(0)]).to(x.device)
+        else:
+            label = torch.zeros([x.size(0)]).to(x.device).long()
         for i in range(len(x)):
             x[i] = self._get_process_fn(label[i])(x[i])
         return x, label
