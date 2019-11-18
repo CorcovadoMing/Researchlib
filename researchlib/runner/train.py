@@ -101,21 +101,21 @@ def train_fn(self, monitor, visualize, **kwargs):
         for i in visualize:
             visualize_record[i] += results[i]
 
-        if batch_idx % 5 == 0 or batch_idx == (self.train_loader_length - 1):
-            liveplot.update_desc(epoch, batch_idx + 1, loss_record, metrics_record, self.monitor)
+        
+        batch_idx += 1
+        if batch_idx % 5 == 0 or batch_idx == self.train_loader_length:
+            liveplot.update_desc(epoch, batch_idx, loss_record, metrics_record, self.monitor)
 
-        if batch_idx == (self.train_loader_length - 1):
+        if batch_idx == self.train_loader_length:
             break
 
         Annealer._iteration_step()
-        
-        batch_idx += 1
 
-    loss_record = loss_record / (batch_idx + 1)
-    norm_record = (norm_record ** 0.5) / (batch_idx + 1)
+    loss_record /= batch_idx
+    norm_record = (norm_record ** 0.5) / batch_idx
     
     for i in metrics_record:
-        metrics_record[i] /= (batch_idx + 1)
+        metrics_record[i] /= batch_idx
     
     return loss_record, norm_record, metrics_record, visualize_record
 

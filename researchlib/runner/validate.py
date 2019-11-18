@@ -66,15 +66,14 @@ def validate_fn(self, monitor, visualize, **kwargs):
                 
             loss_record += loss.item()
             del loss
-
-            if batch_idx == (self.test_loader_length - 1):
-                break
             
             batch_idx += 1
+            if batch_idx == self.test_loader_length:
+                break
 
-    loss_record = loss_record / (batch_idx + 1)
+    loss_record /= batch_idx
     
     for i in metrics_record:
-        metrics_record[i] /= (batch_idx + 1)
+        metrics_record[i] /= batch_idx
     
     return loss_record, metrics_record, visualize_record
