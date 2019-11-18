@@ -43,7 +43,7 @@ class _Normalize(nn.Module):
                 _process_single,
                 normalizer = self.normalizer
             )
-            self.val_ds = MultiProcessMapDataZMQ(ds, 4, process_single_fn, buffer_size = 20)
+            self.val_ds = MapData(ds, process_single_fn)
         
         if self.phase == 0:
             return self.train_ds
