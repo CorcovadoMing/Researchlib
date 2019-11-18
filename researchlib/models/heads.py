@@ -9,7 +9,7 @@ def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', **
 
     last_dim = parameter_manager.get_param('last_dim', None)
     last_dim = last_dim if last_dim else parameter_manager.get_buffer('last_dim')
-    dim_type = parameter_manager.get_buffer('dim_type')
+    dim_type = parameter_manager.get_param('dim_type', None) or parameter_manager.get_buffer('dim_type')
 
     if reduce_type == 'concat':
         _reduce_name = 'Concat'

@@ -61,6 +61,8 @@ class Runner:
         self.history = History()
 
         self.model = model
+        
+        # TODO (only for predict)
         self.output_node = parameter_manager.get_param('output_node', required=True)
             
         self.num_params = num_model_params(model)

@@ -56,7 +56,6 @@ def validate_fn(self, monitor, visualize, **kwargs):
         batch_idx = 0
         while True:
             results = self.val_model({'phase': 1})
-            outputs = results[self.output_node]
             loss = results[self.loss_fn]
 
             for i in monitor:

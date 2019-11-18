@@ -74,8 +74,7 @@ def train_fn(self, monitor, visualize, **kwargs):
             i.zero_grad()
         
         results = self.model({'phase': 0}) # 0: train, 1: val, 2: custom
-        outputs, loss = results[self.output_node], results[self.loss_fn]
-
+        loss = results[self.loss_fn]
         loss.backward()
 
         for i in self.optimizer:
