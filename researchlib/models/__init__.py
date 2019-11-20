@@ -1,4 +1,3 @@
-from .preset import Preset
 from .builder import Builder
 from .auto_conv_net import AutoConvNet
 from .auto_enc_dec import AutoEncDec
