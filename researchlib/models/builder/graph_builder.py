@@ -110,16 +110,23 @@ def build_graph(net, sep = '/'):
 
 
 class _Graph(nn.Module):
-    def __init__(self, net, in_node='x', out_node=None):
+    def __init__(self, *net, in_node='x', out_node=None):
         super().__init__()
-        self.graph = build_graph(net)
+        if len(net) == 1 and type(net[0]) == dict:
+            self.graph = build_graph(net[0])
+        else:
+            self.graph = build_graph(self._expand_net(net))
         self.in_node = in_node
         self.out_node = out_node
         self.train_mode = True
         for path, (val, _) in self.graph.items(): 
             setattr(self, path.replace('/', '_'), val)
             
-            
+    
+    def _expand_net(self, net):
+        pass
+    
+    
     def prepare_inp(self, ins, outputs):
         inp = []
         for x in ins:

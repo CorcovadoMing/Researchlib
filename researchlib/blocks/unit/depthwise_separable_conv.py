@@ -64,4 +64,4 @@ def _DepthwiseSeparableConv(prefix, _op, in_dim, out_dim, **kwargs):
     first, last = list(flow.keys())[0], list(flow.keys())[-1]
     flow[first] = (flow[first], [f'{prefix}_input'])
 
-    return op.Subgraph(flow, f'{prefix}_input', last)
+    return op.Subgraph(flow, in_node=f'{prefix}_input', out_node=last)

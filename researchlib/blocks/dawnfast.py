@@ -62,4 +62,4 @@ def _DAWNBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
         f'{prefix}_output': (op.Add, [f'{prefix}_op1', f'{prefix}_shakedrop'])
     }
 
-    return op.Subgraph(flow, f'{prefix}_input', f'{prefix}_output')
+    return op.Subgraph(flow, in_node=f'{prefix}_input', out_node=f'{prefix}_output')

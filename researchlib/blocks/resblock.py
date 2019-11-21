@@ -116,4 +116,4 @@ def _ResBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
         f'{prefix}_output': merge_op
     }
 
-    return op.Subgraph(flow, f'{prefix}_input', f'{prefix}_output')
+    return op.Subgraph(flow, in_node=f'{prefix}_input', out_node=f'{prefix}_output')
