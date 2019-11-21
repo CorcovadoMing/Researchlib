@@ -124,7 +124,10 @@ class _Graph(nn.Module):
             
     
     def _expand_net(self, net):
-        pass
+        result = {}
+        for i in net:
+            result.update(i)
+        return result
     
     
     def prepare_inp(self, ins, outputs):

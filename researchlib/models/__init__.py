@@ -1,4 +1,4 @@
-from .builder import Builder
+from .builder import Builder, Node
 from .auto_conv_net import AutoConvNet
 from .auto_enc_dec import AutoEncDec
 from .heads import Heads
