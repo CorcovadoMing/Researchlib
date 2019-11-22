@@ -125,18 +125,18 @@ def AutoEncDec(
         kwargs['non_local'] = id >= non_local_start
         structure = _RecurrentBlock(
             # Begin
-            _op_type_begin(f'{_op_type_begin}_{cache_id}', unit, down_op, in_dim, out_dim,
+            _op_type_begin(f'{cache_id}', unit, down_op, in_dim, out_dim,
                 do_pool=do_pool, do_norm=do_norm, preact=preact,
                 id=cache_id, total_blocks=2*total_blocks+1, **kwargs),
 
             # Inner
-            _op_type_inner(f'{_op_type_inner}_{cache_id}', unit, down_op, out_dim, out_dim,
+            _op_type_inner(f'{cache_id}', unit, down_op, out_dim, out_dim,
                 do_pool=False, do_norm=do_norm, preact=preact,
                 id=cache_id+1, total_blocks=2*total_blocks+1, **kwargs) \
             if id == 1 else structure,
 
             # End
-            _op_type_end(f'{_op_type_end}_{cache_id}', unit, up_op, end_in_dim, in_dim,
+            _op_type_end(f'{cache_id}', unit, up_op, end_in_dim, in_dim,
                 do_pool=do_pool, do_norm=do_norm, preact=preact,
                 id=2*total_blocks+1-cache_id, total_blocks=2*total_blocks+1, **kwargs),
 

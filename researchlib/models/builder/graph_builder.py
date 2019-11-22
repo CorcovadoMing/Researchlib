@@ -1,7 +1,6 @@
 from torch import nn
 from graphviz import Digraph
 
-
 #====================================================================================================
 
 def split(path, sep = '/'):
@@ -110,7 +109,7 @@ def build_graph(net, sep = '/'):
 
 
 class _Graph(nn.Module):
-    def __init__(self, *net, in_node='x', out_node=None):
+    def __init__(self, *net, in_node='x', out_node=None, _seq_auto_build=False):
         super().__init__()
         if len(net) == 1 and type(net[0]) == dict:
             self.graph = build_graph(net[0])
@@ -118,6 +117,7 @@ class _Graph(nn.Module):
             self.graph = build_graph(self._expand_net(net))
         self.in_node = in_node
         self.out_node = out_node
+        self._seq_auto_build = _seq_auto_build
         self.train_mode = True
         for path, (val, _) in self.graph.items(): 
             setattr(self, path.replace('/', '_'), val)
@@ -181,7 +181,15 @@ class _Graph(nn.Module):
                     outputs[k] = inp[0]
                 else:
                     outputs[k] = node(*inp)
+                    if type(node) == _Graph:
+                        if node._seq_auto_build:
+                            key_list = list(node.outputs.keys())
+                            for i in key_list:
+                                new_key = f'{k}/{i}'
+                                node.outputs[new_key] = node.outputs.pop(i)
+                        outputs.update(node.outputs)
                 
+        self.outputs = outputs
         if self.out_node is not None:
             return outputs[self.out_node]
         else:

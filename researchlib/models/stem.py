@@ -20,7 +20,7 @@ def push_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact
         print(id, in_dim, out_dim, stem_type)
         layers.append(
             _op_type(
-                f'{_op_type.__name__}_stem_{id}',
+                f'{id}',
                 unit,
                 _op,
                 in_dim = in_dim,

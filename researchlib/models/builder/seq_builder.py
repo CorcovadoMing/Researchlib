@@ -12,4 +12,4 @@ def _Seq(*models):
             model_list.append(i)
     
     flow = {str(i): (j, ['input'] if i == 0 else [str(i-1)]) for i, j in enumerate(model_list)}
-    return _Graph(flow, in_node='input', out_node=str(len(model_list)-1))
+    return _Graph(flow, in_node='input', out_node=str(len(model_list)-1), _seq_auto_build=True)

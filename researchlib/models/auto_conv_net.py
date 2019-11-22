@@ -84,7 +84,7 @@ def AutoConvNet(
         kwargs['non_local'] = id >= non_local_start
         layers.append(
             _op_type(
-                f'{_op_type.__name__}_{id}',
+                f'{id}',
                 unit,
                 _op,
                 in_dim = in_dim,
