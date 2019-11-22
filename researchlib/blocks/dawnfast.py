@@ -29,7 +29,7 @@ def _DAWNBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
     elif branch_attention == 'cbam':
         attention_op = CBAM_Attention(out_dim, dim)
     else:
-        attention_op = nn.Sequential()
+        attention_op = op.NoOp()
          
     # Shakedrop
     shakedrop = parameter_manager.get_param('shakedrop', False)
@@ -51,7 +51,7 @@ def _DAWNBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
             mode = mode
         )
     else:
-        shakedrop_op = nn.Sequential()
+        shakedrop_op = op.NoOp()
     
     flow = {
         f'{prefix}_op1': (op1, [f'{prefix}_input']),

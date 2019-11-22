@@ -40,7 +40,7 @@ def _ResBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
             get_act_op(act_type)
         )
     else:
-        shared_bn_op = nn.Sequential()
+        shared_bn_op = op.NoOp()
 
     first_conv_kwargs = get_conv_config()
     first_conv_kwargs.update(**kwargs)
@@ -81,7 +81,7 @@ def _ResBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
     elif branch_attention == 'cbam':
         attention_op = CBAM_Attention(out_dim, dim)
     else:
-        attention_op = nn.Sequential()
+        attention_op = op.NoOp()
          
     # Shakedrop
     shakedrop = parameter_manager.get_param('shakedrop', False)
@@ -103,7 +103,7 @@ def _ResBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
             mode = mode
         )
     else:
-        shakedrop_op = nn.Sequential()
+        shakedrop_op = op.NoOp()
 
 
     flow = {
