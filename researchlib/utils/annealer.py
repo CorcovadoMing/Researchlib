@@ -61,6 +61,15 @@ class Annealer:
         return cls.tracker[name]['value']
 
     @classmethod
+    def _post_config(cls, epoch, iterations):
+        for key in cls.tracker:
+            if cls.tracker[key]['max_step'] is None:
+                if cls.tracker[key]['anneal_when'] == 'epoch':
+                    cls.tracker[key]['max_step'] = epoch
+                if cls.tracker[key]['anneal_when'] == 'iteration':
+                    cls.tracker[key]['max_step'] = epoch * iterations
+    
+    @classmethod
     def get_srange(cls, name):
         return cls.tracker[name]['srange']
 

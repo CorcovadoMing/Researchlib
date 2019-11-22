@@ -97,6 +97,10 @@ def fit(
     # ----------------------------------------------
     # MISC
     # ----------------------------------------------
+    
+    Annealer._post_config(epochs, iterations)
+    
+    
     if init is not None:
         self.init_model(init)
         self.set_optimizer()
