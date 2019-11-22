@@ -6,26 +6,24 @@ r0 = lambda x: x
 r90 = lambda x: x.transpose(-2, -1)
 r180 = lambda x: x.flip(-2)
 r270 = lambda x: x.transpose(-2, -1).flip(-1)
+func_list = [r0, r90, r180, r270]
 
 class _Rotation42d(nn.Module):
     def __init__(self):
         super().__init__()
     
     def _get_process_fn(self, angle):
-        if angle == 0:
-            return r0
-        elif angle == 1:
-            return r90
-        elif angle == 2:
-            return r180
-        elif angle == 3:
-            return r270
-    
+        return func_list[angle]
+        
     def forward(self, x):
         if self.training:
-            label = torch.randint(0, 4, [x.size(0)]).to(x.device)
+            with torch.no_grad():
+                x_chunk = torch.chunk(x, 4)
+                new_x = []
+                new_y = []
+                for i, data in enumerate(x_chunk):
+                    new_x.append(func_list[i](data))
+                    new_y.append(torch.zeros([data.size(0)], device=x.device).fill_(i).long())
+            return torch.cat(new_x, dim=0), torch.cat(new_y, dim=0)
         else:
-            label = torch.zeros([x.size(0)]).to(x.device).long()
-        for i in range(len(x)):
-            x[i] = self._get_process_fn(label[i])(x[i])
-        return x, label
+            return x, torch.zeros([x.size(0)], device=x.device).long()

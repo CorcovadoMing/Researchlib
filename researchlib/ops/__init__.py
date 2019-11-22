@@ -49,7 +49,7 @@ from .rcl import _RConv2d
 from .io import _SetVariable, _UpdateVariable, _GetVariable, _Source, _Normalize, _Augmentation, _Generator, _Preloop
 from .node import _To, _Subgraph, _Detach, _Name
 
-from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation42d
+from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation42d, _Anneal
 
 
 class op(object):
@@ -61,6 +61,7 @@ class op(object):
     Sum = _Sum
     Add = _Add
     Rotation42d = _Rotation42d
+    Anneal = _Anneal
     
     # IO
     SetVariable = _SetVariable
