@@ -28,7 +28,7 @@ def _Conv(prefix, _op, in_dim, out_dim, **kwargs):
     erased_act = parameter_manager.get_param('erased_act', False)
     
     drop_rate = parameter_manager.get_param('drop_rate', 0)
-    dropout_op = op.Dropout(drop_rate, inplace=True) if drop_rate > 0 else None
+    dropout_op = op.Dropout(drop_rate) if drop_rate > 0 else None
     
     spectral_norm = parameter_manager.get_param('sn', False)
 
