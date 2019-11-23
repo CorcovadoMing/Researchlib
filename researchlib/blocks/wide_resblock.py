@@ -41,14 +41,14 @@ def _WideResBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
     second_conv_kwargs = get_conv_config()
     second_conv_kwargs.update(**kwargs)
     second_conv_kwargs.update(do_pool=False,
-                              preact=True)
+                              preact=True,
+                              drop_rate=0.3)
                               
 
 
     conv_op = [
         _unit(f'{prefix}_m1', _op, in_dim, out_dim, **first_conv_kwargs),
         op.Downsample(channels = out_dim, filt_size = 3, stride = stride) if blur else None,
-        op.Dropout(0.3, inplace=True),
         _unit(f'{prefix}_m2', _op, out_dim, out_dim, **second_conv_kwargs), 
     ]
 

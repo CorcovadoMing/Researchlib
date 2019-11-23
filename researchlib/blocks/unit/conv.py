@@ -27,6 +27,9 @@ def _Conv(prefix, _op, in_dim, out_dim, **kwargs):
     freeze_bias = parameter_manager.get_param('freeze_bias', False)
     erased_act = parameter_manager.get_param('erased_act', False)
     
+    drop_rate = parameter_manager.get_param('drop_rate', 0)
+    dropout_op = op.Dropout(drop_rate, inplace=True) if drop_rate > 0 else None
+    
     spectral_norm = parameter_manager.get_param('sn', False)
 
     
@@ -42,15 +45,15 @@ def _Conv(prefix, _op, in_dim, out_dim, **kwargs):
     pool_op = None if not do_pool else get_pool_op(pool_type, dim, pool_factor)
     
     if preact:
-        ops = [norm_op, act_op, conv_op, pool_op]
-        names = ['norm', 'act', 'conv', 'pool']
+        ops = [norm_op, act_op, dropout_op, conv_op, pool_op]
+        names = ['norm', 'act', 'dropout', 'conv', 'pool']
     else:
         if prepool:
-            ops = [conv_op, pool_op, norm_op, act_op]
-            names = ['conv', 'pool', 'norm', 'act']
+            ops = [conv_op, pool_op, norm_op, act_op, dropout_op]
+            names = ['conv', 'pool', 'norm', 'act', 'dropout']
         else:
-            ops = [conv_op, norm_op, act_op, pool_op]
-            names = ['conv', 'norm', 'act', 'pool']
+            ops = [conv_op, norm_op, act_op, dropout_op, pool_op]
+            names = ['conv', 'norm', 'act', 'dropout', 'pool']
             
     ops = filter(lambda x: x[0] is not None, zip(ops, names))
     
