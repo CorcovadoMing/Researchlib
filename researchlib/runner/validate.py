@@ -64,6 +64,8 @@ def validate_fn(self, monitor, visualize, **kwargs):
             for i in visualize:
                 visualize_record[i] += results[i]
                 
+            del results
+                
             loss_record += loss.item()
             del loss
             

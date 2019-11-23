@@ -322,6 +322,19 @@ def fit(
         raise
 
     finally:
+        def _post_clean(m):
+            try:
+                del m.outputs
+            except:
+                pass
+            
+            try:
+                m.reset_parameters()
+            except:
+                pass
+
+        self.model.apply(_post_clean)
+        self.val_model.apply(_post_clean)
         self.unload_gpu()
         _STOP_GPU_MONITOR_ = True
         liveplot.redis.set('stage', 'stop')

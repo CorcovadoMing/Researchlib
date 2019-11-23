@@ -100,6 +100,8 @@ def train_fn(self, monitor, visualize, **kwargs):
         
         for i in visualize:
             visualize_record[i] += results[i]
+        
+        del results
 
         
         batch_idx += 1
