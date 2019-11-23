@@ -21,8 +21,7 @@ def _get_op_type(type_object, cur_block, total_blocks, do_pool, do_expand):
     _type = _parse_type(cur_block - 1, type_object)
 
     if _type not in [
-        'vgg', 'dawn', 'residual', 'residual-bottleneck', 'wide-residual', 'inverted-bottleneck',
-        'inceptionv3', 'inceptionv4', 'inception-residualv2', 'whitening'
+        'vgg', 'dawn', 'residual', 'residual-bottleneck', 'wide-residual', 'whitening'
     ]:
         raise ValueError(f'Type {_type} is not supperted')
 
@@ -36,37 +35,8 @@ def _get_op_type(type_object, cur_block, total_blocks, do_pool, do_expand):
         _op_type = block.ResBottleneckBlock
     elif _type == 'wide-residual':
         _op_type = block.WideResBlock
-    elif _type == 'inverted-bottleneck':
-        _op_type = block.InvertedBottleneckBlock
     elif _type == 'whitening':
         _op_type = block.WhiteningBlock
-    elif _type == 'inceptionv3':
-        if (cur_block / total_blocks) <= 0.2:
-            _op_type = block.InceptionV3A
-        elif (cur_block / total_blocks) <= 0.4:
-            _op_type = block.InceptionV3B
-        elif (cur_block / total_blocks) <= 0.6:
-            _op_type = block.InceptionV3C
-        elif (cur_block / total_blocks) <= 0.8:
-            _op_type = block.InceptionV3D
-        elif (cur_block / total_blocks) <= 1:
-            _op_type = block.InceptionV3E
-    elif _type == 'inceptionv4':
-        if (cur_block / total_blocks) <= (1 / 3):
-            _op_type = block.ReductionV4A if do_pool else block.InceptionV4A
-        elif (cur_block / total_blocks) <= (2 / 3):
-            _op_type = block.ReductionV4B if do_pool else block.InceptionV4B
-        elif (cur_block / total_blocks) <= 1:
-            # We don't have Reduction type C
-            _op_type = block.ReductionV4B if do_pool else block.InceptionV4C
-    elif _type == 'inception-residualv2':
-        if (cur_block / total_blocks) <= (1 / 3):
-            _op_type = block.ReductionV2A if do_pool or do_expand else block.InceptionResidualV2A
-        elif (cur_block / total_blocks) <= (2 / 3):
-            _op_type = block.ReductionV2B if do_pool or do_expand else block.InceptionResidualV2B
-        elif (cur_block / total_blocks) <= 1:
-            # We don't have Reduction type C
-            _op_type = block.ReductionV2B if do_pool or do_expand else block.InceptionResidualV2C
     return _op_type
 
 
