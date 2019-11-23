@@ -148,6 +148,7 @@ def fit(
     # optimizers, (LR, warmup, weight_decay, etc.,)
     # ----------------------------------------------
     self.multisteps = multisteps
+    step_decay = parameter_manager.get_param('step_decay', 0.1)
 
     # Weight decay
     weight_decay = parameter_manager.get_param('weight_decay', 5e-4)
@@ -305,7 +306,7 @@ def fit(
             # Steps anneling
             if self.epoch in self.multisteps:
                 srange = Annealer.get_srange('lr')
-                srange = [i * 0.1 for i in srange]
+                srange = [i * step_decay for i in srange]
                 Annealer.update_attr('lr', 'srange', srange)
                 
             # Global epoch annealing
