@@ -45,12 +45,24 @@ def _WideResBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
                               drop_rate=0.3)
                               
 
-
-    conv_op = [
-        _unit(f'{prefix}_m1', _op, in_dim, out_dim, **first_conv_kwargs),
-        op.Downsample(channels = out_dim, filt_size = 3, stride = stride) if blur else None,
-        _unit(f'{prefix}_m2', _op, out_dim, out_dim, **second_conv_kwargs), 
-    ]
+    if in_dim != out_dim or do_pool:
+        first_conv_kwargs.update({'do_norm': False, 'do_act': False})
+        conv_op = [
+            _unit(f'{prefix}_m1', _op, in_dim, out_dim, **first_conv_kwargs),
+            op.Downsample(channels = out_dim, filt_size = 3, stride = stride) if blur else None,
+            _unit(f'{prefix}_m2', _op, out_dim, out_dim, **second_conv_kwargs), 
+        ]
+        pre_shared_norm = nn.Sequential(
+            get_norm_op(norm_type, dim, in_dim),
+            act_op
+        )
+    else:
+        conv_op = [
+            _unit(f'{prefix}_m1', _op, in_dim, out_dim, **first_conv_kwargs),
+            op.Downsample(channels = out_dim, filt_size = 3, stride = stride) if blur else None,
+            _unit(f'{prefix}_m2', _op, out_dim, out_dim, **second_conv_kwargs), 
+        ]
+        pre_shared_norm = op.NoOp()
 
     conv_op = nn.Sequential(*list(filter(None, conv_op)))
 
@@ -95,10 +107,11 @@ def _WideResBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
 
 
     flow = {
-        f'{prefix}_conv': (conv_op, [f'{prefix}_input']),
+        f'{prefix}_pre': (pre_shared_norm, [f'{prefix}_input']),
+        f'{prefix}_conv': conv_op,
         f'{prefix}_attention': attention_op,
         f'{prefix}_shakedrop': shakedrop_op,
-        f'{prefix}_shortcut': (shortcut, [f'{prefix}_input']),
+        f'{prefix}_shortcut': (shortcut, [f'{prefix}_pre']),
         f'{prefix}_output': (op.Add, [f'{prefix}_shortcut', f'{prefix}_shakedrop']),
     }
 
