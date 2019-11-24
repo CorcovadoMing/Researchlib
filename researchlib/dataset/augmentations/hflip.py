@@ -16,7 +16,7 @@ def _(x):
 
 @_hflip.register(np.ndarray)
 def _(x):
-    return x[..., ::-1].copy()
+    return x[..., ::-1]
 
 
 # Interface
