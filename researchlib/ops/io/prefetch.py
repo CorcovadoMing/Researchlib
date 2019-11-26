@@ -17,12 +17,12 @@ def _worker(generator, queue, stream, fp16):
             y = torch.from_numpy(y)
 
         x, y = x.pin_memory(), y.pin_memory()
+        if fp16:
+            x = x.half()
 
         with torch.cuda.stream(stream):
             x = x.cuda(non_blocking = True)
             y = y.cuda(non_blocking = True)
-            if fp16:
-                x = x.half()
 
         queue.put((x, y))
 
