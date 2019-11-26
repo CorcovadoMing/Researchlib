@@ -26,11 +26,11 @@ def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', **
     layers = [
         # Preact
         op.__dict__[f'BatchNorm{dim_type}'](last_dim) if preact else None,
-        op.ReLU() if preact else None,
+        op.ReLU(inplace=True) if preact else None,
 
         # Attention
         op.__dict__[f'DotNonLocalBlock{dim_type}'](last_dim) if attention else None,
-        unit.conv(op.__dict__['Conv' + str(dim_type)], last_dim, last_dim, False, True, False)
+        unit.Conv(op.__dict__['Conv' + str(dim_type)], last_dim, last_dim, False, True, False)
         if attention else None,
 
         # Normal heads

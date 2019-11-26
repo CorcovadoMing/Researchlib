@@ -4,7 +4,7 @@ import copy
 
 
 def push_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs):
-    stem_kwargs = copy.deepcopy(kwargs)
+    stem_kwargs = {}
     if 'stem_pool' not in stem_kwargs:
         stem_kwargs['stem_pool'] = False
         
