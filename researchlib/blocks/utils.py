@@ -34,7 +34,7 @@ class padding_shortcut(nn.Module):
             return torch.cat(
                 (
                     x,
-                    torch.zeros((x.size(0), self.out_dim - self.in_dim, *x.shape[2:]), device = x.device)
+                    torch.zeros((x.size(0), self.out_dim - self.in_dim, *x.shape[2:]), device = x.device).to(x.dtype)
                 ), 1)
         
         

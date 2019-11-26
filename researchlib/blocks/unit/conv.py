@@ -54,7 +54,7 @@ def _Conv(prefix, _op, in_dim, out_dim, **kwargs):
         else:
             ops = [conv_op, norm_op, act_op, dropout_op, pool_op]
             names = ['conv', 'norm', 'act', 'dropout', 'pool']
-            
+    
     ops = filter(lambda x: x[0] is not None, zip(ops, names))
     
     flow = {f'{prefix}_{k}': v for v, k in ops}
