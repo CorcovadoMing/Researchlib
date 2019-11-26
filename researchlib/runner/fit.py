@@ -147,6 +147,9 @@ def fit(
     # ----------------------------------------------
     # optimizers, (LR, warmup, weight_decay, etc.,)
     # ----------------------------------------------
+    accum_grad = parameter_manager.get_param('accum_grad', 1)
+    self.accum_idx = 0
+    
     self.multisteps = multisteps
     step_decay = parameter_manager.get_param('step_decay', 0.1)
 
@@ -237,6 +240,7 @@ def fit(
                                                                      warmup=warmup,
                                                                      weight_decay=weight_decay,
                                                                      bias_scale=bias_scale,
+                                                                     accum_grad=accum_grad,
                                                                      ema=ema,
                                                                      ema_freq=ema_freq,
                                                                      ema_momentum=ema_momentum,

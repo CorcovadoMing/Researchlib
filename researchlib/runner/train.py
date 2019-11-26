@@ -16,7 +16,7 @@ def to_train_mode(m):
     except:
         pass
 
-        
+     
 @register_method
 def train_fn(self, monitor, visualize, **kwargs):
     self.model.apply(to_train_mode)
@@ -31,6 +31,7 @@ def train_fn(self, monitor, visualize, **kwargs):
     warmup = parameter_manager.get_param('warmup')
     weight_decay = parameter_manager.get_param('weight_decay')
     bias_scale = parameter_manager.get_param('bias_scale')
+    accum_grad = parameter_manager.get_param('accum_grad')
     ema = parameter_manager.get_param('ema')
     ema_freq = parameter_manager.get_param('ema_freq')
     ema_momentum = parameter_manager.get_param('ema_momentum')
@@ -44,6 +45,9 @@ def train_fn(self, monitor, visualize, **kwargs):
     metrics_record = {key: 0 for key in monitor}
     visualize_record = {key: 0 for key in visualize}
 
+    for i in self.optimizer:
+        i.zero_grad()
+    
     batch_idx = 0
     while True:
         # Set LR
@@ -70,15 +74,21 @@ def train_fn(self, monitor, visualize, **kwargs):
             targets_res = None
             lam = None
 
-        for i in self.optimizer:
-            i.zero_grad()
         
         results = self.model({'phase': 0}) # 0: train, 1: val, 2: custom
+        
         loss = results[self.loss_fn]
+        loss /= accum_grad
         loss.backward()
+        
+        self.accum_idx += 1
+        self.accum_idx %= accum_grad
 
-        for i in self.optimizer:
-            i.step()
+        if self.accum_idx == 0 or self.train_loader_length:
+            for i in self.optimizer:
+                i.step()
+                i.zero_grad()
+            
 
         loss_record += loss.item()
         del loss
