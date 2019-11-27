@@ -52,8 +52,23 @@ def WideResNet28x10(**kwargs):
     return AutoConvNet(op.Conv2d, unit.Conv, 3, 12, **default_kwargs)
 
 
+def PyramidNet272(**kwargs):
+    default_kwargs = dict(
+        type='residual-bottleneck', 
+        filters=(16, -1), 
+        pool_freq = [30, 60],
+        preact=True,
+        erased_act = True,
+        filter_policy = 'pyramid',
+        pyramid_alpha = 200,
+        shortcut = 'padding'
+    )
+    return AutoConvNet(op.Conv2d, unit.Conv, 3, 90, **default_kwargs)
+
+
 class Template(object):
     Dawnfast = Dawnfast
     ResNet18 = ResNet18
     PreResNet18 = PreResNet18
     WideResNet28x10 = WideResNet28x10
+    PyramidNet272 = PyramidNet272
