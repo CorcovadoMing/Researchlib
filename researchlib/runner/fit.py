@@ -157,6 +157,7 @@ def fit(
     weight_decay = parameter_manager.get_param('weight_decay', 5e-4)
     if weight_decay > 0:
         weight_decay_policy = parameter_manager.get_param('weight_decay_policy', 'fixed')
+        weight_decay_bias = parameter_manager.get_param('weight_decay_bias', True)
         Annealer.set_trace('weight_decay', epochs * iterations, [0, weight_decay], 'iteration', _anneal_policy(weight_decay_policy))
         Annealer._iteration_step(key = 'weight_decay')
         
@@ -239,6 +240,7 @@ def fit(
                                                                      epoch=epoch,
                                                                      warmup=warmup,
                                                                      weight_decay=weight_decay,
+                                                                     weight_decay_bias=weight_decay_bias,
                                                                      bias_scale=bias_scale,
                                                                      accum_grad=accum_grad,
                                                                      ema=ema,

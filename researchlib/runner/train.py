@@ -30,6 +30,7 @@ def train_fn(self, monitor, visualize, **kwargs):
     epoch = parameter_manager.get_param('epoch')
     warmup = parameter_manager.get_param('warmup')
     weight_decay = parameter_manager.get_param('weight_decay')
+    weight_decay_bias = parameter_manager.get_param('weight_decay_bias')
     bias_scale = parameter_manager.get_param('bias_scale')
     accum_grad = parameter_manager.get_param('accum_grad')
     ema = parameter_manager.get_param('ema')
@@ -58,7 +59,7 @@ def train_fn(self, monitor, visualize, **kwargs):
         if weight_decay > 0:
             cur_weight_decay = Annealer.get_trace('weight_decay')
             update_optim(
-                self.optimizer, [cur_weight_decay, 0],
+                self.optimizer, [cur_weight_decay, (cur_weight_decay / bias_scale) if weight_decay_bias else 0],
                 key = 'weight_decay'
             )
 

@@ -42,6 +42,7 @@ class Liveplot:
         self.history = hl.History()
         self.custom_msg = {}
         self.text_table = Texttable(max_width = 0)  #unlimited
+        self.text_table.set_precision(4)
         self.timer = Timer(total_iteration)
         self.redis = redis.Redis()
         self.redis.set('progress', 0)
@@ -136,7 +137,7 @@ class Liveplot:
         loss_record /= batch_idx
         metrics_collection = [
             ''.join([
-                '%s: %.5s' % (key.capitalize(), float(value) / batch_idx)
+                '%s: %.6s' % (key.capitalize(), float(value) / batch_idx)
                 for (key, value) in monitor_record.items()
             ])
         ]
@@ -144,14 +145,14 @@ class Liveplot:
         misc, progress = self.timer.output(batch_idx)
         self.cache = (epoch, loss_record, metrics_collection, track_best, misc)
         self.progress_bar.value = batch_idx
-        self.progress_label_text.value = f'Epoch: {epoch}, Loss: {loss_record:.5f}, {metrics_collection}, Track best: {track_best:.5f}, {misc}'
+        self.progress_label_text.value = f'Epoch: {epoch}, Loss: {loss_record:.4f}, {metrics_collection}, Track best: {track_best:.4f}, {misc}'
         self.redis.set('desc', self.progress_label_text.value)
         self.redis.set('progress', progress)
     
     
     def cali_desc(self, track_best):
         (epoch, loss_record, metrics_collection, _, misc) = self.cache
-        self.progress_label_text.value = f'Epoch: {epoch}, Loss: {loss_record:.5f}, {metrics_collection}, Track best: {track_best:.5f}, {misc}'
+        self.progress_label_text.value = f'Epoch: {epoch}, Loss: {loss_record:.4f}, {metrics_collection}, Track best: {track_best:.4f}, {misc}'
         self.redis.set('desc', self.progress_label_text.value)
     
     def update_custom_output(self, msg, prefix):
@@ -187,7 +188,7 @@ class Liveplot:
             if epoch == 1:
                 self.text_table.add_row(['Epochs'] + list(history_.records.keys()))
                 self.text_table.set_cols_width(
-                    [6] + [len(format(i[-1], '.4f')) for i in list(history_.records.values())]
+                    [6] + [len(format(i[-1], '.8f')) for i in list(history_.records.values())]
                 )
             self.text_table.add_row(
                 [epoch_str] + [format(i[-1], '.4f') for i in list(history_.records.values())]
