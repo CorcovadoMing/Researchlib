@@ -79,17 +79,18 @@ def train_fn(self, monitor, visualize, **kwargs):
         results = self.model({'phase': 0}) # 0: train, 1: val, 2: custom
         
         loss = results[self.loss_fn]
-        loss /= accum_grad
         loss.backward()
         
         self.accum_idx += 1
         self.accum_idx %= accum_grad
 
-        if self.accum_idx == 0 or self.train_loader_length:
+        if self.accum_idx == 0 or batch_idx == self.train_loader_length:
+            for p in self.model.parameters():
+                if p.requires_grad: p.grad.div_(accum_grad)
+                    
             for i in self.optimizer:
                 i.step()
                 i.zero_grad()
-            
 
         loss_record += loss.item()
         del loss
