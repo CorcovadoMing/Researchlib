@@ -37,8 +37,10 @@ def _ResBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
     preact_bn_shared = parameter_manager.get_param('preact_bn_shared', False) and preact and (in_dim != out_dim or do_pool)
     if preact_bn_shared:
         shared_bn_op = nn.Sequential(
-            get_norm_op(norm_type, dim, in_dim),
-            get_act_op(act_type)
+            *filter(None,[
+                get_norm_op(norm_type, dim, in_dim),
+                get_act_op(act_type) if not erased_act else None
+            ])
         )
     else:
         shared_bn_op = op.NoOp()
