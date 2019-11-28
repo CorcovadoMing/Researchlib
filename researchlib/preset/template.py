@@ -19,7 +19,7 @@ def Dawnfast(**kwargs):
 
 def ResNet18(**kwargs):
     default_kwargs = dict(
-        stem={'whitening': 1}, 
+        stem={'vgg': 1}, 
         type='residual', 
         pool_freq=[3,5,7],
         filters=(64, -1)
@@ -32,7 +32,7 @@ def PreResNet18(**kwargs):
     default_kwargs = dict(
         preact=True,
         preact_bn_shared=True,
-        stem={'whitening': 1}, 
+        stem={'vgg': 1}, 
         type='residual', 
         pool_freq=[3,5,7],
         filters=(64, -1)
