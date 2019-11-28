@@ -8,20 +8,21 @@ from .utils import get_conv_config, padding_shortcut, projection_shortcut, SE_At
 def _ResBottleneckBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
     '''
     '''
-    # Merge op
+   # Merge op
     parameter_manager = ParameterManager(**kwargs)
     preact = parameter_manager.get_param('preact', False)
     erased_act = parameter_manager.get_param('erased_act', False)
     act_type = parameter_manager.get_param('act_type', 'relu')
-    act_op = get_act_op(act_type) if not erased_act and not preact else None
+    act_op = get_act_op(act_type) if not preact and not erased_act else None
     merge_op = nn.Sequential(*list(filter(None, [act_op])))
-
+    
     # Preact final norm
     transpose = is_transpose(_op)
     dim = get_dim(_op)
     do_norm = parameter_manager.get_param('do_norm', True)
     norm_type = parameter_manager.get_param('norm_type', 'batch')
-    preact_final_norm_op = get_norm_op(norm_type, dim, out_dim) if do_norm and preact else None
+    preact_final_norm = parameter_manager.get_param('preact_final_norm', False)
+    preact_final_norm_op = get_norm_op(norm_type, dim, out_dim) if do_norm and preact and preact_final_norm else None
 
     # Blur
     do_pool = parameter_manager.get_param('do_pool', False)
