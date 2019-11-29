@@ -8,14 +8,14 @@ from .utils import get_conv_config, padding_shortcut, projection_shortcut, SE_At
 def _ResBottleneckBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
     '''
     '''
-   # Merge op
+    # Merge op
     parameter_manager = ParameterManager(**kwargs)
     preact = parameter_manager.get_param('preact', False)
     erased_act = parameter_manager.get_param('erased_act', False)
     act_type = parameter_manager.get_param('act_type', 'relu')
     act_op = get_act_op(act_type) if not preact and not erased_act else None
     merge_op = nn.Sequential(*list(filter(None, [act_op])))
-    
+
     # Preact final norm
     transpose = is_transpose(_op)
     dim = get_dim(_op)
@@ -35,8 +35,10 @@ def _ResBottleneckBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
     preact_bn_shared = parameter_manager.get_param('preact_bn_shared', False) and preact and (in_dim != out_dim or do_pool)
     if preact_bn_shared:
         shared_bn_op = nn.Sequential(
-            get_norm_op(norm_type, dim, in_dim),
-            get_act_op(act_type)
+            *filter(None,[
+                get_norm_op(norm_type, dim, in_dim),
+                get_act_op(act_type) if not erased_act else None
+            ])
         )
     else:
         shared_bn_op = op.NoOp()
@@ -66,7 +68,7 @@ def _ResBottleneckBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
                               stride=1,
                               padding=0,
                               do_pool=False,
-                              erased_act=True if not preact else False)
+                              erased_act=not preact)
 
     conv_op = [
         _unit(f'{prefix}_m1', _op, in_dim, hidden_size, **first_conv_kwargs),
