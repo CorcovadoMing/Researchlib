@@ -59,10 +59,12 @@ def PyramidNet272(**kwargs):
         pool_freq = [30, 60],
         preact=True,
         erased_act = True,
+        preact_final_norm = True,
         filter_policy = 'pyramid',
         pyramid_alpha = 200,
         shortcut = 'padding'
     )
+    default_kwargs.update(kwargs)
     return AutoConvNet(op.Conv2d, unit.Conv, 3, 90, **default_kwargs)
 
 
