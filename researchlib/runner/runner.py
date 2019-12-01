@@ -20,7 +20,7 @@ from . import gpu_resource_management
 from . import predict
 from . import set_optimizer
 from . import describe
-
+from . import calibrate
 
 @_add_methods_from(describe)
 @_add_methods_from(set_optimizer)
@@ -29,6 +29,7 @@ from . import describe
 @_add_methods_from(fit)
 @_add_methods_from(train)
 @_add_methods_from(validate)
+@_add_methods_from(calibrate)
 @_add_methods_from(predict)
 class Runner:
     __model_settings__ = {}
