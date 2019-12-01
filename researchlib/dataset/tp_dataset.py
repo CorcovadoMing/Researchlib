@@ -9,11 +9,9 @@ from .preprocessing import preprocessing
 
 
 class _VISION_GENERAL_LOADER:
-    def __init__(self, is_train, ds, name, transpose):
-        self.is_train = is_train
+    def __init__(self, ds, name):
         self.ds = ds
         self.name = name
-        self.transpose = transpose
 
     def get_generator(self, batch_size = 512, **kwargs):
         ds = self.ds
@@ -39,17 +37,15 @@ class _VISION_GENERAL_LOADER:
                                                            shot).reshape(len(classes), shot)
 
 
-def _CIFAR10(is_train = True, transpose = ('NHWC', 'NCHW')):
+def _CIFAR10(is_train = True, shuffle = True):
     phase = 'train' if is_train else 'test'
     return _VISION_GENERAL_LOADER(
-        is_train,
-        dataset.Cifar10(phase, shuffle = is_train),
+        dataset.Cifar10(phase, shuffle = shuffle),
         name = 'cifar10',
-        transpose = transpose
     )
 
 
-def _NumpyDataset(x, y, is_train = True, name = '', transpose = None):
-    _inner_gen = DataFromList(list(zip(x, y)), shuffle = is_train)
+def _NumpyDataset(x, y, shuffle = True, name = ''):
+    _inner_gen = DataFromList(list(zip(x, y)), shuffle = shuffle)
     _inner_gen.data = x
-    return _VISION_GENERAL_LOADER(is_train, _inner_gen, name = name, transpose = transpose)
+    return _VISION_GENERAL_LOADER(_inner_gen, name = name)

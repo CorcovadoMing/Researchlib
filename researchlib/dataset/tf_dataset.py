@@ -15,7 +15,7 @@ def rename_fn(dp):
     return dp['image'], dp['label']
 
 class _TFDataset:
-    def __init__(self, name, is_train, transpose = ('NHWC', 'NCHW')):
+    def __init__(self, name, is_train, shuffle):
         self.is_train = is_train
         self.name = name
 
@@ -25,8 +25,7 @@ class _TFDataset:
         info = ds.info
         self.length = info.splits[phase].num_examples
         ds.download_and_prepare()
-        self.ds = ds.as_dataset(split = split, shuffle_files = False)
-        self.transpose = transpose
+        self.ds = ds.as_dataset(split = split, shuffle_files = shuffle)
 
     def get_generator(self, batch_size = 512, **kwargs):
         # TODO: support the fixed size iteration
