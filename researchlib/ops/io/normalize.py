@@ -16,7 +16,7 @@ class _Normalize(nn.Module):
     def set_phase(self, phase):
         self.phase = phase
     
-    def reset_parameters(self):
+    def clear_source(self):
         try:
             del self.train_ds
         except:

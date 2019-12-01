@@ -20,6 +20,7 @@ def to_train_mode(m):
 @register_method
 def train_fn(self, monitor, visualize, **kwargs):
     self.model.apply(to_train_mode)
+    self.model.train()
     
     parameter_manager = ParameterManager(**kwargs)
 

@@ -106,15 +106,15 @@ def fit(
         self.set_optimizer()
         self.epoch = 1
     
-    if same_init:
-        init_model = os.path.join(self.checkpoint_path, 'init_model_' + _id)
-        if os.path.exists(str(init_model) + '.model.pt'):
-            self.load(init_model)
-        else:
-            self.save(init_model)
-        self.set_optimizer()
-        self.epoch = 1
-        
+        if same_init:
+            init_model = os.path.join(self.checkpoint_path, 'init_model_' + _id)
+            if os.path.exists(str(init_model) + '.model.pt'):
+                self.load(init_model)
+            else:
+                self.save(init_model)
+            self.set_optimizer()
+            self.epoch = 1
+
     
     fixed_mmixup = parameter_manager.get_param('fixed_mmixup', validator = lambda x: type(x) == list)
     random_mmixup = parameter_manager.get_param('random_mmixup', validator = lambda x: len(x) == 2 and type(x) == list)
@@ -336,7 +336,7 @@ def fit(
                 pass
             
             try:
-                m.reset_parameters()
+                m.clear_source()
             except:
                 pass
 
