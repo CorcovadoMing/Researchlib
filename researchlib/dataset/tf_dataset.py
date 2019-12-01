@@ -29,6 +29,7 @@ class _TFDataset:
         self.transpose = transpose
 
     def get_generator(self, batch_size = 512, **kwargs):
+        # TODO: support the fixed size iteration
         ds = self.ds.shuffle(10240).repeat(kwargs['epochs']).batch(batch_size).prefetch(2048)
         ds = DataFromGenerator(tfds.as_numpy(ds))
         ds.__len__ = lambda: math.ceil(self.length / batch_size)

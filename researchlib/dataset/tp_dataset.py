@@ -16,7 +16,11 @@ class _VISION_GENERAL_LOADER:
         self.transpose = transpose
 
     def get_generator(self, batch_size = 512, **kwargs):
-        ds = BatchData(self.ds, batch_size, remainder = True)
+        ds = self.ds
+        if 'fixed_batch' in kwargs:
+            ds = FixedSizeData(ds, batch_size * kwargs['fixed_batch'], keep_state=False)
+            ds = LocallyShuffleData(ds, batch_size * kwargs['fixed_batch'])
+        ds = BatchData(ds, batch_size, remainder = True)
         return ds
 
     def get_support_set(self, classes = [], shot = 5):
