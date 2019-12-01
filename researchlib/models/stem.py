@@ -4,9 +4,8 @@ import copy
 
 
 def push_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs):
-    stem_kwargs = {}
-    if 'stem_pool' not in stem_kwargs:
-        stem_kwargs['stem_pool'] = False
+    if 'stem_pool' not in kwargs:
+        kwargs['stem_pool'] = False
         
     for i in range(stem_layers):
         id = i + 1
@@ -20,13 +19,13 @@ def push_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact
                 _op,
                 in_dim = in_dim,
                 out_dim = out_dim,
-                do_pool = stem_kwargs['stem_pool'],
+                do_pool = kwargs['stem_pool'],
                 do_norm = False if preact else True,
                 preact = False,
                 id = id,
                 total_blocks = stem_layers,
                 erased_act = True if preact else False,
-                **stem_kwargs
+                **kwargs
             )
         )
         layers.append(op.ManifoldMixup())
