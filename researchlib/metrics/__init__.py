@@ -12,6 +12,7 @@
 from .categorical import Categorical
 from .meta_categorical import MetaCategorical
 from .acc import Acc
+from .ece import ECE
 from .l1 import L1
 from .l2 import L2
 from .hitrate import Hitrate
@@ -21,6 +22,7 @@ class Metrics(object):
     Categorical = Categorical
     MetaCategorical = MetaCategorical
     Acc = Acc
+    ECE = ECE
     L1 = L1
     L2 = L2
     Hitrate = Hitrate
