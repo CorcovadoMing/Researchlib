@@ -116,4 +116,4 @@ def calibrate_fn(self, logits_node, update, **kwargs):
     make_model_diagrams(temperature_scale(logits), labels)
 
     for i in update:
-        self.val_model.graph[update][0].temperature.fill_(float(temperature))
+        self.val_model.graph[i][0].temperature.fill_(float(temperature))
