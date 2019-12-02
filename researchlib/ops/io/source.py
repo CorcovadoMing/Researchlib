@@ -1,14 +1,22 @@
 from .prefetch import BackgroundGenerator
 from ...utils import inifinity_loop
+from torch import nn
 
 
-class _Source:
+class _Source(nn.Module):
     def __init__(self, train_source, val_source = None, **kwargs):
+        super().__init__()
         self.train_source = train_source
         self.train_source_generator = None
         self.val_source = val_source
         self.val_source_generator = None
         self.kwargs = kwargs
+        
+    def clear_source(self):
+        del self.train_source_generator
+        self.train_source_generator = None
+        del self.val_source_generator
+        self.val_source_generator = None
         
     def prepare_generator(self, batch_size, epochs):
         if self.train_source_generator is None and self.train_source is not None:
@@ -16,7 +24,7 @@ class _Source:
         if self.val_source_generator is None and self.val_source is not None:
             self.val_source_generator = self.val_source.get_generator(batch_size=batch_size, epochs=epochs)
     
-    def __call__(self, x):
+    def forward(self, x):
         if x == 0:
             return self.train_source_generator
         elif x == 1:

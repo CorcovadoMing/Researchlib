@@ -22,7 +22,22 @@ def _anneal_policy(anneal_type):
         anneal_policy = Annealer.Fixed
     return anneal_policy
     
+    
+    
+def _clear_output(m):
+    try:
+        del m.outputs
+    except:
+        pass
 
+def _clear_source(m):
+    try:
+        m.clear_source()
+    except:
+        pass
+    
+    
+    
 @register_method
 def fit(
     self,
@@ -50,6 +65,7 @@ def fit(
     
     parameter_manager = ParameterManager(**kwargs)
     
+    self.model.apply(_clear_source)
 
     # ----------------------------------------------
     # Dashboard
@@ -329,19 +345,10 @@ def fit(
         raise
 
     finally:
-        def _post_clean(m):
-            try:
-                del m.outputs
-            except:
-                pass
-            
-            try:
-                m.clear_source()
-            except:
-                pass
-
-        self.model.apply(_post_clean)
-        self.val_model.apply(_post_clean)
+        self.model.apply(_clear_source)
+        self.model.apply(_clear_output)
+        self.val_model.apply(_clear_source)
+        self.val_model.apply(_clear_output)
         self.unload_gpu()
         _STOP_GPU_MONITOR_ = True
         liveplot.redis.set('stage', 'stop')
