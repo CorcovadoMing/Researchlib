@@ -41,6 +41,19 @@ def PreResNet18(**kwargs):
     return AutoConvNet(op.Conv2d, unit.Conv, 3, 8, **default_kwargs)
 
 
+def PreResNet50(**kwargs):
+    default_kwargs = dict(
+        preact=True,
+        preact_bn_shared=True,
+        stem={'vgg': 1}, 
+        type='residual-bottleneck', 
+        pool_freq=[4,8,14],
+        filters=(64, -1)
+    )
+    default_kwargs.update(kwargs)
+    return AutoConvNet(op.Conv2d, unit.Conv, 3, 16, **default_kwargs)
+
+
 def WideResNet28x10(**kwargs):
     default_kwargs = dict(
         type='wide-residual', 
@@ -72,5 +85,6 @@ class Template(object):
     Dawnfast = Dawnfast
     ResNet18 = ResNet18
     PreResNet18 = PreResNet18
+    PreResNet50 = PreResNet50
     WideResNet28x10 = WideResNet28x10
     PyramidNet272 = PyramidNet272
