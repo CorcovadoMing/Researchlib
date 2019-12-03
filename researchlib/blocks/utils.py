@@ -40,6 +40,10 @@ class padding_shortcut(nn.Module):
         
         
 class projection_shortcut(nn.Module):
+    '''
+        Bag of Tricks for Image Classification with Convolutional Neural Networks
+        https://arxiv.org/abs/1812.01187
+    '''
     def __init__(self, _op, in_dim, out_dim, norm_op, shortcut_norm, do_pool, pool_factor, blur, transpose, stride):
         super().__init__()
         if in_dim != out_dim or do_pool:
