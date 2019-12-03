@@ -170,6 +170,8 @@ def get_shortcut_op(config, parameter_manager, **kwargs):
 
 def get_config(prefix, _unit, _op, in_dim, out_dim, parameter_manager):
     _config = build_config(
+        id = parameter_manager.get_param('id', 0),
+        total_blocks = parameter_manager.get_param('total_blocks', 1),
         prefix = prefix,
         _unit = _unit,
         _op = _op,
@@ -185,7 +187,7 @@ def get_config(prefix, _unit, _op, in_dim, out_dim, parameter_manager):
         do_pool = parameter_manager.get_param('do_pool', False),
         pool_factor = parameter_manager.get_param('pool_factor', 2),
         blur = parameter_manager.get_param('blur', False) and do_pool,
-        stochastic_depth = parameter_manager.get_param('stochastic_depth', 0)
+        stochastic_depth = parameter_manager.get_param('stochastic_depth', False)
     )
     stride = _config.pool_factor if _config.do_pool else 1
     kernel_size = 2 if _config.transpose and _config.do_pool else 3
@@ -202,6 +204,7 @@ class BernoulliSkip(nn.Module):
     def __init__(self, f, p):
         super().__init__()
         self.f = f
+        self.p = p
         self.dist = torch.distributions.Bernoulli(p)
     
     def forward(self, x):
@@ -211,4 +214,4 @@ class BernoulliSkip(nn.Module):
             else:
                 return 0
         else:
-            return self.f(x)
+            return self.p * self.f(x)

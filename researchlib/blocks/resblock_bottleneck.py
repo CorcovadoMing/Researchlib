@@ -96,8 +96,10 @@ def _ResBottleneckBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
         shared_bn_op = op.NoOp()
         
     branch_op = _branch_function(config, parameter_manager, **kwargs)
-    if config.stochastic_depth > 0:
-        branch_op = BernoulliSkip(branch_op, config.stochastic_depth)
+    if config.stochastic_depth:
+        k = (config.id - 1) / config.total_blocks
+        pl = (1-k) + 0.5 * k
+        branch_op = BernoulliSkip(branch_op, pl)
     shortcut_op = get_shortcut_op(config, parameter_manager, **kwargs)
 
 
