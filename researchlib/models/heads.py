@@ -4,7 +4,7 @@ from ..utils import ParameterManager
 from ..blocks.unit import unit
 
 
-def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', linear_bias = True, **kwargs):
+def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', linear_bias = False, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
 
     last_dim = parameter_manager.get_param('last_dim', None)
