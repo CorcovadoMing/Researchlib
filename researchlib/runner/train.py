@@ -87,7 +87,10 @@ def train_fn(self, monitor, visualize, **kwargs):
 
         if self.accum_idx == 0 or batch_idx == self.train_loader_length:
             for p in self.model.parameters():
-                if p.requires_grad: p.grad.div_(accum_grad)
+                try:
+                    if p.requires_grad: p.grad.div_(accum_grad)
+                except:
+                    pass
                     
             for i in self.optimizer:
                 i.step()

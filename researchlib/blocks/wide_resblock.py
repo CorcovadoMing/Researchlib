@@ -2,7 +2,7 @@ from ..ops import op
 from torch import nn
 from .unit.utils import get_act_op, get_norm_op, is_transpose, get_dim
 from ..utils import ParameterManager
-from .utils import get_conv_config, padding_shortcut, projection_shortcut, SE_Attention, CBAM_Attention, get_shakedrop_op, get_shortcut_op, get_config
+from .utils import get_conv_config, padding_shortcut, projection_shortcut, SE_Attention, CBAM_Attention, get_shakedrop_op, get_shortcut_op, get_config, BernoulliSkip
 
 def _branch_function(config, parameter_manager, **kwargs):
     first_conv_kwargs = get_conv_config()
@@ -72,6 +72,8 @@ def _WideResBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
     config = get_config(prefix, _unit, _op, in_dim, out_dim, parameter_manager)
     
     branch_op, pre_shared_norm_op = _branch_function(config, parameter_manager, **kwargs)
+    if config.stochastic_depth > 0:
+        branch_op = BernoulliSkip(branch_op, config.stochastic_depth)
     shortcut_op = get_shortcut_op(config, parameter_manager, **kwargs)
 
 

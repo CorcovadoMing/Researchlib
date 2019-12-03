@@ -184,7 +184,8 @@ def get_config(prefix, _unit, _op, in_dim, out_dim, parameter_manager):
         norm_type = parameter_manager.get_param('norm_type', 'batch'),
         do_pool = parameter_manager.get_param('do_pool', False),
         pool_factor = parameter_manager.get_param('pool_factor', 2),
-        blur = parameter_manager.get_param('blur', False) and do_pool
+        blur = parameter_manager.get_param('blur', False) and do_pool,
+        stochastic_depth = parameter_manager.get_param('stochastic_depth', 0)
     )
     stride = _config.pool_factor if _config.do_pool else 1
     kernel_size = 2 if _config.transpose and _config.do_pool else 3
@@ -195,3 +196,19 @@ def get_config(prefix, _unit, _op, in_dim, out_dim, parameter_manager):
     setattr(_config, 'padding', padding)
             
     return _config
+
+
+class BernoulliSkip(nn.Module):
+    def __init__(self, f, p):
+        super().__init__()
+        self.f = f
+        self.dist = torch.distributions.Bernoulli(p)
+    
+    def forward(self, x):
+        if self.training:
+            if self.dist.sample() > 0:
+                return self.f(x)
+            else:
+                return 0
+        else:
+            return self.f(x)
