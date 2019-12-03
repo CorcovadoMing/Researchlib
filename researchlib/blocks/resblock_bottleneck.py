@@ -39,7 +39,7 @@ def _branch_function(config, parameter_manager, **kwargs):
 
     conv_op = [
         config._unit(f'{config.prefix}_m1', config._op, config.in_dim, hidden_size, **first_conv_kwargs),
-        config._unit(f'{config.prefix}_m2', config._op, config.hidden_size, hidden_size, **second_conv_kwargs), 
+        config._unit(f'{config.prefix}_m2', config._op, hidden_size, hidden_size, **second_conv_kwargs), 
         op.Downsample(channels = hidden_size, filt_size = 3, stride = config.stride) if config.blur else None,
         config._unit(f'{config.prefix}_m3', config._op, hidden_size, config.out_dim, **third_conv_kwargs), 
         preact_final_norm_op
@@ -102,7 +102,7 @@ def _ResBottleneckBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
     flow = {
         f'{prefix}_shared_bn': (shared_bn_op, [f'{prefix}_input']),
         f'{prefix}_branch': branch_op,
-        f'{prefix}_shortcut': (shortcut, [f'{prefix}_shared_bn']),
+        f'{prefix}_shortcut': (shortcut_op, [f'{prefix}_shared_bn']),
         f'{prefix}_add': (op.Add, [f'{prefix}_shortcut', f'{prefix}_branch']),
         f'{prefix}_output': merge_op
     }
