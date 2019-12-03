@@ -8,7 +8,7 @@ from .utils import get_conv_config, padding_shortcut, projection_shortcut, SE_At
 def _branch_function(config, parameter_manager, **kwargs):
     # Preact final norm
     preact_final_norm = parameter_manager.get_param('preact_final_norm', False)
-    preact_final_norm_op = get_norm_op(config.norm_type, config.dim, config.out_dim) if config.do_norm and config.preact and config.preact_final_norm else None
+    preact_final_norm_op = get_norm_op(config.norm_type, config.dim, config.out_dim) if config.do_norm and config.preact and preact_final_norm else None
 
     first_conv_kwargs = get_conv_config()
     first_conv_kwargs.update(**kwargs)
