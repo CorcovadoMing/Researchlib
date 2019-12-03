@@ -41,6 +41,19 @@ def PreResNet18(**kwargs):
     return AutoConvNet(op.Conv2d, unit.Conv, 3, 8, **default_kwargs)
 
 
+def PreResNet34(**kwargs):
+    default_kwargs = dict(
+        preact=True,
+        preact_bn_shared=True,
+        stem={'vgg': 1}, 
+        type='residual', 
+        pool_freq=[4,8,14],
+        filters=(64, -1)
+    )
+    default_kwargs.update(kwargs)
+    return AutoConvNet(op.Conv2d, unit.Conv, 3, 16, **default_kwargs)
+
+
 def PreResNet50(**kwargs):
     default_kwargs = dict(
         preact=True,

@@ -4,7 +4,7 @@ from ..utils import ParameterManager
 from ..blocks.unit import unit
 
 
-def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', **kwargs):
+def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', linear_bias = True, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
 
     last_dim = parameter_manager.get_param('last_dim', None)
@@ -36,7 +36,7 @@ def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', **
         # Normal heads
         op.__dict__[f'Adaptive{_reduce_name}Pool{dim_type}'](1),
         op.Flatten(),
-        op.Linear(_reduce_dim_calibrate * last_dim, out_dim, bias = False)
+        op.Linear(_reduce_dim_calibrate * last_dim, out_dim, bias = linear_bias)
     ]
 
     layers = list(filter(None, layers))
