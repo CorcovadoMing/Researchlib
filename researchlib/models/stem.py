@@ -4,9 +4,13 @@ import copy
 
 
 def push_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs):
-    if 'stem_pool' not in kwargs:
-        kwargs['stem_pool'] = False
-        
+    stem_kwargs = {}
+    stem_kwargs.update(kwargs)
+    stem_kwargs['erased_act'] = True if preact else False
+    stem_kwargs['preact'] = False
+    stem_kwargs['do_norm'] = False if preact else True,
+    stem_kwargs['do_pool'] = False
+    
     for i in range(stem_layers):
         id = i + 1
         _type = _parse_type(i, stem_type)
@@ -19,13 +23,9 @@ def push_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact
                 _op,
                 in_dim = in_dim,
                 out_dim = out_dim,
-                do_pool = kwargs['stem_pool'],
-                do_norm = False if preact else True,
-                preact = False,
                 id = id,
                 total_blocks = stem_layers,
-                erased_act = True if preact else False,
-                **kwargs
+                **stem_kwargs
             )
         )
         layers.append(op.ManifoldMixup())

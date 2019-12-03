@@ -2,6 +2,7 @@ from ...ops import op
 import torch.nn.utils.spectral_norm as sn
 from ...utils import ParameterManager
 from .utils import is_transpose, get_dim, get_norm_op, get_act_op, get_pool_op, get_conv_hparams
+from torch import nn
 
 
 def _Conv(prefix, _op, in_dim, out_dim, **kwargs):
@@ -55,10 +56,14 @@ def _Conv(prefix, _op, in_dim, out_dim, **kwargs):
             ops = [conv_op, norm_op, act_op, dropout_op, pool_op]
             names = ['conv', 'norm', 'act', 'dropout', 'pool']
     
-    ops = filter(lambda x: x[0] is not None, zip(ops, names))
-    
-    flow = {f'{prefix}_{k}': v for v, k in ops}
-    first, last = list(flow.keys())[0], list(flow.keys())[-1]
-    flow[first] = (flow[first], [f'{prefix}_input'])
+    reduce_mem = parameter_manager.get_param('reduce_mem', True)
+    if reduce_mem:
+        return nn.Sequential(*filter(None, ops))
+    else:
+        ops = filter(lambda x: x[0] is not None, zip(ops, names))
 
-    return op.Subgraph(flow, in_node=f'{prefix}_input', out_node=last)
+        flow = {f'{prefix}_{k}': v for v, k in ops}
+        first, last = list(flow.keys())[0], list(flow.keys())[-1]
+        flow[first] = (flow[first], [f'{prefix}_input'])
+
+        return op.Subgraph(flow, in_node=f'{prefix}_input', out_node=last)

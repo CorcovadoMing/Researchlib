@@ -146,5 +146,4 @@ class _RevBlock(nn.Module):
         
     def forward(self, x):
         args = [x, self.branch_f_op, self.branch_g_op] + [w for w in self.branch_f_op.parameters()] + [w for w in self.branch_g_op.parameters()]
-        y = AdditiveBlockFunction.apply(*args)
-        return y
+        return AdditiveBlockFunction.apply(*args)
