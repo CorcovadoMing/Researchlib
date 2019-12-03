@@ -65,8 +65,8 @@ def AutoConvNet(
             id, type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy,
             parameter_manager
         )
-        _op_type = _get_op_type(type, id, total_blocks, do_pool, in_dim == out_dim)
-        print(id + stem_layers, in_dim, out_dim, do_pool)
+        _op_type = _get_op_type(type, id, total_blocks, do_pool, in_dim != out_dim)
+        print(id + stem_layers, in_dim, out_dim, do_pool, _op_type)
 
         if do_pool and auxiliary_classifier is not None:
             parameter_manager.save_buffer('dim_type', _get_dim_type(_op))

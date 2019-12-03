@@ -10,7 +10,7 @@ def push_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact
     for i in range(stem_layers):
         id = i + 1
         _type = _parse_type(i, stem_type)
-        _op_type = _get_op_type(stem_type, id, stem_layers, False, in_dim == out_dim)
+        _op_type = _get_op_type(stem_type, id, stem_layers, False, in_dim != out_dim)
         print(id, in_dim, out_dim, stem_type)
         layers.append(
             _op_type(

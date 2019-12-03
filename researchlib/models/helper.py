@@ -21,7 +21,7 @@ def _get_op_type(type_object, cur_block, total_blocks, do_pool, do_expand):
     _type = _parse_type(cur_block - 1, type_object)
 
     if _type not in [
-        'vgg', 'dawn', 'residual', 'residual-bottleneck', 'wide-residual', 'whitening'
+        'vgg', 'dawn', 'residual', 'residual-bottleneck', 'wide-residual', 'whitening', 'rev-residual'
     ]:
         raise ValueError(f'Type {_type} is not supperted')
 
@@ -37,6 +37,12 @@ def _get_op_type(type_object, cur_block, total_blocks, do_pool, do_expand):
         _op_type = block.WideResBlock
     elif _type == 'whitening':
         _op_type = block.WhiteningBlock
+    elif _type == 'rev-residual':
+        if do_pool or do_expand:
+            # Reduce to residual
+            _op_type = block.ResBlock
+        else:
+            _op_type = block.RevBlock
     return _op_type
 
 
