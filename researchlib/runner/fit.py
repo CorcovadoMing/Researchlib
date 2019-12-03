@@ -32,7 +32,7 @@ def _clear_output(m):
 
 def _clear_source(m):
     try:
-        m.clear_source()
+        m.clear_source(True)
     except:
         pass
     

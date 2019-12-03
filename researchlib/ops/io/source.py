@@ -12,7 +12,7 @@ class _Source(nn.Module):
         self.val_source_generator = None
         self.kwargs = kwargs
         
-    def clear_source(self):
+    def clear_source(self, is_train):
         del self.train_source_generator
         self.train_source_generator = None
         del self.val_source_generator

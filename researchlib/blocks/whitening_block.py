@@ -18,8 +18,9 @@ class _WhiteningBlock(nn.Module):
         self.inner_op = _op(in_dim, 27, kernel_size=3, padding=1, bias=False)
         self.inner_op.weight.requires_grad = False
     
-    def clear_source(self):
-        self.reset_parameters()
+    def clear_source(self, is_train):
+        if is_train:
+            self.reset_parameters()
     
     def forward(self, x):
         if self.e1 is None or self.e2 is None:

@@ -17,7 +17,7 @@ class _Generator(nn.Module):
     def set_phase(self, phase):
         self.phase = phase
     
-    def clear_source(self):
+    def clear_source(self, is_train):
         try:
             del self.train_ds
         except:

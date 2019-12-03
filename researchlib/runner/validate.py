@@ -15,14 +15,40 @@ def to_eval_mode(m):
         m.set_phase(1)
     except:
         pass
-        
+
+def _clear_output(m):
+    try:
+        del m.outputs
+    except:
+        pass
+
+def _clear_source(m):
+    try:
+        m.clear_source(False)
+    except:
+        pass
         
 @register_method
 def validate(self, monitor = [], visualize = [], prefetch = True, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
-    batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
+    
+    self.val_model.apply(_clear_source)
+    self.val_model.apply(_clear_output)
+    
     fp16 = parameter_manager.get_param('fp16', False)
-    buffered_epochs = 1
+    batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
+    buffered_epochs = 2
+    
+    for k, v in self.val_model.graph.items():
+        if type(v[0]) == op.Source:
+            v[0].prepare_generator(batch_size, buffered_epochs)
+            self.train_loader_length = v[0].train_source_generator.__len__()
+            if v[0].val_source is not None:
+                self.test_loader_length = v[0].val_source_generator.__len__()
+            else:
+                self.test_loader_length = None
+        if type(v[0]) == op.Generator:
+            v[0].prepare_state(fp16)
     
     self.preload_gpu()
     try:
@@ -33,6 +59,8 @@ def validate(self, monitor = [], visualize = [], prefetch = True, **kwargs):
     except:
         raise
     finally:
+        self.val_model.apply(_clear_source)
+        self.val_model.apply(_clear_output)
         self.unload_gpu()
 
 
