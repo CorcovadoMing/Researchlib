@@ -38,10 +38,10 @@ def _branch_function(config, parameter_manager, **kwargs):
                               erased_act=not config.preact)
 
     conv_op = [
-        config._unit(f'{prefix}_m1', config._op, config.in_dim, hidden_size, **first_conv_kwargs),
-        config._unit(f'{prefix}_m2', config._op, config.hidden_size, hidden_size, **second_conv_kwargs), 
+        config._unit(f'{config.prefix}_m1', config._op, config.in_dim, hidden_size, **first_conv_kwargs),
+        config._unit(f'{config.prefix}_m2', config._op, config.hidden_size, hidden_size, **second_conv_kwargs), 
         op.Downsample(channels = hidden_size, filt_size = 3, stride = config.stride) if config.blur else None,
-        config._unit(f'{prefix}_m3', config._op, hidden_size, config.out_dim, **third_conv_kwargs), 
+        config._unit(f'{config.prefix}_m3', config._op, hidden_size, config.out_dim, **third_conv_kwargs), 
         preact_final_norm_op
     ]
 
