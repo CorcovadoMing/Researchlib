@@ -1,8 +1,9 @@
 from torch import nn
 import torch
-from .unit.utils import get_pool_op, get_dim
+from .unit.utils import get_pool_op, get_dim, get_act_op, get_norm_op, is_transpose
 import torch.nn.functional as F
 from ..ops import op
+from ..utils import build_config
 
 
 def get_conv_config(**custom_kwargs):
@@ -112,4 +113,85 @@ class CBAM_Attention(nn.Module):
         spatial_attention = channel_attention * self.sfn(_channel_pool(channel_attention))
         return spatial_attention
 
+    
+# ==============================================================================================================================
+    
+def get_shakedrop_op(parameter_manager):
+    shakedrop = parameter_manager.get_param('shakedrop', False)
+    if shakedrop:
+        id = parameter_manager.get_param('id', required = True)
+        total_blocks = parameter_manager.get_param('total_blocks', required = True)
+        alpha_range = parameter_manager.get_param('alpha_range', init_value = [-1, 1])
+        beta_range = parameter_manager.get_param('beta_range', init_value = [0, 1])
+        shakedrop_prob = parameter_manager.get_param('shakedrop_prob', init_value = 0.5)
+        mode_mapping = {'batch': 0, 'sample': 1, 'channel': 2, 'pixel': 3}
+        mode = parameter_manager.get_param('shakedrop_mode', 'pixel')
+        mode = mode_mapping[mode]
+        shakedrop_op = op.ShakeDrop(
+            id,
+            total_blocks,
+            alpha_range = alpha_range,
+            beta_range = beta_range,
+            shakedrop_prob = shakedrop_prob,
+            mode = mode
+        )
+    else:
+        shakedrop_op = op.NoOp()
+    return shakedrop_op
 
+
+def get_shortcut_op(config, parameter_manager, **kwargs):
+    shortcut_type = parameter_manager.get_param('shortcut', 'projection')
+    shortcut_norm = parameter_manager.get_param('shortcut_norm', False)
+    if shortcut_type == 'padding':
+        shortcut_op = padding_shortcut(config._op, 
+                                    config.in_dim, 
+                                    config.out_dim, 
+                                    get_norm_op(config.norm_type, config.dim, config.out_dim), 
+                                    shortcut_norm, 
+                                    config.do_pool, 
+                                    config.pool_factor, 
+                                    config.blur, 
+                                    config.transpose, 
+                                    config.stride)
+    else:
+        shortcut_op = projection_shortcut(config._op, 
+                                        config.in_dim, 
+                                        config.out_dim, 
+                                        get_norm_op(config.norm_type, config.dim, config.out_dim), 
+                                        shortcut_norm, 
+                                        config.do_pool, 
+                                        config.pool_factor, 
+                                        config.blur, 
+                                        config.transpose, 
+                                        config.stride)
+    return shortcut_op
+
+
+def get_config(prefix, _unit, _op, in_dim, out_dim, parameter_manager):
+    _config = build_config(
+        prefix = prefix,
+        _unit = _unit,
+        _op = _op,
+        in_dim = in_dim,
+        out_dim = out_dim,
+        preact = parameter_manager.get_param('preact', False),
+        erased_act = parameter_manager.get_param('erased_act', False),
+        act_type = parameter_manager.get_param('act_type', 'relu'),
+        transpose = is_transpose(_op),
+        dim = get_dim(_op),
+        do_norm = parameter_manager.get_param('do_norm', True),
+        norm_type = parameter_manager.get_param('norm_type', 'batch'),
+        do_pool = parameter_manager.get_param('do_pool', False),
+        pool_factor = parameter_manager.get_param('pool_factor', 2),
+        blur = parameter_manager.get_param('blur', False) and do_pool
+    )
+    stride = _config.pool_factor if _config.do_pool else 1
+    kernel_size = 2 if _config.transpose and _config.do_pool else 3
+    padding = 0 if _config.transpose and _config.do_pool else int((kernel_size - 1) / 2)
+    
+    setattr(_config, 'stride', stride)
+    setattr(_config, 'kernel_size', kernel_size)
+    setattr(_config, 'padding', padding)
+            
+    return _config
