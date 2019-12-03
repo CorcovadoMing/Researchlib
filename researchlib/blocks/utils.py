@@ -43,22 +43,13 @@ class projection_shortcut(nn.Module):
     def __init__(self, _op, in_dim, out_dim, norm_op, shortcut_norm, do_pool, pool_factor, blur, transpose, stride):
         super().__init__()
         if in_dim != out_dim or do_pool:
-            shortcut_kernel_size = 2 if transpose and do_pool else 1
-            shortcut_stride = 1 if blur else stride
+            pool_op = get_pool_op('avg', get_dim(_op), pool_factor) if do_pool else None 
+            pool_op = op.Downsample(channels = in_dim, filt_size = 3, stride = stride) if blur else pool_op
             reduction_op = [
-                _op(
-                    in_dim,
-                    out_dim,
-                    kernel_size = shortcut_kernel_size,
-                    stride = shortcut_stride,
-                    bias = False
-                ),
+                pool_op,
+                _op(in_dim, out_dim, kernel_size = 1, bias = False),
                 norm_op if shortcut_norm else None
             ]
-            if blur:
-                reduction_op.append(
-                    op.Downsample(channels = self.out_dim, filt_size = 3, stride = stride)
-                )
         else:
             reduction_op = [None]
         self.op = nn.Sequential(*list(filter(None, reduction_op)))
