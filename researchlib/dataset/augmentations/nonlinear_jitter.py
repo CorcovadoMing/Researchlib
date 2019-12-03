@@ -6,6 +6,12 @@ from scipy import interpolate
 
 
 class NonlinearJitter(object):
+    '''
+        https://github.com/deepmind/multidim-image-augmentation/blob/master/doc/color_augmentation_colab.md
+       
+        This is a experimental augmentation!
+        The performance of this augmentation is being verifying
+    '''
     def __init__(self, white_point=0.1, black_point=0.1, slope=0.5):
         self.white_point = self._check_input(white_point, 'white_point')
         self.black_point = self._check_input(black_point, 'black_point', center=0, bound=(-1, 1), clip_first_on_zero=False)
