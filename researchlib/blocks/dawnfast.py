@@ -32,26 +32,7 @@ def _DAWNBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
         attention_op = op.NoOp()
          
     # Shakedrop
-    shakedrop = parameter_manager.get_param('shakedrop', False)
-    if shakedrop:
-        id = parameter_manager.get_param('id', required = True)
-        total_blocks = parameter_manager.get_param('total_blocks', required = True)
-        alpha_range = parameter_manager.get_param('alpha_range', init_value = [-1, 1])
-        beta_range = parameter_manager.get_param('beta_range', init_value = [0, 1])
-        shakedrop_prob = parameter_manager.get_param('shakedrop_prob', init_value = 0.5)
-        mode_mapping = {'batch': 0, 'sample': 1, 'channel': 2, 'pixel': 3}
-        mode = parameter_manager.get_param('shakedrop_mode', 'pixel')
-        mode = mode_mapping[mode]
-        shakedrop_op = op.ShakeDrop(
-            id,
-            total_blocks,
-            alpha_range = alpha_range,
-            beta_range = beta_range,
-            shakedrop_prob = shakedrop_prob,
-            mode = mode
-        )
-    else:
-        shakedrop_op = op.NoOp()
+    shakedrop_op = get_shakedrop_op(parameter_manager)
     
     flow = {
         f'{prefix}_op1': (op1, [f'{prefix}_input']),
