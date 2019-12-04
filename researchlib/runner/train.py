@@ -118,7 +118,6 @@ def train_fn(self, monitor, visualize, **kwargs):
             visualize_record[i] += results[i]
         
         del results
-
         
         batch_idx += 1
         if batch_idx % 5 == 0 or batch_idx == self.train_loader_length:

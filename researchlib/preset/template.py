@@ -29,25 +29,26 @@ def ResNet18(**kwargs):
     return AutoConvNet(op.Conv2d, unit.Conv, 3, 8, **default_kwargs)
 
 
-def ResNet110(**kwargs):
+def PreResNet110(**kwargs):
     default_kwargs = dict(
         stem={'vgg': 1}, 
         type='residual', 
         pool_freq=[19,37],
-        erased_act=True,
-        filters=(16, -1)
+        preact=True,
+        shortcut_norm=True,
+        filters=(32, -1)
     )
     default_kwargs.update(kwargs)
     return AutoConvNet(op.Conv2d, unit.Conv, 3, 54, **default_kwargs)
 
 
-def RevNet110(**kwargs):
+def PreRevNet110(**kwargs):
     default_kwargs = dict(
         stem={'vgg': 1}, 
         type='rev-residual', 
         pool_freq=[10,19],
-        erased_act=True,
-        filters=(32, -1)
+        preact=True,
+        filters=(64, -1)
     )
     default_kwargs.update(kwargs)
     return AutoConvNet(op.Conv2d, unit.Conv, 3, 27, **default_kwargs)
@@ -122,8 +123,8 @@ def PyramidNet272(**kwargs):
 class Template(object):
     Dawnfast = Dawnfast
     ResNet18 = ResNet18
-    ResNet110 = ResNet110
-    RevNet110 = RevNet110
+    PreResNet110 = PreResNet110
+    PreRevNet110 = PreRevNet110
     PreResNet18 = PreResNet18
     PreResNet50 = PreResNet50
     WideResNet28x10 = WideResNet28x10

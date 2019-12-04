@@ -8,6 +8,7 @@ from ..utils import ParameterManager
 from ..blocks import block
 from ..blocks import unit as _unit
 from .stem import push_stem
+from torch import nn
 
 
 def AutoConvNet(
@@ -26,9 +27,11 @@ def AutoConvNet(
     **kwargs
 ):
     Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
+    
     parameter_manager = ParameterManager(**kwargs)
-    parameter_manager.allow_param('stem_pool')
+    
     auxiliary_classifier = parameter_manager.get_param('auxiliary_classifier', None)
+    
     base_dim, max_dim = filters
     block_group = 0
     layers = []
@@ -103,8 +106,13 @@ def AutoConvNet(
 
     # must verify after all keys get registered
     parameter_manager.allow_param('non_local')
+    use_subgraph = parameter_manager.get_param('use_subgraph', False)
     
     ParameterManager.verify_kwargs(**kwargs)
     parameter_manager.save_buffer('dim_type', _get_dim_type(_op))
     parameter_manager.save_buffer('last_dim', out_dim)
-    return Builder.Seq(layers)
+    
+    if use_subgraph:
+        return Builder.Seq(layers)
+    else:
+        return nn.Sequential(*layers)

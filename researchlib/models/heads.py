@@ -2,9 +2,10 @@ from ..ops import op
 from .builder import Builder
 from ..utils import ParameterManager
 from ..blocks.unit import unit
+from torch import nn
 
 
-def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', linear_bias = False, **kwargs):
+def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', linear_bias = False, use_subgraph = False, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
 
     last_dim = parameter_manager.get_param('last_dim', None)
@@ -40,4 +41,7 @@ def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', li
     ]
 
     layers = list(filter(None, layers))
-    return Builder.Seq(layers)
+    if use_subgraph:
+        return Builder.Seq(layers)
+    else:
+        return nn.Sequential(*layers)
