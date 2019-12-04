@@ -47,11 +47,9 @@ class AdditiveBlockFunction(torch.autograd.Function):
         with torch.no_grad():
             # partition in two equally sized set of channels
             x1, x2 = torch.chunk(x, 2, dim=1)
-            x1, x2 = x1.contiguous(), x2.contiguous()
 
             # compute outputs
             fmr = Fm.forward(x2)
-
             y1 = x1 + fmr
             x1.set_()
             del x1
@@ -65,8 +63,8 @@ class AdditiveBlockFunction(torch.autograd.Function):
             y2.set_()
             del y2
 
-        # save the input and output variables
-        ctx.save_for_backward(x.data, output)
+        # save the input and output variables (Ming: save only output)
+        ctx.save_for_backward(output)
 
         return output
 
@@ -75,16 +73,14 @@ class AdditiveBlockFunction(torch.autograd.Function):
 
         Fm, Gm = ctx.Fm, ctx.Gm
         # are all variable objects now
-        x, output = ctx.saved_tensors
+        output, = ctx.saved_tensors
 
         with torch.no_grad():
             y1, y2 = torch.chunk(output, 2, dim=1)
-            y1, y2 = y1.contiguous(), y2.contiguous()
 
             # partition output gradient also on channels
             assert(grad_output.shape[1] % 2 == 0)  # nosec
             y1_grad, y2_grad = torch.chunk(grad_output, 2, dim=1)
-            y1_grad, y2_grad = y1_grad.contiguous(), y2_grad.contiguous()
 
         # Recreate computation graphs for functions Gm and Fm with gradient collecting leaf nodes:
         # z1_stop, x2_stop, GW, FW
@@ -102,12 +98,6 @@ class AdditiveBlockFunction(torch.autograd.Function):
             x1 = y1 - F_x2
             x1_stop = x1.detach()
             x1_stop.requires_grad = True
-
-            # restore input
-            xout = torch.cat([x1, x2], dim=1).contiguous()
-            with torch.no_grad():
-                x.storage().resize_(int(np.prod(xout.shape)))
-                x.set_(xout).detach()  # NOTE .detach() is very important here.
 
             # compute outputs building a sub-graph
             y1 = x1_stop + F_x2
@@ -146,6 +136,4 @@ class _RevBlock(nn.Module):
         
     def forward(self, x):
         args = [x, self.branch_f_op, self.branch_g_op] + [w for w in self.branch_f_op.parameters()] + [w for w in self.branch_g_op.parameters()]
-        y = AdditiveBlockFunction.apply(*args)
-        del x
-        return y
+        return AdditiveBlockFunction.apply(*args)
