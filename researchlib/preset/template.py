@@ -30,6 +30,7 @@ def ResNet18(**kwargs):
 
 
 def PreResNet110(**kwargs):
+    # TODO: Verify
     default_kwargs = dict(
         stem={'vgg': 1}, 
         type='residual', 
@@ -43,6 +44,7 @@ def PreResNet110(**kwargs):
 
 
 def PreRevNet110(**kwargs):
+    # TODO: Verify
     default_kwargs = dict(
         stem={'vgg': 1}, 
         type='rev-residual', 
