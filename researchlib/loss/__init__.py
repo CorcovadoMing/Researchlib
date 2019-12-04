@@ -12,6 +12,7 @@ from .ssim_msssim import SSIMLoss, MSSSIMLoss
 from .adaptive_robust_loss import AdaptiveRobustLoss
 from .soft_dtw import SoftDTWLoss
 from .distance import L1Loss, L2Loss
+from .sparsemax import SparsemaxLoss
 
 
 
@@ -32,7 +33,7 @@ class Loss(object):
     SSIM = SSIMLoss
     MSSSIM = MSSSIMLoss
     SoftDTW = SoftDTWLoss
-    
+    Sparsemax = SparsemaxLoss
 #     'bce': F.binary_cross_entropy
 #     'adaptive_robust': AdaptiveRobustLoss(1),  # need to fix dimensions
 #     'focal': FocalLoss(),  # need to be refined
