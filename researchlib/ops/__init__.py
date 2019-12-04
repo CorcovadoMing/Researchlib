@@ -21,7 +21,7 @@ from .sasa import _SASA2d
 
 #============================================================================
 
-from .activator import _GeLU, _Mish, _Swish, _DropReLU, _LogSoftmax, _Softmax
+from .activator import _GeLU, _Mish, _Swish, _DropReLU, _LogSoftmax, _Softmax, _LogSparsemax, _Sparsemax
 
 from .ghost_batchnorm import _GhostBatchNorm2d
 
@@ -160,6 +160,8 @@ class op(object):
     DropReLU = _DropReLU
     LogSoftmax = _LogSoftmax
     Softmax = _Softmax
+    LogSparsemax = _LogSparsemax
+    Sparsemax = _Sparsemax
 
     # DropBlock
     DropBlock2d = _DropBlock2d
