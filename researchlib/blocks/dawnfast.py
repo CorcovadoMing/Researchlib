@@ -1,4 +1,4 @@
-from .utils import get_conv_config, SE_Attention, CBAM_Attention
+from .utils import get_conv_config, SE_Attention, CBAM_Attention, get_shakedrop_op
 from ..utils import ParameterManager
 from ..ops import op
 from torch import nn
