@@ -1,8 +1,11 @@
 from .imagenet import ImageNet
-from .template import Template
+from .scratch import Scratch
 from .loader import Loader
+from .config import Config
+
 
 class Preset(object):
     ImageNet = ImageNet
-    Template = Template
+    Scratch = Scratch
+    Config = Config
     Loader = Loader
