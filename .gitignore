@@ -3,7 +3,6 @@ sheets.googleapis.com-python.json
 *.pyc
 .ipynb_checkpoints
 *.h5
-*.npy
 *.onnx
 *.pkl
 *.png
