@@ -43,7 +43,7 @@ def _Conv(prefix, _op, in_dim, out_dim, **kwargs):
     if freeze_bias:
         norm_op.bias.requires_grad = False
     act_op = None if erased_act or not do_act else get_act_op(act_type)
-    pool_op = None if not do_pool else get_pool_op(pool_type, dim, pool_factor)
+    pool_op = None if not do_pool else get_pool_op(pool_type, dim, pool_factor, out_dim)
     
     if preact:
         ops = [norm_op, act_op, dropout_op, conv_op, pool_op]

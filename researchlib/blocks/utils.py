@@ -20,11 +20,11 @@ def get_conv_config(**custom_kwargs):
 
 
 class padding_shortcut(nn.Module):
-    def __init__(self, _op, in_dim, out_dim, norm_op, shortcut_norm, do_pool, pool_factor, blur, transpose, stride):
+    def __init__(self, _op, in_dim, out_dim, norm_op, shortcut_norm, do_pool, pool_type, pool_factor, blur, transpose, stride):
         super().__init__()
         self.in_dim = in_dim
         self.out_dim = out_dim
-        pool_op = get_pool_op('avg', get_dim(_op), pool_factor) if do_pool else None    
+        pool_op = get_pool_op(pool_type, get_dim(_op), pool_factor, in_dim) if do_pool else None    
         self.pool_op = nn.Sequential(*list(filter(None, [pool_op])))
 
     def forward(self, x):
@@ -44,10 +44,10 @@ class projection_shortcut(nn.Module):
         Bag of Tricks for Image Classification with Convolutional Neural Networks
         https://arxiv.org/abs/1812.01187
     '''
-    def __init__(self, _op, in_dim, out_dim, norm_op, shortcut_norm, do_pool, pool_factor, blur, transpose, stride):
+    def __init__(self, _op, in_dim, out_dim, norm_op, shortcut_norm, do_pool, pool_type, pool_factor, blur, transpose, stride):
         super().__init__()
         if in_dim != out_dim or do_pool:
-            pool_op = get_pool_op('avg', get_dim(_op), pool_factor) if do_pool else None 
+            pool_op = get_pool_op(pool_type, get_dim(_op), pool_factor, in_dim) if do_pool else None 
             pool_op = op.Downsample(channels = in_dim, filt_size = 3, stride = stride) if blur else pool_op
             reduction_op = [
                 pool_op,
@@ -144,7 +144,8 @@ def get_shortcut_op(config, parameter_manager, **kwargs):
                                     config.out_dim, 
                                     get_norm_op(config.norm_type, config.dim, config.out_dim), 
                                     shortcut_norm, 
-                                    config.do_pool, 
+                                    config.do_pool,
+                                    config.pool_type,
                                     config.pool_factor, 
                                     config.blur, 
                                     config.transpose, 
@@ -155,7 +156,8 @@ def get_shortcut_op(config, parameter_manager, **kwargs):
                                         config.out_dim, 
                                         get_norm_op(config.norm_type, config.dim, config.out_dim), 
                                         shortcut_norm, 
-                                        config.do_pool, 
+                                        config.do_pool,
+                                        config.pool_type,
                                         config.pool_factor, 
                                         config.blur, 
                                         config.transpose, 
@@ -180,6 +182,7 @@ def get_config(prefix, _unit, _op, in_dim, out_dim, parameter_manager):
         do_norm = parameter_manager.get_param('do_norm', True),
         norm_type = parameter_manager.get_param('norm_type', 'batch'),
         do_pool = parameter_manager.get_param('do_pool', False),
+        pool_type = parameter_manager.get_param('pool_type', 'avg'), # Residual famaily default use avg pool
         pool_factor = parameter_manager.get_param('pool_factor', 2),
         blur = parameter_manager.get_param('blur', False) and do_pool,
         stochastic_depth = parameter_manager.get_param('stochastic_depth', False)
