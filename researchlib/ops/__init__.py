@@ -50,9 +50,12 @@ from .io import _SetVariable, _UpdateVariable, _GetVariable, _Source, _Normalize
 from .node import _To, _Subgraph, _Detach, _Name, _NoOp
 
 from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation42d, _Anneal
-
+from .pool import _CombinePool2d
 
 class op(object):
+    
+    # Pool
+    CombinePool2d = _CombinePool2d
     
     # Non-Params
     Flip = _Flip
