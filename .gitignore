@@ -1,6 +1,7 @@
 # google oauth file
 sheets.googleapis.com-python.json
 *.pyc
+*.npy
 .ipynb_checkpoints
 *.h5
 *.onnx
