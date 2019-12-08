@@ -13,6 +13,6 @@ class VAELoss(nn.Module):
         super().__init__()
 
     def forward(self, x, recon_x, mu, logvar):
-        BCE = F.binary_cross_entropy(recon_x.view(recon_x.size(0), -1), x.view(x.size(0), -1))
-        KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+        BCE = F.binary_cross_entropy(recon_x.view(recon_x.size(0), -1), x.view(x.size(0), -1), reduction = 'sum') / x.size(0)
+        KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()) / x.size(0)
         return BCE + KLD
