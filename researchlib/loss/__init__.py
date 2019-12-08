@@ -2,7 +2,8 @@ from .ensemble import loss_ensemble
 from .mapping import *
 
 #from .gan import GANLoss
-#from .vae import VAELoss
+
+from .vae import VAELoss
 from .likelihood import SmoothNLLLoss, NLLoss, NLLLoss
 from .dice import DiceLoss, FlattenDiceLoss
 from .logcosh import LogCoshLoss
@@ -34,6 +35,7 @@ class Loss(object):
     MSSSIM = MSSSIMLoss
     SoftDTW = SoftDTWLoss
     Sparsemax = SparsemaxLoss
+    VAE = VAELoss
 #     'bce': F.binary_cross_entropy
 #     'adaptive_robust': AdaptiveRobustLoss(1),  # need to fix dimensions
 #     'focal': FocalLoss(),  # need to be refined
