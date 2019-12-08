@@ -24,5 +24,5 @@ def CIFAR10():
 
 
 
-class Loader(object):
+class Dataset(object):
     CIFAR10 = CIFAR10

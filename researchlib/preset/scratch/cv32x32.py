@@ -23,6 +23,9 @@ def Dawnfast(in_node, out_node, head=None, **kwargs):
 
 
 def ResNet18(in_node, out_node, head=None, **kwargs):
+    '''
+        Deep Residual Learning for Image Recognition
+    '''
     default_kwargs = dict(
         stem={'vgg': 1}, 
         type='residual', 
@@ -37,12 +40,14 @@ def ResNet18(in_node, out_node, head=None, **kwargs):
 
 
 def ResNet110(in_node, out_node, head=None, **kwargs):
-    # Need to be verified
+    '''
+        Deep Residual Learning for Image Recognition
+    '''
     default_kwargs = dict(
         stem={'vgg': 1}, 
-        type='residual', 
+        type='residual',
+        shortcut='padding',
         pool_freq=[19,37],
-        erased_act=True,
         filters=(16, -1)
     )
     default_kwargs.update(kwargs)
@@ -79,7 +84,7 @@ def PreResNet18(in_node, out_node, head=None, **kwargs):
         filters=(64, -1)
     )
     default_kwargs.update(kwargs)
-    model = AutoConvNet(op.Conv2d, unit.Conv, 3, 8, **default_kwargs)
+    model = [AutoConvNet(op.Conv2d, unit.Conv, 3, 8, **default_kwargs)]
     if head != None:
         model.append(Heads(head, reduce_type='avg', preact=True))
     return Node(out_node, nn.Sequential(*model), in_node)
