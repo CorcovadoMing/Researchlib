@@ -1,14 +1,8 @@
 import numpy as np
 from tensorpack.dataflow import *
-from tensorpack import imgaug
-import random
-from functools import partial
-from .process_single import _process_single
-from .process_augment import _process_augment
-from .preprocessing import preprocessing
 
 
-class _VISION_GENERAL_LOADER:
+class _GeneralLoader:
     def __init__(self, ds, name):
         self.ds = ds
         self.name = name
@@ -35,17 +29,3 @@ class _VISION_GENERAL_LOADER:
                 break
         return np.stack(list(collect.values())), np.repeat(np.array(list(collect.keys())),
                                                            shot).reshape(len(classes), shot)
-
-
-def _CIFAR10(is_train = True, shuffle = True):
-    phase = 'train' if is_train else 'test'
-    return _VISION_GENERAL_LOADER(
-        dataset.Cifar10(phase, shuffle = shuffle),
-        name = 'cifar10',
-    )
-
-
-def _NumpyDataset(x, y, shuffle = True, name = ''):
-    _inner_gen = DataFromList(list(zip(x, y)), shuffle = shuffle)
-    _inner_gen.data = x
-    return _VISION_GENERAL_LOADER(_inner_gen, name = name)

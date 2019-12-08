@@ -1,5 +1,5 @@
 import torchvision
-from .tp_dataset import _NumpyDataset
+from .np_dataset import _NumpyDataset
 
 
 def _TorchDataset(name, is_train, shuffle):
