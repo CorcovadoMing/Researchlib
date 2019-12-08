@@ -9,6 +9,9 @@ from ..utils import Timer
 import redis
 import pickle
 from tqdm.auto import tqdm
+import torchvision
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def _get_gpu_monitor(index):
@@ -40,7 +43,6 @@ class Liveplot:
     def __init__(self, total_iteration, _plot = False):
         self._plot = _plot
         self.history = hl.History()
-        self.custom_msg = {}
         self.text_table = Texttable(max_width = 0)  #unlimited
         self.text_table.set_precision(4)
         self.timer = Timer(total_iteration)
@@ -154,13 +156,21 @@ class Liveplot:
         (epoch, loss_record, metrics_collection, _, misc) = self.cache
         self.progress_label_text.value = f'Epoch: {epoch}, Loss: {loss_record:.4f}, {metrics_collection}, Track best: {track_best:.4f}, {misc}'
         self.redis.set('desc', self.progress_label_text.value)
-    
-    def update_custom_output(self, msg, prefix):
-        self.custom_msg[prefix] = msg
+        
 
     def record(self, epoch, key, value, mode = ''):
         self.history.log(epoch, **{key: value})
+        
+        
+    def show_grid(self, tensor):
+        with self.custom_output:
+            _display.clear_output(wait = True)
+            img = torchvision.utils.make_grid(tensor.detach(), 16, 0)
+            npimg = img.cpu().numpy()
+            plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
+            plt.show()
 
+            
     def plot(self, epoch, history_, epoch_str):
         self.redis.set('history', pickle.dumps(history_.records))
         if self._plot:
@@ -175,14 +185,6 @@ class Liveplot:
 
             with self.norm_plot:
                 self.norm_canvas.draw_plot([self.history['norm']])
-                
-        with self.custom_output:
-            _display.clear_output(wait = True)
-            for prefix in self.custom_msg:
-                print(prefix)
-                for i in self.custom_msg[prefix]:
-                    print(self.custom_msg[prefix][i])
-            self.custom_msg = {}
 
         with self.text_log:
             if epoch == 1:
