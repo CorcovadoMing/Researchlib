@@ -1,5 +1,6 @@
 import torchvision
 import torch
+import numpy as np
 from .np_dataset import _NumpyDataset
 
 
@@ -19,6 +20,6 @@ def _TorchDataset(name, is_train, shuffle):
         ds.data = ds.data.unsqueeze(-1)
     
     if type(ds.data) == torch.Tensor:
-        return _NumpyDataset(ds.data.numpy(), ds.targets.numpy(), shuffle, name = name)
+        return _NumpyDataset(ds.data.numpy().astype(np.float32), ds.targets.numpy(), shuffle, name = name)
     else:
-        return _NumpyDataset(ds.data, ds.targets, shuffle, name = name)
+        return _NumpyDataset(ds.data.astype(np.float32), ds.targets, shuffle, name = name)
