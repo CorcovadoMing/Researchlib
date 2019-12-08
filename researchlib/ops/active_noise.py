@@ -17,7 +17,7 @@ class _ActiveNoise(nn.Module):
         if self.training:
             noise = torch.empty_like(x).to(x.device)
             if self.type == 'mul' or self.type == 'mixed':
-                return x * noise.uniform_() * self.alpha.expand_as(x)
+                return x * (noise.uniform_() + 0.5) * self.alpha.expand_as(x)
             if self.type == 'add' or self.type == 'mixed':
                 return x + (noise.uniform_() - 0.5) * self.beta.expand_as(x)
         return x
