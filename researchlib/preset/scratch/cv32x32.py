@@ -157,10 +157,15 @@ def PyramidNet272(in_node, out_node, head=None, **kwargs):
 
 class CV32x32(object):
     Dawnfast = Dawnfast
+    
     ResNet18 = ResNet18
     ResNet110 = ResNet110
+    
     RevNet110 = RevNet110
+    
     PreResNet18 = PreResNet18
+    PreResNet34 = PreResNet34
     PreResNet50 = PreResNet50
+    
     WideResNet28x10 = WideResNet28x10
     PyramidNet272 = PyramidNet272
