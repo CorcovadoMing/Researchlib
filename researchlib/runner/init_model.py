@@ -14,12 +14,6 @@ def init_model(
     self, init_algorithm = 'default', lsuv_dummy = False, lsuv_trials = 50, verbose = False
 ):
     
-    # Reset the metrics
-    if self.monitor_mode == min:
-        self.monitor = 1e5
-    elif self.monitor_mode == max:
-        self.monitor = -1e5
-    
     self.history.records = {}
     
     if init_algorithm == 'lsuv':

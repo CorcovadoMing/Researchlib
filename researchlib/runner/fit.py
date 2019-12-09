@@ -55,7 +55,6 @@ def fit(
     plot = False,
     init = None,
     same_init = False,
-    monitor = [],
     freeze = {},
     **kwargs
 ):
@@ -246,8 +245,7 @@ def fit(
             liveplot.redis.set('stage', 'train')
             liveplot.timer.clear()
             # Training function
-            loss_record, norm_record, metrics_record = self.train_fn(monitor,
-                                                                     liveplot=liveplot,
+            loss_record, norm_record, metrics_record = self.train_fn(liveplot=liveplot,
                                                                      mmixup_alpha=mmixup_alpha, 
                                                                      fixed_mmixup=fixed_mmixup, 
                                                                      random_mmixup=random_mmixup,
@@ -279,8 +277,7 @@ def fit(
             if self.test_loader_length is not None:
                 liveplot.redis.set('stage', 'validate')
                 # Validation function
-                loss_record, metrics_record = self.validate_fn(monitor,
-                                                               liveplot=liveplot,
+                loss_record, metrics_record = self.validate_fn(liveplot=liveplot,
                                                                support_set=support_set,
                                                                way=way,
                                                                shot=shot)
@@ -296,9 +293,8 @@ def fit(
             # Check point
             # ----------------------------------------------
             epoch_str = str(self.epoch)
-            monitor_target = 'val_' + self.monitor_state if self.test_loader_length is not None else 'train_' + self.monitor_state
-            if monitor_target in self.history.records:
-                critic = self.history.records[monitor_target][-1]
+            if self.val_model.checkpoint_node is not None:
+                critic = metrics_record[self.val_model.checkpoint_node]
             else:
                 critic = None
 
@@ -307,18 +303,19 @@ def fit(
                 self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(self.epoch)
             )
             self.save(checkpoint_model_name)
-            if critic is not None and self.monitor_mode(critic, self.monitor) == critic:
-                self.monitor = critic
+            if self.val_model.checkpoint_state is None:
+                self.val_model.checkpoint_state = critic
+            if critic is not None and self.val_model.checkpoint_mode(critic, self.val_model.checkpoint_state) == critic:
+                self.val_model.checkpoint_state = critic
                 best_checkpoint_model_name = os.path.join(self.checkpoint_path, 'best_' + _id)
                 self.save(best_checkpoint_model_name)
                 epoch_str += '*'
-
             
             # ----------------------------------------------
             # Post-config
             # ----------------------------------------------
             liveplot.plot(self.epoch, self.history, epoch_str)
-            liveplot.cali_desc(self.monitor)
+            liveplot.cali_desc(self.val_model.checkpoint_state)
             
             
             # Steps anneling

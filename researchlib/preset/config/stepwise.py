@@ -8,7 +8,6 @@ def Stepwise(**kwargs):
         batch_size=128,
         accum_grad=1,
         fp16=True,
-        monitor=['acc'],
         init='xavier',
     )
     default_kwargs.update(kwargs)

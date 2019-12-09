@@ -4,6 +4,7 @@ from .node import Node
 from .visualize import Visualize
 from .output import Output
 from .optimize import Optimize
+from .monitor import MonitorMax, MonitorMin, Monitor
 
 
 class Builder(object):

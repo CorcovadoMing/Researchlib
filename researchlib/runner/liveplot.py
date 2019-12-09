@@ -136,6 +136,12 @@ class Liveplot:
         )
         self.thread.start()
 
+    def _process_num(self, var):
+        if var is None:
+            return 'None'
+        else:
+            return f'{var:.4f}'
+        
     def update_desc(self, epoch, batch_idx, loss_record, monitor_record, track_best):
         loss_record /= batch_idx
         metrics_collection = [
@@ -148,14 +154,14 @@ class Liveplot:
         misc, progress = self.timer.output(batch_idx)
         self.cache = (epoch, loss_record, metrics_collection, track_best, misc)
         self.progress_bar.value = batch_idx
-        self.progress_label_text.value = f'Epoch: {epoch}, Loss: {loss_record:.4f}, {metrics_collection}, Track best: {track_best:.4f}, {misc}'
+        self.progress_label_text.value = f'Epoch: {epoch}, Loss: {self._process_num(loss_record)}, {metrics_collection}, Track best: {self._process_num(track_best)}, {misc}'
         self.redis.set('desc', self.progress_label_text.value)
         self.redis.set('progress', progress)
     
     
     def cali_desc(self, track_best):
         (epoch, loss_record, metrics_collection, _, misc) = self.cache
-        self.progress_label_text.value = f'Epoch: {epoch}, Loss: {loss_record:.4f}, {metrics_collection}, Track best: {track_best:.4f}, {misc}'
+        self.progress_label_text.value = f'Epoch: {epoch}, Loss: {self._process_num(loss_record)}, {metrics_collection}, Track best: {self._process_num(track_best)}, {misc}'
         self.redis.set('desc', self.progress_label_text.value)
         
 

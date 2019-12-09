@@ -115,6 +115,10 @@ class _Graph(nn.Module):
         self.visualize_nodes = []
         self.output_nodes = []
         self.optimize_nodes = []
+        self.monitor_nodes = []
+        self.checkpoint_mode = None
+        self.checkpoint_node = None
+        self.checkpoint_state = None
         
         if len(net) == 1 and type(net[0]) == dict:
             self.graph = build_graph(net[0])
@@ -141,6 +145,16 @@ class _Graph(nn.Module):
                     self.output_nodes += list(node.keys())
                 elif node_type == '__OPTIMIZE__':
                     self.optimize_nodes += list(node.keys())
+                elif node_type == '__MONITOR_MAX__':
+                    self.monitor_nodes += list(node.keys())
+                    self.checkpoint_mode = max
+                    self.checkpoint_node = list(node.keys())[0]
+                elif node_type == '__MONITOR_MIN__':
+                    self.monitor_nodes += list(node.keys())
+                    self.checkpoint_mode = min
+                    self.checkpoint_node = list(node.keys())[0]
+                elif node_type == '__MONITOR__':
+                    self.monitor_nodes += list(node.keys())
             else:
                 node = i
             result.update(node)

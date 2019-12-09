@@ -9,7 +9,6 @@ def Dawnfast(**kwargs):
         ema_freq=5, 
         bias_scale=64,
         batch_size=512,
-        monitor=['acc'],
         init='default'
     )
     default_kwargs.update(kwargs)

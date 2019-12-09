@@ -40,8 +40,6 @@ class Runner:
         self,
         model,
         optimizer = None,
-        monitor_mode = 'min',
-        monitor_state = 'loss',
         **kwargs
     ):
         self.__class__.__runner_settings__ = locals()
@@ -52,9 +50,6 @@ class Runner:
         self.optimizer = None
         self.epoch = 1
         self.is_cuda = is_available()
-        
-        self._augmentation = None
-        self._normalize = None
 
         self.optimizer_choice = optimizer
         self.export = _Export(self)
@@ -71,19 +66,7 @@ class Runner:
         self.multigpu = parameter_manager.get_param('multigpu', False)
 
         self.default_callbacks = []
-
-        # Assign monitoring
-        self.monitor_mode = monitor_mode
-        self.monitor_state = monitor_state
-        self.monitor = None
-
-        if monitor_mode == 'min':
-            self.monitor = 1e5
-            self.monitor_mode = min
-        elif monitor_mode == 'max':
-            self.monitor = -1e5
-            self.monitor_mode = max
-
+        
         if self.multigpu:
             self.model = DataParallel(self.model)
 

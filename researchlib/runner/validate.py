@@ -29,7 +29,7 @@ def _clear_source(m):
         pass
         
 @register_method
-def validate(self, monitor = [], prefetch = True, **kwargs):
+def validate(self, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
     
     self.val_model.apply(_clear_source)
@@ -52,7 +52,7 @@ def validate(self, monitor = [], prefetch = True, **kwargs):
     
     self.preload_gpu()
     try:
-        loss_record, metrics_record = self.validate_fn(monitor, **kwargs)
+        loss_record, metrics_record = self.validate_fn(**kwargs)
         print(loss_record)
         for k, v in metrics_record.items():
             print(str(k) + ':', float(v))
@@ -65,7 +65,7 @@ def validate(self, monitor = [], prefetch = True, **kwargs):
 
 
 @register_method
-def validate_fn(self, monitor, **kwargs):
+def validate_fn(self, **kwargs):
     self.val_model.apply(to_eval_mode)
     
     parameter_manager = ParameterManager(**kwargs)
@@ -78,7 +78,7 @@ def validate_fn(self, monitor, **kwargs):
     self.val_model.eval()
 
     loss_record = 0
-    metrics_record = {key: 0 for key in monitor}
+    metrics_record = {key: 0 for key in self.val_model.monitor_nodes}
 
     with torch.no_grad():
         batch_idx = 0
@@ -86,7 +86,7 @@ def validate_fn(self, monitor, **kwargs):
             results = self.val_model({'phase': 1})
             loss = sum([results[i] for i in self.model.optimize_nodes])
 
-            for i in monitor:
+            for i in self.val_model.monitor_nodes:
                 metrics_record[i] += results[i]
 
             visualize = [results[i] for i in self.val_model.visualize_nodes]

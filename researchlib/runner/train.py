@@ -18,7 +18,7 @@ def to_train_mode(m):
 
      
 @register_method
-def train_fn(self, monitor, **kwargs):
+def train_fn(self, **kwargs):
     self.model.apply(to_train_mode)
     self.model.train()
     
@@ -44,7 +44,7 @@ def train_fn(self, monitor, **kwargs):
 
     loss_record = 0
     norm_record = 0
-    metrics_record = {key: 0 for key in monitor}
+    metrics_record = {key: 0 for key in self.model.monitor_nodes}
 
     
     for i in self.optimizer:
@@ -113,14 +113,14 @@ def train_fn(self, monitor, **kwargs):
                     ema_v.mul_(rho)
                     ema_v.add_(1-rho, v)
 
-        for i in monitor:
+        for i in self.model.monitor_nodes:
             metrics_record[i] += results[i]
             
         del results
         
         batch_idx += 1
         if batch_idx % 5 == 0 or batch_idx == self.train_loader_length:
-            liveplot.update_desc(epoch, batch_idx, loss_record, metrics_record, self.monitor)
+            liveplot.update_desc(epoch, batch_idx, loss_record, metrics_record, self.val_model.checkpoint_state)
 
         if batch_idx == self.train_loader_length:
             liveplot.show_grid('train', visualize)
