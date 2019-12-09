@@ -100,7 +100,6 @@ def train_fn(self, monitor, **kwargs):
         del loss
         
         visualize = [results[i] for i in self.model.visualize_nodes]
-        del results
 
         if ema and (batch_idx + 1) % ema_freq == 0:
             for v, ema_v in zip(
@@ -116,6 +115,8 @@ def train_fn(self, monitor, **kwargs):
 
         for i in monitor:
             metrics_record[i] += results[i]
+            
+        del results
         
         batch_idx += 1
         if batch_idx % 5 == 0 or batch_idx == self.train_loader_length:

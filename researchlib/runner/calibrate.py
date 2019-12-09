@@ -60,7 +60,7 @@ def _clear_source(m):
 
 
 @register_method
-def calibrate(self, logits_node, update=[], **kwargs):
+def calibrate(self, update=[], **kwargs):
     parameter_manager = ParameterManager(**kwargs)
     
     self.val_model.apply(_clear_source)
@@ -83,7 +83,7 @@ def calibrate(self, logits_node, update=[], **kwargs):
             
     self.preload_gpu()
     try:
-        self.calibrate_fn(logits_node, update, **kwargs)
+        self.calibrate_fn(update, **kwargs)
     except:
         raise
     finally:
@@ -93,7 +93,7 @@ def calibrate(self, logits_node, update=[], **kwargs):
 
 
 @register_method
-def calibrate_fn(self, logits_node, update, **kwargs):
+def calibrate_fn(self, update, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
     
     temperature = Variable(torch.ones(1), requires_grad=True)
@@ -113,7 +113,8 @@ def calibrate_fn(self, logits_node, update, **kwargs):
     while True:
         results = self.val_model({'phase': 1})
         
-        logits.append(results[logits_node].detach().cpu())
+        # TODO: Several output nodes should calibrate individually
+        logits.append(results[self.val_model.output_nodes[0]].detach().cpu())
         labels.append(results['y'].detach().cpu())
         
         batch_idx += 1
