@@ -40,7 +40,6 @@ class Runner:
         self,
         model,
         optimizer = None,
-        loss_fn = None,
         monitor_mode = 'min',
         monitor_state = 'loss',
         **kwargs
@@ -62,9 +61,6 @@ class Runner:
         self.history = History()
 
         self.model = model
-        
-        # TODO (only for predict)
-        self.output_node = parameter_manager.get_param('output_node', required=True)
             
         self.num_params = num_model_params(model)
 
@@ -75,8 +71,6 @@ class Runner:
         self.multigpu = parameter_manager.get_param('multigpu', False)
 
         self.default_callbacks = []
-
-        self.loss_fn = loss_fn
 
         # Assign monitoring
         self.monitor_mode = monitor_mode

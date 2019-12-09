@@ -37,9 +37,9 @@ def set_optimizer(self):
     }
 
     loss_params = []
-    for i in self.loss_fn:
+    for i in self.model.optimize_nodes:
         try:
-            loss_params += [p for p in i.parameters() if p.requires_grad]
+            loss_params += [p for p in self.model.graph(i)[0].parameters() if p.requires_grad]
         except:
             pass
 

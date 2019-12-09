@@ -84,7 +84,7 @@ def validate_fn(self, monitor, **kwargs):
         batch_idx = 0
         while True:
             results = self.val_model({'phase': 1})
-            loss = results[self.loss_fn]
+            loss = sum([results[i] for i in self.model.optimize_nodes])
 
             for i in monitor:
                 metrics_record[i] += results[i]
