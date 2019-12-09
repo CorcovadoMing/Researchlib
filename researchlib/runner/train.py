@@ -79,7 +79,8 @@ def train_fn(self, **kwargs):
         
         results = self.model({'phase': 0}) # 0: train, 1: val, 2: custom
         
-        loss = sum([results[i] for i in self.model.optimize_nodes])
+        loss = [results[i] for i in self.model.optimize_nodes]
+        loss = sum(loss)
         loss.backward()
         
         self.accum_idx += 1
