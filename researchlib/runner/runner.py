@@ -21,7 +21,10 @@ from . import predict
 from . import set_optimizer
 from . import describe
 from . import calibrate
+from . import attack
 
+
+@_add_methods_from(attack)
 @_add_methods_from(describe)
 @_add_methods_from(set_optimizer)
 @_add_methods_from(gpu_resource_management)
@@ -64,8 +67,6 @@ class Runner:
         self.swa_start = parameter_manager.get_param('swa_start', -1)
         self.larc = parameter_manager.get_param('larc', False)
         self.multigpu = parameter_manager.get_param('multigpu', False)
-
-        self.default_callbacks = []
         
         if self.multigpu:
             self.model = DataParallel(self.model)

@@ -48,7 +48,6 @@ def fit(
     warmup_policy = 'linear',
     flatten = 0,
     flatten_lr = 0,
-    callbacks = [],
     _id = 'none',
     iterations = 0,
     multisteps = [],
