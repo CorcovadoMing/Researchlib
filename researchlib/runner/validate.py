@@ -29,7 +29,7 @@ def _clear_source(m):
         pass
         
 @register_method
-def validate(self, monitor = [], visualize = [], prefetch = True, **kwargs):
+def validate(self, monitor = [], prefetch = True, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
     
     self.val_model.apply(_clear_source)
@@ -52,7 +52,7 @@ def validate(self, monitor = [], visualize = [], prefetch = True, **kwargs):
     
     self.preload_gpu()
     try:
-        loss_record, metrics_record, visualize_record = self.validate_fn(monitor, visualize, **kwargs)
+        loss_record, metrics_record = self.validate_fn(monitor, **kwargs)
         print(loss_record)
         for k, v in metrics_record.items():
             print(str(k) + ':', float(v))
@@ -65,11 +65,12 @@ def validate(self, monitor = [], visualize = [], prefetch = True, **kwargs):
 
 
 @register_method
-def validate_fn(self, monitor, visualize, **kwargs):
+def validate_fn(self, monitor, **kwargs):
     self.val_model.apply(to_eval_mode)
     
     parameter_manager = ParameterManager(**kwargs)
 
+    liveplot = parameter_manager.get_param('liveplot', None)
     support_set = parameter_manager.get_param('support_set')
     way = parameter_manager.get_param('way')
     shot = parameter_manager.get_param('shot')
@@ -78,7 +79,6 @@ def validate_fn(self, monitor, visualize, **kwargs):
 
     loss_record = 0
     metrics_record = {key: 0 for key in monitor}
-    visualize_record = {key: 0 for key in visualize}
 
     with torch.no_grad():
         batch_idx = 0
@@ -89,9 +89,7 @@ def validate_fn(self, monitor, visualize, **kwargs):
             for i in monitor:
                 metrics_record[i] += results[i]
 
-            for i in visualize:
-                visualize_record[i] += results[i]
-                
+            visualize = [results[i] for i in self.val_model.visualize_nodes]
             del results
                 
             loss_record += loss.item()
@@ -99,6 +97,8 @@ def validate_fn(self, monitor, visualize, **kwargs):
             
             batch_idx += 1
             if batch_idx == self.test_loader_length:
+                if liveplot is not None:
+                    liveplot.show_grid('val', visualize)
                 break
 
     loss_record /= batch_idx
@@ -106,4 +106,4 @@ def validate_fn(self, monitor, visualize, **kwargs):
     for i in metrics_record:
         metrics_record[i] /= batch_idx
     
-    return loss_record, metrics_record, visualize_record
+    return loss_record, metrics_record

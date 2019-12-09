@@ -18,7 +18,7 @@ def to_train_mode(m):
 
      
 @register_method
-def train_fn(self, monitor, visualize, **kwargs):
+def train_fn(self, monitor, **kwargs):
     self.model.apply(to_train_mode)
     self.model.train()
     
@@ -45,8 +45,8 @@ def train_fn(self, monitor, visualize, **kwargs):
     loss_record = 0
     norm_record = 0
     metrics_record = {key: 0 for key in monitor}
-    visualize_record = {key: 0 for key in visualize}
 
+    
     for i in self.optimizer:
         i.zero_grad()
     
@@ -98,6 +98,9 @@ def train_fn(self, monitor, visualize, **kwargs):
 
         loss_record += loss.item()
         del loss
+        
+        visualize = [results[i] for i in self.model.visualize_nodes]
+        del results
 
         if ema and (batch_idx + 1) % ema_freq == 0:
             for v, ema_v in zip(
@@ -114,16 +117,12 @@ def train_fn(self, monitor, visualize, **kwargs):
         for i in monitor:
             metrics_record[i] += results[i]
         
-        for i in visualize:
-            visualize_record[i] += results[i]
-        
-        del results
-        
         batch_idx += 1
         if batch_idx % 5 == 0 or batch_idx == self.train_loader_length:
             liveplot.update_desc(epoch, batch_idx, loss_record, metrics_record, self.monitor)
 
         if batch_idx == self.train_loader_length:
+            liveplot.show_grid('train', visualize)
             break
 
         Annealer._iteration_step()
@@ -134,7 +133,7 @@ def train_fn(self, monitor, visualize, **kwargs):
     for i in metrics_record:
         metrics_record[i] /= batch_idx
     
-    return loss_record, norm_record, metrics_record, visualize_record
+    return loss_record, norm_record, metrics_record
 
 
 

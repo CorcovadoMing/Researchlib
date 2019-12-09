@@ -118,8 +118,9 @@ class Liveplot:
         
         
         # Customize
-        self.custom_output = Output()
-        display(self.custom_output)
+        self.custom_train_output = Output()
+        self.custom_val_output = Output()
+        display(HBox([self.custom_train_output, self.custom_val_output]))
         
         # Log
         self.text_log = Output()
@@ -162,13 +163,22 @@ class Liveplot:
         self.history.log(epoch, **{key: value})
         
         
-    def show_grid(self, tensor):
-        with self.custom_output:
+    def show_grid(self, phase, tensor):
+        if phase == 'train':
+            out_stream = self.custom_train_output
+        else:
+            out_stream = self.custom_val_output
+            
+        with out_stream:
             _display.clear_output(wait = True)
-            img = torchvision.utils.make_grid(tensor.detach(), 16, 0)
-            npimg = img.cpu().numpy()
-            plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
-            plt.show()
+            for i in tensor:
+                img = torchvision.utils.make_grid(i[:64].detach(), 8, 0)
+                npimg = img.cpu().numpy()
+                plt.figure(figsize=(5, 5))
+                plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
+                plt.axis('off')
+                plt.tight_layout()
+                plt.show()
 
             
     def plot(self, epoch, history_, epoch_str):

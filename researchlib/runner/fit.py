@@ -56,7 +56,6 @@ def fit(
     init = None,
     same_init = False,
     monitor = [],
-    visualize = [],
     freeze = {},
     **kwargs
 ):
@@ -247,8 +246,7 @@ def fit(
             liveplot.redis.set('stage', 'train')
             liveplot.timer.clear()
             # Training function
-            loss_record, norm_record, metrics_record, visualize_record = self.train_fn(
-                                                                     monitor, visualize,
+            loss_record, norm_record, metrics_record = self.train_fn(monitor,
                                                                      liveplot=liveplot,
                                                                      mmixup_alpha=mmixup_alpha, 
                                                                      fixed_mmixup=fixed_mmixup, 
@@ -268,7 +266,6 @@ def fit(
             liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer[0].param_groups][-1])
             liveplot.record(epoch, 'train_loss', loss_record)
             liveplot.record(epoch, 'norm', norm_record)
-            liveplot.update_custom_output(visualize_record, prefix = 'train')
             self.history.add({'loss': loss_record}, prefix = 'train')
             self.history.add(metrics_record, prefix = 'train')
             try:
@@ -282,13 +279,12 @@ def fit(
             if self.test_loader_length is not None:
                 liveplot.redis.set('stage', 'validate')
                 # Validation function
-                loss_record, metrics_record, visualize_record = self.validate_fn(
-                                                                   monitor, visualize,
-                                                                   support_set=support_set,
-                                                                   way=way,
-                                                                   shot=shot)
+                loss_record, metrics_record = self.validate_fn(monitor,
+                                                               liveplot=liveplot,
+                                                               support_set=support_set,
+                                                               way=way,
+                                                               shot=shot)
                 liveplot.record(epoch, 'val_loss', loss_record)
-                liveplot.update_custom_output(visualize_record, prefix = 'val')
                 self.history.add({'loss': loss_record}, prefix = 'val')
                 self.history.add(metrics_record, prefix = 'val')
                 try:

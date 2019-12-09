@@ -111,14 +111,19 @@ def build_graph(net, sep = '/'):
 class _Graph(nn.Module):
     def __init__(self, *net, in_node='x', out_node=None, _seq_auto_build=False):
         super().__init__()
+        
+        self.visualize_nodes = []
+        
         if len(net) == 1 and type(net[0]) == dict:
             self.graph = build_graph(net[0])
         else:
             self.graph = build_graph(self._expand_net(net))
+        
         self.in_node = in_node
         self.out_node = out_node
         self._seq_auto_build = _seq_auto_build
         self.train_mode = True
+        
         for path, (val, _) in self.graph.items(): 
             setattr(self, path.replace('/', '_'), val)
             
@@ -126,7 +131,13 @@ class _Graph(nn.Module):
     def _expand_net(self, net):
         result = {}
         for i in net:
-            result.update(i)
+            if type(i) == tuple or type(i) == list:
+                node, node_type = i
+                if node_type == '__VISUAL__':
+                    self.visualize_nodes += list(node.keys())
+            else:
+                node = i
+            result.update(node)
         return result
     
     
