@@ -8,10 +8,14 @@ def _process_single(
     normalizer,
     data_key = 0,
     label_key = 1,
+    injector = None,
     transpose = ('NHWC', 'NCHW')
 ):
     x = np.array(dp[data_key]).astype(np.float32).copy()
     y = np.array(dp[label_key])
+    
+    if injector is not None:
+        x = injector(x)
 
     # Deal with y type
     y_type = str(y.dtype)
