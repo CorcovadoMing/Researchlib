@@ -10,6 +10,13 @@ from ..blocks import unit as _unit
 from .stem import push_stem
 from torch import nn
 
+def _do_pool(id, pool_freq):
+    if (isinstance(pool_freq, int) and id % pool_freq == 0) \
+    or (isinstance(pool_freq, list) and id in pool_freq):
+        do_pool = True
+    else:
+        do_pool = False
+    return do_pool
 
 def AutoConvNet(
     _op,
@@ -54,12 +61,28 @@ def AutoConvNet(
     # Body
     for i in range(total_blocks):
         id = i + 1
-        if (isinstance(pool_freq, int) and id % pool_freq == 0) \
-        or (isinstance(pool_freq, list) and id in pool_freq):
+        do_pool = _do_pool(id, pool_freq)
+        if do_pool:
             block_group += 1
-            do_pool = True
+            save_output = False
         else:
-            do_pool = False
+            if _do_pool(id+1, pool_freq):
+                save_output = True
+            else:
+                save_output = False
+        if id == total_blocks:
+            save_output = True
+        
+        if id == 1:
+            normal_pass = True
+        else:
+            if _do_pool(id-1, pool_freq):
+                normal_pass = True
+            else:
+                normal_pass = False
+                
+            
+            
 
         _type = _parse_type(i, type)
         wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
@@ -69,7 +92,7 @@ def AutoConvNet(
             parameter_manager
         )
         _op_type = _get_op_type(type, id, total_blocks, do_pool, in_dim != out_dim)
-        print(id + stem_layers, in_dim, out_dim, do_pool, _op_type)
+        print(id + stem_layers, in_dim, out_dim, do_pool, _op_type, save_output, normal_pass)
 
         if do_pool and auxiliary_classifier is not None:
             parameter_manager.save_buffer('dim_type', _get_dim_type(_op))
@@ -97,6 +120,8 @@ def AutoConvNet(
                 preact = preact,
                 id = id,
                 total_blocks = total_blocks,
+                save_output = save_output,
+                normal_pass = normal_pass,
                 **kwargs
             )
         )
