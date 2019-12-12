@@ -98,7 +98,6 @@ def train_fn(self, **kwargs):
                 i.zero_grad()
 
         loss_record += loss.item()
-        del loss
         
         visualize = [results[i] for i in self.model.visualize_nodes]
 
@@ -116,8 +115,6 @@ def train_fn(self, **kwargs):
 
         for i in self.model.monitor_nodes:
             metrics_record[i] += results[i]
-            
-        del results
         
         batch_idx += 1
         if batch_idx % 5 == 0 or batch_idx == self.train_loader_length:

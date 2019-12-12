@@ -116,7 +116,6 @@ def attack_fn(self, epsilon, **kwargs):
         #print(results['acc'])
         attack_gradient.append(results['x'].grad.data)
         batch_idx += 1
-        del results
         pbar.update(1)
         if batch_idx == self.test_loader_length:
             break
@@ -150,7 +149,6 @@ def attack_fn(self, epsilon, **kwargs):
         count += results['acc']
         #print(results['acc'])
         batch_idx += 1
-        del results
         pbar.update(1)
         if batch_idx == self.test_loader_length:
             break

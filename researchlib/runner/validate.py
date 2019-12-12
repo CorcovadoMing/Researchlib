@@ -90,10 +90,8 @@ def validate_fn(self, **kwargs):
                 metrics_record[i] += results[i]
 
             visualize = [results[i] for i in self.val_model.visualize_nodes]
-            del results
                 
             loss_record += loss.item()
-            del loss
             
             batch_idx += 1
             if batch_idx == self.test_loader_length:
