@@ -27,13 +27,17 @@ def ResNet18(in_node, out_node, head=None, **kwargs):
         Deep Residual Learning for Image Recognition
     '''
     default_kwargs = dict(
+        _op = op.Conv2d,
+        unit = unit.Conv,
+        input_dim = 3,
+        total_blocks = 8,
         stem={'vgg': 1}, 
         type='residual', 
         pool_freq=[3,5,7],
         filters=(64, -1),
     )
     default_kwargs.update(kwargs)
-    model = [AutoConvNet(op.Conv2d, unit.Conv, 3, 8, **default_kwargs)]
+    model = [AutoConvNet(**default_kwargs)]
     if head != None:
         model.append(Heads(head, reduce_type='avg'))
     return Node(out_node, nn.Sequential(*model), in_node)
