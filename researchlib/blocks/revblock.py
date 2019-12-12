@@ -12,7 +12,7 @@ from torch import set_grad_enabled
 
 class AdditiveBlockFunction(torch.autograd.Function):
     @staticmethod
-    def forward(ctx, x, Fm, Gm, save_output, normal_pass, *weights):
+    def forward(ctx, x, Fm, Gm, keep_input, keep_output, *weights):
         '''
             Forward pass for the reversible block computes:
             {x1, x2} = x
@@ -43,8 +43,8 @@ class AdditiveBlockFunction(torch.autograd.Function):
         # store partition size, Fm and Gm functions in context
         ctx.Fm = Fm
         ctx.Gm = Gm
-        ctx.save_output = save_output
-        ctx.normal_pass = normal_pass
+        ctx.keep_input = keep_input
+        ctx.keep_output = keep_output
 
         with torch.no_grad():
             # partition in two equally sized set of channels
@@ -65,7 +65,7 @@ class AdditiveBlockFunction(torch.autograd.Function):
             y2.set_()
             del y2
 
-        if save_output:
+        if keep_output:
             ctx.save_for_backward(output)
 
         return output
@@ -75,16 +75,17 @@ class AdditiveBlockFunction(torch.autograd.Function):
 
         Fm = ctx.Fm
         Gm = ctx.Gm
-        save_output = ctx.save_output
-        normal_pass = ctx.normal_pass
+        keep_input = ctx.keep_input
+        keep_output = ctx.keep_output
 
         with torch.no_grad():
-            if save_output:
+            if keep_output:
                 output, = ctx.saved_tensors
             else:
                 output = ParameterManager.get_buffer('__REVNET_OUTPUT__')
             
             y1, y2 = torch.chunk(output, 2, dim=1)
+            
             # partition output gradient also on channels
             assert(grad_output.shape[1] % 2 == 0)  # nosec
             y1_grad, y2_grad = torch.chunk(grad_output, 2, dim=1)
@@ -127,7 +128,7 @@ class AdditiveBlockFunction(torch.autograd.Function):
             del y1, y2
 
         with torch.no_grad():
-            if not normal_pass:
+            if not keep_input:
                 ParameterManager.save_buffer('__REVNET_OUTPUT__', torch.cat([x1, x2], 1))
                 
         return (grad_input, None, None, None, None) + FWgrads + GWgrads
@@ -138,8 +139,8 @@ class _RevBlock(nn.Module):
     def __init__(self, prefix, _unit, _op, in_dim, out_dim, **kwargs):
         super().__init__()
         parameter_manager = ParameterManager(**kwargs)
-        self.save_output = parameter_manager.get_param('save_output', False)
-        self.normal_pass = parameter_manager.get_param('normal_pass', False)
+        self.keep_input = parameter_manager.get_param('keep_input', False)
+        self.keep_output = parameter_manager.get_param('keep_output', False)
         out_dim = int(out_dim / 2)
         config = get_config(prefix, _unit, _op, out_dim, out_dim, parameter_manager)
         preact_bn_shared = parameter_manager.get_param('preact_bn_shared', False) and config.preact and (config.in_dim != config.out_dim or config.do_pool)
@@ -148,8 +149,10 @@ class _RevBlock(nn.Module):
         self.branch_g_op = _branch_function(config, parameter_manager, **kwargs)
         
     def forward(self, x):
-        args = [x, self.branch_f_op, self.branch_g_op, self.save_output, self.normal_pass] \
+        args = [x, self.branch_f_op, self.branch_g_op, self.keep_input, self.keep_output] \
                 + [w for w in self.branch_f_op.parameters()] \
                 + [w for w in self.branch_g_op.parameters()]
         y = AdditiveBlockFunction.apply(*args)
+        if not self.keep_input:
+            x.storage().resize_(0)
         return y

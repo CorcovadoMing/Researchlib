@@ -64,25 +64,11 @@ def AutoConvNet(
         do_pool = _do_pool(id, pool_freq)
         if do_pool:
             block_group += 1
-            save_output = False
+            keep_output = False
         else:
-            if _do_pool(id+1, pool_freq):
-                save_output = True
-            else:
-                save_output = False
-        if id == total_blocks:
-            save_output = True
-        
-        if id == 1:
-            normal_pass = True
-        else:
-            if _do_pool(id-1, pool_freq):
-                normal_pass = True
-            else:
-                normal_pass = False
-                
+            keep_output = _do_pool(id+1, pool_freq) or id == total_blocks
             
-            
+        keep_input = True if id == 1 else _do_pool(id-1, pool_freq)
 
         _type = _parse_type(i, type)
         wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
@@ -92,7 +78,8 @@ def AutoConvNet(
             parameter_manager
         )
         _op_type = _get_op_type(type, id, total_blocks, do_pool, in_dim != out_dim)
-        print(id + stem_layers, in_dim, out_dim, do_pool, _op_type, save_output, normal_pass)
+        
+        print(id + stem_layers, in_dim, out_dim, do_pool, _op_type, keep_output, keep_input)
 
         if do_pool and auxiliary_classifier is not None:
             parameter_manager.save_buffer('dim_type', _get_dim_type(_op))
@@ -120,8 +107,8 @@ def AutoConvNet(
                 preact = preact,
                 id = id,
                 total_blocks = total_blocks,
-                save_output = save_output,
-                normal_pass = normal_pass,
+                keep_input = keep_input,
+                keep_output = keep_output,
                 **kwargs
             )
         )
