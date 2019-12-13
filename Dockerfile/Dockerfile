@@ -138,8 +138,9 @@ RUN pip install -U numpy
 RUN pip install gast==0.2.2
 RUN pip install numpy==1.16.4
 
-RUN pip install nibabel
+RUN pip install -U nibabel
+RUN pip install git+https://github.com/CorcovadoMing/box-convolutions.git
 
 # Version tag
-ENV _RESEARCHLIB_IMAGE_TAG 19.10.0
+ENV _RESEARCHLIB_IMAGE_TAG 19.11.0
 
