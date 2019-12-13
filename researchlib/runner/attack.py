@@ -97,6 +97,7 @@ def attack_fn(self, epsilon, **kwargs):
     batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
     buffered_epochs = 2
     
+    self.val_model.apply(to_eval_mode)
     self.val_model.eval()
     
     # 1. Get the attack target and store the attack gradient
@@ -112,8 +113,7 @@ def attack_fn(self, epsilon, **kwargs):
         loss = sum(loss)
         self.val_model.zero_grad()
         loss.backward()
-        count += results['acc']
-        #print(results['acc'])
+        count += results['acc'].item()
         attack_gradient.append(results['x'].grad.data)
         batch_idx += 1
         pbar.update(1)
@@ -146,8 +146,7 @@ def attack_fn(self, epsilon, **kwargs):
     count = 0
     while True:
         results = self.val_model({'phase': 1})
-        count += results['acc']
-        #print(results['acc'])
+        count += results['acc'].item()
         batch_idx += 1
         pbar.update(1)
         if batch_idx == self.test_loader_length:
