@@ -12,10 +12,21 @@ import torch
 from .stem import push_stem
 
 
+def _check_dual_path(var):
+    if type(var) == tuple or type(var) == list:
+        var, bottleneck = var
+    else:
+        bottleneck = None
+    return var, bottleneck
+
+        
 class _RecurrentBlock(nn.Module):
-    def __init__(self, begin_block, inner_block, end_block, skip_type = 'add'):
+    def __init__(self, begin_block, inner_block, end_block, skip_type = 'add', return_bottleneck = False):
         super().__init__()
         self.skip_type = skip_type
+        self.return_bottleneck = return_bottleneck
+        self.return_both = True
+        self.is_final = False
         self.begin = begin_block
         self.inner = inner_block
         self.end = end_block
@@ -24,16 +35,27 @@ class _RecurrentBlock(nn.Module):
         self.end_mmixup = op.ManifoldMixup()
 
     def forward(self, x):
+        x, bottleneck = _check_dual_path(x)
+        
         x = self.begin(x)
         x = self.begin_mmixup(x)
         out = self.inner(x)
+
+        out, bottleneck = _check_dual_path(out)
+            
+        bottleneck = out if self.return_bottleneck else bottleneck
+        
         out = self.inner_mmixup(out)
         if self.skip_type == 'add':
             out = out + x
         elif self.skip_type == 'concat':
             out = torch.cat([out, x], dim = 1)
         out = self.end(out)
-        return self.end_mmixup(out)
+        
+        if self.return_both:
+            return self.end_mmixup(out), bottleneck
+        else:
+            return self.end_mmixup(out)
 
 
 def _do_pool(id, pool_freq):
@@ -60,6 +82,7 @@ def AutoEncDec(
     do_norm = True,
     non_local_start = 1e8,
     skip_type = None,
+    return_bottleneck = False,
     **kwargs
 ):
     Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
@@ -144,9 +167,11 @@ def AutoEncDec(
                 do_pool=do_pool, do_norm=do_norm, preact=preact,
                 id=2*total_blocks+1-cache_id, total_blocks=2*total_blocks+1, **kwargs),
 
-            skip_type=skip_type
+            skip_type=skip_type,
+            return_bottleneck=return_bottleneck and id==1
         )
 
+    structure.return_both = return_bottleneck
     layers.append(structure)
 
     # must verify after all keys get registered
