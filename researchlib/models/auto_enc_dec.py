@@ -21,7 +21,7 @@ def _check_dual_path(var):
 
         
 class _RecurrentBlock(nn.Module):
-    def __init__(self, begin_block, inner_block, end_block, skip_type = 'add', return_bottleneck = False):
+    def __init__(self, begin_block, inner_block, end_block, skip_type = None, return_bottleneck = False):
         super().__init__()
         self.skip_type = skip_type
         self.return_bottleneck = return_bottleneck
@@ -116,7 +116,7 @@ def AutoEncDec(
     dim_cache = []
     for i in range(total_blocks):
         id = i + 1
-        do_pool = _do_pool(id, pool_freq)
+        do_pool = _do_pool(id, pool_freq) and id != total_blocks
         if do_pool:
             block_group += 1
 
@@ -147,8 +147,8 @@ def AutoEncDec(
         _op_type_end = _op_type
         # End of TODO
 
-        end_in_dim = 2 * out_dim if skip_type == 'concat' else out_dim
-        print(2 * total_blocks + 1 - cache_id + stem_layers, end_in_dim, in_dim, do_pool)
+        end_in_dim = 2 * out_dim if skip_type == 'concat' and do_pool else out_dim
+        print(2 * total_blocks + 2 - cache_id + stem_layers, end_in_dim, in_dim, do_pool)
         kwargs['non_local'] = id >= non_local_start
         structure = _RecurrentBlock(
             # Begin
@@ -167,7 +167,7 @@ def AutoEncDec(
                 do_pool=do_pool, do_norm=do_norm, preact=preact,
                 id=2*total_blocks+1-cache_id, total_blocks=2*total_blocks+1, **kwargs),
 
-            skip_type=skip_type,
+            skip_type=skip_type if do_pool else None,
             return_bottleneck=return_bottleneck and id==1
         )
 
