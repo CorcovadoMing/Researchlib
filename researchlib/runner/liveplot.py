@@ -179,7 +179,7 @@ class Liveplot:
             _display.clear_output(wait = True)
             for i in tensor:
                 img = torchvision.utils.make_grid(i[:64].detach(), 8, 0)
-                npimg = img.cpu().numpy()
+                npimg = img.cpu().float().numpy()
                 plt.figure(figsize=(5, 5))
                 plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
                 plt.axis('off')
