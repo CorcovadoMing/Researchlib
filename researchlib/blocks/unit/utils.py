@@ -45,11 +45,14 @@ def get_pool_op(pool_type, dim, pool_factor, out_dim):
     mapping = {
         'max': op.__dict__[f'MaxPool{dim}'],
         'avg': op.__dict__[f'AvgPool{dim}'],
-        'combine': op.__dict__[f'CombinePool{dim}']
+        'combine': op.__dict__[f'CombinePool{dim}'],
+        'upsample': op.__dict__[f'Upsample'],
     }
     args = [pool_factor]
     if pool_type == 'combine':
         args.append(out_dim)
+    if pool_type == 'upsample':
+        args = [None] + args
     return _return_op(mapping, pool_type)(*args)
 
 

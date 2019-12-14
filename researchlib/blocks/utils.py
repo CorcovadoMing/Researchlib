@@ -182,7 +182,6 @@ def get_config(prefix, _unit, _op, in_dim, out_dim, parameter_manager):
         do_norm = parameter_manager.get_param('do_norm', True),
         norm_type = parameter_manager.get_param('norm_type', 'batch'),
         do_pool = parameter_manager.get_param('do_pool', False),
-        pool_type = parameter_manager.get_param('pool_type', 'avg'), # Residual famaily default use avg pool
         pool_factor = parameter_manager.get_param('pool_factor', 2),
         blur = parameter_manager.get_param('blur', False) and do_pool,
         stochastic_depth = parameter_manager.get_param('stochastic_depth', False)
@@ -190,10 +189,12 @@ def get_config(prefix, _unit, _op, in_dim, out_dim, parameter_manager):
     stride = _config.pool_factor if _config.do_pool else 1
     kernel_size = 2 if _config.transpose and _config.do_pool else 3
     padding = 0 if _config.transpose and _config.do_pool else int((kernel_size - 1) / 2)
+    pool_type = parameter_manager.get_param('pool_type', 'upsample') if _config.transpose else parameter_manager.get_param('pool_type', 'avg')
     
     setattr(_config, 'stride', stride)
     setattr(_config, 'kernel_size', kernel_size)
     setattr(_config, 'padding', padding)
+    setattr(_config, 'pool_type', pool_type)
             
     return _config
 
