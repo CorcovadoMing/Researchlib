@@ -116,7 +116,7 @@ def AutoEncDec(
     dim_cache = []
     for i in range(total_blocks):
         id = i + 1
-        do_pool = _do_pool(id, pool_freq) and id != total_blocks
+        do_pool = _do_pool(id, pool_freq)
         if do_pool:
             block_group += 1
 
@@ -149,6 +149,8 @@ def AutoEncDec(
 
         end_in_dim = 2 * out_dim if skip_type == 'concat' and do_pool else out_dim
         _skip_type = skip_type if do_pool else None
+        if id == 1:
+            print('Bottleneck', out_dim, out_dim)
         print(2 * total_blocks + 2 - cache_id + stem_layers, end_in_dim, in_dim, do_pool, _skip_type)
         kwargs['non_local'] = id >= non_local_start
         structure = _RecurrentBlock(
