@@ -13,11 +13,8 @@ from .stem import push_stem
 
 
 class _RecurrentBlock(nn.Module):
-    def __init__(
-        self, begin_block, inner_block, end_block, skip_connection = False, skip_type = 'add'
-    ):
+    def __init__(self, begin_block, inner_block, end_block, skip_type = 'add'):
         super().__init__()
-        self.skip_connection = skip_connection
         self.skip_type = skip_type
         self.begin = begin_block
         self.inner = inner_block
@@ -31,11 +28,10 @@ class _RecurrentBlock(nn.Module):
         x = self.begin_mmixup(x)
         out = self.inner(x)
         out = self.inner_mmixup(out)
-        if self.skip_connection:
-            if self.skip_type == 'add':
-                out = out + x
-            elif self.skip_type == 'concat':
-                out = torch.cat([out, x], dim = 1)
+        if self.skip_type == 'add':
+            out = out + x
+        elif self.skip_type == 'concat':
+            out = torch.cat([out, x], dim = 1)
         out = self.end(out)
         return self.end_mmixup(out)
 
@@ -63,8 +59,7 @@ def AutoEncDec(
     pool_freq = 1,
     do_norm = True,
     non_local_start = 1e8,
-    skip_connection = False,
-    skip_type = 'concat',
+    skip_type = None,
     **kwargs
 ):
     Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
@@ -81,8 +76,8 @@ def AutoEncDec(
     in_dim = input_dim
     out_dim = base_dim
 
-    if skip_type not in ['add', 'concat']:
-        raise ValueError("skip_type can only be 'add' or 'concat'")
+    if skip_type not in [None, 'add', 'concat']:
+        raise ValueError('skip_type can only be one of None/add/concat')
 
     # Stem
     if stem is not None:
@@ -129,7 +124,7 @@ def AutoEncDec(
         _op_type_end = _op_type
         # End of TODO
 
-        end_in_dim = 2 * out_dim if skip_type == 'concat' and skip_connection else out_dim
+        end_in_dim = 2 * out_dim if skip_type == 'concat' else out_dim
         print(2 * total_blocks + 1 - cache_id + stem_layers, end_in_dim, in_dim, do_pool)
         kwargs['non_local'] = id >= non_local_start
         structure = _RecurrentBlock(
@@ -149,7 +144,6 @@ def AutoEncDec(
                 do_pool=do_pool, do_norm=do_norm, preact=preact,
                 id=2*total_blocks+1-cache_id, total_blocks=2*total_blocks+1, **kwargs),
 
-            skip_connection=skip_connection,
             skip_type=skip_type
         )
 
