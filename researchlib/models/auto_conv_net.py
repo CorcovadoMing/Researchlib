@@ -10,6 +10,7 @@ from ..blocks import unit as _unit
 from .stem import push_stem
 from torch import nn
 
+
 def _do_pool(id, pool_freq):
     if (isinstance(pool_freq, int) and id % pool_freq == 0) \
     or (isinstance(pool_freq, list) and id in pool_freq):
@@ -17,6 +18,7 @@ def _do_pool(id, pool_freq):
     else:
         do_pool = False
     return do_pool
+
 
 def AutoConvNet(
     _op,
@@ -36,9 +38,7 @@ def AutoConvNet(
     Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
     
     parameter_manager = ParameterManager(**kwargs)
-    
-    auxiliary_classifier = parameter_manager.get_param('auxiliary_classifier', None)
-    
+     
     base_dim, max_dim = filters
     block_group = 0
     layers = []
@@ -80,19 +80,6 @@ def AutoConvNet(
         _op_type = _get_op_type(type, id, total_blocks, do_pool, in_dim != out_dim)
         
         print(id + stem_layers, in_dim, out_dim, do_pool, _op_type, keep_output, keep_input)
-
-        if do_pool and auxiliary_classifier is not None:
-            parameter_manager.save_buffer('dim_type', _get_dim_type(_op))
-            parameter_manager.save_buffer('last_dim', in_dim)
-            layers.append(
-                wrapper.Auxiliary(
-                    Builder([
-                        Heads(auxiliary_classifier),
-                        layer.LogSoftmax(-1)
-                        # TODO (Ming): if not classification? if using softmax not logsoftmax?
-                    ])
-                )
-            )
 
         kwargs['non_local'] = id >= non_local_start
         layers.append(

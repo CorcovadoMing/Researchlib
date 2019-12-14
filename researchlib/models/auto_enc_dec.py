@@ -40,6 +40,15 @@ class _RecurrentBlock(nn.Module):
         return self.end_mmixup(out)
 
 
+def _do_pool(id, pool_freq):
+    if (isinstance(pool_freq, int) and id % pool_freq == 0) \
+    or (isinstance(pool_freq, list) and id in pool_freq):
+        do_pool = True
+    else:
+        do_pool = False
+    return do_pool
+
+
 def AutoEncDec(
     down_op,
     up_op,
@@ -59,9 +68,9 @@ def AutoEncDec(
     **kwargs
 ):
     Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
+    
     parameter_manager = ParameterManager(**kwargs)
-    parameter_manager.allow_param('stem_pool')
-    auxiliary_classifier = parameter_manager.get_param('auxiliary_classifier', None)
+    
     base_dim, max_dim = filters
     block_group = 0
     layers = []
@@ -89,18 +98,18 @@ def AutoEncDec(
     dim_cache = []
     for i in range(total_blocks):
         id = i + 1
-        if (isinstance(pool_freq, int) and id % pool_freq == 0) \
-        or (isinstance(pool_freq, list) and id in pool_freq):
+        do_pool = _do_pool(id, pool_freq)
+        if do_pool:
             block_group += 1
-            do_pool = True
-        else:
-            do_pool = False
 
-        # TODO: wide_scale
-        out_dim = _filter_policy(
+        _type = _parse_type(i, type)
+        wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
+        
+        out_dim = wide_scale * _filter_policy(
             id, type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy,
             parameter_manager
         )
+        
         print(id + stem_layers, in_dim, out_dim, do_pool)
         dim_cache.append((id + stem_layers, in_dim, out_dim, do_pool))
         in_dim = out_dim
@@ -147,6 +156,7 @@ def AutoEncDec(
     layers.append(structure)
 
     # must verify after all keys get registered
+    parameter_manager.allow_param('non_local')
     ParameterManager.verify_kwargs(**kwargs)
     parameter_manager.save_buffer('dim_type', _get_dim_type(down_op))
     parameter_manager.save_buffer('last_dim', in_dim)
