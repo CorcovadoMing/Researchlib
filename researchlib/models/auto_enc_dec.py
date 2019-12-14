@@ -157,7 +157,13 @@ def AutoEncDec(
 
     # must verify after all keys get registered
     parameter_manager.allow_param('non_local')
+    use_subgraph = parameter_manager.get_param('use_subgraph', False)
+    
     ParameterManager.verify_kwargs(**kwargs)
     parameter_manager.save_buffer('dim_type', _get_dim_type(down_op))
     parameter_manager.save_buffer('last_dim', in_dim)
-    return Builder.Seq(layers)
+    
+    if use_subgraph:
+        return Builder.Seq(layers)
+    else:
+        return nn.Sequential(*layers)
