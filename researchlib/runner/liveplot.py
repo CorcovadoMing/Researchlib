@@ -186,10 +186,9 @@ class Liveplot:
                     r = pca.transform(data)
                     plt.figure(figsize=(5, 5))
                     plt.scatter(r[:, 0], r[:, 1])
-                    plt.axis('off')
+                    plt.grid()
                     plt.tight_layout()
                     plt.title(f'Explained Variance Ratio: {sum(pca.explained_variance_ratio_)}')
-                    plt.grid()
                     plt.show()
                 else:
                     img = torchvision.utils.make_grid(i[:64].detach(), 8, 0)
