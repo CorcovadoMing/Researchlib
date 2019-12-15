@@ -99,7 +99,7 @@ def train_fn(self, **kwargs):
 
         loss_record += loss.item()
         
-        visualize = [results[i] for i in self.model.visualize_nodes]
+        visualize = [results[i].detach() for i in self.model.visualize_nodes]
 
         if ema and (batch_idx + 1) % ema_freq == 0:
             for v, ema_v in zip(

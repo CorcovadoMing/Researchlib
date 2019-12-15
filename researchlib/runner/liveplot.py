@@ -12,6 +12,7 @@ from tqdm.auto import tqdm
 import torchvision
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.decomposition import PCA
 
 
 def _get_gpu_monitor(index):
@@ -178,16 +179,29 @@ class Liveplot:
         with out_stream:
             _display.clear_output(wait = True)
             for i in tensor:
-                img = torchvision.utils.make_grid(i[:64].detach(), 8, 0)
-                npimg = img.cpu().float().numpy()
-                # Scale to [0, 1]
-                npimg -= npimg.min()
-                npimg /= npimg.max()
-                plt.figure(figsize=(5, 5))
-                plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
-                plt.axis('off')
-                plt.tight_layout()
-                plt.show()
+                if i.dim() < 3:
+                    pca = PCA(2)
+                    data = i.cpu().float().view(i.size(0), -1).numpy()
+                    pca.fit(data)
+                    r = pca.transform(data)
+                    plt.figure(figsize=(5, 5))
+                    plt.scatter(r[:, 0], r[:, 1])
+                    plt.axis('off')
+                    plt.tight_layout()
+                    plt.title(f'Explained Variance Ratio: {sum(pca.explained_variance_ratio_)}')
+                    plt.grid()
+                    plt.show()
+                else:
+                    img = torchvision.utils.make_grid(i[:64].detach(), 8, 0)
+                    npimg = img.cpu().float().numpy()
+                    # Scale to [0, 1]
+                    npimg -= npimg.min()
+                    npimg /= npimg.max()
+                    plt.figure(figsize=(5, 5))
+                    plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
+                    plt.axis('off')
+                    plt.tight_layout()
+                    plt.show()
 
             
     def plot(self, epoch, history_, epoch_str):
