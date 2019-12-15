@@ -179,13 +179,22 @@ class Liveplot:
         with out_stream:
             _display.clear_output(wait = True)
             for i in tensor:
+                if type(i) == tuple or type(i) == list:
+                    i, aux = i
+                    aux = aux.detach().cpu().numpy()
+                else:
+                    aux = np.zeros(i.size(0))
+                    
                 if i.dim() < 3:
                     pca = PCA(2)
                     data = i.cpu().float().view(i.size(0), -1).numpy()
                     pca.fit(data)
                     r = pca.transform(data)
+                    # Scale to [0, 1]
+                    r -= r.min()
+                    r /= r.max()
                     plt.figure(figsize=(5, 5))
-                    plt.scatter(r[:, 0], r[:, 1])
+                    plt.scatter(r[:, 0], r[:, 1], c = aux)
                     plt.grid()
                     plt.tight_layout()
                     plt.title(f'Explained Variance Ratio: {sum(pca.explained_variance_ratio_)}')

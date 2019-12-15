@@ -89,7 +89,7 @@ def validate_fn(self, **kwargs):
             for i in self.val_model.monitor_nodes:
                 metrics_record[i] += results[i]
 
-            visualize = [results[i].detach() for i in self.val_model.visualize_nodes]
+            visualize = [results[i] for i in self.val_model.visualize_nodes]
                 
             loss_record += loss.item()
             
