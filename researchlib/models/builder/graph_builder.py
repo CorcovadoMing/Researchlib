@@ -173,13 +173,15 @@ class _Graph(nn.Module):
 
             # Multiple Input
             if type(outputs[x]) == tuple:
-                inp += list(outputs[x])
+                cand = list(outputs[x])
             else:
-                inp.append(outputs[x])
+                cand = outputs[x]
 
             # has index 
             if index >= 0:
-                inp = [inp[index]]
+                cand = cand[index]
+            
+            inp.append(cand)
         return inp
     
                 
