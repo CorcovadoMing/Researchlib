@@ -186,13 +186,9 @@ class Liveplot:
                     aux = np.zeros(i.size(0))
                     
                 if i.dim() < 3:
-                    pca = PCA(2)
                     data = i.cpu().float().view(i.size(0), -1).numpy()
-                    pca.fit(data)
-                    r = pca.transform(data)
-                    # Scale to [0, 1]
-                    r -= r.min()
-                    r /= r.max()
+                    pca = PCA(2)
+                    r = pca.fit_transform(data)
                     plt.figure(figsize=(5, 5))
                     plt.scatter(r[:, 0], r[:, 1], c = aux)
                     plt.grid()
