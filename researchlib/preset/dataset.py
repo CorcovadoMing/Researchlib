@@ -23,6 +23,24 @@ def CIFAR10():
     return graph
 
 
+def MNIST():
+    graph = {}
+    
+    _mnist = [
+        Node('source', op.Source(loader.TorchDataset('mnist', True, True), loader.TorchDataset('mnist', False, False))),
+        Node('normalize', op.Normalize('static', (128,), (128,)), 'source'),
+        Node('generator', op.Generator(), 'normalize'),
+        Node('x', op.Name(), 'generator:0'),
+        Node('y', op.Name(), 'generator:1'),
+    ]
+    
+    for i in _mnist:
+        node, node_type = i
+        graph.update(node)
+        
+    return graph
+
 
 class Dataset(object):
     CIFAR10 = CIFAR10
+    MNIST = MNIST
