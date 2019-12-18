@@ -15,8 +15,8 @@ def to_train_mode(m):
         m.set_phase(0)
     except:
         pass
+    
 
-     
 @register_method
 def train_fn(self, **kwargs):
     self.model.apply(to_train_mode)
@@ -125,7 +125,7 @@ def train_fn(self, **kwargs):
             break
 
         Annealer._iteration_step()
-
+    
     loss_record /= batch_idx
     norm_record = (norm_record ** 0.5) / batch_idx
     
