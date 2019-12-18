@@ -196,16 +196,32 @@ class Liveplot:
                     plt.title(f'Explained Variance Ratio: {sum(pca.explained_variance_ratio_)}')
                     plt.show()
                 else:
-                    img = torchvision.utils.make_grid(i[:64].detach(), 8, 0)
-                    npimg = img.cpu().float().numpy()
-                    # Scale to [0, 1]
-                    npimg -= npimg.min()
-                    npimg /= npimg.max()
-                    plt.figure(figsize=(5, 5))
-                    plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
-                    plt.axis('off')
-                    plt.tight_layout()
-                    plt.show()
+                    unique_index = np.unique(aux)
+                    if unique_index.any() != 0:
+                        groups = len(unique_index)
+                        for index in unique_index:
+                            subgroup = i[aux==index].detach()[:8]
+                            img = torchvision.utils.make_grid(subgroup, len(subgroup), 0)
+                            npimg = img.cpu().float().numpy()
+                            # Scale to [0, 1]
+                            npimg -= npimg.min()
+                            npimg /= npimg.max()
+                            plt.figure(figsize=((5*len(subgroup))/6, 5))
+                            plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
+                            plt.axis('off')
+                            plt.tight_layout()
+                            plt.show()
+                    else:
+                        img = torchvision.utils.make_grid(i[:64].detach(), 8, 0)
+                        npimg = img.cpu().float().numpy()
+                        # Scale to [0, 1]
+                        npimg -= npimg.min()
+                        npimg /= npimg.max()
+                        plt.figure(figsize=(5, 5))
+                        plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
+                        plt.axis('off')
+                        plt.tight_layout()
+                        plt.show()
 
             
     def plot(self, epoch, history_, epoch_str):
