@@ -89,11 +89,13 @@ def validate_fn(self, **kwargs):
             for i in self.val_model.monitor_nodes:
                 metrics_record[i] += results[i]
 
-            visualize = [results[i] for i in self.val_model.visualize_nodes]
-                
             loss_record += loss.item()
             
             batch_idx += 1
+            
+            if (self.test_loader_length > 1 and batch_idx == self.test_loader_length - 1) or self.test_loader_length == 1:
+                visualize = [results[i] for i in self.val_model.visualize_nodes]
+            
             if batch_idx == self.test_loader_length:
                 if liveplot is not None:
                     liveplot.show_grid('val', visualize)

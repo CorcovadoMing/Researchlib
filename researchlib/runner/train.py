@@ -99,8 +99,6 @@ def train_fn(self, **kwargs):
 
         loss_record += loss.item()
         
-        visualize = [results[i] for i in self.model.visualize_nodes]
-
         if ema and (batch_idx + 1) % ema_freq == 0:
             for v, ema_v in zip(
                 self.model.state_dict().values(),
@@ -117,6 +115,10 @@ def train_fn(self, **kwargs):
             metrics_record[i] += results[i]
         
         batch_idx += 1
+        
+        if (self.train_loader_length > 1 and batch_idx == self.train_loader_length - 1) or self.train_loader_length == 1:
+            visualize = [results[i] for i in self.model.visualize_nodes]
+        
         if batch_idx % 5 == 0 or batch_idx == self.train_loader_length:
             liveplot.update_desc(epoch, batch_idx, loss_record, metrics_record, self.val_model.checkpoint_state)
 
