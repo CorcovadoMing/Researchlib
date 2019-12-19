@@ -3,7 +3,7 @@ from scipy.optimize import linear_sum_assignment
 import numpy as np
 
 
-class ClusterAcc(namedtuple('ClusterAcc', [])):
+class Acc(namedtuple('Acc', [])):
     def __call__(self, x, y):
         x, y = x.detach().cpu().numpy(), y.detach().cpu().numpy()
         

@@ -16,13 +16,15 @@ from .ece import ECE
 from .l1 import L1
 from .l2 import L2
 from .hitrate import Hitrate
-from .cluster_acc import ClusterAcc
+from .cluster import Cluster
+
 
 class Metrics(object):
+    Cluster = Cluster
+    
     Categorical = Categorical
     MetaCategorical = MetaCategorical
     Acc = Acc
-    ClusterAcc = ClusterAcc
     ECE = ECE
     L1 = L1
     L2 = L2
