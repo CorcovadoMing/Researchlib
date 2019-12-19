@@ -51,7 +51,7 @@ from .rcl import _RConv2d
 from .io import _SetVariable, _UpdateVariable, _GetVariable, _Source, _Normalize, _Augmentation, _Generator, _Preloop
 from .node import _To, _Subgraph, _Detach, _Name, _NoOp
 
-from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation42d, _Anneal
+from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation42d, _Anneal, _Argmax, _Argmin, _Mixture, _RPT
 from .pool import _CombinePool2d
 
 class op(object):
@@ -68,6 +68,10 @@ class op(object):
     Add = _Add
     Rotation42d = _Rotation42d
     Anneal = _Anneal
+    Argmax = _Argmax
+    Argmin = _Argmin
+    Mixture = _Mixture
+    RPT = _RPT
     
     # IO
     SetVariable = _SetVariable
