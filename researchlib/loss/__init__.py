@@ -15,9 +15,15 @@ from .soft_dtw import SoftDTWLoss
 from .distance import L1Loss, L2Loss
 from .sparsemax import SparsemaxLoss
 
+from .cluster import Cluster
+
 
 
 class Loss(object):
+    # Categorical
+    Cluster = Cluster
+    
+    # Ind
     L1 = L1Loss
     L2 = L2Loss
     MAE = L1Loss
