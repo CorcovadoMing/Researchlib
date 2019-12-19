@@ -29,7 +29,7 @@ def MNIST(normalize=True):
     if normalize:
         _normalize = Node('normalize', op.Normalize('static', (33.3285,), (78.5655,)), 'source')
     else:
-        _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source'),
+        _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
     _mnist = [
         Node('source', op.Source(loader.TorchDataset('mnist', True, True), loader.TorchDataset('mnist', False, False))),
         _normalize,
