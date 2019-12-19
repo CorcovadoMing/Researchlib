@@ -146,7 +146,7 @@ class Liveplot:
     def update_desc(self, epoch, batch_idx, loss_record, monitor_record, track_best):
         loss_record /= batch_idx
         metrics_collection = [
-            ''.join([
+            ', '.join([
                 '%s: %.6s' % (key.capitalize(), float(value) / batch_idx)
                 for (key, value) in monitor_record.items()
             ])
