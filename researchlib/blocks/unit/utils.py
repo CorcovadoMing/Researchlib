@@ -64,11 +64,13 @@ def get_conv_hparams(**kwargs):
     dilation = parameter_manager.get_param('dilation', required=True)
     groups = parameter_manager.get_param('groups', required=True)
     bias = parameter_manager.get_param('bias', required=True)
+    padding_mode = parameter_manager.get_param('padding_mode', 'zeros')
     return {
         'kernel_size': kernel_size,
         'stride': stride,
         'padding': padding,
         'dilation': dilation,
         'groups': groups,
-        'bias': bias
+        'bias': bias,
+        'padding_mode': padding_mode
     }
