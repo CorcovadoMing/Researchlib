@@ -7,7 +7,7 @@ from tqdm.auto import tqdm
 import pickle
 
 
-def Parse(name: str, path: str, parse_format: str, label_mapping: str = None, sep: str = None) -> None:
+def Parse(name: str, path: str, parse_format: str, phase: str, label_mapping: str = None, sep: str = None) -> None:
     os.makedirs(name, exist_ok = True)
 
     glob_pattern = os.path.join(
@@ -56,7 +56,7 @@ def Parse(name: str, path: str, parse_format: str, label_mapping: str = None, se
         except:
             label.append(label_raw)
 
-    print(f'Successfully parse {len(data_path)} data with {len(label)} labels')
+    print(f'Successfully parse {len(data_path)} data with {len(np.unique(label))} labels')
 
     print(f'Assign numeric labels ...')
     remap_file = os.path.join(name, 'remap.pickle')
@@ -73,7 +73,7 @@ def Parse(name: str, path: str, parse_format: str, label_mapping: str = None, se
     numeric_label = [remap[i] for i in label]
         
 
-    output_path = os.path.join(name, 'parse_result.csv')
+    output_path = os.path.join(name, f'parse_result_{phase}.csv')
     print(f'Write to {output_path}')
     df = pd.DataFrame(list(zip(data_path, label, numeric_label)))
     df.columns = ['Data Path', 'Labels', 'Remapping Labels']
