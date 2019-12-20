@@ -21,6 +21,10 @@ imagenet
 checkpoint
 __pycached__
 
+*.lmdb
+*.lmdb-lock
+*.pickle
+
 ####################################################################
 # https://github.com/github/gitignore/blob/master/Python.gitignore #
 ####################################################################
