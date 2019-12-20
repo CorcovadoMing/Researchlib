@@ -55,7 +55,8 @@ def ImageWoofFull(normalize=True, resize=None):
                                  loader.LFS.Classification.ImageWoofFull(False, False, resize))),
         _normalize,
         #Node('preloop', op.Preloop(), 'normalize'),
-        Node('generator', op.Generator(), 'normalize'),
+        Node('augmentation', op.Augmentation([Augmentations.Crop(resize, resize, resize//8), Augmentations.HFlip()]), 'normalize'),
+        Node('generator', op.Generator(), 'augmentation'),
         Node('x', op.Name(), 'generator:0'),
         Node('y', op.Name(), 'generator:1'),
     ]
