@@ -11,7 +11,7 @@ from ..search import *
 from ..mlkit import *
 from ..pipeline import *
 from ..viskit import *
-from ..datatool import *
+from ..datakit import *
 from ..wrapper import *
 from ..reproducer import *
 from ..experiments import *
