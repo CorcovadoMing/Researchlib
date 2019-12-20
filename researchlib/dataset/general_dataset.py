@@ -4,26 +4,29 @@ import cv2
 from functools import partial
 
 
-def _resize(dp, size, data_key = 0, label_key = 1):
+def _transform(dp, size, bgr2rgb, data_key = 0, label_key = 1):
     x = np.array(dp[data_key]).astype(np.float32).copy()
     y = np.array(dp[label_key])
-    return cv2.resize(x, (size, size)), y
+    x = cv2.resize(x, (size, size))
+    if bgr2rgb:
+        x = x[:, :, (2,1,0)]
+    return x, y
 
 
 class _GeneralLoader:
-    def __init__(self, ds, name, resize = None):
+    def __init__(self, ds, name, size = None, bgr2rgb = False):
         self.ds = ds
         self.name = name
-        self.resize = resize
+        self.size = size
+        self.bgr2rgb = bgr2rgb
 
     def get_generator(self, batch_size = 512, **kwargs):
         ds = self.ds
         if 'fixed_batch' in kwargs:
             ds = FixedSizeData(ds, batch_size * kwargs['fixed_batch'], keep_state=False)
-            ds = LocallyShuffleData(ds, batch_size * kwargs['fixed_batch'])
-        if self.resize is not None:
-            resize_fn = partial(_resize, size = self.resize)
-            ds = MapData(ds, resize_fn)
+            ds = LocallyShuffleData(ds, batch_size * kwargs['fixed_batch'])    
+        _transform_fn = partial(_transform, size = self.size, bgr2rgb = self.bgr2rgb)
+        ds = MultiThreadMapData(ds, 8, _transform_fn, strict=True)
         ds = BatchData(ds, batch_size, remainder = True)
         return ds
 

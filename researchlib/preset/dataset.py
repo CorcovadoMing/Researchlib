@@ -44,6 +44,30 @@ def MNIST(normalize=True):
     return graph
 
 
+def ImageWoofFull(normalize=True, resize=None):
+    graph = {}
+    if normalize:
+        _normalize = Node('normalize', op.Normalize('static', (128, 128, 128), (128, 128, 128)), 'source')
+    else:
+        _normalize = Node('normalize', op.Normalize('static', (128, 128, 128), (128, 128, 128)), 'source')
+    _mnist = [
+        Node('source', op.Source(loader.LFS.Classification.ImageWoofFull(True, True, resize), 
+                                 loader.LFS.Classification.ImageWoofFull(False, False, resize))),
+        _normalize,
+        #Node('preloop', op.Preloop(), 'normalize'),
+        Node('generator', op.Generator(), 'normalize'),
+        Node('x', op.Name(), 'generator:0'),
+        Node('y', op.Name(), 'generator:1'),
+    ]
+    for i in _mnist:
+        node, node_type = i
+        graph.update(node)
+    return graph
+
+
+
+
 class Dataset(object):
     CIFAR10 = CIFAR10
     MNIST = MNIST
+    ImageWoofFull = ImageWoofFull

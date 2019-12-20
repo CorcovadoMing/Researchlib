@@ -11,5 +11,5 @@ def ImageNetteFull(is_train, shuffle = True, resize = None):
     file = 'train.lmdb' if is_train else 'val.lmdb'
     file_path = os.path.join(this_dir, 'fullsize', file)
     df = LMDBSerializer.load(file_path, shuffle = shuffle)
-    return _GeneralLoader(df, 'imagenette_fullsize', resize)
+    return _GeneralLoader(df, 'imagenette_fullsize', resize, True)
     
