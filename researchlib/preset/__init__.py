@@ -1,11 +1,11 @@
-from .imagenet import ImageNet
+from .pretrained import Pretrained
 from .scratch import Scratch
 from .dataset import Dataset
 from .config import Config
 
 
 class Preset(object):
-    ImageNet = ImageNet
+    Pretrained = Pretrained
     Scratch = Scratch
     Config = Config
     Dataset = Dataset
