@@ -2,6 +2,8 @@ import torch
 import numpy as np
 from functools import singledispatch
 from collections import namedtuple
+import torch.nn.functional as F
+
 
 
 @singledispatch
@@ -34,3 +36,21 @@ class Crop(namedtuple('Crop', ('h', 'w', 'pad'))):
             'x0': x0,
             'y0': y0
         } for b in [True, False] for x0 in range(W + 1 - self.w) for y0 in range(H + 1 - self.h)]
+
+    
+class CircularCrop(namedtuple('CircularCrop', ('h', 'w', 'pad'))):
+    def __call__(self, x, choice, x0, y0):
+        if choice:
+            x_pad = torch.Tensor(x).unsqueeze(0)
+            x_pad = F.pad(x_pad, (self.pad, self.pad, self.pad, self.pad), mode='circular').numpy()[0]
+            x = x_pad[..., y0:y0 + self.h, x0:x0 + self.w]
+        return x
+
+    def options(self):
+        W, H = self.w + self.pad, self.h + self.pad
+        return [{
+            'choice': b,
+            'x0': x0,
+            'y0': y0
+        } for b in [True, False] for x0 in range(W + 1 - self.w) for y0 in range(H + 1 - self.h)]
+
