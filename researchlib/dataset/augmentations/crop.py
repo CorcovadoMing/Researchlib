@@ -30,7 +30,7 @@ class Crop(namedtuple('Crop', ('h', 'w', 'pad'))):
         return x
 
     def options(self):
-        W, H = self.w + self.pad, self.h + self.pad
+        W, H = self.w + (2 * self.pad), self.h + (2 * self.pad)
         return [{
             'choice': b,
             'x0': x0,
@@ -47,7 +47,7 @@ class CircularCrop(namedtuple('CircularCrop', ('h', 'w', 'pad'))):
         return x
 
     def options(self):
-        W, H = self.w + self.pad, self.h + self.pad
+        W, H = self.w + (2 * self.pad), self.h + (2 * self.pad)
         return [{
             'choice': b,
             'x0': x0,
