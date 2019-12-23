@@ -1,0 +1,2 @@
+class Medical(object):
+    pass

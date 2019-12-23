@@ -7,7 +7,8 @@ from functools import partial
 def _transform(dp, size, bgr2rgb, data_key = 0, label_key = 1):
     x = np.array(dp[data_key]).astype(np.float32).copy()
     y = np.array(dp[label_key])
-    x = cv2.resize(x, (size, size))
+    if size is not None:
+        x = cv2.resize(x, (size, size))
     if bgr2rgb:
         x = x[:, :, (2,1,0)]
     return x, y
