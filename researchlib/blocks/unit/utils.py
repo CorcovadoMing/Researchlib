@@ -47,9 +47,10 @@ def get_pool_op(pool_type, dim, pool_factor, out_dim):
         'avg': op.__dict__[f'AvgPool{dim}'],
         'combine': op.__dict__[f'CombinePool{dim}'],
         'upsample': op.__dict__[f'Upsample'],
+        'pixelshuffle': op.__dict__[f'PixelShuffle{dim}'],
     }
     args = [pool_factor]
-    if pool_type == 'combine':
+    if pool_type == 'combine' or pool_type == 'pixelshuffle':
         args.append(out_dim)
     if pool_type == 'upsample':
         args = [None] + args

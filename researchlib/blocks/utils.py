@@ -189,7 +189,7 @@ def get_config(prefix, _unit, _op, in_dim, out_dim, parameter_manager):
     stride = _config.pool_factor if _config.do_pool else 1
     kernel_size = 2 if _config.transpose and _config.do_pool else 3
     padding = 0 if _config.transpose and _config.do_pool else int((kernel_size - 1) / 2)
-    pool_type = parameter_manager.get_param('pool_type', 'upsample') if _config.transpose else parameter_manager.get_param('pool_type', 'avg')
+    pool_type = parameter_manager.get_param('unpool_type', 'upsample') if _config.transpose else parameter_manager.get_param('pool_type', 'avg')
     
     setattr(_config, 'stride', stride)
     setattr(_config, 'kernel_size', kernel_size)

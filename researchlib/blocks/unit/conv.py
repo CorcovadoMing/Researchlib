@@ -18,8 +18,7 @@ def _Conv(prefix, _op, in_dim, out_dim, **kwargs):
     preact = parameter_manager.get_param('preact', False)
     prepool = parameter_manager.get_param('prepool', False)
     
-    pool_type = parameter_manager.get_param('pool_type', 'upsample') if transpose \
-           else parameter_manager.get_param('pool_type', 'max')
+    pool_type = parameter_manager.get_param('unpool_type', 'upsample') if transpose else parameter_manager.get_param('pool_type', 'max')
     pool_factor = parameter_manager.get_param('pool_factor', 2)
         
     act_type = parameter_manager.get_param('act_type', 'relu')
