@@ -9,6 +9,8 @@ def _transform(dp, size, bgr2rgb, data_key = 0, label_key = 1):
     y = np.array(dp[label_key])
     if size is not None:
         x = cv2.resize(x, (size, size))
+    if x.ndim == 2:
+        x = x[..., None]
     if bgr2rgb:
         x = x[:, :, (2,1,0)]
     return x, y

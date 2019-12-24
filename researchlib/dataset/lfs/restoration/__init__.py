@@ -1,2 +1,5 @@
+from .dice import DiceMix
+
+
 class Restoration(object):
-    pass
+    DiceMix = DiceMix
