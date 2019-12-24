@@ -24,6 +24,8 @@ class _RecurrentBlock(nn.Module):
     def __init__(self, begin_block, inner_block, end_block, skip_type = None, return_bottleneck = False):
         super().__init__()
         self.skip_type = skip_type
+        if skip_type == 'add_adaptive':
+            self.adaptive = nn.Parameter(torch.zeros(1))
         self.return_bottleneck = return_bottleneck
         self.return_both = True
         self.is_final = False
@@ -48,6 +50,8 @@ class _RecurrentBlock(nn.Module):
         out = self.inner_mmixup(out)
         if self.skip_type == 'add':
             out = out + x
+        if self.skip_type == 'add_adaptive':
+            out = out - torch.sigmoid(self.adaptive) * x
         elif self.skip_type == 'concat':
             out = torch.cat([out, x], dim = 1)
         out = self.end(out)
@@ -73,7 +77,8 @@ def AutoEncDec(
     unit,
     input_dim,
     total_blocks,
-    type = 'residual',
+    down_type = 'residual',
+    up_type = 'vgg',
     filters = (128, 1024),
     filter_policy = 'default',
     stem = {'vgg': 1},
@@ -85,7 +90,7 @@ def AutoEncDec(
     return_bottleneck = False,
     **kwargs
 ):
-    Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
+    Runner.__model_settings__[f'{up_type}-blocks{total_blocks}_input{input_dim}'] = locals()
     
     parameter_manager = ParameterManager(**kwargs)
     
@@ -99,7 +104,7 @@ def AutoEncDec(
     in_dim = input_dim
     out_dim = base_dim
 
-    if skip_type not in [None, 'add', 'concat']:
+    if skip_type not in [None, 'add', 'add_adaptive', 'concat']:
         raise ValueError('skip_type can only be one of None/add/concat')
 
     # Stem
@@ -120,11 +125,11 @@ def AutoEncDec(
         if do_pool:
             block_group += 1
 
-        _type = _parse_type(i, type)
+        _type = _parse_type(i, down_type)
         wide_scale = parameter_manager.get_param('wide_scale', 10) if _type == 'wide-residual' else 1
         
         out_dim = wide_scale * _filter_policy(
-            id, type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy,
+            id, down_type, base_dim, max_dim, block_group, in_dim, total_blocks, filter_policy,
             parameter_manager
         )
         
@@ -139,12 +144,12 @@ def AutoEncDec(
 
         # TODO (Ming): Add an option to use different type of blocks in the autoencoder-like architecture
         # Modification targets: _op_type for begin, inner and end
-        _type = _parse_type(i, type)
         
-        _op_type = _get_op_type(type, id, total_blocks, do_pool, in_dim == out_dim)
-        _op_type_begin = _op_type
-        _op_type_inner = _op_type
-        _op_type_end = _op_type
+        _up_op_type = _get_op_type(up_type, id, total_blocks, do_pool, in_dim == out_dim)
+        _down_op_type = _get_op_type(down_type, id, total_blocks, do_pool, in_dim == out_dim)
+        _op_type_begin = _down_op_type
+        _op_type_inner = _down_op_type
+        _op_type_end = _up_op_type
         # End of TODO
 
         end_in_dim = 2 * out_dim if skip_type == 'concat' and do_pool else out_dim
