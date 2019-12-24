@@ -52,13 +52,14 @@ from .io import _SetVariable, _UpdateVariable, _GetVariable, _Source, _Normalize
 from .node import _To, _Subgraph, _Detach, _Name, _NoOp
 
 from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation42d, _Anneal, _Argmax, _Argmin, _Mixture, _RPT
-from .pool import _CombinePool2d
+from .pool import _CombinePool2d, _PixelShuffle2d
 
 class op(object):
     BoxConv2d = _BoxConv2d
     
     # Pool
     CombinePool2d = _CombinePool2d
+    PixelShuffle2d = _PixelShuffle2d
     
     # Non-Params
     Flip = _Flip
