@@ -28,7 +28,7 @@ def _branch_function(config, parameter_manager, **kwargs):
 
     conv_op = [
         config._unit(f'{config.prefix}_m1', config._op, config.in_dim, config.out_dim, **first_conv_kwargs),
-        op.Downsample(channels = config.out_dim, filt_size = 3, stride = stride) if config.blur else None,
+        op.Downsample(channels = config.out_dim, filt_size = 3, stride = config.stride) if config.blur else None,
         config._unit(f'{config.prefix}_m2', config._op, config.out_dim, config.out_dim, **second_conv_kwargs), 
         preact_final_norm_op
     ]
