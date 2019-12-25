@@ -1,2 +1,5 @@
+from .breast_cancer import BreastCancer
+
+
 class Medical(object):
-    pass
+    BreastCancer = BreastCancer
