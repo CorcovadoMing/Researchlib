@@ -24,8 +24,6 @@ class _RecurrentBlock(nn.Module):
     def __init__(self, begin_block, inner_block, end_block, skip_type = None, return_bottleneck = False):
         super().__init__()
         self.skip_type = skip_type
-        if skip_type == 'add_adaptive':
-            self.adaptive = nn.Parameter(torch.zeros(1))
         self.return_bottleneck = return_bottleneck
         self.return_both = True
         self.is_final = False
@@ -50,8 +48,6 @@ class _RecurrentBlock(nn.Module):
         out = self.inner_mmixup(out)
         if self.skip_type == 'add':
             out = out + x
-        if self.skip_type == 'add_adaptive':
-            out = out - torch.sigmoid(self.adaptive) * x
         elif self.skip_type == 'concat':
             out = torch.cat([out, x], dim = 1)
         out = self.end(out)
@@ -104,7 +100,7 @@ def AutoEncDec(
     in_dim = input_dim
     out_dim = base_dim
 
-    if skip_type not in [None, 'add', 'add_adaptive', 'concat']:
+    if skip_type not in [None, 'add', 'concat']:
         raise ValueError('skip_type can only be one of None/add/concat')
 
     # Stem
@@ -176,7 +172,7 @@ def AutoEncDec(
                 id=2*total_blocks+1-cache_id, total_blocks=2*total_blocks+1, **kwargs),
 
             skip_type=_skip_type,
-            return_bottleneck=return_bottleneck and id==1
+            return_bottleneck=return_bottleneck and id==1,
         )
 
     structure.return_both = return_bottleneck

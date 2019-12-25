@@ -115,15 +115,61 @@ def ImageNetteFull(normalize=True, resize=128):
     return graph
 
 
-def Dice(normalize=True, resize=128):
+def Dice(name, normalize=True, resize=128):
     graph = {}
     if normalize:
         _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
     else:
         _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
     _source = [
-        Node('source', op.Source(loader.LFS.Restoration.DiceMix(False, resize), 
-                                 loader.LFS.Restoration.DiceMix(False, resize))),
+        Node('source', op.Source(loader.LFS.Restoration.Dice(name, True, resize), 
+                                 loader.LFS.Restoration.Dice(name, False, resize))),
+        _normalize,
+        #Node('preloop', op.Preloop(), 'normalize'),
+        #Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//8),
+        #                                      Augmentations.HFlip()]), 'normalize'),
+        Node('generator', op.Generator(), 'normalize'),
+        Node('x', op.Name(), 'generator:0'),
+        Node('y', op.Name(), 'generator:1'),
+    ]
+    for i in _source:
+        node, node_type = i
+        graph.update(node)
+    return graph
+
+
+def Noise2d(name, normalize=True, resize=128):
+    graph = {}
+    if normalize:
+        _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
+    else:
+        _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
+    _source = [
+        Node('source', op.Source(loader.LFS.Restoration.Noise2d(name, True, True, resize), 
+                                 loader.LFS.Restoration.Noise2d(name, True, False, resize))),
+        _normalize,
+        #Node('preloop', op.Preloop(), 'normalize'),
+        #Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//8),
+        #                                      Augmentations.HFlip()]), 'normalize'),
+        Node('generator', op.Generator(), 'normalize'),
+        Node('x', op.Name(), 'generator:0'),
+        Node('y', op.Name(), 'generator:1'),
+    ]
+    for i in _source:
+        node, node_type = i
+        graph.update(node)
+    return graph
+
+
+def BreastCancer(normalize=True, resize=128):
+    graph = {}
+    if normalize:
+        _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
+    else:
+        _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
+    _source = [
+        Node('source', op.Source(loader.LFS.Medical.BreastCancer(True, resize), 
+                                 loader.LFS.Medical.BreastCancer(True, resize))),
         _normalize,
         #Node('preloop', op.Preloop(), 'normalize'),
         #Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//8),
@@ -145,3 +191,6 @@ class Dataset(object):
     ImageNetteFull = ImageNetteFull
     
     Dice = Dice
+    Noise2d = Noise2d
+    
+    BreastCancer = BreastCancer
