@@ -184,6 +184,29 @@ def BreastCancer(normalize=True, resize=128):
     return graph
 
 
+def RENOIR(normalize=True, resize=128):
+    graph = {}
+    if normalize:
+        _normalize = Node('normalize', op.Normalize('static', (128,128,128), (128,128,128)), 'source')
+    else:
+        _normalize = Node('normalize', op.Normalize('static', (128,128,128), (128,128,128)), 'source')
+    _source = [
+        Node('source', op.Source(loader.LFS.Restoration.RENOIR(True, resize), 
+                                 loader.LFS.Restoration.RENOIR(True, resize))),
+        _normalize,
+        #Node('preloop', op.Preloop(), 'normalize'),
+        #Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//8),
+        #                                      Augmentations.HFlip()]), 'normalize'),
+        Node('generator', op.Generator(), 'normalize'),
+        Node('x', op.Name(), 'generator:0'),
+        Node('y', op.Name(), 'generator:1'),
+    ]
+    for i in _source:
+        node, node_type = i
+        graph.update(node)
+    return graph
+
+
 class Dataset(object):
     CIFAR10 = CIFAR10
     MNIST = MNIST
@@ -194,3 +217,4 @@ class Dataset(object):
     Noise2d = Noise2d
     
     BreastCancer = BreastCancer
+    RENOIR = RENOIR
