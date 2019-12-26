@@ -8,6 +8,8 @@ def _transform(dp, size, bgr2rgb, data_key = 0, label_key = 1):
     x = np.array(dp[data_key]).astype(np.float32).copy()
     y = np.array(dp[label_key])
     if size is not None:
+        if y.shape == x.shape:
+            y = cv2.resize(y, (size, size))
         x = cv2.resize(x, (size, size))
     if x.ndim == 2:
         x = x[..., None]
