@@ -13,7 +13,7 @@ class AdaptiveRobustLoss(nn.Module):
 
     def forward(self, x, y):
         logits = x.float() - y.float()
-        logits = logits.view(logits.size(0), -1)
+        logits = logits.view(-1, self.num_dims)
         return self.adaptive_loss.lossfun(logits).mean()
 
     def alpha(self):
