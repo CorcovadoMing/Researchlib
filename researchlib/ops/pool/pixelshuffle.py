@@ -5,11 +5,11 @@ import torch
 class _PixelShuffle2d(nn.Module):
     def __init__(self, scale_factor, out_dim):
         super().__init__()
-        self.conv = nn.ConvTranspose2d(out_dim, out_dim, 4, 2, 1)
+        self.conv = nn.ConvTranspose2d(out_dim, out_dim, 4, scale_factor, 1, bias=False)
         self.ups = nn.Upsample(None, scale_factor)
         self.ps = nn.PixelShuffle(scale_factor)
         hidden_channels = int(out_dim/(scale_factor**2))
-        self.reduce = nn.Conv2d(hidden_channels+2*out_dim, out_dim, 1)
+        self.reduce = nn.Conv2d(hidden_channels+2*out_dim, out_dim, 1, bias=False)
         
     
     def forward(self, x):
