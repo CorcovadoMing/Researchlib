@@ -45,7 +45,7 @@ class _Normalize(nn.Module):
                 normalizer = self.normalizer,
                 injector = self.injector
             )
-            self.train_ds = MultiProcessMapDataZMQ(ds, 4, process_single_fn, buffer_size = 20)
+            self.train_ds = MapData(ds, process_single_fn)
         
         if self.val_ds is None and self.phase == 1:
             process_single_fn = partial(

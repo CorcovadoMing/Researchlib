@@ -38,7 +38,7 @@ class _Augmentation(nn.Module):
                 include_y = self.include_y,
                 augmentor = self.augmentor
             )
-            self.train_ds = MultiProcessMapDataZMQ(ds, 4, process_augment_fn, buffer_size = 20)
+            self.train_ds = MapData(ds, process_augment_fn)
         
         if self.val_ds is None and self.phase == 1:
             self.val_ds = ds

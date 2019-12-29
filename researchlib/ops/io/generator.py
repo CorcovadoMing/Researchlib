@@ -3,6 +3,7 @@ from ...utils import inifinity_loop
 from tensorpack.dataflow import *
 from torch import nn
 
+
 class _Generator(nn.Module):
     def __init__(self):
         super().__init__()
