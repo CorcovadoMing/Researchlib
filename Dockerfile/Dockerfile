@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/pytorch:19.10-py3
+FROM nvcr.io/nvidia/pytorch:19.12-py3
 
 ARG ONNXRUNTIME_REPO=https://github.com/Microsoft/onnxruntime
 ARG ONNXRUNTIME_SERVER_BRANCH=master
@@ -36,8 +36,9 @@ RUN pip install cupy
 RUN pip install git+https://github.com/CorcovadoMing/pynvrtc.git
 
 # RAPIDS
+RUN conda update numba -y
 RUN conda install -c rapidsai -c nvidia -c conda-forge \
-    -c defaults rapids=0.10 python=3.6 cudatoolkit=10.1
+    -c defaults rapids=0.11 python=3.6 cudatoolkit=10.1
 
 # Jupyter
 RUN pip install jupyterlab
@@ -50,19 +51,8 @@ RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
 # OpenAI gym
 RUN apt update && apt install -y python3-dev zlib1g-dev libjpeg-dev cmake swig python-pyglet python3-opengl libboost-all-dev libsdl2-dev libosmesa6-dev patchelf ffmpeg xvfb
 RUN pip install lockfile glfw
-RUN mkdir /root/.mujoco && \
-    cd /root/.mujoco  && \
-    wget https://www.roboti.us/download/mjpro150_linux.zip  && \
-    unzip mjpro150_linux.zip && \
-    wget https://www.roboti.us/download/mujoco200_linux.zip && \
-    unzip mujoco200_linux.zip && \
-    mv mujoco200_linux mujoco200
-ARG MUJOCO_KEY
-ENV MUJOCO_KEY=$MUJOCO_KEY
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/.mujoco/mjpro150/bin
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/.mujoco/mujoco200/bin
-RUN echo $MUJOCO_KEY | base64 --decode > /root/.mujoco/mjkey.txt
-RUN pip install 'gym[all]'
+RUN git clone https://github.com/openai/gym.git && cd gym && pip install -e .
+RUN git clone https://github.com/benelot/pybullet-gym.git && cd pybullet-gym && pip install -e .
 COPY run.sh /
 
 # Visualization
@@ -139,8 +129,11 @@ RUN pip install gast==0.2.2
 RUN pip install numpy==1.16.4
 
 RUN pip install -U nibabel
-RUN pip install git+https://github.com/CorcovadoMing/box-convolutions.git
+RUN pip install altair vega_datasets 
+RUN pip install torchlars
+RUN pip install kymatio scikit-cuda cupy
+
 
 # Version tag
-ENV _RESEARCHLIB_IMAGE_TAG 19.11.0
+ENV _RESEARCHLIB_IMAGE_TAG 19.12.0
 
