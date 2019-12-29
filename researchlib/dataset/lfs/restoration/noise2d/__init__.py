@@ -12,5 +12,4 @@ def Noise2d(name, is_train, shuffle = True, resize = None):
         raise ValueError(f'{name} is not in {total}')
     phase = 'train' if is_train else 'test'
     x = np.load(os.path.join(this_dir, f'{name}_{phase}.npy'), allow_pickle=True)
-    y = np.zeros((len(x),))
-    return _NumpyDataset(x, y, shuffle = shuffle, name = '', size = resize)
+    return _NumpyDataset(x, x.copy(), shuffle = shuffle, name = '', size = resize)

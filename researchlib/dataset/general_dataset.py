@@ -7,12 +7,22 @@ from functools import partial
 def _transform(dp, size, bgr2rgb, data_key = 0, label_key = 1):
     x = np.array(dp[data_key]).astype(np.float32).copy()
     y = np.array(dp[label_key])
+    
+    if y.shape[:-1] == x.shape[:-1]:
+        do_y = True
+    else:
+        do_y = False
+        
     if size is not None:
-        if y.shape == x.shape:
-            y = cv2.resize(y, (size, size))
         x = cv2.resize(x, (size, size))
+        if do_y:
+            y = cv2.resize(y, (size, size))
+            
     if x.ndim == 2:
         x = x[..., None]
+        if y.ndim == 2 and do_y:
+            y = y[..., None]
+        
     if bgr2rgb:
         x = x[:, :, (2,1,0)]
     return x, y
