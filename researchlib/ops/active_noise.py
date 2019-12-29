@@ -1,14 +1,19 @@
 from torch import nn
 import torch
-import torch.nn.functional as F
+
 
 class _ActiveNoise(nn.Module):
-    def __init__(self):
+    def __init__(self, noise_type):
         super().__init__()
+        self.noise_type = noise_type
         
     def forward(self, x):
         if self.training:
-            add_noise = torch.empty_like(x).to(x.device).normal_(0, 2*float(x.std()))
-            add_noise -= add_noise.mean(axis=list(range(2, add_noise.ndim)), keepdim=True).expand_as(add_noise) # mean calibration
-            x = x + add_noise
+            std = float(x.std())
+            if 'mul' in self.noise_type:
+                mul_noise = torch.empty_like(x).to(x.device).normal_(0, 0.01)
+                x = x + x * mul_noise
+            if 'add' in self.noise_type:
+                add_noise = torch.empty_like(x).to(x.device).normal_(0, 2 * std)
+                x = x + add_noise
         return x
