@@ -52,7 +52,10 @@ def set_optimizer(self):
 
     opt_fn = opt_mapping[self.optimizer_choice]
 
-    self.optimizer = [opt_fn(model_weight_params + loss_params), opt_fn(model_bias_params)]
+    if num_list_params(model_bias_params) == 0:
+        self.optimizer = [opt_fn(model_weight_params + loss_params)]
+    else:
+        self.optimizer = [opt_fn(model_weight_params + loss_params), opt_fn(model_bias_params)]
 
     for i in range(len(self.optimizer)):
         if self.lookahead:
