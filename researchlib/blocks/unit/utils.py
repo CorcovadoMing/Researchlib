@@ -36,7 +36,8 @@ def get_act_op(act_type):
     mapping = {
         'relu': partial(op.ReLU, inplace=True),
         'celu': partial(op.CELU, alpha=0.3, inplace=True),
-        'elu': partial(op.ELU, inplace=True)
+        'elu': partial(op.ELU, inplace=True),
+        'leaky_relu': partial(op.LeakyReLU, negative_slope=0.2, inplace=True),
     }
     return _return_op(mapping, act_type)()
 
