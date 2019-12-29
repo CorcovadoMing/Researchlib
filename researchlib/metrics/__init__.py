@@ -17,6 +17,7 @@ from .l1 import L1
 from .l2 import L2
 from .hitrate import Hitrate
 from .cluster import Cluster
+from .psnr import PSNR
 
 
 class Metrics(object):
@@ -29,3 +30,4 @@ class Metrics(object):
     L1 = L1
     L2 = L2
     Hitrate = Hitrate
+    PSNR = PSNR
