@@ -204,8 +204,10 @@ class Liveplot:
                             img = torchvision.utils.make_grid(subgroup, len(subgroup), 0)
                             npimg = img.cpu().float().numpy()
                             # Scale to [0, 1]
-                            npimg -= npimg.min()
-                            npimg /= npimg.max()
+#                             npimg -= npimg.min()
+#                             npimg /= npimg.max()
+                            npimg += 1
+                            npimg /= 2
                             plt.figure(figsize=((5*len(subgroup))/6, 5))
                             plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
                             plt.axis('off')
@@ -215,8 +217,10 @@ class Liveplot:
                         img = torchvision.utils.make_grid(i[:64].detach(), 8, 0)
                         npimg = img.cpu().float().numpy()
                         # Scale to [0, 1]
-                        npimg -= npimg.min()
-                        npimg /= npimg.max()
+#                         npimg -= npimg.min()
+#                         npimg /= npimg.max()
+                        npimg += 1
+                        npimg /= 2
                         plt.figure(figsize=(5, 5))
                         plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
                         plt.axis('off')
