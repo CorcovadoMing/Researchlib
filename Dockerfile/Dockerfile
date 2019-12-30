@@ -133,6 +133,8 @@ RUN pip install altair vega_datasets
 RUN pip install torchlars
 RUN pip install kymatio scikit-cuda cupy
 
+# Unstagged 20.01
+RUN git clone --recursive https://github.com/oval-group/dfw && cd dfw && pip install -r requirements.txt && python setup.py install
 
 # Version tag
 ENV _RESEARCHLIB_IMAGE_TAG 19.12.0
