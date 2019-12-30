@@ -14,6 +14,6 @@ class _ActiveNoise(nn.Module):
                 mul_noise = torch.empty_like(x).to(x.device).normal_(0, 0.01)
                 x = x + x * mul_noise
             if 'add' in self.noise_type:
-                add_noise = torch.empty_like(x).to(x.device).normal_(0, 2 * std)
+                add_noise = torch.empty_like(x).to(x.device).normal_(0, 3 * std)
                 x = x + add_noise
         return x
