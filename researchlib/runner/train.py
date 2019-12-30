@@ -2,6 +2,7 @@ import torch
 from ..utils import _register_method, ParameterManager, Annealer, set_lr, update_optim
 from ..ops import op
 from ..models import Builder
+from dfw.losses import set_smoothing_enabled
 
 
 __methods__ = []
@@ -54,7 +55,7 @@ def train_fn(self, **kwargs):
     while True:
         # Set LR
         cur_lr = Annealer.get_trace('lr')
-        update_optim(self.optimizer, [cur_lr, cur_lr * bias_scale], key = 'lr')
+        update_optim(self.optimizer, [cur_lr, cur_lr * bias_scale], key = 'lr' if self.optimizer_choice != 'dfw' else 'eta')
 
         # Set weight decay
         if weight_decay > 0:
@@ -76,8 +77,8 @@ def train_fn(self, **kwargs):
             targets_res = None
             lam = None
 
-        
-        results = self.model({'phase': 0}) # 0: train, 1: val, 2: custom
+        with set_smoothing_enabled(self.optimizer_choice == 'dfw'):
+            results = self.model({'phase': 0}) # 0: train, 1: val, 2: custom
         
         loss = [results[i] for i in self.model.optimize_nodes]
         loss = sum(loss)
@@ -94,7 +95,10 @@ def train_fn(self, **kwargs):
                     pass
                     
             for i in self.optimizer:
-                i.step()
+                if self.optimizer_choice == 'dfw':
+                    i.step(lambda: float(loss))
+                else:
+                    i.step()
                 i.zero_grad()
 
         loss_record += loss.item()

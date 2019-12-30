@@ -16,6 +16,7 @@ from .distance import L1Loss, L2Loss
 from .sparsemax import SparsemaxLoss
 
 from .cluster import Cluster
+from dfw.losses import MultiClassHingeLoss
 
 
 
@@ -42,6 +43,9 @@ class Loss(object):
     SoftDTW = SoftDTWLoss
     Sparsemax = SparsemaxLoss
     VAE = VAELoss
+    SVM = MultiClassHingeLoss
+    
+    
 #     'bce': F.binary_cross_entropy
 #     'adaptive_robust': AdaptiveRobustLoss(1),  # need to fix dimensions
 #     'focal': FocalLoss(),  # need to be refined

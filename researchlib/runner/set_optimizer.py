@@ -12,6 +12,8 @@ from ..utils import _register_method, update_optim
 import torchcontrib
 from functools import partial, reduce
 from .trainable_params_utils import is_bias, num_list_params
+from dfw import DFW
+
 
 __methods__ = []
 register_method = _register_method(__methods__)
@@ -33,7 +35,8 @@ def set_optimizer(self):
         'rmsprop': RMSprop,
         'adabound': partial(AdaBound, lr = 1e-3, final_lr = 0.1),
         'adagrad': Adagrad,
-        'adafactor': partial(Adafactor, lr = 1e-3)
+        'adafactor': partial(Adafactor, lr = 1e-3),
+        'dfw': partial(DFW, eta = 0.1)
     }
 
     loss_params = []
