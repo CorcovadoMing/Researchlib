@@ -5,22 +5,21 @@ from .optimizer.radam import PlainRAdam, RAdam
 from .optimizer.adamw import AdamW
 from .optimizer.cocob import Cocob
 from .optimizer.lookahead import Lookahead
-from .optimizer.larc import LARC
 from .optimizer.nag import NAG
 from adabound import AdaBound
+
 from ..utils import _register_method, update_optim
 import torchcontrib
 from functools import partial, reduce
 from .trainable_params_utils import is_bias, num_list_params
-from dfw import DFW
-
+from torchlars import LARS
 
 __methods__ = []
 register_method = _register_method(__methods__)
 
 
 @register_method
-def set_optimizer(self):
+def set_optimizer(self, lars=False):
     opt_mapping = {
         'adam': partial(Adam, betas = (0.9, 0.999), eps = 1e-4),
         'adamw': partial(AdamW, betas = (0.9, 0.999), eps = 1e-4),
@@ -36,7 +35,6 @@ def set_optimizer(self):
         'adabound': partial(AdaBound, lr = 1e-3, final_lr = 0.1),
         'adagrad': Adagrad,
         'adafactor': partial(Adafactor, lr = 1e-3),
-        'dfw': partial(DFW, eta = 0.1)
     }
 
     loss_params = []
@@ -63,7 +61,5 @@ def set_optimizer(self):
     for i in range(len(self.optimizer)):
         if self.lookahead:
             self.optimizer[i] = Lookahead(self.optimizer[i])
-        if self.swa:
-            self.optimizer[i] = torchcontrib.optim.SWA(self.optimizer[i])
-        if self.larc:
-            self.optimizer[i] = LARC(self.optimizer[i])
+        if lars:
+            self.optimizer[i] = LARS(self.optimizer[i])

@@ -113,10 +113,11 @@ def fit(
     
     Annealer._post_config(epochs, iterations)
     
+    lars = parameter_manager.get_param('lars', False)
     
     if init is not None:
         self.init_model(init)
-        self.set_optimizer()
+        self.set_optimizer(lars)
         self.epoch = 1
     
         if same_init:
@@ -125,7 +126,7 @@ def fit(
                 self.load(init_model)
             else:
                 self.save(init_model)
-            self.set_optimizer()
+            self.set_optimizer(lars)
             self.epoch = 1
 
     
@@ -260,8 +261,7 @@ def fit(
                                                                      support_set=support_set,
                                                                      way=way,
                                                                      shot=shot)
-            lr_key = 'eta' if self.optimizer_choice == 'dfw' else 'lr'
-            liveplot.record(epoch, 'lr', [i[lr_key] for i in self.optimizer[0].param_groups][-1])
+            liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer[0].param_groups][-1])
             liveplot.record(epoch, 'train_loss', loss_record)
             liveplot.record(epoch, 'norm', norm_record)
             self.history.add({'loss': loss_record}, prefix = 'train')
