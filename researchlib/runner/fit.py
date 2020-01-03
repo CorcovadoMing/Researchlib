@@ -167,7 +167,7 @@ def fit(
     accum_grad = parameter_manager.get_param('accum_grad', 1)
     self.accum_idx = 0
     
-    self.multisteps = multisteps
+    self.multisteps = [int(i * epochs) if i < 1 else int(i) for i in multisteps]
     step_decay = parameter_manager.get_param('step_decay', 0.1)
 
     # Weight decay

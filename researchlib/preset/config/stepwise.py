@@ -4,7 +4,7 @@ def Stepwise(**kwargs):
         lr=1e-1, 
         policy='fixed',
         warmup=5,
-        multisteps=[50, 100], 
+        multisteps=[0.5, 0.75], 
         batch_size=128,
         accum_grad=1,
         fp16=True,
