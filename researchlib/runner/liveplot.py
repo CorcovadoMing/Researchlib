@@ -41,12 +41,12 @@ def _gpu_monitor_worker(membar, utilsbar):
 
 
 class Liveplot:
-    def __init__(self, total_iteration, _plot = False):
+    def __init__(self, train_iteration, val_iteration, _plot = False):
         self._plot = _plot
         self.history = hl.History()
         self.text_table = Texttable(max_width = 0)  #unlimited
         self.text_table.set_precision(4)
-        self.timer = Timer(total_iteration)
+        self.timer = Timer(train_iteration)
         self.redis = redis.Redis()
         self.redis.set('progress', 0)
         self.redis.set('desc', '')
@@ -74,16 +74,16 @@ class Liveplot:
         with self.train_progress:
             self.train_progress_bar = IntProgress(bar_style = 'info')
             self.train_progress_bar.min = 0
-            self.train_progress_bar.max = total_iteration
+            self.train_progress_bar.max = train_iteration
             display(self.train_progress_bar)
         with self.train_progress_label:
             self.train_progress_label_text = Label(value = "Initialization")
             display(self.train_progress_label_text)
         # Validate
         with self.val_progress:
-            self.val_progress_bar = IntProgress(bar_style = 'info')
+            self.val_progress_bar = IntProgress(bar_style = 'warning')
             self.val_progress_bar.min = 0
-            self.val_progress_bar.max = total_iteration
+            self.val_progress_bar.max = 1 if val_iteration is None else val_iteration
             display(self.val_progress_bar)
         with self.val_progress_label:
             self.val_progress_label_text = Label(value = "Initialization")

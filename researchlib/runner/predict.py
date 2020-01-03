@@ -73,6 +73,11 @@ def predict_fn(self, dict_input, outputs, **kwargs):
 
     with torch.no_grad():
         dict_input['phase'] = 2
+        # TODO:
+        # 1. GPU
+        # 2. FP16
+        # 3. Normalizer
+        # 4. Tensors, etc.,
         if outputs is None:
             # Forward the whole compute graph
             return self.val_model(dict_input)

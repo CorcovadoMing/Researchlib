@@ -108,7 +108,7 @@ def fit(
     if iterations == 0:
         iterations = self.train_loader_length
     
-    liveplot = Liveplot(self.train_loader_length, plot)
+    liveplot = Liveplot(self.train_loader_length, self.test_loader_length, plot)
     
     # ----------------------------------------------
     # MISC
