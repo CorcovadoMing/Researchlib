@@ -71,6 +71,7 @@ def validate_fn(self, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
 
     liveplot = parameter_manager.get_param('liveplot', None)
+    epoch = parameter_manager.get_param('epoch', 1)
     support_set = parameter_manager.get_param('support_set')
     way = parameter_manager.get_param('way')
     shot = parameter_manager.get_param('shot')
@@ -95,6 +96,9 @@ def validate_fn(self, **kwargs):
             
             if (self.test_loader_length > 1 and batch_idx == self.test_loader_length - 1) or self.test_loader_length == 1:
                 visualize = [results[i] for i in self.val_model.visualize_nodes]
+            
+            if liveplot and (batch_idx % 5 == 0 or batch_idx == self.test_loader_length):
+                liveplot.update_val_desc(epoch, batch_idx, loss_record, metrics_record, self.val_model.checkpoint_state)
             
             if batch_idx == self.test_loader_length:
                 if liveplot is not None:

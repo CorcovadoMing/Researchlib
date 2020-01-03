@@ -131,6 +131,8 @@ def fit(
                 self.save(init_model)
             self.set_optimizer(lars)
             self.epoch = 1
+    else:
+        self.set_optimizer(lars)
 
     
     fixed_mmixup = parameter_manager.get_param('fixed_mmixup', validator = lambda x: type(x) == list)
@@ -281,6 +283,7 @@ def fit(
                 liveplot.redis.set('stage', 'validate')
                 # Validation function
                 loss_record, metrics_record = self.validate_fn(liveplot=liveplot,
+                                                               epoch=epoch,
                                                                support_set=support_set,
                                                                way=way,
                                                                shot=shot)

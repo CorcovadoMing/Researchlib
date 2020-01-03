@@ -119,7 +119,7 @@ def train_fn(self, **kwargs):
             visualize = [results[i] for i in self.model.visualize_nodes]
         
         if batch_idx % 5 == 0 or batch_idx == self.train_loader_length:
-            liveplot.update_desc(epoch, batch_idx, loss_record, metrics_record, self.val_model.checkpoint_state)
+            liveplot.update_train_desc(epoch, batch_idx, loss_record, metrics_record, self.val_model.checkpoint_state)
 
         if batch_idx == self.train_loader_length:
             liveplot.show_grid('train', visualize)

@@ -62,17 +62,32 @@ class Liveplot:
         )
 
         # Label + Pregress
-        self.progress = Output()
-        self.progress_label = Output()
-        display(HBox([self.progress_label, self.progress]))
-        with self.progress:
-            self.progress_bar = IntProgress(bar_style = 'info')
-            self.progress_bar.min = 0
-            self.progress_bar.max = total_iteration
-            display(self.progress_bar)
-        with self.progress_label:
-            self.progress_label_text = Label(value = "Initialization")
-            display(self.progress_label_text)
+        self.train_progress = Output()
+        self.train_progress_label = Output()
+        self.val_progress = Output()
+        self.val_progress_label = Output()
+        display(self.train_progress_label)
+        display(self.train_progress)
+        display(self.val_progress_label)
+        display(self.val_progress)
+        # Train
+        with self.train_progress:
+            self.train_progress_bar = IntProgress(bar_style = 'info')
+            self.train_progress_bar.min = 0
+            self.train_progress_bar.max = total_iteration
+            display(self.train_progress_bar)
+        with self.train_progress_label:
+            self.train_progress_label_text = Label(value = "Initialization")
+            display(self.train_progress_label_text)
+        # Validate
+        with self.val_progress:
+            self.val_progress_bar = IntProgress(bar_style = 'info')
+            self.val_progress_bar.min = 0
+            self.val_progress_bar.max = total_iteration
+            display(self.val_progress_bar)
+        with self.val_progress_label:
+            self.val_progress_label_text = Label(value = "Initialization")
+            display(self.val_progress_label_text)
 
         # Plots
         if self._plot:
@@ -143,7 +158,7 @@ class Liveplot:
         else:
             return f'{var:.4f}'
         
-    def update_desc(self, epoch, batch_idx, loss_record, monitor_record, track_best):
+    def update_train_desc(self, epoch, batch_idx, loss_record, monitor_record, track_best):
         loss_record /= batch_idx
         metrics_collection = [
             ', '.join([
@@ -154,16 +169,33 @@ class Liveplot:
         metrics_collection = ''.join(metrics_collection)
         misc, progress = self.timer.output(batch_idx)
         self.cache = (epoch, loss_record, metrics_collection, track_best, misc)
-        self.progress_bar.value = batch_idx
-        self.progress_label_text.value = f'Epoch: {epoch}, Loss: {self._process_num(loss_record)}, {metrics_collection}, Track best: {self._process_num(track_best)}, {misc}'
-        self.redis.set('desc', self.progress_label_text.value)
+        self.train_progress_bar.value = batch_idx
+        self.train_progress_label_text.value = f'Epoch: {epoch}, Loss: {self._process_num(loss_record)}, {metrics_collection}, Track best: {self._process_num(track_best)}, {misc}'
+        self.redis.set('desc', self.train_progress_label_text.value)
+        self.redis.set('progress', progress)
+        
+    
+    def update_val_desc(self, epoch, batch_idx, loss_record, monitor_record, track_best):
+        loss_record /= batch_idx
+        metrics_collection = [
+            ', '.join([
+                '%s: %.6s' % (key.capitalize(), float(value) / batch_idx)
+                for (key, value) in monitor_record.items()
+            ])
+        ]
+        metrics_collection = ''.join(metrics_collection)
+        misc, progress = self.timer.output(batch_idx)
+        self.cache = (epoch, loss_record, metrics_collection, track_best, misc)
+        self.val_progress_bar.value = batch_idx
+        self.val_progress_label_text.value = f'Epoch: {epoch}, Loss: {self._process_num(loss_record)}, {metrics_collection}, Track best: {self._process_num(track_best)}, {misc}'
+        self.redis.set('desc', self.val_progress_label_text.value)
         self.redis.set('progress', progress)
     
     
     def cali_desc(self, track_best):
         (epoch, loss_record, metrics_collection, _, misc) = self.cache
-        self.progress_label_text.value = f'Epoch: {epoch}, Loss: {self._process_num(loss_record)}, {metrics_collection}, Track best: {self._process_num(track_best)}, {misc}'
-        self.redis.set('desc', self.progress_label_text.value)
+        self.train_progress_label_text.value = f'Epoch: {epoch}, Loss: {self._process_num(loss_record)}, {metrics_collection}, Track best: {self._process_num(track_best)}, {misc}'
+        self.redis.set('desc', self.train_progress_label_text.value)
         
 
     def record(self, epoch, key, value, mode = ''):
