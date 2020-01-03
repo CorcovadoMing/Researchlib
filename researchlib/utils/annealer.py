@@ -8,15 +8,6 @@ def _Cosine(tcur, srange, tmax):
     else:
         return end
 
-
-def _CosineTwoWay(tcur, srange, tmax, split_ratio = 0.333):
-    split_epoch = int(tmax * split_ratio)
-    if tcur <= split_epoch:
-        return _Cosine(tcur, srange, split_epoch)
-    else:
-        return _Cosine(tcur - split_epoch, srange[::-1], tmax - split_epoch)
-
-
 def _Linear(tcur, srange, tmax):
     start, end = srange
     if tcur <= tmax:
@@ -24,7 +15,14 @@ def _Linear(tcur, srange, tmax):
     else:
         return end
 
-
+def _Poly2(tcur, srange, tmax):
+    start, end = srange
+    if tcur <= tmax:
+        return start + (end - start) * (tcur / tmax) ** 2
+    else:
+        return end
+    
+    
 def _Fixed(tcur, srange, tmax):
     start, end = srange
     return max(start, end)
@@ -34,9 +32,9 @@ class Annealer:
     tracker = {}
 
     Cosine = _Cosine
-    CosineTwoWay = _CosineTwoWay
     Linear = _Linear
     Fixed = _Fixed
+    Poly2 = _Poly2
 
     @classmethod
     def reset(cls):
