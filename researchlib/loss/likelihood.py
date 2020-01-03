@@ -18,7 +18,7 @@ class NLLoss(nn.Module):
         super().__init__()
     
     def forward(self, x, y):
-        y = y.squeeze().long()
+        y = y.long()
         return -x[range(y.shape[0]), y].log().mean()
 
 
@@ -27,5 +27,5 @@ class NLLLoss(nn.Module):
         super().__init__()
     
     def forward(self, x, y):
-        y = y.squeeze().long()
+        y = y.long()
         return F.nll_loss(x, y)

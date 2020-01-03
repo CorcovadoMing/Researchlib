@@ -24,8 +24,10 @@ class _Source(nn.Module):
         if self.val_source_generator is None and self.val_source is not None:
             self.val_source_generator = self.val_source.get_generator(epochs=epochs)
     
-    def forward(self, x):
-        if x == 0:
+    def forward(self, phase):
+        if phase == 0:
             return self.train_source_generator
-        elif x == 1:
+        elif phase == 1:
             return self.val_source_generator
+        else:
+            return -1 # Custom predict phase

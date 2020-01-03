@@ -50,3 +50,5 @@ class _Generator(nn.Module):
             return next(iter(self.train_ds))
         elif self.phase == 1:
             return next(iter(self.val_ds))
+        else:
+            return -1 # Custom predict phase

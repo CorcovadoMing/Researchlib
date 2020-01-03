@@ -74,3 +74,5 @@ class _Preloop(nn.Module):
             return self.train_ds
         elif self.phase == 1:
             return self.val_ds
+        else:
+            return -1 # Custom predict phase
