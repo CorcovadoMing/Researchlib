@@ -7,6 +7,7 @@ import copy
 import pickle
 import os
 import torch
+import math
 
 
 __methods__ = []
@@ -95,14 +96,14 @@ def fit(
     
     for k, v in self.model.graph.items():
         if type(v[0]) == op.Source:
-            v[0].prepare_generator(batch_size, buffered_epochs)
-            self.train_loader_length = v[0].train_source_generator.__len__()
+            v[0].prepare_generator(buffered_epochs)
+            self.train_loader_length = math.ceil(v[0].train_source_generator.__len__() / batch_size)
             if v[0].val_source is not None:
-                self.test_loader_length = v[0].val_source_generator.__len__()
+                self.test_loader_length = math.ceil(v[0].val_source_generator.__len__() / batch_size)
             else:
                 self.test_loader_length = None
         if type(v[0]) == op.Generator:
-            v[0].prepare_state(fp16)
+            v[0].prepare_state(fp16, batch_size)
     
     if iterations == 0:
         iterations = self.train_loader_length

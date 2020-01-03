@@ -12,8 +12,9 @@ class _Generator(nn.Module):
         self.fp16 = False
         self.phase = 0
         
-    def prepare_state(self, fp16):
+    def prepare_state(self, fp16, batch_size):
         self.fp16 = fp16
+        self.batch_size = batch_size
     
     def set_phase(self, phase):
         self.phase = phase
@@ -34,11 +35,13 @@ class _Generator(nn.Module):
     
     def forward(self, ds):
         if self.train_ds is None and self.phase == 0:
+            ds = BatchData(ds, self.batch_size, remainder = True)
             ds = PrintData(ds)
             ds.reset_state()
             self.train_ds = BackgroundGenerator(inifinity_loop(ds), fp16=self.fp16)
             
         if self.val_ds is None and self.phase == 1:
+            ds = BatchData(ds, self.batch_size, remainder = True)
             ds = PrintData(ds)
             ds.reset_state()
             self.val_ds = BackgroundGenerator(inifinity_loop(ds), fp16=self.fp16)

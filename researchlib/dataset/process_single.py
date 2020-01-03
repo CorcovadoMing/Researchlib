@@ -9,7 +9,7 @@ def _process_single(
     data_key = 0,
     label_key = 1,
     injector = None,
-    transpose = ('NHWC', 'NCHW')
+    transpose = ('HWC', 'CHW')
 ):
     x = np.array(dp[data_key]).astype(np.float32).copy()
     y = np.array(dp[label_key]).astype(np.float32)

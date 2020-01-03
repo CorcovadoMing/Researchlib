@@ -35,19 +35,15 @@ class _GeneralLoader:
         self.size = size
         self.bgr2rgb = bgr2rgb
 
-    def get_generator(self, batch_size = 512, **kwargs):
+    def get_generator(self, **kwargs):
         ds = self.ds
-        if 'fixed_batch' in kwargs:
-            ds = FixedSizeData(ds, batch_size * kwargs['fixed_batch'], keep_state=False)
-            ds = LocallyShuffleData(ds, batch_size * kwargs['fixed_batch'])    
         _transform_fn = partial(_transform, size = self.size, bgr2rgb = self.bgr2rgb)
-        ds = MultiThreadMapData(ds, 8, _transform_fn, strict=True)
-        ds = BatchData(ds, batch_size, remainder = True)
+        ds = MapData(ds, _transform_fn)
         return ds
 
     def get_support_set(self, classes = [], shot = 5):
         collect = {k: [] for k in classes}
-        g = self.get_generator(1, epochs = 3)
+        g = self.get_generator(epochs = 3)
         g.reset_state()
         count = 0
         for x, y in g:

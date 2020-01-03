@@ -16,7 +16,6 @@ def _process_augment(
     # Augmentation
     for op in augmentor:
         options = op.options()
-        for i in range(len(x)):
-            x[i] = op(x[i], **random.choice(options))
+        x = op(x, **random.choice(options))
 
     return x, y

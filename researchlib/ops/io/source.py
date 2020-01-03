@@ -18,11 +18,11 @@ class _Source(nn.Module):
         del self.val_source_generator
         self.val_source_generator = None
         
-    def prepare_generator(self, batch_size, epochs):
+    def prepare_generator(self, epochs):
         if self.train_source_generator is None and self.train_source is not None:
-            self.train_source_generator = self.train_source.get_generator(batch_size=batch_size, epochs=epochs, **self.kwargs)
+            self.train_source_generator = self.train_source.get_generator(epochs=epochs, **self.kwargs)
         if self.val_source_generator is None and self.val_source is not None:
-            self.val_source_generator = self.val_source.get_generator(batch_size=batch_size, epochs=epochs)
+            self.val_source_generator = self.val_source.get_generator(epochs=epochs)
     
     def forward(self, x):
         if x == 0:
