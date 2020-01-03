@@ -134,6 +134,7 @@ RUN pip install torchlars
 RUN pip install kymatio scikit-cuda cupy
 
 # Unstagged 20.01
+RUN pip install git+git://github.com/deepmind/bsuite.git
 
 # Version tag
 ENV _RESEARCHLIB_IMAGE_TAG 19.12.0
