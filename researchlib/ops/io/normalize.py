@@ -13,15 +13,30 @@ class _Normalize(nn.Module):
         self.phase = 0
         self.train_ds = None
         self.val_ds = None
+        self.process_single_fn = partial(
+            _process_single,
+            normalizer = self.normalizer,
+            injector = self.injector
+        )
         
     def set_phase(self, phase):
         self.phase = phase
     
     def set_injector(self, injector):
         self.injector = injector
+        self.process_single_fn = partial(
+            _process_single,
+            normalizer = self.normalizer,
+            injector = self.injector
+        )
     
     def clear_injector(self):
         self.injector = None
+        self.process_single_fn = partial(
+            _process_single,
+            normalizer = self.normalizer,
+            injector = self.injector
+        )
     
     def clear_source(self, is_train):
         try:
@@ -40,20 +55,10 @@ class _Normalize(nn.Module):
         
     def forward(self, ds):
         if self.train_ds is None and self.phase == 0:
-            process_single_fn = partial(
-                _process_single,
-                normalizer = self.normalizer,
-                injector = self.injector
-            )
-            self.train_ds = MapData(ds, process_single_fn)
+            self.train_ds = MapData(ds, self.process_single_fn)
         
         if self.val_ds is None and self.phase == 1:
-            process_single_fn = partial(
-                _process_single,
-                normalizer = self.normalizer,
-                injector = self.injector
-            )
-            self.val_ds = MapData(ds, process_single_fn)
+            self.val_ds = MapData(ds, self.process_single_fn)
         
         if self.phase == 0:
             return self.train_ds

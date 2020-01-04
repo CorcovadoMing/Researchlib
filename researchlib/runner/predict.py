@@ -73,12 +73,17 @@ def predict_fn(self, dict_input, outputs, **kwargs):
 
     with torch.no_grad():
         dict_input['phase'] = 2
-        # TODO:
-        # 1. GPU
-        # 2. FP16
-        # 3. Normalizer
-        # 4. Tensors, etc.,
+
+        for k, v in self.val_model.graph.items():
+            if type(v[0]) == op.Normalize:
+                normalize_fn = v[0].process_single_fn
+                
+        dict_input['x'], dict_input['y'] = normalize_fn((dict_input['x'], dict_input['y']))
+        dict_input['x'] = torch.from_numpy(dict_input['x']).unsqueeze(0).cuda().half()
+        dict_input['y'] = torch.from_numpy(dict_input['y']).unsqueeze(0).cuda()
+        
         results = self.val_model(dict_input)
+        
         if outputs is None:
             return results
         else:
