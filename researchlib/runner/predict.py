@@ -78,10 +78,14 @@ def predict_fn(self, dict_input, outputs, **kwargs):
         # 2. FP16
         # 3. Normalizer
         # 4. Tensors, etc.,
+        results = self.val_model(dict_input)
         if outputs is None:
-            # Forward the whole compute graph
-            return self.val_model(dict_input)
+            return results
         else:
+            all_keys = list(results.keys())
+            for key in all_keys:
+                if key not in outputs:
+                    del results[key]
+            return results
             # TODO: if all the outputs is collected, return immediately
-            return 0
     
