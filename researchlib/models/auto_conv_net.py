@@ -34,7 +34,6 @@ def AutoConvNet(
     pool_freq = 1,
     do_norm = True,
     non_local_start = 1e8,
-    share_group_banks = 0,
     **kwargs
 ):
     Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
@@ -43,6 +42,7 @@ def AutoConvNet(
     info.add_row(['ID', 'In Dim', 'Out Dim', 'Do Pool?', 'Block Type', 'Keep Output?', 'Keep Input?', 'Groups'])
     
     parameter_manager = ParameterManager(**kwargs)
+    share_group_banks = parameter_manager.get_param('share_group_banks', 0)
      
     base_dim, max_dim = filters
     block_group = 0
@@ -64,8 +64,10 @@ def AutoConvNet(
         stem_layers = 0
 
     # Body
+    cur_bank_dim = -1
     for i in range(total_blocks):
         id = i + 1
+        
         do_pool = _do_pool(id, pool_freq)
         if do_pool:
             block_group += 1
@@ -85,7 +87,11 @@ def AutoConvNet(
         _op_type = _get_op_type(type, id, total_blocks, do_pool, in_dim != out_dim)
         
         info.add_row([id + stem_layers, in_dim, out_dim, do_pool, _op_type, keep_output, keep_input, block_group])
-
+        
+        if cur_bank_dim != out_dim:
+            cur_bank_dim = out_dim
+            cur_bank = op.TemplateBank(share_group_banks, cur_bank_dim, cur_bank_dim, 3)
+        
         kwargs['non_local'] = id >= non_local_start
         layers.append(
             _op_type(
@@ -101,11 +107,11 @@ def AutoConvNet(
                 total_blocks = total_blocks,
                 keep_input = keep_input,
                 keep_output = keep_output,
+                bank = cur_bank,
                 **kwargs
             )
         )
         layers.append(op.ManifoldMixup())
-
         in_dim = out_dim
 
     # must verify after all keys get registered

@@ -31,11 +31,16 @@ def _Conv(prefix, _op, in_dim, out_dim, **kwargs):
     dropout_op = op.Dropout(drop_rate) if drop_rate > 0 else None
     
     spectral_norm = parameter_manager.get_param('sn', False)
+    do_share_banks = parameter_manager.get_param('do_share_banks', False)
+    if do_share_banks:
+        bank = parameter_manager.get_param('bank')
 
-    
     # Build
-    conv_op = _op(in_dim, out_dim, **get_conv_hparams(**kwargs))
-    conv_op = sn(conv_op) if spectral_norm else conv_op
+    if do_share_banks:
+        conv_op = op.SConv2d(bank)
+    else:
+        conv_op = _op(in_dim, out_dim, **get_conv_hparams(**kwargs))
+        conv_op = sn(conv_op) if spectral_norm else conv_op
     norm_op = None if not do_norm else get_norm_op(norm_type, dim, in_dim if preact else out_dim)
     if freeze_scale:
         norm_op.weight.requires_grad = False

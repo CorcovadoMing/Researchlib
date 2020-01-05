@@ -10,20 +10,22 @@ def _branch_function(config, parameter_manager, **kwargs):
     # Preact final norm
     preact_final_norm = parameter_manager.get_param('preact_final_norm', False)
     preact_final_norm_op = get_norm_op(config.norm_type, config.dim, config.out_dim) if config.do_norm and config.preact and preact_final_norm else None
-
+    
     first_conv_kwargs = get_conv_config()
     first_conv_kwargs.update(**kwargs)
     first_conv_kwargs.update(kernel_size=config.kernel_size, 
-                      stride=1 if config.blur else config.stride, 
-                      padding=config.padding,
-                      erased_act=True if (config.preact and config.erased_act) or config.preact_bn_shared else False,
-                      do_pool=False,
-                      do_norm=False if config.preact_bn_shared else config.do_norm)
+                          stride=1 if config.blur else config.stride, 
+                          padding=config.padding,
+                          erased_act=True if (config.preact and config.erased_act) or config.preact_bn_shared else False,
+                          do_pool=False,
+                          do_norm=False if config.preact_bn_shared else config.do_norm,
+                          do_share_banks=config.share_group_banks and config.in_dim == config.out_dim)
 
     second_conv_kwargs = get_conv_config()
     second_conv_kwargs.update(**kwargs)
     second_conv_kwargs.update(do_pool=False,
-                              erased_act=not config.preact)
+                              erased_act=not config.preact,
+                              do_share_banks=config.share_group_banks)
 
 
     conv_op = [

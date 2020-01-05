@@ -183,7 +183,8 @@ def get_config(prefix, _unit, _op, in_dim, out_dim, parameter_manager):
         norm_type = parameter_manager.get_param('norm_type', 'batch'),
         do_pool = parameter_manager.get_param('do_pool', False),
         pool_factor = parameter_manager.get_param('pool_factor', 2),
-        stochastic_depth = parameter_manager.get_param('stochastic_depth', False)
+        stochastic_depth = parameter_manager.get_param('stochastic_depth', False),
+        share_group_banks = parameter_manager.get_param('share_group_banks', 0)
     )
     stride = _config.pool_factor if _config.do_pool else 1
     kernel_size = 2 if _config.transpose and _config.do_pool else 3
