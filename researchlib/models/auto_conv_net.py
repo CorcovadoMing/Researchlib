@@ -9,6 +9,7 @@ from ..blocks import block
 from ..blocks import unit as _unit
 from .stem import push_stem
 from torch import nn
+from texttable import Texttable
 
 
 def _do_pool(id, pool_freq):
@@ -33,9 +34,13 @@ def AutoConvNet(
     pool_freq = 1,
     do_norm = True,
     non_local_start = 1e8,
+    share_group_banks = 0,
     **kwargs
 ):
     Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
+    
+    info = Texttable(max_width = 0)
+    info.add_row(['ID', 'In Dim', 'Out Dim', 'Do Pool?', 'Block Type', 'Keep Output?', 'Keep Input?', 'Groups'])
     
     parameter_manager = ParameterManager(**kwargs)
      
@@ -52,8 +57,8 @@ def AutoConvNet(
     # Stem
     if stem is not None:
         stem_type, stem_layers = list(stem.items())[0]
-        layers, in_dim, out_dim = push_stem(
-            _op, _unit.Conv, layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs
+        layers, in_dim, out_dim, info = push_stem(
+            _op, _unit.Conv, layers, in_dim, out_dim, stem_type, stem_layers, preact, info, **kwargs
         )
     else:
         stem_layers = 0
@@ -79,7 +84,7 @@ def AutoConvNet(
         )
         _op_type = _get_op_type(type, id, total_blocks, do_pool, in_dim != out_dim)
         
-        print(id + stem_layers, in_dim, out_dim, do_pool, _op_type, keep_output, keep_input)
+        info.add_row([id + stem_layers, in_dim, out_dim, do_pool, _op_type, keep_output, keep_input, block_group])
 
         kwargs['non_local'] = id >= non_local_start
         layers.append(
@@ -110,6 +115,8 @@ def AutoConvNet(
     ParameterManager.verify_kwargs(**kwargs)
     parameter_manager.save_buffer('dim_type', _get_dim_type(_op))
     parameter_manager.save_buffer('last_dim', out_dim)
+    
+    print(info.draw())
     
     if use_subgraph:
         return Builder.Seq(layers)

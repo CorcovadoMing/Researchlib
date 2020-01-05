@@ -10,6 +10,7 @@ from ..blocks import unit as _unit
 from torch import nn
 import torch
 from .stem import push_stem
+from texttable import Texttable
 
 
 def _check_dual_path(var):
@@ -88,6 +89,9 @@ def AutoEncDec(
 ):
     Runner.__model_settings__[f'{up_type}-blocks{total_blocks}_input{input_dim}'] = locals()
     
+    info = Texttable(max_width = 0)
+    info.add_row(['ID', 'In Dim', 'Out Dim', 'Do Pool?', 'Block Type', 'Keep Output?', 'Keep Input?', 'Skip Types'])
+    
     parameter_manager = ParameterManager(**kwargs)
     
     base_dim, max_dim = filters
@@ -106,8 +110,8 @@ def AutoEncDec(
     # Stem
     if stem is not None:
         stem_type, stem_layers = list(stem.items())[0]
-        layers, in_dim, out_dim = push_stem(
-            down_op, _unit.Conv, layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs
+        layers, in_dim, out_dim, info = push_stem(
+            down_op, _unit.Conv, layers, in_dim, out_dim, stem_type, stem_layers, preact, info, **kwargs
         )
     else:
         stem_layers = 0
@@ -129,7 +133,8 @@ def AutoEncDec(
             parameter_manager
         )
         
-        print(id + stem_layers, in_dim, out_dim, do_pool)
+        info.add_row([id + stem_layers, in_dim, out_dim, do_pool, 'N/A', 'N/A', 'N/A', 'N/A'])
+        
         dim_cache.append((id + stem_layers, in_dim, out_dim, do_pool))
         in_dim = out_dim
 
@@ -150,9 +155,11 @@ def AutoEncDec(
 
         end_in_dim = 2 * out_dim if skip_type == 'concat' and do_pool else out_dim
         _skip_type = skip_type if do_pool else None
+        
         if id == 1:
-            print('Bottleneck', out_dim, out_dim)
-        print(2 * total_blocks + 2 - cache_id + stem_layers, end_in_dim, in_dim, do_pool, _skip_type)
+            info.add_row(['Bottleneck', out_dim, out_dim, 0, _op_type_inner, 'N/A', 'N/A', 'N/A'])
+        info.add_row([2 * total_blocks + 2 - cache_id + stem_layers, end_in_dim, in_dim, do_pool, _op_type_end, 'N/A', 'N/A', _skip_type])
+        
         kwargs['non_local'] = id >= non_local_start
         structure = _RecurrentBlock(
             # Begin
@@ -185,6 +192,8 @@ def AutoEncDec(
     ParameterManager.verify_kwargs(**kwargs)
     parameter_manager.save_buffer('dim_type', _get_dim_type(down_op))
     parameter_manager.save_buffer('last_dim', in_dim)
+    
+    print(info.draw())
     
     if use_subgraph:
         return Builder.Seq(layers)

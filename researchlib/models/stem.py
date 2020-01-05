@@ -3,7 +3,7 @@ from ..ops import op
 import copy
 
 
-def push_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact, **kwargs):
+def push_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact, info, **kwargs):
     stem_kwargs = {}
     stem_kwargs.update(kwargs)
     stem_kwargs['erased_act'] = True if preact else False
@@ -15,7 +15,9 @@ def push_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact
         id = i + 1
         _type = _parse_type(i, stem_type)
         _op_type = _get_op_type(stem_type, id, stem_layers, False, in_dim != out_dim)
-        print(id, in_dim, out_dim, stem_type)
+        
+        info.add_row([id, in_dim, out_dim, stem_kwargs['do_pool'], _op_type, 'N/A', 'N/A', 'Stem'])
+        
         layers.append(
             _op_type(
                 f'{id}',
@@ -30,4 +32,4 @@ def push_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, preact
         )
         layers.append(op.ManifoldMixup())
         in_dim = out_dim
-    return layers, in_dim, out_dim
+    return layers, in_dim, out_dim, info
