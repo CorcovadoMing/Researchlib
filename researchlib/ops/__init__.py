@@ -19,9 +19,11 @@ from .sasa import _SASA2d
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
 
+from .template_bank import _TemplateBank
+
 #============================================================================
 
-# from .conv_variants import _BoxConv2d
+from .conv_variants import _SConv2d
 
 from .activator import _GeLU, _Mish, _Swish, _DropReLU, _LogSoftmax, _Softmax, _LogSparsemax, _Sparsemax, _FTSwishPlus, _TReLU
 
@@ -55,6 +57,10 @@ from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation4
 from .pool import _CombinePool2d, _PixelShuffle2d
 
 class op(object):
+    TemplateBank = _TemplateBank
+    SConv2d = _SConv2d
+    
+    
     # Pool
     CombinePool2d = _CombinePool2d
     PixelShuffle2d = _PixelShuffle2d
