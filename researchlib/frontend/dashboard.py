@@ -131,7 +131,7 @@ def _update_desc(n):
 
 def _add_trace(fig, data, key, name, row_index, col_index):
     try:
-        fig.append_trace({
+        fig.add_trace({
             'x': [0] + list(range(1,
                                   len(data[key]) + 1)),
             'y': [0] + data[key],

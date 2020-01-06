@@ -60,7 +60,7 @@ def ResNet110(in_node, out_node, head=None, in_dim=3, **kwargs):
         type='residual',
         shortcut='padding',
         pool_freq=[19,37],
-        filters=(16, -1)
+        filters=(64, -1)
     )
     default_kwargs.update(kwargs)
     model = [AutoConvNet(**default_kwargs)]
