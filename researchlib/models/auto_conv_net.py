@@ -65,6 +65,9 @@ def AutoConvNet(
 
     # Body
     cur_bank_dim = -1
+    cur_bank = None
+    cur_bank_to_manifold = None
+    cur_bank_from_manifold = None
     for i in range(total_blocks):
         id = i + 1
         
@@ -88,12 +91,16 @@ def AutoConvNet(
         
         info.add_row([id + stem_layers, in_dim, out_dim, do_pool, _op_type, keep_output, keep_input, block_group])
         
-        if cur_bank_dim != out_dim:
+        if cur_bank_dim != out_dim and (share_group_banks > 0):
             cur_bank_dim = out_dim
             if _type == 'residual-bottleneck':
+                cur_bank_to_manifold = op.TemplateBank(share_group_banks, cur_bank_dim, cur_bank_dim//4, 1)
                 cur_bank = op.TemplateBank(share_group_banks, cur_bank_dim//4, cur_bank_dim//4, 3)
+                cur_bank_from_manifold = op.TemplateBank(share_group_banks, cur_bank_dim//4, cur_bank_dim, 1)
             else:
                 cur_bank = op.TemplateBank(share_group_banks, cur_bank_dim, cur_bank_dim, 3)
+                cur_bank_to_manifold = None
+                cur_bank_from_manifold = None
         
         kwargs['non_local'] = id >= non_local_start
         layers.append(
@@ -111,6 +118,8 @@ def AutoConvNet(
                 keep_input = keep_input,
                 keep_output = keep_output,
                 bank = cur_bank,
+                bank_to_manifold = cur_bank_to_manifold,
+                bank_from_manifold = cur_bank_from_manifold,
                 **kwargs
             )
         )

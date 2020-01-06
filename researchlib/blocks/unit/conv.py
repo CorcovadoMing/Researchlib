@@ -37,7 +37,8 @@ def _Conv(prefix, _op, in_dim, out_dim, **kwargs):
 
     # Build
     if do_share_banks:
-        conv_op = op.SConv2d(bank)
+        conv_param = get_conv_hparams(**kwargs)
+        conv_op = op.SConv2d(bank, stride=conv_param['stride'], padding=conv_param['padding'])
     else:
         conv_op = _op(in_dim, out_dim, **get_conv_hparams(**kwargs))
         conv_op = sn(conv_op) if spectral_norm else conv_op

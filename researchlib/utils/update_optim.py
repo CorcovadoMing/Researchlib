@@ -1,8 +1,9 @@
-def update_optim(opt, value, key):
-    def _inner_process(opt, value, key):
+def _inner_process(opt, value, key):
         for g in opt.param_groups:
             g[key] = value
 
+            
+def update_optim(opt, value, key):
     if type(opt) == list or type(opt) == tuple:
         if type(value) == list or type(value) == tuple:
             for i, j in zip(opt, value):

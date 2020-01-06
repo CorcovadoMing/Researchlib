@@ -54,13 +54,13 @@ def train_fn(self, **kwargs):
     while True:
         # Set LR
         cur_lr = Annealer.get_trace('lr')
-        update_optim(self.optimizer, [cur_lr, cur_lr * bias_scale], key = 'lr')
+        update_optim(self.optimizer, [cur_lr, cur_lr * bias_scale, cur_lr], key = 'lr')
 
         # Set weight decay
         if weight_decay > 0:
             cur_weight_decay = Annealer.get_trace('weight_decay')
             update_optim(
-                self.optimizer, [cur_weight_decay, (cur_weight_decay / bias_scale) if weight_decay_bias else 0],
+                self.optimizer, [cur_weight_decay, (cur_weight_decay / bias_scale) if weight_decay_bias else 0, 0],
                 key = 'weight_decay'
             )
 

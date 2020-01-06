@@ -19,8 +19,10 @@ def _branch_function(config, parameter_manager, **kwargs):
                               padding=0,
                               erased_act=True if (config.preact and config.erased_act) or config.preact_bn_shared else False,
                               do_pool=False,
-                              do_norm=False if config.preact_bn_shared else config.do_norm)
-
+                              do_norm=False if config.preact_bn_shared else config.do_norm,
+                              do_share_banks=config.do_share_banks,
+                              bank=parameter_manager.get_param('bank_to_manifold'))
+    
     second_conv_kwargs = get_conv_config()
     second_conv_kwargs.update(**kwargs)
     second_conv_kwargs.update(kernel_size=config.kernel_size,
@@ -28,7 +30,8 @@ def _branch_function(config, parameter_manager, **kwargs):
                               padding=config.padding,
                               do_pool=False,
                               erased_act=False,
-                              do_share_banks=config.do_share_banks)
+                              do_share_banks=config.do_share_banks,
+                              bank=parameter_manager.get_param('bank'))
     
     third_conv_kwargs = get_conv_config()
     third_conv_kwargs.update(**kwargs)
@@ -36,8 +39,10 @@ def _branch_function(config, parameter_manager, **kwargs):
                               stride=1,
                               padding=0,
                               do_pool=False,
-                              erased_act=not config.preact)
-
+                              erased_act=not config.preact,
+                              do_share_banks=config.do_share_banks,
+                              bank=parameter_manager.get_param('bank_from_manifold'))
+    
     conv_op = [
         config._unit(f'{config.prefix}_m1', config._op, config.in_dim, hidden_size, **first_conv_kwargs),
         config._unit(f'{config.prefix}_m2', config._op, hidden_size, hidden_size, **second_conv_kwargs), 

@@ -11,7 +11,7 @@ from adabound import AdaBound
 from ..utils import _register_method, update_optim
 import torchcontrib
 from functools import partial, reduce
-from .trainable_params_utils import is_bias, num_list_params
+from .trainable_params_utils import group_parameters, num_list_params
 from torchlars import LARS
 
 __methods__ = []
@@ -44,20 +44,26 @@ def set_optimizer(self, lars=False):
         except:
             pass
 
-    model_weight_params = is_bias(self.model)[False]
-    model_bias_params = is_bias(self.model)[True]
-
+    normal_group, bias_group, no_decay_group = group_parameters(self.model)
+    normal_group_num = num_list_params(normal_group)
+    bias_group_num = num_list_params(bias_group)
+    no_decay_group_num = num_list_params(no_decay_group)
+    
+    param_groups = [bias_group, no_decay_group]
+    param_groups_num = [bias_group_num, no_decay_group_num]
+    
     print(reduce(num_list_params, loss_params, 0))
-    print(num_list_params(model_weight_params))
-    print(num_list_params(model_bias_params))
+    print('normal_group', normal_group_num)
+    print('bias_group', bias_group_num)
+    print('no_decay_group', no_decay_group_num)
 
     opt_fn = opt_mapping[self.optimizer_choice]
 
-    if num_list_params(model_bias_params) == 0:
-        self.optimizer = [opt_fn(model_weight_params + loss_params)]
-    else:
-        self.optimizer = [opt_fn(model_weight_params + loss_params), opt_fn(model_bias_params)]
-
+    self.optimizer = [opt_fn(normal_group + loss_params)]
+    for i, j in zip(param_groups_num, param_groups):
+        if i != 0:
+            self.optimizer.append(opt_fn(j))
+    
     for i in range(len(self.optimizer)):
         if self.lookahead:
             self.optimizer[i] = Lookahead(self.optimizer[i])
