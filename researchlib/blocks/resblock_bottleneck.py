@@ -27,7 +27,8 @@ def _branch_function(config, parameter_manager, **kwargs):
                               stride=1 if config.blur else config.stride,
                               padding=config.padding,
                               do_pool=False,
-                              erased_act=False)
+                              erased_act=False,
+                              do_share_banks=config.do_share_banks)
     
     third_conv_kwargs = get_conv_config()
     third_conv_kwargs.update(**kwargs)

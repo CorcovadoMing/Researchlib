@@ -184,19 +184,22 @@ def get_config(prefix, _unit, _op, in_dim, out_dim, parameter_manager):
         do_pool = parameter_manager.get_param('do_pool', False),
         pool_factor = parameter_manager.get_param('pool_factor', 2),
         stochastic_depth = parameter_manager.get_param('stochastic_depth', False),
-        share_group_banks = parameter_manager.get_param('share_group_banks', 0)
+        share_group_banks = parameter_manager.get_param('share_group_banks', 0),
     )
+    
     stride = _config.pool_factor if _config.do_pool else 1
     kernel_size = 2 if _config.transpose and _config.do_pool else 3
     padding = 0 if _config.transpose and _config.do_pool else int((kernel_size - 1) / 2)
     pool_type = parameter_manager.get_param('unpool_type', 'upsample') if _config.transpose else parameter_manager.get_param('pool_type', 'avg')
     blur = parameter_manager.get_param('blur', False) and _config.do_pool
+    do_share_banks = _config.share_group_banks > 0 and (_config.in_dim == _config.out_dim)
     
     setattr(_config, 'stride', stride)
     setattr(_config, 'kernel_size', kernel_size)
     setattr(_config, 'padding', padding)
     setattr(_config, 'pool_type', pool_type)
     setattr(_config, 'blur', blur)
+    setattr(_config, 'do_share_banks', do_share_banks)
             
     return _config
 

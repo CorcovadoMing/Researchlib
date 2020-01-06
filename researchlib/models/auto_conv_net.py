@@ -90,7 +90,10 @@ def AutoConvNet(
         
         if cur_bank_dim != out_dim:
             cur_bank_dim = out_dim
-            cur_bank = op.TemplateBank(share_group_banks, cur_bank_dim, cur_bank_dim, 3)
+            if _type == 'residual-bottleneck':
+                cur_bank = op.TemplateBank(share_group_banks, cur_bank_dim//4, cur_bank_dim//4, 3)
+            else:
+                cur_bank = op.TemplateBank(share_group_banks, cur_bank_dim, cur_bank_dim, 3)
         
         kwargs['non_local'] = id >= non_local_start
         layers.append(

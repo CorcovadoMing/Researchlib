@@ -11,13 +11,15 @@ def _branch_function(config, parameter_manager, **kwargs):
                       stride=1 if config.blur else config.stride, 
                       padding=config.padding,
                       preact=True,
-                      do_pool=False)
+                      do_pool=False,
+                      do_share_banks=config.do_share_banks)
 
     second_conv_kwargs = get_conv_config()
     second_conv_kwargs.update(**kwargs)
     second_conv_kwargs.update(do_pool=False,
                               preact=True,
-                              drop_rate=0.3)
+                              drop_rate=0.3,
+                              do_share_banks=config.do_share_banks)
                               
 
     if config.in_dim != config.out_dim or config.do_pool:
