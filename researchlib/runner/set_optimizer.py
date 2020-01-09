@@ -52,7 +52,7 @@ def set_optimizer(self, lars=False):
     param_groups = [bias_group, no_decay_group]
     param_groups_num = [bias_group_num, no_decay_group_num]
     
-    print(reduce(num_list_params, loss_params, 0))
+    print('loss_group', reduce(num_list_params, loss_params, 0))
     print('normal_group', normal_group_num)
     print('bias_group', bias_group_num)
     print('no_decay_group', no_decay_group_num)
