@@ -220,14 +220,9 @@ def Test(name, normalize=True, resize=256):
     else:
         testset = loader.LFS.Restoration.Test(name, False, resize)
     _source = [
-        Node('source', op.Source(
-#                                  loader.LFS.Restoration.Noise2d('speckle', True, True, resize), 
-                                 loader.LFS.Restoration.Test(name, True, resize),
+        Node('source', op.Source(loader.LFS.Restoration.Test(name, True, resize),
                                  testset)),
         _normalize,
-        #Node('preloop', op.Preloop(), 'normalize'),
-#         Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//8),
-#                                              Augmentations.HFlip()]), 'normalize'),
         Node('generator', op.Generator(), 'normalize'),
         Node('x', op.Name(), 'generator:0'),
         Node('y', op.Name(), 'generator:1'),

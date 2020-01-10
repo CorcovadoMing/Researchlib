@@ -22,8 +22,10 @@ from . import set_optimizer
 from . import describe
 from . import calibrate
 from . import attack
+from . import profile
 
 
+@_add_methods_from(profile)
 @_add_methods_from(attack)
 @_add_methods_from(describe)
 @_add_methods_from(set_optimizer)
