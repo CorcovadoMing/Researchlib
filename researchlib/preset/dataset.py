@@ -214,14 +214,9 @@ def Test(name, normalize=True, resize=256):
     else:
         _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
         
-        
-    if name == 's1':
-        testset = loader.LFS.Restoration.Test('s1test', False, resize)
-    else:
-        testset = loader.LFS.Restoration.Test(name, False, resize)
     _source = [
-        Node('source', op.Source(loader.LFS.Restoration.Test(name, True, resize),
-                                 testset)),
+        Node('source', op.Source(loader.LFS.Restoration.Test(name, True, True, resize),
+                                 loader.LFS.Restoration.Test(name, False, False, resize))),
         _normalize,
         Node('generator', op.Generator(), 'normalize'),
         Node('x', op.Name(), 'generator:0'),

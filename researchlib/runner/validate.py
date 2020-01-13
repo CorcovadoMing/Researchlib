@@ -79,7 +79,7 @@ def validate_fn(self, **kwargs):
     self.val_model.eval()
 
     loss_record = 0
-    metrics_record = {key: 0 for key in self.val_model.monitor_nodes}
+    metrics_record = {key.replace('*', ''): 0 for key in self.val_model.monitor_nodes}
 
     with torch.no_grad():
         batch_idx = 0
@@ -88,6 +88,8 @@ def validate_fn(self, **kwargs):
             loss = sum([results[i] for i in self.model.optimize_nodes])
 
             for i in self.val_model.monitor_nodes:
+                if '*' in i:
+                    i = i.replace('*', '')
                 metrics_record[i] += results[i]
 
             loss_record += loss.item()

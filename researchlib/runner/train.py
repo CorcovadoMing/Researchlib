@@ -44,7 +44,7 @@ def train_fn(self, **kwargs):
 
     loss_record = 0
     norm_record = 0
-    metrics_record = {key: 0 for key in self.model.monitor_nodes}
+    metrics_record = {key.replace('*', ''): 0 for key in self.model.monitor_nodes}
 
     
     for i in self.optimizer:
@@ -111,6 +111,8 @@ def train_fn(self, **kwargs):
                     ema_v.add_(1-rho, v)
 
         for i in self.model.monitor_nodes:
+            if '*' in i:
+                continue
             metrics_record[i] += results[i]
         
         batch_idx += 1
