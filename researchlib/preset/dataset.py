@@ -228,15 +228,15 @@ def Test(name, normalize=True, resize=256):
     return graph
 
 
-def COIL100(name, normalize=True, resize=256):
+def COIL100(name, normalize=True, resize=256, merge_train_val=True):
     graph = {}
     if normalize:
         _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
     else:
         _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
     _source = [
-        Node('source', op.Source(loader.LFS.Restoration.COIL100(name, True, True, resize),
-                                 loader.LFS.Restoration.COIL100(name, False, False, resize))),
+        Node('source', op.Source(loader.LFS.Restoration.COIL100(name, True, True, merge_train_val, resize),
+                                 loader.LFS.Restoration.COIL100(name, False, False, merge_train_val, resize))),
         _normalize,
         Node('generator', op.Generator(), 'normalize'),
         Node('x', op.Name(), 'generator:0'),

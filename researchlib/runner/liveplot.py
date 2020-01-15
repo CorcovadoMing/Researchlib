@@ -237,6 +237,7 @@ class Liveplot:
                             npimg = img.cpu().float().numpy()
                             npimg += 1
                             npimg /= 2
+                            npimg = np.clip(npimg, 0, 1)
                             plt.figure(figsize=((5*len(subgroup))/6, 5))
                             plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
                             plt.axis('off')
@@ -247,6 +248,7 @@ class Liveplot:
                         npimg = img.cpu().float().numpy()
                         npimg += 1
                         npimg /= 2
+                        npimg = np.clip(npimg, 0, 1)
                         plt.figure(figsize=(5, 5))
                         plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
                         plt.axis('off')
