@@ -1,4 +1,4 @@
-from ..utils import _register_method, _get_iteration, set_lr, plot_montage
+from ..utils import _register_method, _get_iteration
 import torch
 
 __methods__ = []

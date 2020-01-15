@@ -1,5 +1,5 @@
 import torch
-from ..utils import _register_method, ParameterManager, Annealer, set_lr, update_optim
+from ..utils import _register_method, ParameterManager, Annealer, update_optim
 from ..ops import op
 from ..models import Builder
 import math
