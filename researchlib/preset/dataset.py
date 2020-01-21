@@ -123,11 +123,8 @@ def Dice(name, normalize=True, resize=128):
         _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
     _source = [
         Node('source', op.Source(loader.LFS.Restoration.Dice(name, True, resize), 
-                                 loader.LFS.Restoration.Dice(name, False, resize))),
+                                 loader.LFS.Restoration.Dice('1000nactest', False, resize))),
         _normalize,
-        #Node('preloop', op.Preloop(), 'normalize'),
-        #Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//8),
-        #                                      Augmentations.HFlip()]), 'normalize'),
         Node('generator', op.Generator(), 'normalize'),
         Node('x', op.Name(), 'generator:0'),
         Node('y', op.Name(), 'generator:1'),
@@ -248,6 +245,26 @@ def COIL100(name, normalize=True, resize=256, merge_train_val=True):
     return graph
 
 
+def BSD68(name, normalize=True, resize=None, merge_train_val=True):
+    graph = {}
+    if normalize:
+        _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
+    else:
+        _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
+    _source = [
+        Node('source', op.Source(loader.LFS.Restoration.BSD68(name, True, True, merge_train_val, resize),
+                                 loader.LFS.Restoration.BSD68(name, False, False, merge_train_val, resize))),
+        _normalize,
+        Node('generator', op.Generator(), 'normalize'),
+        Node('x', op.Name(), 'generator:0'),
+        Node('y', op.Name(), 'generator:1'),
+    ]
+    for i in _source:
+        node, node_type = i
+        graph.update(node)
+    return graph
+
+
 
 
 class Dataset(object):
@@ -263,3 +280,4 @@ class Dataset(object):
     RENOIR = RENOIR
     Test = Test
     COIL100 = COIL100
+    BSD68 = BSD68

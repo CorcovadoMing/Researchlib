@@ -1,8 +1,10 @@
 # google oauth file
 sheets.googleapis.com-python.json
+ngc_run.sh
+*.ipynb
 *.pyc
 *.npy
-.ipynb_checkpoints
+*.ipynb_checkpoints
 *.h5
 *.onnx
 *.pkl

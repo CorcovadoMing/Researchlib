@@ -58,6 +58,7 @@ def fit(
     init = None,
     same_init = False,
     freeze = {},
+    save_checkpoint = True,
     **kwargs
 ):
     
@@ -298,23 +299,27 @@ def fit(
             # ----------------------------------------------
             # Check point
             # ----------------------------------------------
+            
             epoch_str = str(self.epoch)
             if self.val_model.checkpoint_node is not None:
                 critic = metrics_record[self.val_model.checkpoint_node]
             else:
                 critic = None
 
-            # Checkpoint
-            checkpoint_model_name = os.path.join(
-                self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(self.epoch)
-            )
-            self.save(checkpoint_model_name)
+            if save_checkpoint:
+                checkpoint_model_name = os.path.join(
+                    self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(self.epoch)
+                )
+                self.save(checkpoint_model_name)
+                
             if self.val_model.checkpoint_state is None:
                 self.val_model.checkpoint_state = critic
+            
             if critic is not None and self.val_model.checkpoint_mode(critic, self.val_model.checkpoint_state) == critic:
                 self.val_model.checkpoint_state = critic
-                best_checkpoint_model_name = os.path.join(self.checkpoint_path, 'best_' + _id)
-                self.save(best_checkpoint_model_name)
+                if save_checkpoint:
+                    best_checkpoint_model_name = os.path.join(self.checkpoint_path, 'best_' + _id)
+                    self.save(best_checkpoint_model_name)
                 epoch_str += '*'
             
             # ----------------------------------------------
