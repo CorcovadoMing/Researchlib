@@ -302,7 +302,7 @@ def fit(
             
             epoch_str = str(self.epoch)
             if self.val_model.checkpoint_node is not None:
-                critic = metrics_record[self.val_model.checkpoint_node]
+                critic = metrics_record[self.val_model.checkpoint_node.replace('*', '')]
             else:
                 critic = None
 
