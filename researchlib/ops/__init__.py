@@ -56,7 +56,13 @@ from .node import _To, _Subgraph, _Detach, _Name, _NoOp
 from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation42d, _Anneal, _Argmax, _Argmin, _Mixture, _RPT
 from .pool import _CombinePool2d, _PixelShuffle2d
 
+from .n2v import N2V
+
+
 class op(object):
+    N2V = N2V
+    
+    
     TemplateBank = _TemplateBank
     SConv2d = _SConv2d
     

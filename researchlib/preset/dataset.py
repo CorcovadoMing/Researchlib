@@ -123,7 +123,7 @@ def Dice(name, normalize=True, resize=128):
         _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
     _source = [
         Node('source', op.Source(loader.LFS.Restoration.Dice(name, True, resize), 
-                                 loader.LFS.Restoration.Dice('1000nactest', False, resize))),
+                                 loader.LFS.Restoration.Dice('1000nactest2', False, resize))),
         _normalize,
         Node('generator', op.Generator(), 'normalize'),
         Node('x', op.Name(), 'generator:0'),
