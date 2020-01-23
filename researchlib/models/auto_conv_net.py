@@ -58,7 +58,7 @@ def AutoConvNet(
     if stem is not None:
         stem_type, stem_layers = list(stem.items())[0]
         layers, in_dim, out_dim, info = push_stem(
-            _op, _unit.Conv, layers, in_dim, out_dim, stem_type, stem_layers, preact, info, **kwargs
+            _op, _unit.Conv, layers, in_dim, out_dim, stem_type.__name__, stem_layers, preact, info, **kwargs
         )
     else:
         stem_layers = 0
@@ -89,7 +89,7 @@ def AutoConvNet(
         )
         _op_type = _get_op_type(type, id, total_blocks, do_pool, in_dim != out_dim)
         
-        info.add_row([id + stem_layers, in_dim, out_dim, do_pool, _op_type, keep_output, keep_input, block_group])
+        info.add_row([id + stem_layers, in_dim, out_dim, do_pool, _op_type.__name__, keep_output, keep_input, block_group])
         
         if cur_bank_dim != out_dim and (share_group_banks > 0):
             cur_bank_dim = out_dim

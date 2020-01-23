@@ -157,8 +157,8 @@ def AutoEncDec(
         _skip_type = skip_type if do_pool else None
         
         if id == 1:
-            info.add_row(['Bottleneck', out_dim, out_dim, 0, _op_type_inner, 'N/A', 'N/A', 'N/A'])
-        info.add_row([2 * total_blocks + 2 - cache_id + stem_layers, end_in_dim, in_dim, do_pool, _op_type_end, 'N/A', 'N/A', _skip_type])
+            info.add_row(['Bottleneck', out_dim, out_dim, 0, _op_type_inner.__name__, 'N/A', 'N/A', 'N/A'])
+        info.add_row([2 * total_blocks + 2 - cache_id + stem_layers, end_in_dim, in_dim, do_pool, _op_type_end.__name__, 'N/A', 'N/A', _skip_type])
         
         kwargs['non_local'] = id >= non_local_start
         structure = _RecurrentBlock(
