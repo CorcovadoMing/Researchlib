@@ -2,6 +2,7 @@ import torch
 from ..utils import _register_method, get_aux_out, _switch_swa_mode, ParameterManager
 from ..ops import op
 from ..models import Builder
+import math
 
 
 __methods__ = []
@@ -29,7 +30,7 @@ def _clear_source(m):
         pass
         
 @register_method
-def validate(self, **kwargs):
+def validate(self, plot_wrong = False, out = 'categorical', **kwargs):
     parameter_manager = ParameterManager(**kwargs)
     
     self.val_model.apply(_clear_source)
@@ -41,18 +42,18 @@ def validate(self, **kwargs):
     
     for k, v in self.val_model.graph.items():
         if type(v[0]) == op.Source:
-            v[0].prepare_generator(batch_size, buffered_epochs)
-            self.train_loader_length = v[0].train_source_generator.__len__()
+            v[0].prepare_generator(buffered_epochs)
+            self.train_loader_length = math.ceil(v[0].train_source_generator.__len__() / batch_size)
             if v[0].val_source is not None:
-                self.test_loader_length = v[0].val_source_generator.__len__()
+                self.test_loader_length = math.ceil(v[0].val_source_generator.__len__() / batch_size)
             else:
                 self.test_loader_length = None
         if type(v[0]) == op.Generator:
-            v[0].prepare_state(fp16)
+            v[0].prepare_state(fp16, batch_size)
     
     self.preload_gpu()
     try:
-        loss_record, metrics_record = self.validate_fn(**kwargs)
+        loss_record, metrics_record = self.validate_fn(plot_wrong, **kwargs)
         print(loss_record)
         for k, v in metrics_record.items():
             print(str(k) + ':', float(v))
@@ -65,7 +66,7 @@ def validate(self, **kwargs):
 
 
 @register_method
-def validate_fn(self, **kwargs):
+def validate_fn(self, plot_wrong = False, out = 'categorical', **kwargs):
     self.val_model.apply(to_eval_mode)
     
     parameter_manager = ParameterManager(**kwargs)
@@ -80,11 +81,16 @@ def validate_fn(self, **kwargs):
 
     loss_record = 0
     metrics_record = {key.replace('*', ''): 0 for key in self.val_model.monitor_nodes}
+    wrong_samples = []
 
     with torch.no_grad():
         batch_idx = 0
         while True:
             results = self.val_model({'phase': 1})
+            
+            if plot_wrong:
+                wrong_samples.append(results[out])
+            
             loss = sum([results[i] for i in self.model.optimize_nodes])
 
             for i in self.val_model.monitor_nodes:
@@ -111,5 +117,7 @@ def validate_fn(self, **kwargs):
     
     for i in metrics_record:
         metrics_record[i] /= batch_idx
+    
+    print(wrong_samples)
     
     return loss_record, metrics_record
