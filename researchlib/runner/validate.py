@@ -135,11 +135,12 @@ def validate_fn(self, plot_wrong = -1, out = 'categorical', denormalizer = lambd
         wrong_samples = wrong_samples[:plot_wrong].float().numpy().transpose(0, 2, 3, 1)
         wrong_samples_labels = wrong_samples_labels[:plot_wrong]
         
-        _, arr = plt.subplots(3, 3, figsize=(15, 15))
+        num = math.ceil(math.sqrt(plot_wrong))
+        _, arr = plt.subplots(num, num, figsize=(15, 15))
         for i in range(plot_wrong):
-            arr[i//3][i%3].imshow(denormalizer(wrong_samples[i]).astype(np.uint8))
-            arr[i//3][i%3].axis('off')
-            arr[i//3][i%3].set_title(f'{wrong_samples_labels[i][0]} -> {wrong_samples_labels[i][1]}')
+            arr[i//num][i%num].imshow(denormalizer(wrong_samples[i]).astype(np.uint8))
+            arr[i//num][i%num].axis('off')
+            arr[i//num][i%num].set_title(f'{wrong_samples_labels[i][0]} -> {wrong_samples_labels[i][1]}')
         plt.tight_layout()
         plt.show()
         print(wrong_samples.shape)
