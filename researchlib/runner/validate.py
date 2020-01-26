@@ -4,6 +4,7 @@ from ..ops import op
 from ..models import Builder
 import math
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 __methods__ = []
@@ -41,6 +42,7 @@ def validate(self, plot_wrong = -1, out = 'categorical', **kwargs):
     batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
     buffered_epochs = 2
     
+    denormalizer = lambda x: x
     for k, v in self.val_model.graph.items():
         if type(v[0]) == op.Source:
             v[0].prepare_generator(buffered_epochs)
@@ -51,10 +53,13 @@ def validate(self, plot_wrong = -1, out = 'categorical', **kwargs):
                 self.test_loader_length = None
         if type(v[0]) == op.Generator:
             v[0].prepare_state(fp16, batch_size)
+        if type(v[0]) == op.Normalize:
+            denormalizer = v[0].denormalizer
+            
     
     self.preload_gpu()
     try:
-        loss_record, metrics_record = self.validate_fn(plot_wrong, **kwargs)
+        loss_record, metrics_record = self.validate_fn(plot_wrong, out, denormalizer, **kwargs)
         print(loss_record)
         for k, v in metrics_record.items():
             print(str(k) + ':', float(v))
@@ -67,7 +72,7 @@ def validate(self, plot_wrong = -1, out = 'categorical', **kwargs):
 
 
 @register_method
-def validate_fn(self, plot_wrong = -1, out = 'categorical', **kwargs):
+def validate_fn(self, plot_wrong = -1, out = 'categorical', denormalizer = lambda x: x, **kwargs):
     self.val_model.apply(to_eval_mode)
     
     parameter_manager = ParameterManager(**kwargs)
@@ -132,7 +137,7 @@ def validate_fn(self, plot_wrong = -1, out = 'categorical', **kwargs):
         
         _, arr = plt.subplots(3, 3, figsize=(15, 15))
         for i in range(plot_wrong):
-            arr[i//3][i%3].imshow(wrong_samples[i])
+            arr[i//3][i%3].imshow(denormalizer(wrong_samples[i]).astype(np.uint8))
             arr[i//3][i%3].axis('off')
             arr[i//3][i%3].set_title(f'{wrong_samples_labels[i][0]} -> {wrong_samples_labels[i][1]}')
         plt.tight_layout()
