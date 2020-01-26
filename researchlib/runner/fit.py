@@ -2,6 +2,7 @@ from ..utils import _register_method, plot_montage, _is_port_in_use, Annealer, P
 from .liveplot import Liveplot
 from ..frontend.dashboard import _Dashboard
 from ..ops import op
+from ..loss import Loss
 import numpy as np
 import copy
 import pickle
@@ -192,13 +193,15 @@ def fit(
         if isinstance(m, torch.nn.Module) and not isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
             m.half()
             
-    def _fix_bn(m):
+    def _fix(m):
         if isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
+            m.float()
+        if type(m) == Loss.AdaptiveRobust:
             m.float()
             
     if fp16:
         self.model.apply(_to_half)
-        self.model.apply(_fix_bn)
+        self.model.apply(_fix)
     
     # For convergence
     bias_scale = parameter_manager.get_param('bias_scale', 1)
