@@ -3,6 +3,7 @@ from ..utils import _register_method, get_aux_out, _switch_swa_mode, ParameterMa
 from ..ops import op
 from ..models import Builder
 import math
+import matplotlib.pyplot as plt
 
 
 __methods__ = []
@@ -30,7 +31,7 @@ def _clear_source(m):
         pass
         
 @register_method
-def validate(self, plot_wrong = False, out = 'categorical', **kwargs):
+def validate(self, plot_wrong = -1, out = 'categorical', **kwargs):
     parameter_manager = ParameterManager(**kwargs)
     
     self.val_model.apply(_clear_source)
@@ -66,7 +67,7 @@ def validate(self, plot_wrong = False, out = 'categorical', **kwargs):
 
 
 @register_method
-def validate_fn(self, plot_wrong = False, out = 'categorical', **kwargs):
+def validate_fn(self, plot_wrong = -1, out = 'categorical', **kwargs):
     self.val_model.apply(to_eval_mode)
     
     parameter_manager = ParameterManager(**kwargs)
@@ -82,14 +83,20 @@ def validate_fn(self, plot_wrong = False, out = 'categorical', **kwargs):
     loss_record = 0
     metrics_record = {key.replace('*', ''): 0 for key in self.val_model.monitor_nodes}
     wrong_samples = []
+    wrong_samples_labels = []
 
     with torch.no_grad():
         batch_idx = 0
         while True:
             results = self.val_model({'phase': 1})
             
-            if plot_wrong:
-                wrong_samples.append(results[out])
+            if plot_wrong > 0:
+                x = results['x']
+                y = results['y']
+                wrong_index = results[out] != y
+                wrong_samples.append(x[wrong_index].detach().cpu())
+                g_label, t_label = results[out][wrong_index], y[wrong_index]
+                wrong_samples_labels += [(i, j) for i, j in zip(t_label, g_label)]
             
             loss = sum([results[i] for i in self.model.optimize_nodes])
 
@@ -118,6 +125,18 @@ def validate_fn(self, plot_wrong = False, out = 'categorical', **kwargs):
     for i in metrics_record:
         metrics_record[i] /= batch_idx
     
-    print(wrong_samples)
+    if plot_wrong > 0:
+        wrong_samples = torch.cat(wrong_samples)
+        wrong_samples = wrong_samples[:plot_wrong].float().numpy().transpose(0, 2, 3, 1)
+        wrong_samples_labels = wrong_samples_labels[:plot_wrong]
+        
+        _, arr = plt.subplots(3, 3, figsize=(15, 15))
+        for i in range(plot_wrong):
+            arr[i//3][i%3].imshow(wrong_samples[i])
+            arr[i//3][i%3].axis('off')
+            arr[i//3][i%3].set_title(f'{wrong_samples_labels[i][0]} -> {wrong_samples_labels[i][1]}')
+        plt.tight_layout()
+        plt.show()
+        print(wrong_samples.shape)
     
     return loss_record, metrics_record
