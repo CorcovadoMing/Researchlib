@@ -17,4 +17,4 @@ class _Name(nn.Module):
         if (type(x) == list or type(x) == tuple) and len(x) == 1:
             return x[0]
         else:
-            return torch.stack(x)
+            return x
