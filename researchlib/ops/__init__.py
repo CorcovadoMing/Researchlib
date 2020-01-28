@@ -57,10 +57,12 @@ from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation4
 from .pool import _CombinePool2d, _PixelShuffle2d
 
 from .n2v import N2V
+from .wrapper import Wrapper
 
 
 class op(object):
     N2V = N2V
+    Wrapper = Wrapper
     
     
     TemplateBank = _TemplateBank
