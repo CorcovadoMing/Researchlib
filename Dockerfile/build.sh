@@ -1,4 +1,6 @@
 #!/bin/sh
 
-docker build -t rf37535/researchlib:19.12.0 . && docker push rf37535/researchlib:19.12.0 && docker tag rf37535/researchlib:19.12.0 rf37535/researchlib && docker push rf37535/researchlib:latest
+VERSION=20.01
+
+docker build -t rf37535/researchlib:$VERSION . && docker push rf37535/researchlib:$VERSION && docker tag rf37535/researchlib:$VERSION rf37535/researchlib && docker push rf37535/researchlib:latest
 

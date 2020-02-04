@@ -133,9 +133,12 @@ RUN pip install altair vega_datasets
 RUN pip install torchlars
 RUN pip install kymatio scikit-cuda cupy
 
-# Unstagged 20.01
 RUN pip install git+git://github.com/deepmind/bsuite.git
+RUN pip install nevergrad[all]
+RUN pip install tifffile
+RUN pip install jupyterlab-nvdashboard
+RUN jupyter labextension install jupyterlab-nvdashboard
 
 # Version tag
-ENV _RESEARCHLIB_IMAGE_TAG 19.12.0
+ENV _RESEARCHLIB_IMAGE_TAG 20.01
 

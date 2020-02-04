@@ -2,7 +2,7 @@ from pynvml import *
 import os
 
 
-def pre_script(current_version):
+def pre_script(current_version, checkversion):
     nvmlInit()
     deviceCount = nvmlDeviceGetCount()
 
@@ -23,7 +23,7 @@ def pre_script(current_version):
         print(token + str(i) + ":", nvmlDeviceGetName(handle).decode('utf-8'))
     print()
     
-    print('Researchlib version', current_version)
+    print('Researchlib version', checkversion)
     print('Image version:', os.environ['_RESEARCHLIB_IMAGE_TAG'])
     print('Driver:', nvmlSystemGetDriverVersion().decode('utf-8'))
     print()

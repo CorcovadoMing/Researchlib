@@ -19,7 +19,7 @@ import seaborn as sns
 
 from ..logo import logo
 from ..pre_script import pre_script
-from ..version import version
+from ..version import version, checkversion
 from ..initial_frontend import initial_frontend
 
 # Print logo
@@ -29,7 +29,7 @@ logo()
 uploader()
 
 # Pre-script (GPU info, etc.,)
-pre_script(version)
+pre_script(version, checkversion)
 sns.set()
 sns.set_style("whitegrid", {'axes.grid': False})
 
