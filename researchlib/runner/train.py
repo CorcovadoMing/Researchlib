@@ -37,6 +37,7 @@ def train_fn(self, **kwargs):
     ema = parameter_manager.get_param('ema')
     ema_freq = parameter_manager.get_param('ema_freq')
     ema_momentum = parameter_manager.get_param('ema_momentum')
+    grad_clip = parameter_manager.get_param('grad_clip')
     support_set = parameter_manager.get_param('support_set')
     way = parameter_manager.get_param('way')
     shot = parameter_manager.get_param('shot')
@@ -93,6 +94,8 @@ def train_fn(self, **kwargs):
                     pass
                     
             for i in self.optimizer:
+                if grad_clip != 0:
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), grad_clip)
                 i.step()
                 i.zero_grad()
 

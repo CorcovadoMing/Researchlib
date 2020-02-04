@@ -168,6 +168,7 @@ def fit(
     # ----------------------------------------------
     # optimizers, (LR, warmup, weight_decay, etc.,)
     # ----------------------------------------------
+    grad_clip = parameter_manager.get_param('grad_clip', 0)
     accum_grad = parameter_manager.get_param('accum_grad', 1)
     self.accum_idx = 0
     
@@ -267,6 +268,7 @@ def fit(
                                                                      ema=ema,
                                                                      ema_freq=ema_freq,
                                                                      ema_momentum=ema_momentum,
+                                                                     grad_clip=grad_clip,
                                                                      support_set=support_set,
                                                                      way=way,
                                                                      shot=shot)
