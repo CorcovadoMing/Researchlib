@@ -139,6 +139,10 @@ RUN pip install tifffile
 RUN pip install jupyterlab-nvdashboard
 RUN jupyter labextension install jupyterlab-nvdashboard
 
+# Unstaged changes
+RUN pip install cvxpylayers
+RUN pip install pytorch-metric-learning
+
 # Version tag
 ENV _RESEARCHLIB_IMAGE_TAG 20.01
 
