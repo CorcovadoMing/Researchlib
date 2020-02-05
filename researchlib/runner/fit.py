@@ -275,6 +275,7 @@ def fit(
             liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer[0].param_groups][-1])
             liveplot.record(epoch, 'train_loss', loss_record)
             liveplot.record(epoch, 'norm', norm_record)
+            self.history.add({'norm': norm_record}, prefix = 'train')
             self.history.add({'loss': loss_record}, prefix = 'train')
             self.history.add(metrics_record, prefix = 'train')
             try:

@@ -92,10 +92,12 @@ def train_fn(self, **kwargs):
                     if p.requires_grad: p.grad.div_(accum_grad)
                 except:
                     pass
+            
+            if grad_clip != 0:
+                norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), grad_clip)
+                norm_record += norm
                     
             for i in self.optimizer:
-                if grad_clip != 0:
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), grad_clip)
                 i.step()
                 i.zero_grad()
 
@@ -133,7 +135,7 @@ def train_fn(self, **kwargs):
         Annealer._iteration_step()
     
     loss_record /= batch_idx
-    norm_record = (norm_record ** 0.5) / batch_idx
+    norm_record /= batch_idx
     
     for i in metrics_record:
         metrics_record[i] /= batch_idx
