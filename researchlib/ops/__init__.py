@@ -50,7 +50,7 @@ from .non_local import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _Gaus
 
 from .active_noise import _ActiveNoise
 from .rcl import _RConv2d
-from .io import _SetVariable, _UpdateVariable, _GetVariable, _Source, _Normalize, _Augmentation, _Generator, _Preloop
+from .io import _SetVariable, _UpdateVariable, _GetVariable, _Source, _Normalize, _Augmentation, _Generator, _Preloop, _RandAugment
 from .node import _To, _Subgraph, _Detach, _Name, _NoOp
 
 from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation42d, _Anneal, _Argmax, _Argmin, _Mixture, _RPT
@@ -93,6 +93,7 @@ class op(object):
     Source = _Source
     Normalize = _Normalize
     Augmentation = _Augmentation
+    RandAugment = _RandAugment
     Generator = _Generator
     Preloop = _Preloop
     

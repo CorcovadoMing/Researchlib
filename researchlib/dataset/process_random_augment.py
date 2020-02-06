@@ -3,8 +3,10 @@ import random
 from .preprocessing import preprocessing
 
 
-def _process_augment(
+def _process_random_augment(
     dp,
+    N, 
+    M,
     include_y,
     augmentor,
     data_key = 0,
@@ -14,7 +16,7 @@ def _process_augment(
     y = dp[label_key]
 
     # Augmentation
-    for op in augmentor:
+    for op in random.choices(augmentor, k=N):
         options = op.options()
         x = op(x, **random.choice(options))
 

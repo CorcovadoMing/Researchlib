@@ -11,13 +11,7 @@ def CIFAR10(normalize=True):
         _normalize = Node('normalize', op.Normalize('static', (128, 128, 128), (128, 128, 128)), 'augmentation')
     _source = [
         Node('source', op.Source(loader.TorchDataset('cifar10', True, True), loader.TorchDataset('cifar10', False, False))),
-        Node('augmentation', op.Augmentation([Augmentations.CircularCrop(32, 32, 8), 
-                                              Augmentations.HFlip(),
-                                              Augmentations.AutoContrast(),
-                                              Augmentations.Cutout(32, 32, 8),
-                                              Augmentations.Invert(),
-                                              Augmentations.Equalize(),
-                                             ]), 'source'),
+        Node('augmentation', op.RandAugment(2), 'source'),
         _normalize,
         Node('generator', op.Generator(), 'normalize'),
         Node('x', op.Name(), 'generator:0'),
