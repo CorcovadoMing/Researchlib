@@ -5,7 +5,7 @@ from collections import namedtuple
 class Cutout(namedtuple('Cutout', ('h', 'w', 'cut'))):
     def __call__(self, x, choice, x0, y0):
         if choice:
-            x[..., y0:y0 + self.cut, x0:x0 + self.cut] = 0
+            x[y0:y0 + self.cut, x0:x0 + self.cut, :] = 0
         return x
 
     def options(self):

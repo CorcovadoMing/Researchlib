@@ -6,16 +6,20 @@ from ..models import Node
 def CIFAR10(normalize=True):
     graph = {}
     if normalize:
-        _normalize = Node('normalize', op.Normalize('static', (125.31, 122.95, 113.87), (62.99, 62.09, 66.70)), 'source')
+        _normalize = Node('normalize', op.Normalize('static', (125.31, 122.95, 113.87), (62.99, 62.09, 66.70)), 'augmentation')
     else:
-        _normalize = Node('normalize', op.Normalize('static', (128, 128, 128), (128, 128, 128)), 'source')
+        _normalize = Node('normalize', op.Normalize('static', (128, 128, 128), (128, 128, 128)), 'augmentation')
     _source = [
         Node('source', op.Source(loader.TorchDataset('cifar10', True, True), loader.TorchDataset('cifar10', False, False))),
-        _normalize,
-        Node('preloop', op.Preloop(), 'normalize'),
         Node('augmentation', op.Augmentation([Augmentations.CircularCrop(32, 32, 8), 
-                                              Augmentations.HFlip()]), 'preloop'),
-        Node('generator', op.Generator(), 'augmentation'),
+                                              Augmentations.HFlip(),
+                                              Augmentations.AutoContrast(),
+                                              Augmentations.Cutout(32, 32, 8),
+                                              Augmentations.Invert(),
+                                              Augmentations.Equalize(),
+                                             ]), 'source'),
+        _normalize,
+        Node('generator', op.Generator(), 'normalize'),
         Node('x', op.Name(), 'generator:0'),
         Node('y', op.Name(), 'generator:1'),
     ]
@@ -34,9 +38,8 @@ def CIFAR100(normalize=True):
     _source = [
         Node('source', op.Source(loader.TorchDataset('cifar100', True, True), loader.TorchDataset('cifar100', False, False))),
         _normalize,
-        Node('preloop', op.Preloop(), 'normalize'),
         Node('augmentation', op.Augmentation([Augmentations.CircularCrop(32, 32, 8), 
-                                              Augmentations.HFlip()]), 'preloop'),
+                                              Augmentations.HFlip()]), 'source'),
         Node('generator', op.Generator(), 'augmentation'),
         Node('x', op.Name(), 'generator:0'),
         Node('y', op.Name(), 'generator:1'),
@@ -56,7 +59,6 @@ def MNIST(normalize=True):
     _source = [
         Node('source', op.Source(loader.TorchDataset('mnist', True, True), loader.TorchDataset('mnist', False, False))),
         _normalize,
-        Node('preloop', op.Preloop(), 'normalize'),
         Node('generator', op.Generator(), 'preloop'),
         Node('x', op.Name(), 'generator:0'),
         Node('y', op.Name(), 'generator:1'),
@@ -77,7 +79,6 @@ def ImageWoofFull(normalize=True, resize=128):
         Node('source', op.Source(loader.LFS.Classification.ImageWoofFull(True, True, resize),
                                  loader.LFS.Classification.ImageWoofFull(False, False, resize))),
         _normalize,
-        #Node('preloop', op.Preloop(), 'normalize'),
         Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//4), 
                                               Augmentations.NonlinearJitter(),
                                               Augmentations.HFlip(),

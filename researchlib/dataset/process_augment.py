@@ -14,7 +14,8 @@ def _process_augment(
     y = dp[label_key]
 
     # Augmentation
-    for op in augmentor:
+    random.shuffle(augmentor)
+    for op in augmentor[:2]:
         options = op.options()
         x = op(x, **random.choice(options))
 
