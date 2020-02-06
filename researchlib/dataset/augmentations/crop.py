@@ -9,11 +9,11 @@ class CircularCrop(namedtuple('CircularCrop', ('h', 'w', 'pad'))):
             x = x[y0:y0 + self.h, x0:x0 + self.w, :]
         return x
 
-    def options(self):
+    def options(self, prob=0.5):
         W, H = self.w + (2 * self.pad), self.h + (2 * self.pad)
         return [{
             'choice': b,
             'x0': x0,
             'y0': y0
-        } for b in [True, False] for x0 in range(W + 1 - self.w) for y0 in range(H + 1 - self.h)]
+        } for b in np.random.choice([True, False], p=[prob, 1-prob], size=1) for x0 in range(W + 1 - self.w) for y0 in range(H + 1 - self.h)]
 

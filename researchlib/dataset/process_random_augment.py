@@ -17,7 +17,7 @@ def _process_random_augment(
 
     # Augmentation
     for op in random.choices(augmentor, k=N):
-        options = op.options()
+        options = op.options(prob=1)
         x = op(x, **random.choice(options))
 
     return x, y

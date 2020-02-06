@@ -12,8 +12,8 @@ class Color(namedtuple('Color', ())):
             x = _to_numpy(x)
         return x
 
-    def options(self):
+    def options(self, prob=0.5):
         return [{
             'choice': b,
             'v': v
-        } for b in [True, False] for v in np.linspace(0.1, 1.9)]
+        } for b in np.random.choice([True, False], p=[prob, 1-prob], size=1) for v in np.linspace(0.1, 1.9)]
