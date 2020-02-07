@@ -6,6 +6,8 @@ from .wide_resblock import _WideResBlock
 from .vggblock import _VGGBlock
 from .whitening_block import _WhiteningBlock
 from .revblock import _RevBlock
+from .randwireblock import _RandWireBlock
+
 
 class block(object):
     WhiteningBlock = _WhiteningBlock
@@ -15,3 +17,4 @@ class block(object):
     WideResBlock = _WideResBlock
     VGGBlock = _VGGBlock
     RevBlock = _RevBlock
+    RandWireBlock = _RandWireBlock

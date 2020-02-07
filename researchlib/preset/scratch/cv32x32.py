@@ -4,6 +4,24 @@ from ...blocks import unit
 from torch import nn
 
 
+def RandWire(in_node, out_node, head=None, in_dim=3, **kwargs):
+    default_kwargs = dict(
+        _op = op.SepConv2d,
+        unit = unit.Conv,
+        input_dim = 3,
+        total_blocks = 3,
+        stem={'vgg': 1},
+        type='randwire',
+        filters=(64, -1),  
+    )
+    default_kwargs.update(kwargs)
+    model = [AutoConvNet(**default_kwargs)]
+    if head != None:
+        model.append(Heads(head, reduce_type='avg'))
+    return Node(out_node, nn.Sequential(*model), in_node)
+
+
+
 def Dawnfast(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs = dict(
         _op = op.Conv2d,
@@ -192,6 +210,8 @@ def PyramidNet272(in_node, out_node, head=None, in_dim=3, **kwargs):
 
 
 class CV32x32(object):
+    RandWire = RandWire
+    
     Dawnfast = Dawnfast
     
     ResNet18 = ResNet18
@@ -205,3 +225,4 @@ class CV32x32(object):
     
     WideResNet28x10 = WideResNet28x10
     PyramidNet272 = PyramidNet272
+    
