@@ -12,12 +12,13 @@ def RandWire(in_node, out_node, head=None, in_dim=3, **kwargs):
         total_blocks = 3,
         stem={'vgg': 1},
         type='randwire',
-        filters=(64, -1),  
+        filters=(64, -1),
+        preact=True,
     )
     default_kwargs.update(kwargs)
     model = [AutoConvNet(**default_kwargs)]
     if head != None:
-        model.append(Heads(head, reduce_type='avg'))
+        model.append(Heads(head, reduce_type='avg', channels_transform=True))
     return Node(out_node, nn.Sequential(*model), in_node)
 
 
