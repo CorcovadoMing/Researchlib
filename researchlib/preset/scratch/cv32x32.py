@@ -12,6 +12,7 @@ def RandWire(in_node, out_node, head=None, in_dim=3, **kwargs):
         total_blocks = 3,
         stem={'vgg': 1},
         type='randwire',
+        pool_freq=[2,3],
         filters=(64, -1),
         preact=True,
     )

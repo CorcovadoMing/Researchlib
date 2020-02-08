@@ -35,7 +35,7 @@ def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', li
         if attention else None,
 
         # Normal heads
-        op.__dict__[f'Conv{dim_type}'](last_dim, last_dim, 1) if channels_transform else None,
+        op.__dict__[f'Conv{dim_type}'](last_dim, last_dim, 1, bias = linear_bias) if channels_transform else None,
         op.__dict__[f'Adaptive{_reduce_name}Pool{dim_type}'](1),
         op.Flatten(),
         op.Linear(_reduce_dim_calibrate * last_dim, out_dim, bias = linear_bias)
