@@ -31,7 +31,6 @@ def _RandWireBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
     
     N = parameter_manager.get_param('N', 32)
-    C = parameter_manager.get_param('C', 109)
     K = parameter_manager.get_param('K', 4)
     P = parameter_manager.get_param('P', 0.75)
     

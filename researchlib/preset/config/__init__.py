@@ -1,7 +1,7 @@
 from .dawnfast import Dawnfast
 from .stepwise import Stepwise
 from .poly import Poly
-from .cosine import Cosine
+from .cosine import Cosine, CosineForRandWireModel
 
 
 class Config(object):
@@ -9,3 +9,4 @@ class Config(object):
     Stepwise = Stepwise
     Poly = Poly
     Cosine = Cosine
+    CosineForRandWireModel = CosineForRandWireModel
