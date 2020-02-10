@@ -126,7 +126,7 @@ def PreResNet18(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs.update(kwargs)
     model = [AutoConvNet(**default_kwargs)]
     if head != None:
-        model.append(Heads(head, reduce_type='avg', preact=True))
+        model.append(Heads(head, reduce_type='avg', channels_transform=True, preact=True))
     return Node(out_node, nn.Sequential(*model), in_node)
 
 
@@ -146,7 +146,7 @@ def PreResNet34(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs.update(kwargs)
     model = [AutoConvNet(**default_kwargs)]
     if head != None:
-        model.append(Heads(head, reduce_type='avg', preact=True))
+        model.append(Heads(head, reduce_type='avg', channels_transform=True, preact=True))
     return Node(out_node, nn.Sequential(*model), in_node)
 
 
@@ -166,7 +166,7 @@ def PreResNet50(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs.update(kwargs)
     model = [AutoConvNet(**default_kwargs)]
     if head != None:
-        model.append(Heads(head, reduce_type='avg', preact=True))
+        model.append(Heads(head, reduce_type='avg', channels_transform=True, preact=True))
     return Node(out_node, nn.Sequential(*model), in_node)
 
 

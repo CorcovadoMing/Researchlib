@@ -27,7 +27,6 @@ def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', li
     layers = [
         # Preact
         op.__dict__[f'BatchNorm{dim_type}'](last_dim) if preact else None,
-        op.ReLU(inplace=True) if preact else None,
 
         # Attention
         op.__dict__[f'DotNonLocalBlock{dim_type}'](last_dim) if attention else None,
