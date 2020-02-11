@@ -2,7 +2,7 @@ from .dawnfast import Dawnfast
 from .stepwise import Stepwise, Stepwise300
 from .poly import Poly
 from .cosine import Cosine, Cosine300, CosineForRandWireModel
-from .sm3 import SM3
+from .flat import Flat, Flat300
 
 
 class Config(object):
@@ -13,4 +13,5 @@ class Config(object):
     Cosine = Cosine
     Cosine300 = Cosine300
     CosineForRandWireModel = CosineForRandWireModel
-    SM3 = SM3
+    Flat = Flat
+    Flat300 = Flat300
