@@ -52,6 +52,7 @@ def fit(
     warmup_policy = 'linear',
     flatten = 0,
     flatten_lr = 0,
+    final_anneal = 0,
     _id = 'none',
     iterations = 0,
     multisteps = [],
@@ -247,6 +248,9 @@ def fit(
             if epoch == (epochs - flatten + 1):
                 Annealer.set_trace('lr', flatten * iterations, [flatten_lr, flatten_lr], 'iteration', _anneal_policy('fixed'))
                 Annealer._iteration_step(key = 'lr')
+                
+            if epoch == (epochs - final_anneal + 1):
+                Annealer.set_trace('lr', final_anneal * iterations, [lr, 0], 'iteration', _anneal_policy('linear'))
                 
 
             # ----------------------------------------------
