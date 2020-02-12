@@ -211,6 +211,7 @@ def PyramidNet272(in_node, out_node, head=None, in_dim=3, **kwargs):
     return Node(out_node, nn.Sequential(*model), in_node)
 
 
+
 class CV32x32(object):
     RandWire = RandWire
     

@@ -15,21 +15,36 @@ class _DilConv2d(nn.Module):
         padding_mode = 'zeros'
     ):
         super().__init__()
-        self.depth_conv = nn.Conv2d(in_channels, 
-                                    in_channels, 
-                                    kernel_size, 
-                                    stride=stride, 
-                                    padding=2*padding, 
-                                    dilation=2, 
-                                    groups=in_channels, 
-                                    bias=bias, 
+        self.kernel_size = kernel_size
+        if kernel_size > 1:
+            self.depth_conv = nn.Conv2d(in_channels, 
+                                        in_channels, 
+                                        kernel_size, 
+                                        stride=stride, 
+                                        padding=2*padding, 
+                                        dilation=2, 
+                                        groups=in_channels, 
+                                        bias=bias, 
+                                        padding_mode=padding_mode)
+            self.point_conv = nn.Conv2d(in_channels, 
+                                        out_channels, 
+                                        1, 
+                                        bias=bias)
+        else:
+            self.conv = nn.Conv2d(in_channels,
+                                    out_channels,
+                                    kernel_size,
+                                    stride=stride,
+                                    padding=padding,
+                                    dilation=dilation,
+                                    groups=groups,
+                                    bias=bias,
                                     padding_mode=padding_mode)
-        self.point_conv = nn.Conv2d(in_channels, 
-                                    out_channels, 
-                                    1, 
-                                    bias=bias)
 
     def forward(self, x):
-        return self.point_conv(self.depth_conv(x))
+        if self.kernel_size > 1:
+            return self.point_conv(self.depth_conv(x))
+        else:
+            return self.conv(x)
 
 

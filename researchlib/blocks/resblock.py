@@ -15,8 +15,8 @@ def _branch_function(config, parameter_manager, **kwargs):
     first_conv_kwargs.update(**kwargs)
     first_conv_kwargs.update(kernel_size=config.kernel_size, 
                           stride=1 if config.blur else config.stride, 
-                          padding=config.padding,
                           erased_act=True if (config.preact and config.erased_act) or config.preact_bn_shared else False,
+                          padding=config.padding,
                           do_pool=False,
                           do_norm=False if config.preact_bn_shared else config.do_norm,
                           do_share_banks=config.do_share_banks)
@@ -24,6 +24,7 @@ def _branch_function(config, parameter_manager, **kwargs):
     second_conv_kwargs = get_conv_config()
     second_conv_kwargs.update(**kwargs)
     second_conv_kwargs.update(do_pool=False,
+                              padding=config.padding,
                               erased_act=not config.preact,
                               do_share_banks=config.do_share_banks)
 
