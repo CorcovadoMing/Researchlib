@@ -24,7 +24,8 @@ def _get_op_type(type_object, cur_block, total_blocks, do_pool, do_expand):
         'vgg', 
         'dawn', 
         'residual', 
-        'residual-bottleneck', 
+        'residual-bottleneck',
+        'resnext-bottleneck',
         'wide-residual', 
         'whitening', 
         'rev-residual',
@@ -40,6 +41,8 @@ def _get_op_type(type_object, cur_block, total_blocks, do_pool, do_expand):
         _op_type = block.ResBlock
     elif _type == 'residual-bottleneck':
         _op_type = block.ResBottleneckBlock
+    elif _type == 'resnext-bottleneck':
+        _op_type = block.ResnextBottleneckBlock
     elif _type == 'wide-residual':
         _op_type = block.WideResBlock
     elif _type == 'whitening':
