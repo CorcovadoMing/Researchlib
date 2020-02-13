@@ -143,6 +143,7 @@ RUN jupyter labextension install jupyterlab-nvdashboard
 RUN pip install cvxpylayers
 RUN pip install pytorch-metric-learning
 RUN pip install git+https://github.com/facebookresearch/pytorch3d.git
+RUN pip install prenlp
 
 # Version tag
 ENV _RESEARCHLIB_IMAGE_TAG 20.01
