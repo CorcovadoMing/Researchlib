@@ -8,7 +8,7 @@ def Flat(**kwargs):
         accum_grad=1,
         fp16=True,
         final_anneal=15,
-        init='xavier',
+        init='kaiming_normal',
     )
     default_kwargs.update(kwargs)
     return default_kwargs
@@ -24,7 +24,7 @@ def Flat300(**kwargs):
         accum_grad=1,
         fp16=True,
         final_anneal=30,
-        init='xavier',
+        init='kaiming_normal',
     )
     default_kwargs.update(kwargs)
     return default_kwargs
