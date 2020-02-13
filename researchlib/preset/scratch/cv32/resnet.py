@@ -52,7 +52,7 @@ def ResNet50(in_node, out_node, head=None, in_dim=3, **kwargs):
         stem={'vgg': 1}, 
         type='residual-bottleneck', 
         pool_freq=[4,8,14],
-        filters=(64, -1)
+        filters=(256, -1)
     )
     default_kwargs.update(kwargs)
     model = [AutoConvNet(**default_kwargs)]
@@ -71,10 +71,9 @@ def ResNet110(in_node, out_node, head=None, in_dim=3, **kwargs):
         input_dim = in_dim,
         total_blocks = 54,
         stem={'vgg': 1}, 
-        type='residual',
-        shortcut='padding',
+        type='residual-bottleneck',
         pool_freq=[19,37],
-        filters=(64, -1)
+        filters=(256, -1)
     )
     default_kwargs.update(kwargs)
     model = [AutoConvNet(**default_kwargs)]
