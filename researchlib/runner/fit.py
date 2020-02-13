@@ -257,7 +257,7 @@ def fit(
             # Training stage
             # ----------------------------------------------
             liveplot.redis.set('stage', 'train')
-            liveplot.timer.clear()
+            liveplot.train_timer.clear()
             # Training function
             loss_record, norm_record, metrics_record = self.train_fn(liveplot=liveplot,
                                                                      mmixup_alpha=mmixup_alpha, 
@@ -292,6 +292,7 @@ def fit(
             # ----------------------------------------------
             if self.test_loader_length is not None:
                 liveplot.redis.set('stage', 'validate')
+                liveplot.val_timer.clear()
                 # Validation function
                 loss_record, metrics_record = self.validate_fn(liveplot=liveplot,
                                                                epoch=epoch,
