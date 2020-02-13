@@ -61,6 +61,45 @@ def ResNet50(in_node, out_node, head=None, in_dim=3, **kwargs):
     return Node(out_node, nn.Sequential(*model), in_node)
 
 
+def ResNet101(in_node, out_node, head=None, in_dim=3, **kwargs):
+    default_kwargs = dict(
+        _op = op.Conv2d,
+        unit = unit.Conv,
+        input_dim = in_dim,
+        total_blocks = 33,
+        stem={'vgg': 1}, 
+        type='residual-bottleneck', 
+        pool_freq=[4,8,31],
+        filters=(256, -1)
+    )
+    default_kwargs.update(kwargs)
+    model = [AutoConvNet(**default_kwargs)]
+    if head != None:
+        model.append(Heads(head, reduce_type='avg'))
+    return Node(out_node, nn.Sequential(*model), in_node)
+
+
+def ResNet152(in_node, out_node, head=None, in_dim=3, **kwargs):
+    default_kwargs = dict(
+        _op = op.Conv2d,
+        unit = unit.Conv,
+        input_dim = in_dim,
+        total_blocks = 50,
+        stem={'vgg': 1}, 
+        type='residual-bottleneck', 
+        pool_freq=[4,12,48],
+        filters=(256, -1)
+    )
+    default_kwargs.update(kwargs)
+    model = [AutoConvNet(**default_kwargs)]
+    if head != None:
+        model.append(Heads(head, reduce_type='avg'))
+    return Node(out_node, nn.Sequential(*model), in_node)
+
+
+
+# ----------------------------------------------------------------------------
+
 def ResNet110(in_node, out_node, head=None, in_dim=3, **kwargs):
     '''
         Deep Residual Learning for Image Recognition

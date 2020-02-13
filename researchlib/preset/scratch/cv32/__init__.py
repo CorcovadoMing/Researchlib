@@ -5,9 +5,9 @@ from torch import nn
 
 from .randwire import RandWire
 from .dawnfast import Dawnfast
-from .resnet import ResNet18, ResNet34, ResNet50, ResNet110
+from .resnet import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152, ResNet110
 from .resnext import ResNeXt50
-from .preresnet import PreResNet18, PreResNet34, PreResNet50
+from .preresnet import PreResNet18, PreResNet34, PreResNet50, PreResNet101, PreResNet152
 from .revnet import RevNet110
 from .wideresnet import WideResNet28x10
 from .pyramidnet import PyramidNet272
@@ -22,6 +22,9 @@ class CV32(object):
     ResNet18 = ResNet18
     ResNet34 = ResNet34
     ResNet50 = ResNet50
+    ResNet101 = ResNet101
+    ResNet152 = ResNet152
+    
     ResNet110 = ResNet110
     
     ResNeXt50 = ResNeXt50
@@ -31,6 +34,8 @@ class CV32(object):
     PreResNet18 = PreResNet18
     PreResNet34 = PreResNet34
     PreResNet50 = PreResNet50
+    PreResNet101 = PreResNet101
+    PreResNet152 = PreResNet152
     
     WideResNet28x10 = WideResNet28x10
     
