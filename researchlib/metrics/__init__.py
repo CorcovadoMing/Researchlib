@@ -11,6 +11,7 @@
 
 from .categorical import Categorical
 from .meta_categorical import MetaCategorical
+from .binary_categorical import BinaryCategorical
 from .acc import Acc
 from .ece import ECE
 from .l1 import L1
@@ -25,6 +26,8 @@ class Metrics(object):
     
     Categorical = Categorical
     MetaCategorical = MetaCategorical
+    BinaryCategorical = BinaryCategorical
+    
     Acc = Acc
     ECE = ECE
     L1 = L1

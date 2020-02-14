@@ -29,3 +29,11 @@ class NLLLoss(nn.Module):
     def forward(self, x, y):
         y = y.long()
         return F.nll_loss(x, y)
+    
+    
+class BCELoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+        
+    def forward(self, x, y):
+        return F.binary_cross_entropy(x, y.float())
