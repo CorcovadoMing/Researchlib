@@ -10,4 +10,4 @@ def _VGGBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
     new_kwargs = get_conv_config()
     new_kwargs.update(**kwargs)
     new_kwargs.update(do_share_banks=config.do_share_banks)
-    return _unit(prefix, _op, in_dim, out_dim, **new_kwargs)
+    return config._unit(config.prefix, config._op, config.in_dim, config.out_dim, **new_kwargs)

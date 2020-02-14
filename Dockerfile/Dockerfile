@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/pytorch:19.12-py3
+FROM nvcr.io/nvidia/pytorch:20.01-py3
 
 ARG ONNXRUNTIME_REPO=https://github.com/Microsoft/onnxruntime
 ARG ONNXRUNTIME_SERVER_BRANCH=master
@@ -29,7 +29,11 @@ RUN pip install torchtext spacy
 RUN pip install imageio numpy scipy opencv-python-headless scikit-image
 
 # Graph
-RUN pip install torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric
+#RUN pip install torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric
+RUN pip install torch-scatter==latest+cu101 torch-sparse==latest+cu101 -f https://s3.eu-central-1.amazonaws.com/pytorch-geometric.com/whl/torch-1.4.0.html
+RUN pip install torch-cluster
+RUN pip install torch-spline-conv
+RUN pip install torch-geometric
 
 # QRNN
 RUN pip install cupy
@@ -133,9 +137,19 @@ RUN pip install altair vega_datasets
 RUN pip install torchlars
 RUN pip install kymatio scikit-cuda cupy
 
-# Unstagged 20.01
 RUN pip install git+git://github.com/deepmind/bsuite.git
+RUN pip install nevergrad[all]
+RUN pip install tifffile
+RUN pip install jupyterlab-nvdashboard
+RUN jupyter labextension install jupyterlab-nvdashboard
+
+RUN pip install cvxpylayers
+RUN pip install pytorch-metric-learning
+RUN pip install git+https://github.com/facebookresearch/pytorch3d.git
+RUN pip install prenlp
+
+# Unstaged changes
 
 # Version tag
-ENV _RESEARCHLIB_IMAGE_TAG 19.12.0
+ENV _RESEARCHLIB_IMAGE_TAG 20.02
 

@@ -32,12 +32,12 @@ def get_norm_op(norm_type, dim, channel):
     return _return_op(mapping, norm_type)(channel)
 
 
-def get_act_op(act_type):
+def get_act_op(act_type, inplace=True):
     mapping = {
-        'relu': partial(op.ReLU, inplace=True),
-        'celu': partial(op.CELU, alpha=0.3, inplace=True),
-        'elu': partial(op.ELU, inplace=True),
-        'leaky_relu': partial(op.LeakyReLU, negative_slope=0.2, inplace=True),
+        'relu': partial(op.ReLU, inplace=inplace),
+        'celu': partial(op.CELU, alpha=0.3, inplace=inplace),
+        'elu': partial(op.ELU, inplace=inplace),
+        'leaky_relu': partial(op.LeakyReLU, negative_slope=0.2, inplace=inplace),
     }
     return _return_op(mapping, act_type)()
 

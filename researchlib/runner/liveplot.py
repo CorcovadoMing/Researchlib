@@ -46,7 +46,9 @@ class Liveplot:
         self.history = hl.History()
         self.text_table = Texttable(max_width = 0)  #unlimited
         self.text_table.set_precision(4)
-        self.timer = Timer(train_iteration)
+        self.train_timer = Timer(train_iteration)
+        if val_iteration:
+            self.val_timer = Timer(val_iteration)
         self.redis = redis.Redis()
         self.redis.set('progress', 0)
         self.redis.set('desc', '')
@@ -167,7 +169,7 @@ class Liveplot:
             ])
         ]
         metrics_collection = ''.join(metrics_collection)
-        misc, progress = self.timer.output(batch_idx)
+        misc, progress = self.train_timer.output(batch_idx)
         self.cache = (epoch, loss_record, metrics_collection, track_best, misc)
         self.train_progress_bar.value = batch_idx
         self.train_progress_label_text.value = f'Epoch: {epoch}, Loss: {self._process_num(loss_record)}, {metrics_collection}, Track best: {self._process_num(track_best)}, {misc}'
@@ -184,7 +186,7 @@ class Liveplot:
             ])
         ]
         metrics_collection = ''.join(metrics_collection)
-        misc, progress = self.timer.output(batch_idx)
+        misc, progress = self.val_timer.output(batch_idx)
         self.cache = (epoch, loss_record, metrics_collection, track_best, misc)
         self.val_progress_bar.value = batch_idx
         self.val_progress_label_text.value = f'Epoch: {epoch}, Loss: {self._process_num(loss_record)}, {metrics_collection}, Track best: {self._process_num(track_best)}, {misc}'

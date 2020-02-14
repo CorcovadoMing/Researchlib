@@ -23,7 +23,7 @@ from .template_bank import _TemplateBank
 
 #============================================================================
 
-from .conv_variants import _SConv2d
+from .conv_variants import _SConv2d, _SepConv2d, _DilConv2d
 
 from .activator import _GeLU, _Mish, _Swish, _DropReLU, _LogSoftmax, _Softmax, _LogSparsemax, _Sparsemax, _FTSwishPlus, _TReLU
 
@@ -50,16 +50,25 @@ from .non_local import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _Gaus
 
 from .active_noise import _ActiveNoise
 from .rcl import _RConv2d
-from .io import _SetVariable, _UpdateVariable, _GetVariable, _Source, _Normalize, _Augmentation, _Generator, _Preloop
+from .io import _SetVariable, _UpdateVariable, _GetVariable, _Source, _Normalize, _Augmentation, _Generator, _Preloop, _RandAugment
 from .node import _To, _Subgraph, _Detach, _Name, _NoOp
 
 from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation42d, _Anneal, _Argmax, _Argmin, _Mixture, _RPT
 from .pool import _CombinePool2d, _PixelShuffle2d
 
+from .n2v import N2V
+from .wrapper import Wrapper
+
+
 class op(object):
+    N2V = N2V
+    Wrapper = Wrapper
+    
+    
     TemplateBank = _TemplateBank
     SConv2d = _SConv2d
-    
+    SepConv2d = _SepConv2d
+    DilConv2d = _DilConv2d
     
     # Pool
     CombinePool2d = _CombinePool2d
@@ -85,6 +94,7 @@ class op(object):
     Source = _Source
     Normalize = _Normalize
     Augmentation = _Augmentation
+    RandAugment = _RandAugment
     Generator = _Generator
     Preloop = _Preloop
     

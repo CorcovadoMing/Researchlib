@@ -3,6 +3,7 @@ from .noise2d import Noise2d
 from .renoir import RENOIR
 from .test import Test
 from .coil100 import COIL100
+from .bsd68 import BSD68
 
 
 class Restoration(object):
@@ -11,3 +12,4 @@ class Restoration(object):
     RENOIR = RENOIR
     Test = Test
     COIL100 = COIL100
+    BSD68 = BSD68

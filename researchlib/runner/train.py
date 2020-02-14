@@ -37,6 +37,7 @@ def train_fn(self, **kwargs):
     ema = parameter_manager.get_param('ema')
     ema_freq = parameter_manager.get_param('ema_freq')
     ema_momentum = parameter_manager.get_param('ema_momentum')
+    grad_clip = parameter_manager.get_param('grad_clip')
     support_set = parameter_manager.get_param('support_set')
     way = parameter_manager.get_param('way')
     shot = parameter_manager.get_param('shot')
@@ -91,6 +92,10 @@ def train_fn(self, **kwargs):
                     if p.requires_grad: p.grad.div_(accum_grad)
                 except:
                     pass
+            
+            if grad_clip != 0:
+                norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), grad_clip)
+                norm_record += norm
                     
             for i in self.optimizer:
                 i.step()
@@ -130,7 +135,7 @@ def train_fn(self, **kwargs):
         Annealer._iteration_step()
     
     loss_record /= batch_idx
-    norm_record = (norm_record ** 0.5) / batch_idx
+    norm_record /= batch_idx
     
     for i in metrics_record:
         metrics_record[i] /= batch_idx

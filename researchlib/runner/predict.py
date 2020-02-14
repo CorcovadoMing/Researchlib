@@ -37,8 +37,6 @@ def _clear_source(m):
         
 @register_method
 def predict(self, dict_input, outputs=None, **kwargs):
-    parameter_manager = ParameterManager(**kwargs)
-    
     try:
         self.val_model
     except:
@@ -65,6 +63,7 @@ def predict_fn(self, dict_input, outputs, **kwargs):
     
     parameter_manager = ParameterManager(**kwargs)
 
+    fp16 = parameter_manager.get_param('fp16', False)
     support_set = parameter_manager.get_param('support_set')
     way = parameter_manager.get_param('way')
     shot = parameter_manager.get_param('shot')
@@ -79,7 +78,9 @@ def predict_fn(self, dict_input, outputs, **kwargs):
                 normalize_fn = v[0].process_single_fn
                 
         dict_input['x'], dict_input['y'] = normalize_fn((dict_input['x'], dict_input['y']))
-        dict_input['x'] = torch.from_numpy(dict_input['x']).unsqueeze(0).cuda().half()
+        dict_input['x'] = torch.from_numpy(dict_input['x']).unsqueeze(0).cuda()
+        if fp16:
+            dict_input['x'] = dict_input['x'].half()
         dict_input['y'] = torch.from_numpy(dict_input['y']).unsqueeze(0).cuda()
         
         results = self.val_model(dict_input)

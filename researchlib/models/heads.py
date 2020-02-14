@@ -5,7 +5,7 @@ from ..blocks.unit import unit
 from torch import nn
 
 
-def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', linear_bias = False, use_subgraph = False, **kwargs):
+def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', linear_bias = False, channels_transform = False, use_subgraph = False, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
 
     last_dim = parameter_manager.get_param('last_dim', None)
@@ -27,7 +27,6 @@ def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', li
     layers = [
         # Preact
         op.__dict__[f'BatchNorm{dim_type}'](last_dim) if preact else None,
-        op.ReLU(inplace=True) if preact else None,
 
         # Attention
         op.__dict__[f'DotNonLocalBlock{dim_type}'](last_dim) if attention else None,
@@ -35,6 +34,7 @@ def Heads(out_dim, attention = False, preact = False, reduce_type = 'concat', li
         if attention else None,
 
         # Normal heads
+        op.__dict__[f'Conv{dim_type}'](last_dim, last_dim, 1, bias = linear_bias) if channels_transform else None,
         op.__dict__[f'Adaptive{_reduce_name}Pool{dim_type}'](1),
         op.Flatten(),
         op.Linear(_reduce_dim_calibrate * last_dim, out_dim, bias = linear_bias)

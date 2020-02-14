@@ -22,9 +22,15 @@ _app.layout = html.Div(
         dbc.Navbar(
             html.A(
                 # Use row and col to control vertical alignment of logo / brand
-                dbc.Row(
-                    [
+                dbc.Row([
                         dbc.Col(dbc.NavbarBrand("Researchlib Dashboard", className = "ml-2")),
+                        dbc.Col(
+                            dbc.DropdownMenu(
+                                label = 'Experiments',
+                                id = 'experiments_menu',
+                                children=[dbc.DropdownMenuItem('Loading')],
+                            )
+                        ),
                     ],
                     align = "left",
                     no_gutters = True,
@@ -74,13 +80,6 @@ _app.layout = html.Div(
 
         # Experiments choose (TODO)
         html.Div([
-            dcc.Tabs(
-                id = "tabs",
-                value = 'tab-0',
-                children = [
-                    dcc.Tab(label = 'Loading', value = 'tab-0'),
-                ]
-            ),
             dbc.Card(
                 dbc.CardBody([
                     html.Div(id = 'live-update-text'),
@@ -103,7 +102,7 @@ _app.layout = html.Div(
 @_app.callback([
     Output('live-update-text', 'children'),
     Output('progress', 'value'),
-    Output('tabs', 'children')
+    Output('experiments_menu', 'children')
 ], [Input('text-update', 'n_intervals')])
 def _update_desc(n):
     r = redis.Redis()
@@ -113,20 +112,20 @@ def _update_desc(n):
     stage_color = {'train': 'success', 'validate': 'danger'}
     style = {'padding': '5px', 'fontSize': '16px'}
 
-    tabs = []
+    experiments_menu = []
     experiments = pickle.loads(r.get('experiment'))
     for i, name in enumerate(experiments):
-        tabs.append(dcc.Tab(label = str(name), value = 'tab-' + str(i)))
-    if len(tabs) == 0:
-        tabs.append(dcc.Tab(label = 'Loading', value = 'tab-0'))
+        experiments_menu.append(dbc.DropdownMenuItem(str(name)))
+    if len(experiments_menu) == 0:
+        experiments_menu.append(dbc.DropdownMenuItem('No Experiment founded'))
 
     if stage == 'stop':
-        return [html.Span(f'{desc}', style = style)], value, tabs
+        return [html.Span(f'{desc}', style = style)], value, experiments_menu
     else:
         return [
             dbc.Spinner(color = stage_color[stage], type = "grow"),
             html.Span(f'{desc}', style = style)
-        ], value, tabs
+        ], value, experiments_menu
 
 
 def _add_trace(fig, data, key, name, row_index, col_index):
@@ -181,10 +180,11 @@ def _update_loss_live(n):
     fig = plotly.subplots.make_subplots(rows = 1, cols = 1, subplot_titles = ('Loss', ))
 
     fig['layout']['margin'] = {'l': 20, 'r': 20, 'b': 20, 't': 20}
-
-    fig['layout']['legend'] = {'x': 0, 'y': 1, 'xanchor': 'left'}
-
+    
+    fig.update_layout(template='plotly_white')
+    fig.update_layout(legend_orientation="h")
     fig.update_layout(autosize = True, showlegend = True, height = 200)
+    
     fig = _add_trace(fig, data, 'train_loss', 'Train Loss', 1, 1)
     fig = _add_trace(fig, data, 'val_loss', 'Validation Loss', 1, 1)
     return fig
@@ -198,9 +198,9 @@ def _update_acc_live(n):
     fig = plotly.subplots.make_subplots(rows = 1, cols = 1, subplot_titles = ('Accuracy', ))
 
     fig['layout']['margin'] = {'l': 20, 'r': 20, 'b': 20, 't': 20}
-
-    fig['layout']['legend'] = {'x': 0, 'y': 1, 'xanchor': 'left'}
-
+    
+    fig.update_layout(template='plotly_white')
+    fig.update_layout(legend_orientation="h")
     fig.update_layout(autosize = True, showlegend = True, height = 200)
 
     fig = _add_trace(fig, data, 'train_acc', 'Train Accuracy', 1, 1)

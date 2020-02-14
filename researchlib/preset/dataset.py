@@ -6,16 +6,14 @@ from ..models import Node
 def CIFAR10(normalize=True):
     graph = {}
     if normalize:
-        _normalize = Node('normalize', op.Normalize('static', (125.31, 122.95, 113.87), (62.99, 62.09, 66.70)), 'source')
+        _normalize = Node('normalize', op.Normalize('static', (125.31, 122.95, 113.87), (62.99, 62.09, 66.70)), 'augmentation')
     else:
-        _normalize = Node('normalize', op.Normalize('static', (128, 128, 128), (128, 128, 128)), 'source')
+        _normalize = Node('normalize', op.Normalize('static', (128, 128, 128), (128, 128, 128)), 'augmentation')
     _source = [
         Node('source', op.Source(loader.TorchDataset('cifar10', True, True), loader.TorchDataset('cifar10', False, False))),
+        Node('augmentation', op.RandAugment(2), 'source'),
         _normalize,
-        Node('preloop', op.Preloop(), 'normalize'),
-        Node('augmentation', op.Augmentation([Augmentations.CircularCrop(32, 32, 4), 
-                                              Augmentations.HFlip()]), 'preloop'),
-        Node('generator', op.Generator(), 'augmentation'),
+        Node('generator', op.Generator(), 'normalize'),
         Node('x', op.Name(), 'generator:0'),
         Node('y', op.Name(), 'generator:1'),
     ]
@@ -34,9 +32,8 @@ def CIFAR100(normalize=True):
     _source = [
         Node('source', op.Source(loader.TorchDataset('cifar100', True, True), loader.TorchDataset('cifar100', False, False))),
         _normalize,
-        Node('preloop', op.Preloop(), 'normalize'),
-        Node('augmentation', op.Augmentation([Augmentations.CircularCrop(32, 32, 4), 
-                                              Augmentations.HFlip()]), 'preloop'),
+        Node('augmentation', op.Augmentation([Augmentations.CircularCrop(32, 32, 8), 
+                                              Augmentations.HFlip()]), 'source'),
         Node('generator', op.Generator(), 'augmentation'),
         Node('x', op.Name(), 'generator:0'),
         Node('y', op.Name(), 'generator:1'),
@@ -56,7 +53,6 @@ def MNIST(normalize=True):
     _source = [
         Node('source', op.Source(loader.TorchDataset('mnist', True, True), loader.TorchDataset('mnist', False, False))),
         _normalize,
-        Node('preloop', op.Preloop(), 'normalize'),
         Node('generator', op.Generator(), 'preloop'),
         Node('x', op.Name(), 'generator:0'),
         Node('y', op.Name(), 'generator:1'),
@@ -77,11 +73,10 @@ def ImageWoofFull(normalize=True, resize=128):
         Node('source', op.Source(loader.LFS.Classification.ImageWoofFull(True, True, resize),
                                  loader.LFS.Classification.ImageWoofFull(False, False, resize))),
         _normalize,
-        #Node('preloop', op.Preloop(), 'normalize'),
-        Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//8), 
+        Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//4), 
                                               Augmentations.NonlinearJitter(),
                                               Augmentations.HFlip(),
-                                              Augmentations.Cutout(resize, resize, resize//8)]), 'normalize'),
+                                              Augmentations.Cutout(resize, resize, resize//4)]), 'normalize'),
         Node('generator', op.Generator(), 'augmentation'),
         Node('x', op.Name(), 'generator:0'),
         Node('y', op.Name(), 'generator:1'),
@@ -103,7 +98,7 @@ def ImageNetteFull(normalize=True, resize=128):
                                  loader.LFS.Classification.ImageNetteFull(False, False, resize))),
         _normalize,
         #Node('preloop', op.Preloop(), 'normalize'),
-        Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//8),
+        Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//4),
                                               Augmentations.HFlip()]), 'normalize'),
         Node('generator', op.Generator(), 'augmentation'),
         Node('x', op.Name(), 'generator:0'),
@@ -123,11 +118,8 @@ def Dice(name, normalize=True, resize=128):
         _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
     _source = [
         Node('source', op.Source(loader.LFS.Restoration.Dice(name, True, resize), 
-                                 loader.LFS.Restoration.Dice(name, False, resize))),
+                                 loader.LFS.Restoration.Dice('1000nactest2', False, resize))),
         _normalize,
-        #Node('preloop', op.Preloop(), 'normalize'),
-        #Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//8),
-        #                                      Augmentations.HFlip()]), 'normalize'),
         Node('generator', op.Generator(), 'normalize'),
         Node('x', op.Name(), 'generator:0'),
         Node('y', op.Name(), 'generator:1'),
@@ -149,7 +141,7 @@ def Noise2d(name, normalize=True, resize=128):
                                  loader.LFS.Restoration.Noise2d(name, True, False, resize))),
         _normalize,
         #Node('preloop', op.Preloop(), 'normalize'),
-        #Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//8),
+        #Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//4),
         #                                      Augmentations.HFlip()]), 'normalize'),
         Node('generator', op.Generator(), 'normalize'),
         Node('x', op.Name(), 'generator:0'),
@@ -172,7 +164,7 @@ def BreastCancer(normalize=True, resize=128):
                                  loader.LFS.Medical.BreastCancer(True, resize))),
         _normalize,
         #Node('preloop', op.Preloop(), 'normalize'),
-        #Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//8),
+        #Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//4),
         #                                      Augmentations.HFlip()]), 'normalize'),
         Node('generator', op.Generator(), 'normalize'),
         Node('x', op.Name(), 'generator:0'),
@@ -195,7 +187,7 @@ def RENOIR(normalize=True, resize=128):
                                  loader.LFS.Restoration.RENOIR(True, resize))),
         _normalize,
         #Node('preloop', op.Preloop(), 'normalize'),
-        #Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//8),
+        #Node('augmentation', op.Augmentation([Augmentations.CircularCrop(resize, resize, resize//4),
         #                                      Augmentations.HFlip()]), 'normalize'),
         Node('generator', op.Generator(), 'normalize'),
         Node('x', op.Name(), 'generator:0'),
@@ -248,6 +240,26 @@ def COIL100(name, normalize=True, resize=256, merge_train_val=True):
     return graph
 
 
+def BSD68(name, normalize=True, resize=None, merge_train_val=True):
+    graph = {}
+    if normalize:
+        _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
+    else:
+        _normalize = Node('normalize', op.Normalize('static', (128,), (128,)), 'source')
+    _source = [
+        Node('source', op.Source(loader.LFS.Restoration.BSD68(name, True, True, merge_train_val, resize),
+                                 loader.LFS.Restoration.BSD68(name, False, False, merge_train_val, resize))),
+        _normalize,
+        Node('generator', op.Generator(), 'normalize'),
+        Node('x', op.Name(), 'generator:0'),
+        Node('y', op.Name(), 'generator:1'),
+    ]
+    for i in _source:
+        node, node_type = i
+        graph.update(node)
+    return graph
+
+
 
 
 class Dataset(object):
@@ -263,3 +275,4 @@ class Dataset(object):
     RENOIR = RENOIR
     Test = Test
     COIL100 = COIL100
+    BSD68 = BSD68

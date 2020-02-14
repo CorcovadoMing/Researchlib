@@ -1,7 +1,7 @@
 from .utils import utils
 
 # RL Dataset
-from .environment import GymEnv
+from .environment import GymEnv, BSuiteEnv
 
 # Vision Dataset
 from .np_dataset import _NumpyDataset

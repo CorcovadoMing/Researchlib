@@ -23,10 +23,9 @@ def _process_single(
         x = injector(x)
 
     # Normalize
-    for op in normalizer:
-        x = op(x)
-        if do_y:
-            y = op(y)
+    x = normalizer(x)
+    if do_y:
+        y = normalizer(y)
 
     # Transfer to right format for pytorch
     if transpose is not None:

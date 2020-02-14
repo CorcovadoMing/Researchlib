@@ -8,9 +8,9 @@ this_dir, _ = os.path.split(__file__)
 
 def Test(name, is_train, shuffle = True, resize = None):
     if is_train:
-        x = np.load(os.path.join(this_dir, f'speckle_v{name}_x.npy'))
-        y = np.load(os.path.join(this_dir, f'speckle_v{name}_y.npy'))
+        x = np.load(os.path.join(this_dir, f'{name}_x.npy'))
+        y = np.load(os.path.join(this_dir, f'{name}_y.npy'))
     else:
-        x = np.load(os.path.join(this_dir, f'speckle_v{name}_testx.npy'))
-        y = np.load(os.path.join(this_dir, f'speckle_v{name}_testy.npy'))
+        x = np.load(os.path.join(this_dir, f'{name}_testx.npy'))
+        y = np.load(os.path.join(this_dir, f'{name}_testy.npy'))
     return _NumpyDataset(x, y, shuffle = shuffle, name = '', size = resize)

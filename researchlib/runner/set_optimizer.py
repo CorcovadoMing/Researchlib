@@ -6,6 +6,7 @@ from .optimizer.adamw import AdamW
 from .optimizer.cocob import Cocob
 from .optimizer.lookahead import Lookahead
 from .optimizer.nag import NAG
+from .optimizer.sm3 import SM3
 from adabound import AdaBound
 
 from ..utils import _register_method, update_optim
@@ -35,6 +36,7 @@ def set_optimizer(self, lars=False):
         'adabound': partial(AdaBound, lr = 1e-3, final_lr = 0.1),
         'adagrad': Adagrad,
         'adafactor': partial(Adafactor, lr = 1e-3),
+        'sm3': partial(SM3, eps = 1e-4),
     }
 
     loss_params = []

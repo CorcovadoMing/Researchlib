@@ -2,6 +2,7 @@ from ..utils import _register_method, plot_montage, _is_port_in_use, Annealer, P
 from .liveplot import Liveplot
 from ..frontend.dashboard import _Dashboard
 from ..ops import op
+from ..loss import Loss
 import numpy as np
 import copy
 import pickle
@@ -51,6 +52,7 @@ def fit(
     warmup_policy = 'linear',
     flatten = 0,
     flatten_lr = 0,
+    final_anneal = 0,
     _id = 'none',
     iterations = 0,
     multisteps = [],
@@ -58,6 +60,7 @@ def fit(
     init = None,
     same_init = False,
     freeze = {},
+    save_checkpoint = True,
     **kwargs
 ):
     
@@ -166,6 +169,7 @@ def fit(
     # ----------------------------------------------
     # optimizers, (LR, warmup, weight_decay, etc.,)
     # ----------------------------------------------
+    grad_clip = parameter_manager.get_param('grad_clip', 0)
     accum_grad = parameter_manager.get_param('accum_grad', 1)
     self.accum_idx = 0
     
@@ -191,13 +195,15 @@ def fit(
         if isinstance(m, torch.nn.Module) and not isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
             m.half()
             
-    def _fix_bn(m):
+    def _fix(m):
         if isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
+            m.float()
+        if type(m) == Loss.AdaptiveRobust:
             m.float()
             
     if fp16:
         self.model.apply(_to_half)
-        self.model.apply(_fix_bn)
+        self.model.apply(_fix)
     
     # For convergence
     bias_scale = parameter_manager.get_param('bias_scale', 1)
@@ -243,12 +249,15 @@ def fit(
                 Annealer.set_trace('lr', flatten * iterations, [flatten_lr, flatten_lr], 'iteration', _anneal_policy('fixed'))
                 Annealer._iteration_step(key = 'lr')
                 
+            if epoch == (epochs - final_anneal + 1):
+                Annealer.set_trace('lr', final_anneal * iterations, [lr, 0], 'iteration', _anneal_policy('linear'))
+                
 
             # ----------------------------------------------
             # Training stage
             # ----------------------------------------------
             liveplot.redis.set('stage', 'train')
-            liveplot.timer.clear()
+            liveplot.train_timer.clear()
             # Training function
             loss_record, norm_record, metrics_record = self.train_fn(liveplot=liveplot,
                                                                      mmixup_alpha=mmixup_alpha, 
@@ -263,12 +272,14 @@ def fit(
                                                                      ema=ema,
                                                                      ema_freq=ema_freq,
                                                                      ema_momentum=ema_momentum,
+                                                                     grad_clip=grad_clip,
                                                                      support_set=support_set,
                                                                      way=way,
                                                                      shot=shot)
             liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer[0].param_groups][-1])
             liveplot.record(epoch, 'train_loss', loss_record)
             liveplot.record(epoch, 'norm', norm_record)
+            self.history.add({'norm': norm_record}, prefix = 'train')
             self.history.add({'loss': loss_record}, prefix = 'train')
             self.history.add(metrics_record, prefix = 'train')
             try:
@@ -281,6 +292,7 @@ def fit(
             # ----------------------------------------------
             if self.test_loader_length is not None:
                 liveplot.redis.set('stage', 'validate')
+                liveplot.val_timer.clear()
                 # Validation function
                 loss_record, metrics_record = self.validate_fn(liveplot=liveplot,
                                                                epoch=epoch,
@@ -298,23 +310,27 @@ def fit(
             # ----------------------------------------------
             # Check point
             # ----------------------------------------------
+            
             epoch_str = str(self.epoch)
             if self.val_model.checkpoint_node is not None:
-                critic = metrics_record[self.val_model.checkpoint_node]
+                critic = metrics_record[self.val_model.checkpoint_node.replace('*', '')]
             else:
                 critic = None
 
-            # Checkpoint
-            checkpoint_model_name = os.path.join(
-                self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(self.epoch)
-            )
-            self.save(checkpoint_model_name)
+            if save_checkpoint:
+                checkpoint_model_name = os.path.join(
+                    self.checkpoint_path, 'checkpoint_' + _id + '_epoch_' + str(self.epoch)
+                )
+                self.save(checkpoint_model_name)
+                
             if self.val_model.checkpoint_state is None:
                 self.val_model.checkpoint_state = critic
+            
             if critic is not None and self.val_model.checkpoint_mode(critic, self.val_model.checkpoint_state) == critic:
                 self.val_model.checkpoint_state = critic
-                best_checkpoint_model_name = os.path.join(self.checkpoint_path, 'best_' + _id)
-                self.save(best_checkpoint_model_name)
+                if save_checkpoint:
+                    best_checkpoint_model_name = os.path.join(self.checkpoint_path, 'best_' + _id)
+                    self.save(best_checkpoint_model_name)
                 epoch_str += '*'
             
             # ----------------------------------------------

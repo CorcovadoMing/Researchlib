@@ -44,7 +44,7 @@ class Runner:
     def __init__(
         self,
         model,
-        optimizer = None,
+        optimizer = 'sm3',
         **kwargs
     ):
         self.__class__.__runner_settings__ = locals()

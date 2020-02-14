@@ -9,7 +9,7 @@ def Dawnfast(**kwargs):
         ema_freq=5, 
         bias_scale=64,
         batch_size=512,
-        init='default'
+        init='kaiming_normal'
     )
     default_kwargs.update(kwargs)
     return default_kwargs

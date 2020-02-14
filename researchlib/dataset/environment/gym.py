@@ -13,6 +13,15 @@ class GymEnv(Env):
         self.reset()
         print('Env', name, 'is with', self.env.observation_space, 'observed space')
         print('Env', name, 'is with', self.env.action_space, 'action space')
+        
+    def action_space(self):
+        return self.env.action_space.n, self.env.action_space.dtype
+    
+    def observation_space(self):
+        return self.env.observation_space.shape
+    
+    def samples(self):
+        return self.env.action_space.sample()
 
     def step(self, action):
         return self.env.step(action)

@@ -7,7 +7,7 @@ def Poly(**kwargs):
         batch_size=128,
         accum_grad=1,
         fp16=True,
-        init='xavier',
+        init='kaiming_normal',
     )
     default_kwargs.update(kwargs)
     return default_kwargs

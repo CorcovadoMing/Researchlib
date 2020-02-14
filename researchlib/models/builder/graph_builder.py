@@ -132,32 +132,39 @@ class _Graph(nn.Module):
         
         for path, (val, _) in self.graph.items(): 
             setattr(self, path.replace('/', '_'), val)
-            
+    
+    def _parse_node(self, cur_node):
+        node, node_type = cur_node
+        if node_type == '__VISUAL__':
+            self.visualize_nodes += list(node.keys())
+        elif node_type == '__OUTPUT__':
+            self.output_nodes += list(node.keys())
+        elif node_type == '__OPTIMIZE__':
+            self.optimize_nodes += list(node.keys())
+        elif node_type == '__MONITOR_MAX__':
+            self.monitor_nodes += list(node.keys())
+            self.checkpoint_mode = max
+            self.checkpoint_node = list(node.keys())[0]
+        elif node_type == '__MONITOR_MIN__':
+            self.monitor_nodes += list(node.keys())
+            self.checkpoint_mode = min
+            self.checkpoint_node = list(node.keys())[0]
+        elif node_type == '__MONITOR__':
+            self.monitor_nodes += list(node.keys())
+        return node
     
     def _expand_net(self, net):
         result = {}
         for i in net:
-            if type(i) == tuple or type(i) == list:
-                node, node_type = i
-                if node_type == '__VISUAL__':
-                    self.visualize_nodes += list(node.keys())
-                elif node_type == '__OUTPUT__':
-                    self.output_nodes += list(node.keys())
-                elif node_type == '__OPTIMIZE__':
-                    self.optimize_nodes += list(node.keys())
-                elif node_type == '__MONITOR_MAX__':
-                    self.monitor_nodes += list(node.keys())
-                    self.checkpoint_mode = max
-                    self.checkpoint_node = list(node.keys())[0]
-                elif node_type == '__MONITOR_MIN__':
-                    self.monitor_nodes += list(node.keys())
-                    self.checkpoint_mode = min
-                    self.checkpoint_node = list(node.keys())[0]
-                elif node_type == '__MONITOR__':
-                    self.monitor_nodes += list(node.keys())
+            if (type(i) == tuple or type(i) == list) and len(i) == 2:
+                result.update(self._parse_node(i))
+            elif (type(i) == tuple or type(i) == list):
+                for j in i:
+                    result.update(self._parse_node(j))
+            elif type(i) == dict:
+                result.update(i)
             else:
-                node = i
-            result.update(node)
+                raise ValueError(f'Unknown node type {type(i)}')
         return result
     
     

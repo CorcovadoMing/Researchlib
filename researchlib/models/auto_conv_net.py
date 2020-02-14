@@ -2,7 +2,6 @@ from .helper import _get_dim_type, _filter_policy, _get_op_type, _parse_type
 from .heads import Heads
 from ..runner import Runner
 from ..ops import op
-from ..wrapper import wrapper
 from .builder import Builder
 from ..utils import ParameterManager
 from ..blocks import block
@@ -34,6 +33,7 @@ def AutoConvNet(
     pool_freq = 1,
     do_norm = True,
     non_local_start = 1e8,
+    custom = {},
     **kwargs
 ):
     Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
@@ -89,8 +89,6 @@ def AutoConvNet(
         )
         _op_type = _get_op_type(type, id, total_blocks, do_pool, in_dim != out_dim)
         
-        info.add_row([id + stem_layers, in_dim, out_dim, do_pool, _op_type, keep_output, keep_input, block_group])
-        
         if cur_bank_dim != out_dim and (share_group_banks > 0):
             cur_bank_dim = out_dim
             if _type == 'residual-bottleneck':
@@ -102,25 +100,40 @@ def AutoConvNet(
                 cur_bank_to_manifold = None
                 cur_bank_from_manifold = None
         
+        # Customization
+        layer_kwargs = dict(
+            in_dim = in_dim,
+            out_dim = out_dim,
+            do_pool = do_pool,
+            do_norm = do_norm,
+            preact = preact,
+            id = id,
+            total_blocks = total_blocks,
+            keep_input = keep_input,
+            keep_output = keep_output,
+            bank = cur_bank,
+            bank_to_manifold = cur_bank_to_manifold,
+            bank_from_manifold = cur_bank_from_manifold,
+        )
+        layer_kwargs.update(kwargs)
+        if 'group' in custom and block_group in custom['group']:
+            custom_kwargs = custom['group'][block_group]
+            layer_kwargs.update(custom_kwargs)
+            custom_kwargs_str = [f'{i}: {j}' for i, j in custom_kwargs.items()]
+            custom_kwargs_str = ', '.join(custom_kwargs_str)
+        else:
+            custom_kwargs = None
+            custom_kwargs_str = None
+        
+        info.add_row([id + stem_layers, in_dim, out_dim, do_pool, _op_type.__name__, custom_kwargs_str, None, block_group])
+        
         kwargs['non_local'] = id >= non_local_start
         layers.append(
             _op_type(
                 f'{id}',
                 unit,
                 _op,
-                in_dim = in_dim,
-                out_dim = out_dim,
-                do_pool = do_pool,
-                do_norm = do_norm,
-                preact = preact,
-                id = id,
-                total_blocks = total_blocks,
-                keep_input = keep_input,
-                keep_output = keep_output,
-                bank = cur_bank,
-                bank_to_manifold = cur_bank_to_manifold,
-                bank_from_manifold = cur_bank_from_manifold,
-                **kwargs
+                **layer_kwargs
             )
         )
         layers.append(op.ManifoldMixup())

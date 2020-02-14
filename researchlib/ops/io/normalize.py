@@ -8,7 +8,7 @@ from torch import nn
 class _Normalize(nn.Module):
     def __init__(self, type, mean, std):
         super().__init__()
-        self.normalizer = preprocessing.set_normalizer(type, mean, std)
+        self.normalizer, self.denormalizer = preprocessing.set_normalizer(type, mean, std)
         self.injector = None
         self.phase = 0
         self.train_ds = None
