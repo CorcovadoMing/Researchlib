@@ -4,6 +4,7 @@ from ..utils import ParameterManager
 from ..ops import op
 from torch import nn
 import torch
+import torch.utils.checkpoint as cp
 
 
 class _RandWireNodeOp(nn.Module):
@@ -15,6 +16,9 @@ class _RandWireNodeOp(nn.Module):
             self.reg_drop = nn.Dropout(0.1)
             self.only_pos = nn.ReLU(inplace=True)
         self.unit_factory = unit_factory()
+        
+    def closure(self, x):
+        return self.unit_factory(x)
     
     def forward(self, *x):
         x = torch.stack(x)
@@ -24,7 +28,7 @@ class _RandWireNodeOp(nn.Module):
             x = torch.einsum('fnchw,f -> nchw', x, weighting)
         else:
             x = x.sum(0)
-        return self.unit_factory(x)
+        return cp.checkpoint(self.closure, x)
 
     
 def _RandWireBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
@@ -40,13 +44,15 @@ def _RandWireBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
     pool_kwargs.update(do_share_banks=config.do_share_banks,
                        do_pool=False,
                        stride=2 if kwargs['do_pool'] else 1,
-                       randwire=True)
+                       randwire=True,
+                       act_inplace=False)
     
     regular_kwargs = get_conv_config()
     regular_kwargs.update(**kwargs)
     regular_kwargs.update(do_share_banks=config.do_share_banks,
                           do_pool=False,
-                          randwire=True)
+                          randwire=True,
+                          act_inplace=False)
     
     pool_unit_factory = lambda: config._unit(config.prefix, config._op, config.in_dim, config.out_dim, **pool_kwargs)
     regular_unit_factory = lambda: config._unit(config.prefix, config._op, config.out_dim, config.out_dim, **regular_kwargs)
