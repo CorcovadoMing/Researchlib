@@ -10,7 +10,7 @@ from .resnext import ResNeXt50
 from .preresnet import PreResNet18, PreResNet34, PreResNet50, PreResNet101, PreResNet152
 from .revnet import RevNet110
 from .wideresnet import WideResNet28x10
-from .pyramidnet import PyramidNet272
+from .pyramidnet import PyramidNet110, PyramidNet272
 
 
 
@@ -39,5 +39,6 @@ class CV32(object):
     
     WideResNet28x10 = WideResNet28x10
     
+    PyramidNet110 = PyramidNet110
     PyramidNet272 = PyramidNet272
     
