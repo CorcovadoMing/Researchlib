@@ -27,12 +27,12 @@ class BSuiteEnv(Env):
 
     def step(self, action):
         obj = self.env.step(action)
-        return obj.observation, obj.reward, obj.last(), _
+        return obj.observation, obj.reward, obj.last(), None
 
     def reset(self):
         self.cache = None
         obj = self.env.reset()
-        return obj.observation, obj.reward, obj.last(), _
+        return obj.observation, obj.reward, obj.last(), None
         
 
     def render(self, title = None, return_cache = False):
