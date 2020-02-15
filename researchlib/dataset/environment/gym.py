@@ -28,7 +28,7 @@ class GymEnv(Env):
 
     def reset(self):
         self.cache = None
-        return self.env.reset()
+        return self.env.reset(), 0, False, None
 
     def render(self, title = None, return_cache = False):
         if return_cache:
