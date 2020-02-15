@@ -6,4 +6,4 @@ class _Sample(nn.Module):
         super().__init__()
     
     def forward(self, x):
-        return x.sample().item()
+        return x.sample()
