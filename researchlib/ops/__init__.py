@@ -61,15 +61,18 @@ from .mlp import _MLP
 from .n2v import N2V
 from .wrapper import Wrapper
 from .prob import Prob
+from .rl import RL
 
 
 class op(object):
+    # Submodules
     N2V = N2V
     Wrapper = Wrapper
     Prob = Prob
+    RL = RL
+    
     
     MLP = _MLP
-    
     
     TemplateBank = _TemplateBank
     SConv2d = _SConv2d

@@ -1,7 +1,7 @@
 import torch
 from torch import nn
-from torch_scatter import scatter_add
-from torch_geometric.utils import softmax
+# from torch_scatter import scatter_add
+# from torch_geometric.utils import softmax
 
 
 class _Set2Set(nn.Module):
