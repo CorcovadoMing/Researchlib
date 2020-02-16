@@ -31,9 +31,7 @@ RUN pip install imageio numpy scipy opencv-python-headless scikit-image
 # Graph
 #RUN pip install torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric
 RUN pip install torch-scatter==latest+cu101 torch-sparse==latest+cu101 -f https://s3.eu-central-1.amazonaws.com/pytorch-geometric.com/whl/torch-1.4.0.html
-RUN pip install torch-cluster
-RUN pip install torch-spline-conv
-RUN pip install torch-geometric
+RUN pip install torch-cluster torch-spline-conv torch-geometric
 
 # QRNN
 RUN pip install cupy
@@ -69,10 +67,7 @@ RUN pip install pyro-ppl botorch gpytorch scikit-learn ax-platform --no-deps tor
 RUN pip install pennylane pennylane-forest bindsnet --no-deps torch
 
 # MISC
-RUN pip install adabound
-RUN pip install deepdish boxx 
-
-RUN pip install pydicom
+RUN pip install adabound deepdish boxx pydicom
 
 # Julia
 COPY julia-1.1.1 /opt/julia
@@ -117,34 +112,22 @@ RUN \
 RUN pip install redis
 VOLUME ["/data"]
 
-RUN pip install pytorch-nlp pygsheets
+RUN pip install pytorch-nlp pygsheets hyperopt
 RUN apt update && apt install -y sox libsox-dev libsox-fmt-all
 RUN pip install http://download.pytorch.org/whl/torchaudio-0.2-cp36-cp36m-linux_x86_64.whl
-RUN pip install hyperopt
 
 RUN pip install tensorpack
 RUN apt-get update && apt-get install -y build-essential libcap-dev
-RUN pip install python-prctl
-
-RUN pip install tensorflow-gpu
-RUN pip install tensorflow-datasets
+RUN pip install python-prctl tensorflow-gpu tensorflow-datasets
 RUN pip install -U numpy
 RUN pip install gast==0.2.2
 RUN pip install numpy==1.16.4
 
-RUN pip install -U nibabel
-RUN pip install altair vega_datasets 
-RUN pip install torchlars
-RUN pip install kymatio scikit-cuda cupy
-
+RUN pip install -U nibabel altair vega_datasets torchlars kymatio scikit-cuda cupy
 RUN pip install git+git://github.com/deepmind/bsuite.git
 RUN pip install nevergrad[all]
-RUN pip install tifffile
-
-RUN pip install cvxpylayers
-RUN pip install pytorch-metric-learning
+RUN pip install tifffile pytorch-metric-learning prenlp cvxpylayers
 RUN pip install git+https://github.com/facebookresearch/pytorch3d.git
-RUN pip install prenlp
 
 # Unstaged changes
 
