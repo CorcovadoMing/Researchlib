@@ -39,8 +39,6 @@ class _VanillaPG(nn.Module):
             logp.append(_logp)
             weights.append(_weights)
             returns += len(_logp)
-    
-        print(returns / len(eps_trajection))
         
         logp = torch.cat(logp, 0).to(self.device)
         weights = torch.cat(weights, 0).to(self.device)

@@ -25,6 +25,7 @@ def train_fn(self, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
 
     liveplot = parameter_manager.get_param('liveplot', required = True)
+    batch_size = parameter_manager.get_param('batch_size')
     mmixup_alpha = parameter_manager.get_param('mmixup_alpha')
     fixed_mmixup = parameter_manager.get_param('fixed_mmixup')
     random_mmixup = parameter_manager.get_param('random_mmixup')
@@ -77,7 +78,7 @@ def train_fn(self, **kwargs):
             targets_res = None
             lam = None
 
-        results = self.model({'phase': 0}) # 0: train, 1: val, 2: custom
+        results = self.model({'phase': 0, 'batch_size': batch_size}) # 0: train, 1: val, 2: custom
         
         loss = [results[i] for i in self.model.optimize_nodes]
         loss = sum(loss)

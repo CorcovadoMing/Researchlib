@@ -109,7 +109,14 @@ def fit(
             v[0].prepare_state(fp16, batch_size)
     
     if iterations == 0:
-        iterations = self.train_loader_length
+        try:
+            # Classification
+            iterations = self.train_loader_length
+        except:
+            # RL simulator
+            iterations = 1
+            self.train_loader_length = 1
+            self.test_loader_length = None
     
     liveplot = Liveplot(self.train_loader_length, self.test_loader_length, plot)
     
@@ -260,6 +267,7 @@ def fit(
             liveplot.train_timer.clear()
             # Training function
             loss_record, norm_record, metrics_record = self.train_fn(liveplot=liveplot,
+                                                                     batch_size=batch_size,
                                                                      mmixup_alpha=mmixup_alpha, 
                                                                      fixed_mmixup=fixed_mmixup, 
                                                                      random_mmixup=random_mmixup,
@@ -295,6 +303,7 @@ def fit(
                 liveplot.val_timer.clear()
                 # Validation function
                 loss_record, metrics_record = self.validate_fn(liveplot=liveplot,
+                                                               batch_size=batch_size,
                                                                epoch=epoch,
                                                                support_set=support_set,
                                                                way=way,
