@@ -1,5 +1,6 @@
 # google oauth file
 sheets.googleapis.com-python.json
+.data
 ngc_run.sh
 *.ipynb
 *.pyc

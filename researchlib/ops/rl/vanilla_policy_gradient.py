@@ -17,10 +17,13 @@ class _VanillaPG(nn.Module):
         self.agent = agent
         self.state_node = state_node
         self.policy_node = policy_node
+        self.device = None
         
     def _process_single(self, trajection):
-        result = self.agent({self.state_node: torch.stack(trajection['state'], 0)})
-        logp = result[self.policy_node].log_prob(torch.LongTensor(trajection['action']))
+        if self.device is None:
+            self.device = next(self.agent.parameters()).device
+        result = self.agent({self.state_node: torch.stack(trajection['state'], 0).to(self.device)})
+        logp = result[self.policy_node].log_prob(torch.LongTensor(trajection['action']).to(self.device))
         weights = torch.FloatTensor(list(_reward_to_go(trajection['reward'])))
         return logp, weights
     
@@ -39,6 +42,6 @@ class _VanillaPG(nn.Module):
     
         print(returns / len(eps_trajection))
         
-        logp = torch.cat(logp, 0)
-        weights = torch.cat(weights, 0)
+        logp = torch.cat(logp, 0).to(self.device)
+        weights = torch.cat(weights, 0).to(self.device)
         return -(logp * weights).mean()

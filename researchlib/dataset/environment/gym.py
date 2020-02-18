@@ -3,16 +3,19 @@ import gym
 from IPython import display
 import matplotlib
 import matplotlib.pyplot as plt
+import warnings
 
 
 class GymEnv(Env):
     def __init__(self, name):
         super().__init__()
+        warnings.filterwarnings('ignore')
         self.env = gym.make(name)
         self.cache = None
         self.reset()
         print('Env', name, 'is with', self.env.observation_space, 'observed space')
         print('Env', name, 'is with', self.env.action_space, 'action space')
+        warnings.filterwarnings('once')
         
     def action_space(self):
         return self.env.action_space.n, self.env.action_space.dtype
