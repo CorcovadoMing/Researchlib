@@ -2,13 +2,7 @@ from torch import nn
 import torch
 import numpy as np
 import torch.nn.functional as F
-
-def _reward_to_go(rews):
-    n = len(rews)
-    rtgs = np.zeros_like(rews)
-    for i in reversed(range(n)):
-        rtgs[i] = rews[i] + (rtgs[i+1] if i+1 < n else 0)
-    return rtgs
+from .utils import _discount_returns
 
 
 class _ActorCritic(nn.Module):
@@ -25,7 +19,7 @@ class _ActorCritic(nn.Module):
             self.device = next(self.agent.parameters()).device
         result = self.agent({self.state_node: torch.stack(trajection['state'], 0).to(self.device)})
         logp = result[self.policy_node].log_prob(torch.LongTensor(trajection['action']).to(self.device))
-        returns = torch.FloatTensor(list(_reward_to_go(trajection['reward']))).to(self.device)
+        returns = torch.from_numpy(_discount_returns(trajection['reward'])).to(self.device)
         returns = (returns - returns.mean()) / (returns.std() + self.eps)
         weights = returns.clone()
         weigths = weights - result['value']
