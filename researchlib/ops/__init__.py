@@ -62,6 +62,7 @@ from .n2v import N2V
 from .wrapper import Wrapper
 from .prob import Prob
 from .rl import RL
+from .buffer import Buffer
 
 
 class op(object):
@@ -70,6 +71,7 @@ class op(object):
     Wrapper = Wrapper
     Prob = Prob
     RL = RL
+    Buffer = Buffer
     
     
     MLP = _MLP

@@ -3,18 +3,19 @@ import torch
 
 
 class _Simulator(nn.Module):
-    def __init__(self, agent, env, state_node='state', action_node='action'):
+    def __init__(self, agent, env, state_node='state', action_node='action', policy_node='policy'):
         super().__init__()
         self.agent = agent
         self.env = env
         self.state_node = state_node
         self.action_node = action_node
+        self.policy_node = policy_node
         self.device = None
     
     def forward(self, batch_size):
         if self.device is None:
             self.device = next(self.agent.parameters()).device
-        trajection = {'state': [], 'action': [], 'reward': []}
+        trajection = {'state': [], 'action': [], 'reward': [], 'policy': []}
         state, reward, done, _ = self.env.reset()
         eps_trajection = []
         self.agent.eval()
@@ -24,6 +25,10 @@ class _Simulator(nn.Module):
                 result = self.agent({self.state_node: state[None, ...].to(self.device)})
                 action = result[self.action_node].item()
                 trajection['state'].append(state)
+                try:
+                    trajection['policy'].append(result[self.policy_node])
+                except:
+                    trajection['policy'].append(None)
                 trajection['action'].append(action)
                 state, reward, done, _ = self.env.step(action)
                 trajection['reward'].append(reward)
@@ -32,6 +37,6 @@ class _Simulator(nn.Module):
                 if len(eps_trajection) >= batch_size:
                     break
                 else:
-                    trajection = {'state': [], 'action': [], 'reward': []}
+                    trajection = {'state': [], 'action': [], 'reward': [], 'policy': []}
                     state, reward, done, _ = self.env.reset()
         return eps_trajection
