@@ -1,6 +1,9 @@
 from .simulator import _Simulator
-from .vanilla_policy_gradient import _VanillaPG
+from .reinforce import _REINFORCE
+from .actor_critic import _ActorCritic
+
 
 class RL(object):
     Simulator = _Simulator
-    VanillaPG = _VanillaPG
+    REINFORCE = _REINFORCE
+    ActorCritic = _ActorCritic

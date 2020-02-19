@@ -18,11 +18,13 @@ from .l1 import L1
 from .l2 import L2
 from .hitrate import Hitrate
 from .cluster import Cluster
+from .rl import RL
 from .psnr import PSNR
 
 
 class Metrics(object):
     Cluster = Cluster
+    RL = RL
     
     Categorical = Categorical
     MetaCategorical = MetaCategorical

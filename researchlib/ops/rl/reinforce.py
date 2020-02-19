@@ -11,9 +11,10 @@ def _reward_to_go(rews):
     return rtgs
 
 
-class _VanillaPG(nn.Module):
+class _REINFORCE(nn.Module):
     def __init__(self, agent, state_node='state', policy_node='policy'):
         super().__init__()
+        self.eps = np.finfo(np.float32).eps.item()
         self.agent = agent
         self.state_node = state_node
         self.policy_node = policy_node
@@ -24,7 +25,9 @@ class _VanillaPG(nn.Module):
             self.device = next(self.agent.parameters()).device
         result = self.agent({self.state_node: torch.stack(trajection['state'], 0).to(self.device)})
         logp = result[self.policy_node].log_prob(torch.LongTensor(trajection['action']).to(self.device))
-        weights = torch.FloatTensor(list(_reward_to_go(trajection['reward'])))
+        returns = torch.FloatTensor(list(_reward_to_go(trajection['reward']))).to(self.device)
+        returns = (returns - returns.mean()) / (returns.std() + self.eps)
+        weights = returns.clone()
         return logp, weights
     
     def forward(self, eps_trajection):
