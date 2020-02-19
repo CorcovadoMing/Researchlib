@@ -1,5 +1,6 @@
 from torch.distributions.categorical import Categorical
 from torch import nn
+import torch.nn.functional as F
 
 
 class _Categorical(nn.Module):

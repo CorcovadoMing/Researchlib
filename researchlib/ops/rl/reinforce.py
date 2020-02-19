@@ -17,25 +17,20 @@ class _REINFORCE(nn.Module):
         if self.device is None:
             self.device = next(self.agent.parameters()).device
         result = self.agent({self.state_node: torch.stack(trajection['state'], 0).to(self.device)})
-        logp = result[self.policy_node].log_prob(torch.LongTensor(trajection['action']).to(self.device))
-        returns = torch.from_numpy(_discount_returns(trajection['reward'])).to(self.device)
-        returns = (returns - returns.mean()) / (returns.std() + self.eps)
-        weights = returns.clone()
+        action = torch.LongTensor(trajection['action']).to(self.device)
+        logp = result[self.policy_node].log_prob(action).view(-1)
+        with torch.no_grad():
+            logq = torch.stack([i.log_prob(j) for i, j in zip(trajection['policy'], action)], 0).view(-1)
+            returns = torch.from_numpy(_discount_returns(trajection['reward'])).to(self.device)
+            returns = (returns - returns.mean()) / (returns.std() + self.eps)
+            weights = returns.clone()
+            weights = weights * (logp.exp() / logq.exp()).clamp_(0, 2)
         return logp, weights
     
     def forward(self, eps_trajection):
         self.agent.train()
-
-        logp = []
-        weights = []
-        returns = 0
-        
+        loss = 0
         for i in eps_trajection:
-            _logp, _weights = self._process_single(i)
-            logp.append(_logp)
-            weights.append(_weights)
-            returns += len(_logp)
-        
-        logp = torch.cat(logp, 0).to(self.device)
-        weights = torch.cat(weights, 0).to(self.device)
-        return -(logp * weights).mean()
+            logp, weights = self._process_single(i)
+            loss += -(logp * weights).sum()
+        return loss / len(eps_trajection)

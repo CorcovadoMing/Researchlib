@@ -3,7 +3,7 @@ import random
 
 
 class _ExperienceReplay(nn.Module):
-    def __init__(self, total_buffer_eps=100, sample_eps=50):
+    def __init__(self, total_buffer_eps=2000, sample_eps=1000):
         super().__init__()
         self.total_buffer_eps = total_buffer_eps
         self.sample_eps = sample_eps
