@@ -15,6 +15,18 @@ def to_train_mode(m):
         m.set_phase(0)
     except:
         pass
+
+def set_io_enable(m):
+    try:
+        m.set_enable()
+    except:
+        pass
+
+def set_io_disable(m):
+    try:
+        m.set_disable()
+    except:
+        pass
     
 
 @register_method
@@ -30,6 +42,7 @@ def train_fn(self, **kwargs):
     fixed_mmixup = parameter_manager.get_param('fixed_mmixup')
     random_mmixup = parameter_manager.get_param('random_mmixup')
     epoch = parameter_manager.get_param('epoch')
+    inner_epochs = parameter_manager.get_param('inner_epochs')
     warmup = parameter_manager.get_param('warmup')
     weight_decay = parameter_manager.get_param('weight_decay')
     weight_decay_bias = parameter_manager.get_param('weight_decay_bias')
@@ -52,7 +65,7 @@ def train_fn(self, **kwargs):
     for i in self.optimizer:
         i.zero_grad()
     
-    batch_idx = 0
+    iteration_idx = 0
     while True:
         # Set LR
         cur_lr = Annealer.get_trace('lr')
@@ -77,34 +90,50 @@ def train_fn(self, **kwargs):
         else:
             targets_res = None
             lam = None
-
-        results = self.model({'phase': 0, 'batch_size': batch_size}) # 0: train, 1: val, 2: custom
-        
-        loss = [results[i] for i in self.model.optimize_nodes]
-        loss = sum(loss)
-        loss.backward()
-        
-        self.accum_idx += 1
-        self.accum_idx %= accum_grad
-
-        if self.accum_idx == 0 or batch_idx == self.train_loader_length:
-            for p in self.model.parameters():
-                try:
-                    if p.requires_grad: p.grad.div_(accum_grad)
-                except:
-                    pass
             
-            if grad_clip != 0:
-                norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), grad_clip)
-                norm_record += norm
-                    
-            for i in self.optimizer:
-                i.step()
-                i.zero_grad()
-
-        loss_record += loss.item()
+        # //////////////////////////
+        # // Inner Loop
+        # //////////////////////////
         
-        if ema and (batch_idx + 1) % ema_freq == 0:
+        for inner_loop in range(inner_epochs):
+            # Inner loop shared the same mini-batch
+            if inner_loop == 0:
+                self.model.apply(set_io_enable)
+            else:
+                self.model.apply(set_io_disable)
+            
+            # 0: train, 1: val, 2: custom
+            results = self.model({'phase': 0, 'batch_size': batch_size, 'inner_loop': inner_loop}) 
+            
+            loss = [results[i] for i in self.model.optimize_nodes]
+            loss = sum(loss)
+            loss.backward()
+
+            self.accum_idx += 1
+            self.accum_idx %= accum_grad
+
+            if self.accum_idx == 0 or ((iteration_idx == self.train_loader_length) and (inner_loop == inner_epochs - 1)):
+                for p in self.model.parameters():
+                    try:
+                        if p.requires_grad: p.grad.div_(accum_grad)
+                    except:
+                        pass
+
+                if grad_clip != 0:
+                    norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), grad_clip)
+                    norm_record += norm
+
+                for i in self.optimizer:
+                    i.step()
+                    i.zero_grad()
+
+            loss_record += loss.item()
+            
+        # //////////////////////////
+        # // End of Inner Loop
+        # //////////////////////////
+        
+        if ema and (iteration_idx + 1) % ema_freq == 0:
             for v, ema_v in zip(
                 self.model.state_dict().values(),
                 self.val_model.state_dict().values()
@@ -121,25 +150,25 @@ def train_fn(self, **kwargs):
                 continue
             metrics_record[i] += results[i]
         
-        batch_idx += 1
+        iteration_idx += 1
         
-        if (self.train_loader_length > 1 and batch_idx == self.train_loader_length - 1) or self.train_loader_length == 1:
+        if (self.train_loader_length > 1 and iteration_idx == self.train_loader_length - 1) or self.train_loader_length == 1:
             visualize = [results[i] for i in self.model.visualize_nodes]
         
-        if batch_idx % 5 == 0 or batch_idx == self.train_loader_length:
-            liveplot.update_train_desc(epoch, batch_idx, loss_record, metrics_record, self.val_model.checkpoint_state)
+        if iteration_idx % 5 == 0 or iteration_idx == self.train_loader_length:
+            liveplot.update_train_desc(epoch, iteration_idx, loss_record, metrics_record, self.val_model.checkpoint_state)
 
-        if batch_idx == self.train_loader_length:
+        if iteration_idx == self.train_loader_length:
             liveplot.show_grid('train', visualize)
             break
 
         Annealer._iteration_step()
     
-    loss_record /= batch_idx
-    norm_record /= batch_idx
+    loss_record /= iteration_idx
+    norm_record /= iteration_idx
     
     for i in metrics_record:
-        metrics_record[i] /= batch_idx
+        metrics_record[i] /= iteration_idx
     
     return loss_record, norm_record, metrics_record
 

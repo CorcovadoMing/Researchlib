@@ -27,7 +27,7 @@ class _REINFORCE(nn.Module):
             weights = weights * (logp.exp() / logq.exp()).clamp_(0, 2)
         return logp, weights
     
-    def forward(self, eps_trajection):
+    def forward(self, eps_trajection, inner_loop=0):
         self.agent.train()
         loss = 0
         for i in eps_trajection:

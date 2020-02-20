@@ -29,10 +29,10 @@ class _ActorCritic(nn.Module):
             weights = weights * (logp.exp() / logq.exp()).clamp_(0, 2)
         return logp, weights, result['value'], returns
     
-    def forward(self, eps_trajection):
+    def forward(self, eps_trajection, inner_loop=0):
         self.agent.train()
         loss = 0
         for i in eps_trajection:
             logp, weights, values, returns = self._process_single(i)
-            loss += -(logp * weights).sum() + 0.01 * F.smooth_l1_loss(values, returns.view_as(values), reduction='sum')
+            loss += -(logp * weights).sum() + F.smooth_l1_loss(values, returns.view_as(values), reduction='sum')
         return loss / len(eps_trajection)

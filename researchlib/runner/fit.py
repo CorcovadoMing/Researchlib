@@ -108,6 +108,7 @@ def fit(
         if type(v[0]) == op.Generator:
             v[0].prepare_state(fp16, batch_size)
     
+    inner_epochs = parameter_manager.get_param('inner_epochs', 1)
     if iterations == 0:
         try:
             # Classification
@@ -272,6 +273,7 @@ def fit(
                                                                      fixed_mmixup=fixed_mmixup, 
                                                                      random_mmixup=random_mmixup,
                                                                      epoch=epoch,
+                                                                     inner_epochs = inner_epochs,
                                                                      warmup=warmup,
                                                                      weight_decay=weight_decay,
                                                                      weight_decay_bias=weight_decay_bias,
