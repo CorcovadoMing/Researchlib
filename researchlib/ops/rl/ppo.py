@@ -35,11 +35,14 @@ class _PPO(nn.Module):
             returns = torch.from_numpy(_discount_returns(trajection['reward'])).to(self.device).view(-1)
             returns = (returns - returns.mean()) / (returns.std() + self.eps)
             intrinsic = torch.zeros_like(returns) if 'intrinsic' not in trajection else trajection['intrinsic']
-            intrinsic = torch.from_numpy(_discount_returns(trajection['reward'])).to(self.device).view(-1)
+            intrinsic = torch.from_numpy(_discount_returns(trajection['reward'], 0.9)).to(self.device).view(-1)
         value_rollout = result['value'].view(-1)
         intrinsic_rollout = torch.zeros_like(value_rollout) if 'intrinsic' not in trajection \
                                                             else result['intrinsic'].view(-1)
-        weights = returns - value_rollout + intrinsic - intrinsic_rollout
+        advantages_external = (returns - value_rollout)
+        advantages_internal = (intrinsic - intrinsic_rollout)
+        advantages_internal = (advantages_internal - advantages_internal.mean()) / (advantages_internal.std() + self.eps)
+        weights = advantages_external + advantages_internal
         ratio = torch.exp(logp - fixed_logp)
         surrogate1 = ratio * weights
         surrogate2 = torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon) * weights
