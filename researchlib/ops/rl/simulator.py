@@ -1,5 +1,6 @@
 from torch import nn
 import torch
+from itertools import count
 
 
 class _Simulator(nn.Module):
@@ -16,6 +17,20 @@ class _Simulator(nn.Module):
         self.cache = None
         self.device = None
         self.enable = True
+    
+    def inference(self):
+        self.agent.eval()
+        state, reward, done, _ = self.env.reset()
+        self.env.render('Start')
+        for iteration in count(1):
+            if not done:
+                state = torch.from_numpy(state).float()
+                result = self.agent({self.state_node: state[None, ...].to(self.device)})
+                action = result[self.action_node].item()
+                state, reward, done, _ = self.env.step(action)
+                self.env.render(str(iteration) + ' ' + str(action) + ' ' + str(reward))
+            else:
+                break
     
     def set_enable(self):
         self.enable = True
