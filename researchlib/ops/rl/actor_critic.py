@@ -22,7 +22,7 @@ class _ActorCritic(nn.Module):
         self.policy_node = policy_node
         self.device = None
         
-    def _process_single(self, trajection, fixed_logp):
+    def _process_single(self, trajection):
         if self.device is None:
             self.device = next(self.agent.parameters()).device
         result = self.agent({self.state_node: torch.stack(trajection['state'], 0).to(self.device)})
@@ -33,12 +33,14 @@ class _ActorCritic(nn.Module):
             intrinsic = torch.zeros_like(returns) if 'intrinsic' not in trajection else trajection['intrinsic']
             intrinsic = torch.from_numpy(_discount_returns(intrinsic)).to(self.device).view(-1)
         value_rollout = result['value'].view(-1)
-        intrinsic_rollout = torch.zeros_like(value_rollout) if 'intrinsic' not in trajection \
+        intrinsic_rollout = torch.zeros_like(intrinsic) if 'intrinsic' not in trajection \
                                                             else result['intrinsic'].view(-1)
         advantages_external = (returns - value_rollout)
         advantages_internal = (intrinsic - intrinsic_rollout)
         weights = advantages_external + advantages_internal
         weights = (weights - weights.mean()) / (weights.std() + self.eps)
+        rnd_x = torch.zeros(1) if 'rnd_x' not in trajection else trajection['rnd_x']
+        rnd_y = torch.zeros(1) if 'rnd_y' not in trajection else trajection['rnd_y']
         return (logp,
                 weights,
                 value_rollout,
@@ -60,8 +62,8 @@ class _ActorCritic(nn.Module):
         
         # Concate to long sequence
         long_seq = [[] for _ in range(8)]
-        for trajection, fixed_logp in zip(eps_trajection, self.fixed_log_prob):
-            for i, t in enumerate(self._process_single(trajection, fixed_logp)):
+        for trajection in eps_trajection:
+            for i, t in enumerate(self._process_single(trajection)):
                 long_seq[i].append(t)
         long_seq = [torch.cat(i) for i in long_seq]
         

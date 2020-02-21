@@ -45,7 +45,7 @@ class _PPO(nn.Module):
             intrinsic = torch.zeros_like(returns) if 'intrinsic' not in trajection else trajection['intrinsic']
             intrinsic = torch.from_numpy(_discount_returns(intrinsic)).to(self.device).view(-1)
         value_rollout = result['value'].view(-1)
-        intrinsic_rollout = torch.zeros_like(value_rollout) if 'intrinsic' not in trajection \
+        intrinsic_rollout = torch.zeros_like(intrinsic) if 'intrinsic' not in trajection \
                                                             else result['intrinsic'].view(-1)
         advantages_external = (returns - value_rollout)
         advantages_internal = (intrinsic - intrinsic_rollout)
