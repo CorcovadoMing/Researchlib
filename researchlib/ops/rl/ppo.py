@@ -32,15 +32,34 @@ class _PPO(nn.Module):
         action = torch.LongTensor(trajection['action']).to(self.device)
         logp = result[self.policy_node].log_prob(action).view(-1)
         with torch.no_grad():
-            returns = torch.from_numpy(_discount_returns(trajection['reward'])).to(self.device)
+            returns = torch.from_numpy(_discount_returns(trajection['reward'])).to(self.device).view(-1)
             returns = (returns - returns.mean()) / (returns.std() + self.eps)
-            weights = returns.clone()
-            weigths = weights - result['value']
+            intrinsic = torch.zeros_like(returns) if 'intrinsic' not in trajection else trajection['intrinsic']
+            intrinsic = torch.from_numpy(_discount_returns(trajection['reward'])).to(self.device).view(-1)
+        value_rollout = result['value'].view(-1)
+        intrinsic_rollout = torch.zeros_like(value_rollout) if 'intrinsic' not in trajection \
+                                                            else result['intrinsic'].view(-1)
+        weights = returns - value_rollout + intrinsic - intrinsic_rollout
         ratio = torch.exp(logp - fixed_logp)
-        surrogate1 = ratio * weigths
-        surrogate2 = torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon) * weigths
-        surrogate = -torch.min(surrogate1, surrogate2)
-        return surrogate, result['value'], returns
+        surrogate1 = ratio * weights
+        surrogate2 = torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon) * weights
+        rnd_x = torch.zeros(1) if 'rnd_x' not in trajection else trajection['rnd_x']
+        rnd_y = torch.zeros(1) if 'rnd_y' not in trajection else trajection['rnd_y']
+        return (surrogate1, 
+                surrogate2, 
+                value_rollout,
+                returns,
+                intrinsic_rollout,
+                intrinsic,
+                rnd_x,
+                rnd_y)
+    
+    def _get_loss(self, long_seq):
+        loss = - torch.min(long_seq[0], long_seq[1]).sum() \
+               + F.smooth_l1_loss(long_seq[2], long_seq[3], reduction='sum') \
+               + F.smooth_l1_loss(long_seq[4], long_seq[5], reduction='sum') \
+               + F.mse_loss(long_seq[6], long_seq[7], reduction='sum')
+        return loss
     
     def forward(self, eps_trajection, inner_loop=0):
         self.agent.train()
@@ -50,10 +69,14 @@ class _PPO(nn.Module):
             self.fixed_log_prob = []
             for i in eps_trajection:
                 self.fixed_log_prob.append(self._fixed_log_prob(i))
-        
-        loss = 0
+                
+        # Concate to long sequence
+        long_seq = [[] for _ in range(8)]
         for trajection, fixed_logp in zip(eps_trajection, self.fixed_log_prob):
-            surrogate, values, returns = self._process_single(trajection, fixed_logp)
-            loss += surrogate.sum() + F.smooth_l1_loss(values, returns.view_as(values), reduction='sum')
+            for i, t in enumerate(self._process_single(trajection, fixed_logp)):
+                long_seq[i].append(t)
+        long_seq = [torch.cat(i) for i in long_seq]
+        
+        loss = self._get_loss(long_seq)
         return loss / len(eps_trajection)
 

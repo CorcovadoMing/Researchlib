@@ -3,7 +3,10 @@ import torch
 
 
 class _Simulator(nn.Module):
-    def __init__(self, agent, env, state_node='state', action_node='action', policy_node='policy'):
+    def __init__(self, agent, env, 
+                 state_node='state', 
+                 action_node='action', 
+                 policy_node='policy'):
         super().__init__()
         self.agent = agent
         self.env = env

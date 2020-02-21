@@ -55,7 +55,7 @@ class SM3(Optimizer):
                 if p is None:
                     continue
                 grad = p.grad.data
-
+                
                 state = self.state[p]
                 shape = grad.shape
                 rank = len(shape)
