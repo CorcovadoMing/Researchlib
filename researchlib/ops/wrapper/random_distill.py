@@ -1,6 +1,7 @@
 from torch import nn
 import torch.nn.functional as F
 import torch
+import torch.nn.init as init
 
 
 class _RandomDistill(nn.Module):
@@ -11,6 +12,8 @@ class _RandomDistill(nn.Module):
         self.device = None
         for i in self.target_network.parameters():
             i.requires_grad = False
+            if i.ndim > 1:
+                init.orthogonal_(i)
         
     def forward(self, x):
         if self.device is None:

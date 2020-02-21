@@ -5,32 +5,59 @@ from .utils import _discount_returns
 
 
 class _REINFORCE(nn.Module):
-    def __init__(self, agent, state_node='state', policy_node='policy'):
+    def __init__(self, agent, 
+                 int_coeff=1.0, 
+                 rdn_coeff=1.0, 
+                 state_node='state', 
+                 policy_node='policy'):
         super().__init__()
         self.eps = np.finfo(np.float32).eps.item()
+        self.int_coeff = int_coeff
+        self.rdn_coeff = rdn_coeff
         self.agent = agent
         self.state_node = state_node
         self.policy_node = policy_node
         self.device = None
         
-    def _process_single(self, trajection):
+    def _process_single(self, trajection, fixed_logp):
         if self.device is None:
             self.device = next(self.agent.parameters()).device
         result = self.agent({self.state_node: torch.stack(trajection['state'], 0).to(self.device)})
         action = torch.LongTensor(trajection['action']).to(self.device)
         logp = result[self.policy_node].log_prob(action).view(-1)
         with torch.no_grad():
-            logq = torch.stack([i.log_prob(j) for i, j in zip(trajection['policy'], action)], 0).view(-1)
-            returns = torch.from_numpy(_discount_returns(trajection['reward'])).to(self.device)
-            returns = (returns - returns.mean()) / (returns.std() + self.eps)
-            weights = returns.clone()
-            weights = weights * (logp.exp() / logq.exp()).clamp_(0, 2)
-        return logp, weights
+            returns = torch.from_numpy(_discount_returns(trajection['reward'])).to(self.device).view(-1)
+            intrinsic = torch.zeros_like(returns) if 'intrinsic' not in trajection else trajection['intrinsic']
+            intrinsic = torch.from_numpy(_discount_returns(intrinsic)).to(self.device).view(-1)
+        intrinsic_rollout = torch.zeros_like(value_rollout) if 'intrinsic' not in trajection \
+                                                            else result['intrinsic'].view(-1)
+        advantages_external = returns
+        advantages_internal = (intrinsic - intrinsic_rollout)
+        weights = advantages_external + advantages_internal
+        weights = (weights - weights.mean()) / (weights.std() + self.eps)
+        return (logp,
+                weights,
+                intrinsic_rollout,
+                intrinsic,
+                rnd_x,
+                rnd_y)
+    
+    def _get_loss(self, long_seq):
+        loss = - (long_seq[0] * long_seq[1]).mean() \
+               + F.mse_loss(long_seq[2], long_seq[3]) * self.int_coeff \
+               + F.mse_loss(long_seq[4], long_seq[5]) * self.rdn_coeff
+        return loss
     
     def forward(self, eps_trajection, inner_loop=0):
         self.agent.train()
-        loss = 0
-        for i in eps_trajection:
-            logp, weights = self._process_single(i)
-            loss += -(logp * weights).sum()
+        
+        # Concate to long sequence
+        long_seq = [[] for _ in range(8)]
+        for trajection, fixed_logp in zip(eps_trajection, self.fixed_log_prob):
+            for i, t in enumerate(self._process_single(trajection, fixed_logp)):
+                long_seq[i].append(t)
+        long_seq = [torch.cat(i) for i in long_seq]
+        
+        loss = self._get_loss(long_seq)
         return loss / len(eps_trajection)
+

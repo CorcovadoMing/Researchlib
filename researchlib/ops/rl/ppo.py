@@ -6,10 +6,19 @@ from .utils import _discount_returns
 
 
 class _PPO(nn.Module):
-    def __init__(self, agent, epsilon=0.1, state_node='state', policy_node='policy'):
+    def __init__(self, agent, 
+                 epsilon=0.2, 
+                 vf_coeff=0.5, 
+                 int_coeff=1.0, 
+                 rdn_coeff=1.0, 
+                 state_node='state', 
+                 policy_node='policy'):
         super().__init__()
         self.epsilon = epsilon
         self.eps = np.finfo(np.float32).eps.item()
+        self.vf_coeff = vf_coeff
+        self.int_coeff = int_coeff
+        self.rdn_coeff = rdn_coeff
         self.agent = agent
         self.state_node = state_node
         self.policy_node = policy_node
@@ -33,16 +42,15 @@ class _PPO(nn.Module):
         logp = result[self.policy_node].log_prob(action).view(-1)
         with torch.no_grad():
             returns = torch.from_numpy(_discount_returns(trajection['reward'])).to(self.device).view(-1)
-            returns = (returns - returns.mean()) / (returns.std() + self.eps)
             intrinsic = torch.zeros_like(returns) if 'intrinsic' not in trajection else trajection['intrinsic']
-            intrinsic = torch.from_numpy(_discount_returns(trajection['reward'], 0.9)).to(self.device).view(-1)
+            intrinsic = torch.from_numpy(_discount_returns(intrinsic)).to(self.device).view(-1)
         value_rollout = result['value'].view(-1)
         intrinsic_rollout = torch.zeros_like(value_rollout) if 'intrinsic' not in trajection \
                                                             else result['intrinsic'].view(-1)
         advantages_external = (returns - value_rollout)
         advantages_internal = (intrinsic - intrinsic_rollout)
-        advantages_internal = (advantages_internal - advantages_internal.mean()) / (advantages_internal.std() + self.eps)
         weights = advantages_external + advantages_internal
+        weights = (weights - weights.mean()) / (weights.std() + self.eps)
         ratio = torch.exp(logp - fixed_logp)
         surrogate1 = ratio * weights
         surrogate2 = torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon) * weights
@@ -58,10 +66,10 @@ class _PPO(nn.Module):
                 rnd_y)
     
     def _get_loss(self, long_seq):
-        loss = - torch.min(long_seq[0], long_seq[1]).sum() \
-               + F.smooth_l1_loss(long_seq[2], long_seq[3], reduction='sum') \
-               + F.smooth_l1_loss(long_seq[4], long_seq[5], reduction='sum') \
-               + F.mse_loss(long_seq[6], long_seq[7], reduction='sum')
+        loss = - torch.min(long_seq[0], long_seq[1]).mean() \
+               + F.mse_loss(long_seq[2], long_seq[3]) * self.vf_coeff \
+               + F.mse_loss(long_seq[4], long_seq[5]) * self.int_coeff \
+               + F.mse_loss(long_seq[6], long_seq[7]) * self.rdn_coeff
         return loss
     
     def forward(self, eps_trajection, inner_loop=0):
