@@ -1,7 +1,6 @@
 from .env import Env
 import gym
 from IPython import display
-import matplotlib
 import matplotlib.pyplot as plt
 import warnings
 

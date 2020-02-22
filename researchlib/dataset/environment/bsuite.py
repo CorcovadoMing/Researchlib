@@ -1,6 +1,5 @@
 from .env import Env
 from IPython import display
-import matplotlib
 import matplotlib.pyplot as plt
 import bsuite
 import numpy as np
