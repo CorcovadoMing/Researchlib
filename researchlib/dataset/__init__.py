@@ -1,7 +1,7 @@
 from .utils import utils
 
 # RL Dataset
-from .environment import GymEnv, BSuiteEnv, GoogleFootBall, SuperMarioBros
+from .environment import GymEnv, BSuiteEnv, GoogleFootBall, SuperMarioBros, ChromeDino, DeepmindLab
 
 # Vision Dataset
 from .np_dataset import _NumpyDataset
