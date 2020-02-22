@@ -110,7 +110,7 @@ RUN pip install -U nibabel altair vega_datasets torchlars kymatio scikit-cuda cu
 RUN pip install git+git://github.com/deepmind/bsuite.git
 RUN pip install tifffile pytorch-metric-learning prenlp cvxpylayers
 RUN pip install git+https://github.com/facebookresearch/pytorch3d.git
-RUN pip install gym-retro pybullet gym-chrome-dino procgen stable-baselines[mpi] gym-pull
+RUN pip install gym-retro pybullet gym-chrome-dino procgen stable-baselines[mpi] gym-super-mario-bros
 RUN git clone -b v2.0.4 https://github.com/google-research/football.git
 RUN mkdir -p football/third_party/gfootball_engine/lib
 RUN wget https://storage.googleapis.com/gfootball/prebuilt_gameplayfootball_v2.0.4.so -O football/third_party/gfootball_engine/lib/prebuilt_gameplayfootball.so
