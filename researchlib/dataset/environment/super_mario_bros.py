@@ -7,6 +7,9 @@ import matplotlib.pyplot as plt
 
 
 class SuperMarioBros(Env):
+    '''
+        REF: https://github.com/Kautenja/gym-super-mario-bros
+    '''
     def __init__(self, name):
         super().__init__()
         env = gym_super_mario_bros.make(name)
