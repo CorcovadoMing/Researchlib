@@ -7,3 +7,5 @@ from .deepmindlab import DeepmindLab
 from .pybullet import PyBulletEnv
 from .retro import RetroEnv
 from .ple import PLEEnv
+from .roboschool import Roboschool
+from .maze import Maze
