@@ -6,3 +6,4 @@ from .chrome_dino import ChromeDino
 from .deepmindlab import DeepmindLab
 from .pybullet import PyBulletEnv
 from .retro import RetroEnv
+from .ple import PLEEnv

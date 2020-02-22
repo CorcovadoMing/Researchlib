@@ -116,12 +116,14 @@ RUN mkdir -p football/third_party/gfootball_engine/lib
 RUN wget https://storage.googleapis.com/gfootball/prebuilt_gameplayfootball_v2.0.4.so -O football/third_party/gfootball_engine/lib/prebuilt_gameplayfootball.so
 RUN cd football && GFOOTBALL_USE_PREBUILT_SO=1 pip install .
 RUN apt install -y python-pygame && pip install pygame && pip install git+https://github.com/ntasfi/PyGame-Learning-Environment.git && pip install git+https://github.com/kenjyoung/MinAtar.git && pip install git+https://github.com/qlan3/gym-games.git
-RUN apt install -y software-properties-common && apt-get update && add-apt-repository ppa:openjdk-r/ppa && apt-get update && apt-get install -y openjdk-8-jdk && pip install -U minerl
 RUN apt install -y curl && curl https://bazel.build/bazel-release.pub.gpg | apt-key add - && echo "deb [arch=amd64] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list && apt-get update && apt-get install bazel -y
 RUN apt-get install -y libffi-dev gettext
 RUN git clone https://github.com/deepmind/lab.git && cd lab && bazel build -c opt --python_version=PY3 //python/pip_package:build_pip_package && ./bazel-bin/python/pip_package/build_pip_package /tmp/dmlab_pkg && pip install /tmp/dmlab_pkg/deepmind_lab-1.0-py3-none-any.whl --force-reinstall
 RUN pip install gym_deepmindlab
 RUN apt-get install -y chromium-driver chromium-browser && pip install git+https://github.com/CorcovadoMing/gym-chrome-dino
+RUN pip install git+https://github.com/zuoxingdong/mazelab.git && pip install git+https://github.com/MattChanTK/gym-maze
+RUN apt-get install -y libgl1-mesa-dev && pip install roboschool && pip install 'plotnine[all]'
+RUN git clone https://github.com/ntasfi/PyGame-Learning-Environment.git && mv PyGame-Learning-Environment/ple/games/flappybird/assets/ /opt/conda/lib/python3.6/site-packages/ple/games/flappybird/
 
 # Unstaged change
 
