@@ -1,9 +1,9 @@
 import numpy as np
+import scipy.signal
+import torch
 
 
-def _discount_returns(rewards, discount=0.99):
-    n = len(rewards)
-    returns = np.zeros(n).astype(np.float32)
-    for i in reversed(range(n)):
-        returns[i] = rewards[i] + discount * (returns[i+1] if i+1 < n else 0)
-    return returns
+def _discount(arr, coeff=0.99):
+    if type(arr) == torch.Tensor:
+        arr = arr.detach().cpu().numpy()
+    return np.array(scipy.signal.lfilter([1], [1, -coeff], arr[::-1], axis=0)[::-1], dtype=np.float32)

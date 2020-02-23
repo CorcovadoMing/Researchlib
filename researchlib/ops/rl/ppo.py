@@ -2,12 +2,14 @@ from torch import nn
 import torch
 import numpy as np
 import torch.nn.functional as F
-from .utils import _discount_returns
+from .utils import _discount
 
 
 class _PPO(nn.Module):
     def __init__(self, agent, 
-                 epsilon=0.2, 
+                 epsilon=0.2,
+                 gae_gamma=0.99,
+                 gae_lambda=0.95,
                  vf_coeff=0.5, 
                  int_coeff=1.0, 
                  rdn_coeff=1.0, 
@@ -16,6 +18,8 @@ class _PPO(nn.Module):
         super().__init__()
         self.epsilon = epsilon
         self.eps = np.finfo(np.float32).eps.item()
+        self.gae_gamma = gae_gamma
+        self.gae_lambda = gae_lambda
         self.vf_coeff = vf_coeff
         self.int_coeff = int_coeff
         self.rdn_coeff = rdn_coeff
@@ -41,13 +45,17 @@ class _PPO(nn.Module):
         action = torch.LongTensor(trajection['action']).to(self.device)
         logp = result[self.policy_node].log_prob(action).view(-1)
         with torch.no_grad():
-            returns = torch.from_numpy(_discount_returns(trajection['reward'])).to(self.device).view(-1)
+            returns = torch.from_numpy(_discount(trajection['reward'], self.gae_gamma)).to(self.device).view(-1)
             intrinsic = torch.zeros_like(returns) if 'intrinsic' not in trajection else trajection['intrinsic']
-            intrinsic = torch.from_numpy(_discount_returns(intrinsic)).to(self.device).view(-1)
+            intrinsic = torch.from_numpy(_discount(intrinsic, self.gae_gamma)).to(self.device).view(-1)
         value_rollout = result['value'].view(-1)
         intrinsic_rollout = torch.zeros_like(intrinsic) if 'intrinsic' not in trajection \
                                                             else result['intrinsic'].view(-1)
-        advantages_external = (returns - value_rollout)
+        advantages_external = torch.FloatTensor(trajection['reward']).to(self.device) \
+                              + self.gae_gamma * torch.cat([value_rollout[1:], torch.zeros(1).to(self.device)]) \
+                              - value_rollout
+        advantages_external = torch.from_numpy(_discount(advantages_external, 
+                                                         self.gae_gamma * self.gae_lambda)).to(self.device)
         advantages_internal = (intrinsic - intrinsic_rollout)
         weights = advantages_external + advantages_internal
         weights = (weights - weights.mean()) / (weights.std() + self.eps)

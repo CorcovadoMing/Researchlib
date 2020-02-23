@@ -2,7 +2,7 @@ from torch import nn
 import torch
 import numpy as np
 import torch.nn.functional as F
-from .utils import _discount_returns
+from .utils import _discount
 
 
 class _REINFORCE(nn.Module):
@@ -27,9 +27,9 @@ class _REINFORCE(nn.Module):
         action = torch.LongTensor(trajection['action']).to(self.device)
         logp = result[self.policy_node].log_prob(action).view(-1)
         with torch.no_grad():
-            returns = torch.from_numpy(_discount_returns(trajection['reward'])).to(self.device).view(-1)
+            returns = torch.from_numpy(_discount(trajection['reward'])).to(self.device).view(-1)
             intrinsic = torch.zeros_like(returns) if 'intrinsic' not in trajection else trajection['intrinsic']
-            intrinsic = torch.from_numpy(_discount_returns(intrinsic)).to(self.device).view(-1)
+            intrinsic = torch.from_numpy(_discount(intrinsic)).to(self.device).view(-1)
         intrinsic_rollout = torch.zeros_like(intrinsic) if 'intrinsic' not in trajection \
                                                             else result['intrinsic'].view(-1)
         advantages_external = returns
