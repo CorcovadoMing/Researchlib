@@ -83,6 +83,9 @@ class _PPO(nn.Module):
     def forward(self, eps_trajection, inner_loop=0):
         self.agent.train()
         
+        # Only support on-policy
+        eps_trajection = eps_trajection[-1]
+        
         # Get the fixed referenced policy
         if inner_loop == 0:
             self.fixed_log_prob = []

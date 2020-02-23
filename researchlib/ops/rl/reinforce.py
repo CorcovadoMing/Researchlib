@@ -54,6 +54,9 @@ class _REINFORCE(nn.Module):
     def forward(self, eps_trajection, inner_loop=0):
         self.agent.train()
         
+        # Only support on-policy
+        eps_trajection = eps_trajection[-1]
+        
         # Concate to long sequence
         long_seq = [[] for _ in range(6)]
         for trajection in eps_trajection:
