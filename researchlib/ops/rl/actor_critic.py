@@ -59,22 +59,20 @@ class _ActorCritic(nn.Module):
             weights = advantages_extrinsic + advantages_intrinsic
             weights = (weights - weights.mean()) / (weights.std() + self.eps)
             
-        rnd_x = torch.zeros(1) if 'rnd_x' not in trajection else trajection['rnd_x']
-        rnd_y = torch.zeros(1) if 'rnd_y' not in trajection else trajection['rnd_y']
+        intrinsic_loss = torch.zero_like(logp) if 'intrinsic_loss' not in trajection else trajection['intrinsic_loss']
         return (logp,
                 weights,
                 value_rollout,
                 value_returns,
                 intrinsic_rollout,
                 intrinsic_returns,
-                rnd_x,
-                rnd_y)
+                intrinsic_loss)
     
     def _get_loss(self, long_seq):
         loss = - (long_seq[0] * long_seq[1]).mean() \
                + F.mse_loss(long_seq[2], long_seq[3]) * self.vf_coeff \
                + F.mse_loss(long_seq[4], long_seq[5]) * self.int_coeff \
-               + F.mse_loss(long_seq[6], long_seq[7]) * self.rdn_coeff
+               + long_seq[6].mean() * self.rdn_coeff
         return loss
     
     def forward(self, eps_trajection, inner_loop=0):
@@ -84,7 +82,7 @@ class _ActorCritic(nn.Module):
         eps_trajection = eps_trajection[-1]
         
         # Concate to long sequence
-        long_seq = [[] for _ in range(8)]
+        long_seq = [[] for _ in range(7)]
         for trajection in eps_trajection:
             for i, t in enumerate(self._process_single(trajection)):
                 long_seq[i].append(t)

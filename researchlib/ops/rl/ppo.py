@@ -74,22 +74,20 @@ class _PPO(nn.Module):
         ratio = torch.exp(logp - fixed_logp.detach())
         surrogate1 = ratio * weights
         surrogate2 = torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon) * weights
-        rnd_x = torch.zeros(1) if 'rnd_x' not in trajection else trajection['rnd_x']
-        rnd_y = torch.zeros(1) if 'rnd_y' not in trajection else trajection['rnd_y']
+        intrinsic_loss = torch.zero_like(logp) if 'intrinsic_loss' not in trajection else trajection['intrinsic_loss']
         return (surrogate1, 
                 surrogate2, 
                 value_rollout,
                 value_returns,
                 intrinsic_rollout,
                 intrinsic_returns,
-                rnd_x,
-                rnd_y)
+                intrinsic_loss)
     
     def _get_loss(self, long_seq):
         loss = - torch.min(long_seq[0], long_seq[1]).mean() \
                + F.mse_loss(long_seq[2], long_seq[3]) * self.vf_coeff \
                + F.mse_loss(long_seq[4], long_seq[5]) * self.int_coeff \
-               + F.mse_loss(long_seq[6], long_seq[7]) * self.rdn_coeff
+               + long_seq[6].mean() * self.rdn_coeff
         return loss
     
     def forward(self, eps_trajection, inner_loop=0):
@@ -105,7 +103,7 @@ class _PPO(nn.Module):
                 self.fixed_log_prob.append(self._fixed_log_prob(i))
                 
         # Concate to long sequence
-        long_seq = [[] for _ in range(8)]
+        long_seq = [[] for _ in range(7)]
         for trajection, fixed_logp in zip(eps_trajection, self.fixed_log_prob):
             for i, t in enumerate(self._process_single(trajection, fixed_logp)):
                 long_seq[i].append(t)

@@ -24,12 +24,11 @@ class _RandomDistill(nn.Module):
                 for j in range(len(x[i])):
                     state = torch.stack(x[i][j]['state'],  0).to(self.device)
                     with torch.no_grad():
-                        x1 = self.target_network(state)
+                        x1 = self.target_network(state).detach()
                     x2 = self.predict_network(state)
-                    x[i][j]['rnd_x'] = x1
-                    x[i][j]['rnd_y'] = x2
+                    x[i][j]['intrinsic_loss'] = (x2 - x1).pow(2).mean(-1)
                     with torch.no_grad():
-                        intrinsic = (x1 - x2).pow(2).mean(-1).cpu()
+                        intrinsic = (x2 - x1).pow(2).mean(-1).cpu().detach()
                         intrinsic = torch.cat([intrinsic[1:], torch.zeros(1)]) # Because Ri is for s(i+1) not s(i)
                         x[i][j]['intrinsic'] = intrinsic
         return x
