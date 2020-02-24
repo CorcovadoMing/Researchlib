@@ -23,7 +23,7 @@ from .template_bank import _TemplateBank
 
 #============================================================================
 
-from .conv_variants import _SConv2d, _SepConv2d, _DilConv2d
+from .conv_variants import _SConv2d, _SepConv2d, _DilConv2d, _DiracConv1d, _DiracConv2d, _DiracConv3d
 
 from .activator import _GeLU, _Mish, _Swish, _DropReLU, _LogSoftmax, _Softmax, _LogSparsemax, _Sparsemax, _FTSwishPlus, _TReLU
 
@@ -80,6 +80,9 @@ class op(object):
     SConv2d = _SConv2d
     SepConv2d = _SepConv2d
     DilConv2d = _DilConv2d
+    DiracConv1d = _DiracConv1d
+    DiracConv2d = _DiracConv2d
+    DiracConv3d = _DiracConv3d
     
     # Pool
     CombinePool2d = _CombinePool2d
