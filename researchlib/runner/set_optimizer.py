@@ -12,13 +12,10 @@ Yogi: https://papers.nips.cc/paper/8186-adaptive-methods-for-nonconvex-optimizat
 '''
 from torch.optim import *
 from .optimizer.adafactor import Adafactor
-# from .optimizer.radam import PlainRAdam, RAdam
-# from .optimizer.adamw import AdamW
 from .optimizer.cocob import Cocob
 from .optimizer.lookahead import Lookahead
 from .optimizer.nag import NAG
 from .optimizer.sm3 import SM3
-# from adabound import AdaBound
 
 from ..utils import _register_method, update_optim
 import torchcontrib

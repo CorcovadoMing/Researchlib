@@ -5,7 +5,7 @@ from .environment import *
 
 # Vision Dataset
 from .np_dataset import _NumpyDataset
-from .tf_dataset import _TFDataset
+#from .tf_dataset import _TFDataset
 from .torch_dataset import _TorchDataset
 
 # LFS Dataset
@@ -19,5 +19,5 @@ class loader(object):
     utils = utils
     NumpyDataset = _NumpyDataset
     TorchDataset = _TorchDataset
-    TFDataset = _TFDataset
+    #TFDataset = _TFDataset
     LFS = _LFS

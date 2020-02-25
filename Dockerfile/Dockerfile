@@ -101,16 +101,14 @@ RUN apt update && apt install -y sox libsox-dev libsox-fmt-all
 RUN pip install http://download.pytorch.org/whl/torchaudio-0.2-cp36-cp36m-linux_x86_64.whl
 
 RUN apt-get update && apt-get install -y build-essential libcap-dev cmake libopenmpi-dev zlib1g-dev libsdl2-gfx-dev libsdl2-ttf-dev
-RUN pip install python-prctl tensorflow-gpu tensorflow-datasets gast
-#RUN pip install -U numpy
-#RUN pip install gast==0.2.2
-#RUN pip install numpy==1.16.4
+
+RUN pip install python-prctl tensorflow-gpu==1.14 tensorflow-datasets gast
 
 RUN pip install -U nibabel altair vega_datasets torchlars kymatio scikit-cuda cupy
 RUN pip install git+git://github.com/deepmind/bsuite.git
 RUN pip install tifffile pytorch-metric-learning prenlp cvxpylayers
 RUN pip install git+https://github.com/facebookresearch/pytorch3d.git
-RUN pip install gym-retro pybullet procgen stable-baselines[mpi] gym-super-mario-bros
+RUN pip install -U gym-retro pybullet procgen stable-baselines gym-super-mario-bros
 RUN git clone -b v2.0.4 https://github.com/google-research/football.git
 RUN mkdir -p football/third_party/gfootball_engine/lib
 RUN wget https://storage.googleapis.com/gfootball/prebuilt_gameplayfootball_v2.0.4.so -O football/third_party/gfootball_engine/lib/prebuilt_gameplayfootball.so

@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings('ignore')
+
 from ...dataset import *
 from ...models import *
 from ...runner import *
@@ -36,3 +39,5 @@ sns.set_style("whitegrid", {'axes.grid': False})
 
 # Frontend
 initial_frontend()
+
+warnings.filterwarnings('once')
