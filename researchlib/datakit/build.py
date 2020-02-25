@@ -21,7 +21,7 @@ class DataFlowBuilder(DataFlow):
     
     
 def Build(name: str, dataset_format: str) -> None:
-    support_type = ['lmdb']
+    support_type = ['lmdb', 'numpy']
     if dataset_format not in support_type:
         raise ValueError(f'Support dataset format is {support_type}')
     
@@ -31,13 +31,14 @@ def Build(name: str, dataset_format: str) -> None:
     for i, j in tqdm(zip(csv, phase), total=len(csv)):
         data_sheet = pd.read_csv(i)
         
+        output_file = os.path.join(name, j)
+        df = DataFlowBuilder(data_sheet)
+        
         if dataset_format == 'lmdb':
-            output_file = os.path.join(name, j)
             try:
                 os.remove(f'{output_file}.lmdb')
                 os.remove(f'{output_file}.lmdb-lock')
             except:
                 pass
-            df = DataFlowBuilder(data_sheet)
             LMDBSerializer.save(df, f'{output_file}.lmdb')
             
