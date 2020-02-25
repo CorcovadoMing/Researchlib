@@ -2,15 +2,97 @@ from .prefetch import BackgroundGenerator
 from ...utils import inifinity_loop
 from tensorpack.dataflow import *
 from torch import nn
+import random
+import numpy as np
+from functools import partial
+from ...dataset import Augmentations, Preprocessing
+
+def _processing_function(
+    dp,
+    include_y,
+    augmentor,
+    normalizer,
+    N,
+    M,
+    data_key = 0,
+    label_key = 1,
+):
+    batch_x = dp[data_key]
+    batch_y = dp[label_key]
+
+    return_x = []
+    return_y = []
+    for x, y in zip(batch_x, batch_y):
+
+        # Augmentation
+        augmentor = augmentor if len(augmentor) < N else random.choices(augmentor, k=N)
+        for op in augmentor:
+            options = op.options()
+            x = op(x, **random.choice(options))
+
+        if x.shape[:-1] == y.shape[:-1]:
+            do_y = True
+        else:
+            do_y = False
+
+        x = x.astype(np.float32)
+        y = y.astype(np.float32) if do_y else y.astype(np.int64)
+
+        # Normalization
+        for op in normalizer:
+            x = op(x)
+            if do_y:
+                y = op(y)
+        
+        return_x.append(x)
+        return_y.append(y)
+
+    return np.stack(return_x), np.stack(return_y)
 
 
 class _Generator(nn.Module):
-    def __init__(self):
+    def __init__(self, 
+                 *preprocessing_list, 
+                 include_y = False, 
+                 N = 2, 
+                 M = 1):
         super().__init__()
         self.train_ds = None
         self.val_ds = None
         self.fp16 = False
         self.phase = 0
+        self.N = N
+        self.M = M
+        self.include_y = include_y
+        
+        normalize_list = []
+        augment_list = []
+        for i in preprocessing_list:
+            try:
+                if 'options' in i.__class__.__dict__:
+                    augment_list.append(i)
+                else:
+                    normalize_list.append(i)
+            except:
+                normalize_list.append(i)
+        
+        self.train_processing_function = partial(
+            _processing_function,
+            N = self.N,
+            M = self.M,
+            include_y = False,
+            normalizer = normalize_list,
+            augmentor = augment_list
+        )
+        
+        self.val_processing_function = partial(
+            _processing_function,
+            N = self.N,
+            M = self.M,
+            include_y = False,
+            normalizer = normalize_list,
+            augmentor = []
+        )
         
     def prepare_state(self, fp16, batch_size):
         self.fp16 = fp16
@@ -36,12 +118,14 @@ class _Generator(nn.Module):
     def forward(self, ds):
         if self.train_ds is None and self.phase == 0:
             ds = BatchData(ds, self.batch_size, remainder = True)
+            ds = MapData(ds, self.train_processing_function)
             ds = PrintData(ds)
             ds.reset_state()
             self.train_ds = BackgroundGenerator(inifinity_loop(ds), fp16=self.fp16)
             
         if self.val_ds is None and self.phase == 1:
             ds = BatchData(ds, self.batch_size, remainder = True)
+            ds = MapData(ds, self.val_processing_function)
             ds = PrintData(ds)
             ds.reset_state()
             self.val_ds = BackgroundGenerator(inifinity_loop(ds), fp16=self.fp16)

@@ -12,4 +12,5 @@ def set_normalizer(type, mean, std):
         normalizer = DynamicNormalize()
         denormalizer = None # TODO
 
-    return normalizer, denormalizer
+    #return normalizer, denormalizer
+    return normalizer
