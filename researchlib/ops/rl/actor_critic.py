@@ -11,9 +11,13 @@ class _ActorCritic(nn.Module):
                  gae_ext_lambda=0.95,
                  gae_int_gamma=0.99,
                  gae_int_lambda=0.95,
-                 vf_coeff=0.5, 
+                 disable_int = False,
+                 disable_ext = False,
+                 int_weight = 1,
+                 ext_weight = 1,
+                 ext_coeff=0.5, 
                  int_coeff=2.0, 
-                 rdn_coeff=1.0, 
+                 int_fit_coeff=1.0, 
                  state_node='state', 
                  policy_node='policy'):
         super().__init__()
@@ -22,13 +26,25 @@ class _ActorCritic(nn.Module):
         self.gae_ext_lambda = gae_ext_lambda
         self.gae_int_gamma = gae_int_gamma
         self.gae_int_lambda = gae_int_lambda
-        self.vf_coeff = vf_coeff
+        self.int_weight = int_weight
+        self.ext_weight = ext_weight
+        self.ext_coeff = ext_coeff
         self.int_coeff = int_coeff
-        self.rdn_coeff = rdn_coeff
+        self.int_fit_coeff = int_fit_coeff
         self.agent = agent
         self.state_node = state_node
         self.policy_node = policy_node
         self.device = None
+        
+        if disable_int:
+            self.int_weight = 0
+            self.int_coeff = 0
+            self.int_fit_coeff = 0
+        
+        if disable_ext:
+            self.ext_weight = 0
+            self.ext_coeff = 0
+            
         
     def _process_single(self, trajection):
         if self.device is None:
@@ -56,7 +72,7 @@ class _ActorCritic(nn.Module):
             advantages_intrinsic = torch.from_numpy(_discount(advantages_intrinsic, 
                                                              self.gae_int_gamma * self.gae_int_lambda)).to(self.device)
             
-            weights = advantages_extrinsic + advantages_intrinsic
+            weights = self.ext_weight * advantages_extrinsic + self.int_weight * advantages_intrinsic
             weights = (weights - weights.mean()) / (weights.std() + self.eps)
             
         intrinsic_loss = torch.zero_like(logp) if 'intrinsic_loss' not in trajection else trajection['intrinsic_loss']
@@ -70,9 +86,9 @@ class _ActorCritic(nn.Module):
     
     def _get_loss(self, long_seq):
         loss = - (long_seq[0] * long_seq[1]).mean() \
-               + F.mse_loss(long_seq[2], long_seq[3]) * self.vf_coeff \
+               + F.mse_loss(long_seq[2], long_seq[3]) * self.ext_coeff \
                + F.mse_loss(long_seq[4], long_seq[5]) * self.int_coeff \
-               + long_seq[6].mean() * self.rdn_coeff
+               + long_seq[6].mean() * self.int_fit_coeff
         return loss
     
     def forward(self, eps_trajection, inner_loop=0):

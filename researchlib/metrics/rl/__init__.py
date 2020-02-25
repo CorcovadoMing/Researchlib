@@ -1,7 +1,8 @@
 from .length import EpisodeLength
-from .reward import Reward
+from .rewards import ExtrinsicRewards, IntrinsicRewards
 
 
 class RL(object):
     EpisodeLength = EpisodeLength
-    Reward = Reward
+    ExtrinsicRewards = ExtrinsicRewards
+    IntrinsicRewards = IntrinsicRewards
