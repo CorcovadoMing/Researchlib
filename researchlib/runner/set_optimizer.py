@@ -1,13 +1,24 @@
+import torch_optimizer as extra_optim
+'''
+AccSGD: https://arxiv.org/abs/1803.05591
+AdaBound: https://arxiv.org/abs/1902.09843
+AdaMod: https://arxiv.org/abs/1910.12249
+DiffGrad: https://arxiv.org/abs/1909.11015
+Lamb: https://arxiv.org/abs/1904.00962
+NovoGrad: https://arxiv.org/abs/1905.11286
+RAdam: https://arxiv.org/abs/1908.03265
+SGDW: https://arxiv.org/abs/1608.03983
+Yogi: https://papers.nips.cc/paper/8186-adaptive-methods-for-nonconvex-optimization
+'''
 from torch.optim import *
-from apex.optimizers import *
 from .optimizer.adafactor import Adafactor
-from .optimizer.radam import PlainRAdam, RAdam
-from .optimizer.adamw import AdamW
+# from .optimizer.radam import PlainRAdam, RAdam
+# from .optimizer.adamw import AdamW
 from .optimizer.cocob import Cocob
 from .optimizer.lookahead import Lookahead
 from .optimizer.nag import NAG
 from .optimizer.sm3 import SM3
-from adabound import AdaBound
+# from adabound import AdaBound
 
 from ..utils import _register_method, update_optim
 import torchcontrib
@@ -24,19 +35,22 @@ def set_optimizer(self, lars=False):
     opt_mapping = {
         'adam': partial(Adam, betas = (0.9, 0.999), eps = 1e-4),
         'adamw': partial(AdamW, betas = (0.9, 0.999), eps = 1e-4),
-        'lamb': partial(FusedLAMB, betas = (0.9, 0.999), eps = 1e-4),
-        'novograd': FusedNovoGrad,
+        'lamb': partial(extra_optim.Lamb, betas = (0.9, 0.999), eps = 1e-4),
+        'novograd': partial(extra_optim.NovoGrad, betas=(0.95, 0), eps = 1e-4),
         'cocob': Cocob,
-        'radam-plain': partial(PlainRAdam, betas = (0.9, 0.999), eps = 1e-4),
-        'radam': partial(RAdam, betas = (0.9, 0.999), eps = 1e-4),
+        'radam': extra_optim.RAdam,
         'sgd': partial(SGD, lr = 1e-1, momentum = 0.9),
+        'accsgd': extra_optim.AccSGD,
         'nesterov': partial(SGD, lr = 1e-2, momentum = 0.9, nesterov = True),
         'nag': partial(NAG, lr = 1e-1),
         'rmsprop': RMSprop,
-        'adabound': partial(AdaBound, lr = 1e-3, final_lr = 0.1),
-        'adagrad': Adagrad,
+        'adabound': partial(extra_optim.AdaBound, lr = 1e-3, final_lr = 0.1, eps = 1e-4),
+        'adamod': partial(extra_optim.AdaMod, eps = 1e-4),
         'adafactor': partial(Adafactor, lr = 1e-3),
         'sm3': partial(SM3, eps = 1e-4),
+        'diffgrad': partial(extra_optim.DiffGrad, eps = 1e-4),
+        'sgdw': partial(extra_optim.SGDW, momentum = 0.9),
+        'yogi': partial(extra_optim.Yogi, eps = 1e-4),
     }
 
     loss_params = []

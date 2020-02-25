@@ -124,9 +124,9 @@ RUN apt-get install -y chromium-driver chromium-browser && pip install git+https
 RUN pip install git+https://github.com/zuoxingdong/mazelab.git && pip install git+https://github.com/MattChanTK/gym-maze
 RUN pip install 'plotnine[all]'
 RUN git clone https://github.com/ntasfi/PyGame-Learning-Environment.git && mv PyGame-Learning-Environment/ple/games/flappybird/assets/ /opt/conda/lib/python3.6/site-packages/ple/games/flappybird/
-
 COPY roboschool ./roboschool
 RUN cd roboschool && apt-get install qtbase5-dev libqt5opengl5-dev libassimp-dev cmake patchelf -y && ./install_boost.sh && ./install_bullet.sh && source exports.sh && cd roboschool/cpp-household && make clean && make -j4 && cd ../.. && pip install -e .
+RUN pip install git+https://github.com/jettify/pytorch-optimizer && pip install lineflow
 
 # Unstaged change
 
