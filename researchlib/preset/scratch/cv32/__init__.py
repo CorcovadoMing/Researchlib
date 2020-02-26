@@ -11,6 +11,7 @@ from .preresnet import PreResNet18, PreResNet34, PreResNet50, PreResNet101, PreR
 from .revnet import RevNet110
 from .wideresnet import WideResNet28x10
 from .pyramidnet import PyramidNet110, PyramidNet272
+from .diracnet import DiracNet18
 
 
 
@@ -41,4 +42,6 @@ class CV32(object):
     
     PyramidNet110 = PyramidNet110
     PyramidNet272 = PyramidNet272
+    
+    DiracNet18 = DiracNet18
     

@@ -17,37 +17,31 @@ def _processing_function(
     data_key = 0,
     label_key = 1,
 ):
-    batch_x = dp[data_key]
-    batch_y = dp[label_key]
+    x = dp[data_key]
+    y = dp[label_key]
 
-    return_x = []
-    return_y = []
-    for x, y in zip(batch_x, batch_y):
 
-        # Augmentation
-        augmentor = augmentor if len(augmentor) < N else random.choices(augmentor, k=N)
-        for op in augmentor:
-            options = op.options()
-            x = op(x, **random.choice(options))
+    # Augmentation
+    augmentor = augmentor if len(augmentor) < N else random.choices(augmentor, k=N)
+    for op in augmentor:
+        options = op.options()
+        x = op(x, **random.choice(options))
 
-        if x.shape[:-1] == y.shape[:-1]:
-            do_y = True
-        else:
-            do_y = False
+    if x.shape[:-1] == y.shape[:-1]:
+        do_y = True
+    else:
+        do_y = False
 
-        x = x.astype(np.float32)
-        y = y.astype(np.float32) if do_y else y.astype(np.int64)
+    x = x.astype(np.float32)
+    y = y.astype(np.float32) if do_y else y.astype(np.int64)
 
-        # Normalization
-        for op in normalizer:
-            x = op(x)
-            if do_y:
-                y = op(y)
-        
-        return_x.append(x)
-        return_y.append(y)
-
-    return np.stack(return_x), np.stack(return_y)
+    # Normalization
+    for op in normalizer:
+        x = op(x)
+        if do_y:
+            y = op(y)
+            
+    return x, y
 
 
 class _Generator(nn.Module):
@@ -117,15 +111,15 @@ class _Generator(nn.Module):
     
     def forward(self, ds):
         if self.train_ds is None and self.phase == 0:
-            ds = BatchData(ds, self.batch_size, remainder = True)
             ds = MapData(ds, self.train_processing_function)
+            ds = BatchData(ds, self.batch_size, remainder = True)
             ds = PrintData(ds)
             ds.reset_state()
             self.train_ds = BackgroundGenerator(inifinity_loop(ds), fp16=self.fp16)
             
         if self.val_ds is None and self.phase == 1:
-            ds = BatchData(ds, self.batch_size, remainder = True)
             ds = MapData(ds, self.val_processing_function)
+            ds = BatchData(ds, self.batch_size, remainder = True)
             ds = PrintData(ds)
             ds.reset_state()
             self.val_ds = BackgroundGenerator(inifinity_loop(ds), fp16=self.fp16)
