@@ -7,7 +7,7 @@ from torch import nn
 def Dawnfast(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs = dict(
         _op = op.Conv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = 3,
         stem={'whitening': 1},

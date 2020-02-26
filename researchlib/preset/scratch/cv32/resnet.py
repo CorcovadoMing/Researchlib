@@ -10,7 +10,7 @@ def ResNet18(in_node, out_node, head=None, in_dim=3, **kwargs):
     '''
     default_kwargs = dict(
         _op = op.Conv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = 8,
         stem={'vgg': 1}, 
@@ -28,7 +28,7 @@ def ResNet18(in_node, out_node, head=None, in_dim=3, **kwargs):
 def ResNet34(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs = dict(
         _op = op.Conv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = 16,
         stem={'vgg': 1}, 
@@ -46,7 +46,7 @@ def ResNet34(in_node, out_node, head=None, in_dim=3, **kwargs):
 def ResNet50(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs = dict(
         _op = op.Conv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = 16,
         stem={'vgg': 1}, 
@@ -64,7 +64,7 @@ def ResNet50(in_node, out_node, head=None, in_dim=3, **kwargs):
 def ResNet101(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs = dict(
         _op = op.Conv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = 33,
         stem={'vgg': 1}, 
@@ -82,7 +82,7 @@ def ResNet101(in_node, out_node, head=None, in_dim=3, **kwargs):
 def ResNet152(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs = dict(
         _op = op.Conv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = 50,
         stem={'vgg': 1}, 
@@ -106,7 +106,7 @@ def ResNet110(in_node, out_node, head=None, in_dim=3, **kwargs):
     '''
     default_kwargs = dict(
         _op = op.Conv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = 54,
         stem={'vgg': 1}, 

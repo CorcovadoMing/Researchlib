@@ -7,7 +7,7 @@ from torch import nn
 def PyramidNet110(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs = dict(
         _op = op.Conv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = 54,
         type='residual', 
@@ -30,7 +30,7 @@ def PyramidNet110(in_node, out_node, head=None, in_dim=3, **kwargs):
 def PyramidNet272(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs = dict(
         _op = op.Conv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = 90,
         type='residual-bottleneck', 

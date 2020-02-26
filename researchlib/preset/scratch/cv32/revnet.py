@@ -8,7 +8,7 @@ def RevNet110(in_node, out_node, head=None, in_dim=3, **kwargs):
     # Need to be verified
     default_kwargs = dict(
         _op = op.Conv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = 27,
         stem={'vgg': 1}, 

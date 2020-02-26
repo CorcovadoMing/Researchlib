@@ -7,7 +7,7 @@ from torch import nn
 def RandWire(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs = dict(
         _op = op.SepConv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = 3,
         total_blocks = 3,
         stem={'vgg': 1},

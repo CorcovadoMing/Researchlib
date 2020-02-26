@@ -5,7 +5,7 @@ from torch import nn
 import math
 
 
-def ResNet(size, pool_freq, in_node, out_node, head=None, start_filter=64, end_filter=-1, in_dim=3, **kwargs):
+def ResNet(in_node, out_node, size, pool_freq, head=None, in_dim=3, filters=(64, -1), **kwargs):
     '''
         Deep Residual Learning for Image Recognition
     '''
@@ -16,13 +16,13 @@ def ResNet(size, pool_freq, in_node, out_node, head=None, start_filter=64, end_f
     _pool_freq = [i+pool_freq+1 for i in range(0, total_blocks, pool_freq)]
     default_kwargs = dict(
         _op = op.Conv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = total_blocks,
         stem={'vgg': 1}, 
         type='residual', 
         pool_freq=_pool_freq,
-        filters=(start_filter, end_filter),
+        filters=filters,
     )
     default_kwargs.update(kwargs)
     model = [AutoConvNet(**default_kwargs)]

@@ -7,7 +7,7 @@ from torch import nn
 def PreResNet18(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs = dict(
         _op = op.Conv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = 8,
         preact=True,
@@ -27,7 +27,7 @@ def PreResNet18(in_node, out_node, head=None, in_dim=3, **kwargs):
 def PreResNet34(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs = dict(
         _op = op.Conv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = 16,
         preact=True,
@@ -47,7 +47,7 @@ def PreResNet34(in_node, out_node, head=None, in_dim=3, **kwargs):
 def PreResNet50(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs = dict(
         _op = op.Conv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = 16,
         preact=True,
@@ -67,7 +67,7 @@ def PreResNet50(in_node, out_node, head=None, in_dim=3, **kwargs):
 def PreResNet101(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs = dict(
         _op = op.Conv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = 33,
         preact=True,
@@ -87,7 +87,7 @@ def PreResNet101(in_node, out_node, head=None, in_dim=3, **kwargs):
 def PreResNet152(in_node, out_node, head=None, in_dim=3, **kwargs):
     default_kwargs = dict(
         _op = op.Conv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = 50,
         preact=True,

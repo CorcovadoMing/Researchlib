@@ -10,7 +10,7 @@ def DiracNet18(in_node, out_node, head=None, in_dim=3, **kwargs):
     '''
     default_kwargs = dict(
         _op = op.DiracConv2d,
-        unit = unit.Conv,
+        _unit = unit.Conv,
         input_dim = in_dim,
         total_blocks = 16,
         stem={'vgg': 1}, 
