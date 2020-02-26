@@ -9,3 +9,4 @@ from .retro import RetroEnv
 from .ple import PLEEnv
 from .roboschool import Roboschool
 from .maze import Maze
+from .vectorize import Vectorize

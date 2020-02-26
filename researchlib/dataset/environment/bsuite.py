@@ -34,5 +34,5 @@ class BSuiteEnv(Env):
         return obj.observation, obj.reward, obj.last(), None
         
 
-    def render(self, title = None, return_cache = False):
+    def render(self, title = None, output = False):
         pass

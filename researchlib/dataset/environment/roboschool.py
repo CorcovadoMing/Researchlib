@@ -47,12 +47,17 @@ class Roboschool(Env):
         self.cache = None
         return self.env.reset(), 0, False, None
 
-    def render(self, title = None):
+    def render(self, title = None, output = False):
+        warnings.filterwarnings('ignore')
+        if output:
+            return self.env.render(mode = 'rgb_array')
+        
         if self.cache is None:
             self.cache = plt.imshow(self.env.render(mode = 'rgb_array'))
+        else:
+            self.cache.set_data(self.env.render(mode = 'rgb_array'))
+        
         plt.title(str(title))
-        self.cache.set_data(self.env.render(mode = 'rgb_array'))
         display.display(plt.gcf())
         display.clear_output(wait = True)
-
-
+        warnings.filterwarnings('once')

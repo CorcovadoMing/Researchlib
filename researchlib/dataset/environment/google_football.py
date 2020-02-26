@@ -51,13 +51,15 @@ class GoogleFootBall(Env):
         self.obs = self.env.reset()
         return self.obs, 0, False, None
 
-    def render(self, title = None):
+    def render(self, title = None, output = False):
+        if output:
+            return self.obs
+        
         if self.cache is None:
             self.cache = plt.imshow(self.obs)
+        else:
+            self.cache.set_data(self.obs)
+        
         plt.title(str(title))
-        self.cache.set_data(self.env.render(mode = 'rgb_array'))
         display.display(plt.gcf())
         display.clear_output(wait = True)
-
-
-
