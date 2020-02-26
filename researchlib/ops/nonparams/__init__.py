@@ -9,3 +9,4 @@ from .argmax import _Argmax
 from .argmin import _Argmin
 from .mixture import _Mixture
 from .rpt import _RPT
+from .sobel import _SobelHorizontal2d, _SobelVertical2d

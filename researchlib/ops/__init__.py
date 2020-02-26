@@ -50,10 +50,10 @@ from .non_local import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _Gaus
 
 from .active_noise import _ActiveNoise
 from .rcl import _RConv2d
-from .io import _SetVariable, _UpdateVariable, _GetVariable, _Source, _Generator, _Preloop
+from .inputs import _SetVariable, _UpdateVariable, _GetVariable, _Source, _Generator, _Preloop
 from .node import _To, _Subgraph, _Detach, _Name, _NoOp
 
-from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation42d, _Anneal, _Argmax, _Argmin, _Mixture, _RPT
+from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation42d, _Anneal, _Argmax, _Argmin, _Mixture, _RPT, _SobelHorizontal2d, _SobelVertical2d
 from .pool import _CombinePool2d, _PixelShuffle2d
 
 from .mlp import _MLP
@@ -100,8 +100,10 @@ class op(object):
     Argmin = _Argmin
     Mixture = _Mixture
     RPT = _RPT
+    SobelHorizontal2d = _SobelHorizontal2d
+    SobelVertical2d = _SobelVertical2d
     
-    # IO
+    # inputs
     SetVariable = _SetVariable
     UpdateVariable = _UpdateVariable
     GetVariable = _GetVariable
