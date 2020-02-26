@@ -32,7 +32,6 @@ def AutoConvNet(
     preact = False,
     pool_freq = 1,
     do_norm = True,
-    non_local_start = 1e8,
     custom = {},
     **kwargs
 ):
@@ -127,7 +126,6 @@ def AutoConvNet(
         
         info.add_row([id + stem_layers, in_dim, out_dim, do_pool, _op_type.__name__, custom_kwargs_str, None, block_group])
         
-        kwargs['non_local'] = id >= non_local_start
         layers.append(
             _op_type(
                 f'{id}',
@@ -140,9 +138,7 @@ def AutoConvNet(
         in_dim = out_dim
 
     # must verify after all keys get registered
-    parameter_manager.allow_param('non_local')
     use_subgraph = parameter_manager.get_param('use_subgraph', False)
-    
     ParameterManager.verify_kwargs(**kwargs)
     parameter_manager.save_buffer('dim_type', _get_dim_type(_op))
     parameter_manager.save_buffer('last_dim', out_dim)

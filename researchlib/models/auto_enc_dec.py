@@ -81,7 +81,6 @@ def AutoEncDec(
     preact = False,
     pool_freq = 1,
     do_norm = True,
-    non_local_start = 1e8,
     skip_type = None,
     return_bottleneck = False,
     **kwargs
@@ -159,7 +158,6 @@ def AutoEncDec(
             info.add_row(['Bottleneck', out_dim, out_dim, 0, _op_type_inner.__name__, 'N/A', 'N/A', 'N/A'])
         info.add_row([2 * total_blocks + 2 - cache_id + stem_layers, end_in_dim, in_dim, do_pool, _op_type_end.__name__, 'N/A', 'N/A', _skip_type])
         
-        kwargs['non_local'] = id >= non_local_start
         structure = _RecurrentBlock(
             # Begin
             _op_type_begin(f'{cache_id}', unit, down_op, in_dim, out_dim,
@@ -185,9 +183,7 @@ def AutoEncDec(
     layers.append(structure)
 
     # must verify after all keys get registered
-    parameter_manager.allow_param('non_local')
     use_subgraph = parameter_manager.get_param('use_subgraph', False)
-    
     ParameterManager.verify_kwargs(**kwargs)
     parameter_manager.save_buffer('dim_type', _get_dim_type(down_op))
     parameter_manager.save_buffer('last_dim', in_dim)
