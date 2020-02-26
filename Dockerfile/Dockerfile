@@ -128,6 +128,7 @@ RUN pip install git+https://github.com/duckietown/gym-duckietown
 COPY roboschool ./roboschool
 RUN cd roboschool && apt-get install qtbase5-dev libqt5opengl5-dev libassimp-dev cmake patchelf -y && ./install_boost.sh && ./install_bullet.sh && source exports.sh && cd roboschool/cpp-household && make clean && make -j4 && cd ../.. && pip install -e .
 RUN pip install git+https://github.com/jettify/pytorch-optimizer && pip install lineflow
+RUN pip uninstall pyglet -y && pip install pyglet==1.3.2
 
 # Unstaged change
 
