@@ -11,9 +11,7 @@ def _N2V(input_node, output_node='out', model_node='model'):
     
         Node(model_node,
              nn.Sequential(
-                 AutoEncDec(op.Conv2d, 
-                            op.ConvTranspose2d, 
-                            unit.Conv, 1, 7, 
+                 AutoEncDec(1, 7, 
                             down_type='residual',
                             up_type='vgg',
                             preact=False, 
@@ -25,8 +23,7 @@ def _N2V(input_node, output_node='out', model_node='model'):
                             blur=False,
                             pool_freq=2),
                  nn.InstanceNorm2d(32),
-                 AutoConvNet(op.Conv2d, unit.Conv, 32, 
-                           4, 
+                 AutoConvNet(32, 4, 
                            stem=None,
                            type='vgg', 
                            filters=(32, -1),

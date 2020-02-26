@@ -5,7 +5,7 @@ from ..ops import op
 from .builder import Builder
 from ..utils import ParameterManager
 from ..blocks import block
-from ..blocks import unit as _unit
+from ..blocks import unit
 from torch import nn
 import torch
 from .stem import push_stem
@@ -68,9 +68,6 @@ def _do_pool(id, pool_freq):
 
 
 def AutoEncDec(
-    down_op,
-    up_op,
-    unit,
     input_dim,
     total_blocks,
     down_type = 'residual',
@@ -81,6 +78,9 @@ def AutoEncDec(
     preact = False,
     pool_freq = 1,
     do_norm = True,
+    down_op = op.Conv2d,
+    up_op = op.ConvTranspose2d,
+    _unit = unit.Conv,
     skip_type = None,
     return_bottleneck = False,
     **kwargs
@@ -109,7 +109,7 @@ def AutoEncDec(
     if stem is not None:
         stem_type, stem_layers = list(stem.items())[0]
         layers, in_dim, out_dim, info = push_stem(
-            down_op, _unit.Conv, layers, in_dim, out_dim, stem_type, stem_layers, preact, info, **kwargs
+            down_op, unit.Conv, layers, in_dim, out_dim, stem_type, stem_layers, preact, info, **kwargs
         )
     else:
         stem_layers = 0
@@ -160,18 +160,18 @@ def AutoEncDec(
         
         structure = _RecurrentBlock(
             # Begin
-            _op_type_begin(f'{cache_id}', unit, down_op, in_dim, out_dim,
+            _op_type_begin(f'{cache_id}', _unit, down_op, in_dim, out_dim,
                 do_pool=do_pool, do_norm=do_norm, preact=preact,
                 id=cache_id, total_blocks=2*total_blocks+1, **kwargs),
 
             # Inner
-            _op_type_inner(f'{cache_id}', unit, down_op, out_dim, out_dim,
+            _op_type_inner(f'{cache_id}', _unit, down_op, out_dim, out_dim,
                 do_pool=False, do_norm=do_norm, preact=preact,
                 id=cache_id+1, total_blocks=2*total_blocks+1, **kwargs) \
             if id == 1 else structure,
 
             # End
-            _op_type_end(f'{cache_id}', unit, up_op, end_in_dim, in_dim,
+            _op_type_end(f'{cache_id}', _unit, up_op, end_in_dim, in_dim,
                 do_pool=do_pool, do_norm=do_norm, preact=preact,
                 id=2*total_blocks+1-cache_id, total_blocks=2*total_blocks+1, **kwargs),
 
