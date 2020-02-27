@@ -53,7 +53,7 @@ from .rcl import _RConv2d
 from .inputs import _SetVariable, _UpdateVariable, _GetVariable, _Source, _Generator, _Preloop
 from .node import _To, _Subgraph, _Detach, _Name, _NoOp
 
-from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation42d, _Anneal, _Argmax, _Argmin, _Mixture, _RPT, _SobelHorizontal2d, _SobelVertical2d
+from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation42d, _Anneal, _Argmax, _Argmin, _Mixture, _RPT, _SobelHorizontal2d, _SobelVertical2d, _Perception, _Gaussian2d
 from .pool import _CombinePool2d, _PixelShuffle2d
 
 from .mlp import _MLP
@@ -102,6 +102,8 @@ class op(object):
     RPT = _RPT
     SobelHorizontal2d = _SobelHorizontal2d
     SobelVertical2d = _SobelVertical2d
+    Perception = _Perception
+    Gaussian2d = _Gaussian2d
     
     # inputs
     SetVariable = _SetVariable

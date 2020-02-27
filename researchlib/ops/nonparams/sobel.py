@@ -11,7 +11,7 @@ class _SobelHorizontal2d(nn.Module):
                         [-1., 0., 1.],
                         [-2., 0., 2.],
                         [-1., 0., 1.],
-                    ]]]).repeat(self.in_dim, 1, 1, 1)
+                    ]]]).repeat(self.in_dim, 1, 1, 1) / 8.
     
     def forward(self, x):
         return F.conv2d(x, self.prior, padding=1, groups=self.in_dim)
@@ -25,7 +25,7 @@ class _SobelVertical2d(nn.Module):
                         [-1., -2., -1.],
                         [0., 0., 0.],
                         [1., 2., 1.],
-                    ]]]).repeat(self.in_dim, 1, 1, 1)
+                    ]]]).repeat(self.in_dim, 1, 1, 1) / 8.
     
     def forward(self, x):
         return F.conv2d(x, self.prior, padding=1, groups=self.in_dim)
