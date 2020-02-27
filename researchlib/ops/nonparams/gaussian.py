@@ -22,4 +22,4 @@ class _Gaussian2d(nn.Module):
         self.prior = torch.from_numpy(_gen_kernel(kernel_size))[None, None, ...].repeat(in_dim, 1, 1, 1)
     
     def forward(self, x):
-        return F.conv2d(x, self.prior, padding=int((self.kernel_size-1)/2), groups=self.in_dim)
+        return F.conv2d(x, self.prior.to(x.dtype).to(x.device), padding=int((self.kernel_size-1)/2), groups=self.in_dim)
