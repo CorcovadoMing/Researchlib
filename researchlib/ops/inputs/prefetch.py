@@ -10,19 +10,11 @@ else:
 
 
 def _worker(generator, queue, fp16):
-    for x, y in generator:
-        if type(x) != torch.Tensor:
-            x = torch.from_numpy(x)
-        if type(y) != torch.Tensor:
-            y = torch.from_numpy(y)
-
-        x, y = x.pin_memory(), y.pin_memory()
+    for data in generator:
+        data = [torch.from_numpy(i).cuda() if type(i) != torch.Tensor else i for i in data]
         if fp16:
-            x = x.half()
-        x = x.cuda()
-        y = y.cuda()
-
-        queue.put((x, y))
+            data = [j.half() if i != 1 else j for i, j in enumerate(data)]
+        queue.put(data)
 
 
 class BackgroundGenerator:
@@ -42,8 +34,7 @@ class BackgroundGenerator:
         while self.queue.empty():
             # Simple spin lock
             time.sleep(0.001)
-        x, y = self.queue.get()
-        return x, y
+        return self.queue.get()
 
     # Python 3 compatibility
     def __next__(self):

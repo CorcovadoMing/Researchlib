@@ -29,5 +29,5 @@ def threadsafe_generator(f):
 @threadsafe_generator
 def inifinity_loop(loader):
     while True:
-        for i, j in loader:
-            yield i, j
+        for data in loader:
+            yield data
