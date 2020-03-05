@@ -19,6 +19,8 @@ def _processing_function(
 ):
     x = dp[data_key]
     y = dp[label_key]
+    x_org = x.astype(np.float32)
+#     x_org = x
 
 
     # Augmentation
@@ -26,6 +28,7 @@ def _processing_function(
     for op in augmentor:
         options = op.options()
         x = op(x, **random.choice(options))
+#         x_org = op(x_org, **random.choice(options))
 
     if x.shape[:-1] == y.shape[:-1]:
         do_y = True
@@ -33,15 +36,17 @@ def _processing_function(
         do_y = False
 
     x = x.astype(np.float32)
+#     x_org = x_org.astype(np.float32)
     y = y.astype(np.float32) if do_y else y.astype(np.int64)
 
     # Normalization
     for op in normalizer:
         x = op(x)
+        x_org = op(x_org)
         if do_y:
             y = op(y)
             
-    return x, y
+    return x, y, x_org
 
 
 class _Generator(nn.Module):

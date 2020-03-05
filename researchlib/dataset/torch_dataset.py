@@ -1,10 +1,11 @@
 import torchvision
 import torch
 import numpy as np
+import random
 from .np_dataset import _NumpyDataset
 
 
-def _TorchDataset(name, is_train, shuffle):
+def _TorchDataset(name, is_train, shuffle, label_noise=0):
     dataset_fn = None
     for i in torchvision.datasets.__dict__:
         if i.lower() == name and type(torchvision.datasets.__dict__[i]) == type:
@@ -20,6 +21,14 @@ def _TorchDataset(name, is_train, shuffle):
         ds.data = ds.data.unsqueeze(-1)
     
     if type(ds.data) == torch.Tensor:
-        return _NumpyDataset(ds.data.numpy().astype(np.float32), ds.targets.numpy(), shuffle, name = name)
+        data = ds.data.numpy().astype(np.float32)
+        target = ds.targets.numpy() 
     else:
-        return _NumpyDataset(ds.data.astype(np.float32), ds.targets, shuffle, name = name)
+        data = np.array(ds.data).astype(np.float32)
+        target = np.array(ds.targets)
+    
+    if label_noise != 0:
+        noise_idx = random.choices(list(range(len(target))), k = int(len(target)*label_noise))
+        target[noise_idx] = (target[noise_idx] + 1) % 10
+        
+    return _NumpyDataset(data, target, shuffle, name = name)

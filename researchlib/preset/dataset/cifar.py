@@ -3,14 +3,14 @@ from ...dataset import loader, Augmentations, Preprocessing
 from ...models import Node
 
 
-def CIFAR10(normalize=True):
+def CIFAR10(normalize=True, label_noise=0):
     if normalize:
         magic_mean, magic_std = (125.31, 122.95, 113.87), (62.99, 62.09, 66.70)
     else:
         magic_mean, magic_std = 128, 128
     _source = [
-        Node('source', op.Source(loader.TorchDataset('cifar10', True, True), 
-                                 loader.TorchDataset('cifar10', False, False))),
+        Node('source', op.Source(loader.TorchDataset('cifar10', True, True, label_noise), 
+                                 loader.TorchDataset('cifar10', False, False, 0))),
         Node('generator', op.Generator(
             Preprocessing.set_normalizer('static', magic_mean, magic_std),
             Preprocessing.Layout('HWC', 'CHW'),
@@ -35,6 +35,7 @@ def CIFAR10(normalize=True):
         ), 'source'),
         Node('x', op.Name(), 'generator:0'),
         Node('y', op.Name(), 'generator:1'),
+        Node('x_org', op.Name(), 'generator:2')
     ]
     return _source
 
