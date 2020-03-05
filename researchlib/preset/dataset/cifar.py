@@ -3,13 +3,13 @@ from ...dataset import loader, Augmentations, Preprocessing
 from ...models import Node
 
 
-def CIFAR10(normalize=True, label_noise=0):
+def CIFAR10(normalize=True, label_noise=0, noise_type='asymmetry'):
     if normalize:
         magic_mean, magic_std = (125.31, 122.95, 113.87), (62.99, 62.09, 66.70)
     else:
         magic_mean, magic_std = 128, 128
     _source = [
-        Node('source', op.Source(loader.TorchDataset('cifar10', True, True, label_noise), 
+        Node('source', op.Source(loader.TorchDataset('cifar10', True, True, label_noise, noise_type), 
                                  loader.TorchDataset('cifar10', False, False, 0))),
         Node('generator', op.Generator(
             Preprocessing.set_normalizer('static', magic_mean, magic_std),
@@ -42,13 +42,13 @@ def CIFAR10(normalize=True, label_noise=0):
 
 
 
-def CIFAR100(normalize=True):
+def CIFAR100(normalize=True, label_noise=0, noise_type='asymmetry'):
     if normalize:
         magic_mean, magic_std = (129.3105, 124.0575, 112.4295), (68.1615, 65.382, 70.431)
     else:
         magic_mean, magic_std = 128, 128
     _source = [
-        Node('source', op.Source(loader.TorchDataset('cifar100', True, True), 
+        Node('source', op.Source(loader.TorchDataset('cifar100', True, True, label_noise, noise_type), 
                                  loader.TorchDataset('cifar100', False, False))),
         Node('generator', op.Generator(
             Preprocessing.set_normalizer('static', magic_mean, magic_std),

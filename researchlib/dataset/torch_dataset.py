@@ -5,7 +5,11 @@ import random
 from .np_dataset import _NumpyDataset
 
 
-def _TorchDataset(name, is_train, shuffle, label_noise=0):
+def _TorchDataset(name, is_train, shuffle, label_noise=0, noise_type='asymmetry'):
+    noise_type_candidates = ['asymmetry', 'symmetry']
+    if noise_type not in noise_type_candidates:
+        raise ValueError(f'Noise type can only be one of the {noise_type_candidates}')
+    
     dataset_fn = None
     for i in torchvision.datasets.__dict__:
         if i.lower() == name and type(torchvision.datasets.__dict__[i]) == type:
@@ -28,7 +32,16 @@ def _TorchDataset(name, is_train, shuffle, label_noise=0):
         target = np.array(ds.targets)
     
     if label_noise != 0:
-        noise_idx = random.choices(list(range(len(target))), k = int(len(target)*label_noise))
-        target[noise_idx] = (target[noise_idx] + 1) % 10
+        total_class = target.max() + 1
+        print(f'Apply label noise type: {noise_type}')
+        print(f'Total classes: {total_class}')
+        if noise_type == 'asymmetry':
+            noise_idx = random.choices(list(range(len(target))), k = int(len(target)*label_noise))
+            target[noise_idx] = (target[noise_idx] + 1) % total_class
+        else:
+            noise_idx = random.choices(list(range(len(target))), k = int(len(target)*label_noise))
+            for i in noise_idx:
+                target[i] = np.random.choice(np.delete(np.arange(total_class), target[i]))
+            
         
     return _NumpyDataset(data, target, shuffle, name = name)
