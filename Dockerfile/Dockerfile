@@ -131,8 +131,8 @@ RUN pip install git+https://github.com/jettify/pytorch-optimizer && pip install 
 RUN pip uninstall pyglet -y && pip install pyglet==1.3.2
 
 # Unstaged change
-RUN pip install hiplot
+RUN pip install hiplot captum
 
 # Version tag
-ENV _RESEARCHLIB_IMAGE_TAG 20.02
+ENV _RESEARCHLIB_IMAGE_TAG 20.03
 
