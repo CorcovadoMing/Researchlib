@@ -23,8 +23,10 @@ from . import describe
 from . import calibrate
 from . import attack
 from . import profile
+from . import step
 
 
+@_add_methods_from(step)
 @_add_methods_from(profile)
 @_add_methods_from(attack)
 @_add_methods_from(describe)

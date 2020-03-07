@@ -20,15 +20,12 @@ def _processing_function(
     x = dp[data_key]
     y = dp[label_key]
     x_org = x.astype(np.float32)
-#     x_org = x
-
 
     # Augmentation
     augmentor = augmentor if len(augmentor) < N else random.choices(augmentor, k=N)
     for op in augmentor:
         options = op.options()
         x = op(x, **random.choice(options))
-#         x_org = op(x_org, **random.choice(options))
 
     if x.shape[:-1] == y.shape[:-1]:
         do_y = True
@@ -36,7 +33,6 @@ def _processing_function(
         do_y = False
 
     x = x.astype(np.float32)
-#     x_org = x_org.astype(np.float32)
     y = y.astype(np.float32) if do_y else y.astype(np.int64)
 
     # Normalization
@@ -47,6 +43,11 @@ def _processing_function(
             y = op(y)
             
     return x, y, x_org
+
+
+def _flat_list(l):
+    s = [i if type(i) == list else [i] for i in l]
+    return sum(s, [])
 
 
 class _Generator(nn.Module):
@@ -64,6 +65,7 @@ class _Generator(nn.Module):
         self.M = M
         self.include_y = include_y
         
+        preprocessing_list = _flat_list(preprocessing_list)
         normalize_list = []
         augment_list = []
         for i in preprocessing_list:

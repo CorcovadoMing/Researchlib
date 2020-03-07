@@ -19,7 +19,7 @@ def to_train_mode(m):
 
 
 @register_method
-def profile(self, **kwargs):
+def step(self, **kwargs):
     
     parameter_manager = ParameterManager(**kwargs)
     fp16 = parameter_manager.get_param('fp16', False)
@@ -44,15 +44,9 @@ def profile(self, **kwargs):
 
         with torch.autograd.profiler.profile(use_cuda=True) as prof:
             results = self.model({'phase': 0}) # 0: train, 1: val, 2: custom
-            try:
-                loss = [results[i] for i in self.model.optimize_nodes]
-                loss = sum(loss)
-                loss.backward()
-            except:
-                pass
-        print(prof)
-        print(prof.key_averages().table(sort_by="self_cpu_time_total"))
     except:
         raise
     finally:
         self.unload_gpu()
+    
+    return results
