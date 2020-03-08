@@ -64,6 +64,8 @@ from .prob import Prob
 from .rl import RL
 from .buffer import Buffer
 
+from .prepare import _PrepareImage2d, _RandomAugment2d
+
 
 class op(object):
     # Submodules
@@ -83,6 +85,10 @@ class op(object):
     DiracConv1d = _DiracConv1d
     DiracConv2d = _DiracConv2d
     DiracConv3d = _DiracConv3d
+    
+    # Prepare
+    PrepareImage2d = _PrepareImage2d 
+    RandomAugment2d = _RandomAugment2d
     
     # Pool
     CombinePool2d = _CombinePool2d

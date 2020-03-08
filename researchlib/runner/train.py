@@ -1,4 +1,5 @@
 import torch
+from torch._six import inf
 from ..utils import _register_method, ParameterManager, Annealer, update_optim
 from ..ops import op
 from ..models import Builder
@@ -15,12 +16,14 @@ def to_train_mode(m):
         m.set_phase(0)
     except:
         pass
+    
 
 def set_io_enable(m):
     try:
         m.set_enable()
     except:
         pass
+    
 
 def set_io_disable(m):
     try:
@@ -28,6 +31,25 @@ def set_io_disable(m):
     except:
         pass
     
+    
+def _clip_grad_norm_(parameters, max_norm, norm_type=2):
+    if isinstance(parameters, torch.Tensor):
+        parameters = [parameters]
+    parameters = list(filter(lambda p: p.grad is not None, parameters))
+    max_norm = float(max_norm)
+    norm_type = float(norm_type)
+    if norm_type == inf:
+        total_norm = max(p.grad.data.abs().max() for p in parameters)
+    else:
+        total_norm = torch.norm(
+            torch.stack([torch.norm(p.grad.detach().float(), norm_type) for p in parameters]), 
+            norm_type)
+    clip_coef = max_norm / (total_norm + 1e-6)
+    if clip_coef < 1:
+        for p in parameters:
+            p.grad.data.mul_(clip_coef)
+    return total_norm
+
 
 @register_method
 def train_fn(self, **kwargs):
@@ -120,7 +142,7 @@ def train_fn(self, **kwargs):
                         pass
 
                 if grad_clip != 0:
-                    norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), grad_clip)
+                    norm = _clip_grad_norm_(self.model.parameters(), grad_clip)
                     norm_record += norm
 
                 for i in self.optimizer:

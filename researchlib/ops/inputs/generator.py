@@ -34,7 +34,13 @@ def _processing_function(
 
     x = x.astype(np.float32)
     y = y.astype(np.float32) if do_y else y.astype(np.int64)
-
+    
+    # Fix grayscale
+    if x.ndim == 2:
+        x = x[..., None]
+        if y.ndim == 2 and do_y:
+            y = y[..., None]
+            
     # Normalization
     for op in normalizer:
         x = op(x)

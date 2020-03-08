@@ -177,7 +177,7 @@ def fit(
     # ----------------------------------------------
     # optimizers, (LR, warmup, weight_decay, etc.,)
     # ----------------------------------------------
-    grad_clip = parameter_manager.get_param('grad_clip', 0)
+    grad_clip = parameter_manager.get_param('grad_clip', 9e9)
     accum_grad = parameter_manager.get_param('accum_grad', 1)
     self.accum_idx = 0
     
