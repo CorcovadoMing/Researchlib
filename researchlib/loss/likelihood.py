@@ -2,6 +2,18 @@ from torch import nn
 import torch.nn.functional as F
 
 
+class SmoothNLLoss(nn.Module):
+    def __init__(self, smooth = 0.2):
+        super().__init__()
+        self.smooth = smooth
+        
+    def forward(self, x, y):
+        x = (x + 1e-6).log()
+        kl = -x.mean(dim = -1)
+        xent = F.nll_loss(x, y, reduction = 'none')
+        return ((1 - self.smooth) * xent + self.smooth * kl).mean()
+    
+
 class SmoothNLLLoss(nn.Module):
     def __init__(self, smooth = 0.2):
         super().__init__()
@@ -18,8 +30,9 @@ class NLLoss(nn.Module):
         super().__init__()
     
     def forward(self, x, y):
+        x = (x + 1e-6).log()
         y = y.long()
-        return -x[range(y.shape[0]), y].log().mean()
+        return F.nll_loss(x, y)
 
 
 class NLLLoss(nn.Module):

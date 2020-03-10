@@ -22,7 +22,8 @@ def _processing_function(
     x_org = x.astype(np.float32)
 
     # Augmentation
-    augmentor = augmentor if len(augmentor) < N else random.choices(augmentor, k=N)
+    random.shuffle(augmentor)
+    augmentor = augmentor if len(augmentor) < N else augmentor[:N]
     for op in augmentor:
         options = op.options()
         x = op(x, **random.choice(options))
