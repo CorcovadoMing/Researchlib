@@ -36,7 +36,6 @@ pre_script(version, checkversion)
 sns.set()
 sns.set_style("whitegrid", {'axes.grid': False})
 
-
 # Frontend
 initial_frontend()
 

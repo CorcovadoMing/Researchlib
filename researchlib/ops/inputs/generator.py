@@ -10,7 +10,6 @@ from ...dataset import Augmentations, Preprocessing
 
 def _processing_function(
     dp,
-    include_y,
     augmentor,
     normalizer,
     N,
@@ -18,39 +17,52 @@ def _processing_function(
     data_key = 0,
     label_key = 1,
 ):
-    x = dp[data_key].copy()
-    y = dp[label_key].copy()
-    x_org = copy.deepcopy(x).astype(np.float32)
-
-    # Augmentation
-    random.shuffle(augmentor)
-    augmentor = augmentor if len(augmentor) < N else augmentor[:N]
-    for op in augmentor:
-        options = op.options()
-        x = op(x, **random.choice(options))
-
-    if x.shape[:-1] == y.shape[:-1]:
-        do_y = True
-    else:
-        do_y = False
-
-    x = x.astype(np.float32)
-    y = y.astype(np.float32) if do_y else y.astype(np.int64)
+    x_batch = dp[data_key].copy()
+    y_batch = dp[label_key].copy()
+    x_org_batch = copy.deepcopy(x_batch).astype(np.float32)
     
-    # Fix grayscale
-    if x.ndim == 2:
-        x = x[..., None]
-        if y.ndim == 2 and do_y:
-            y = y[..., None]
-            
-    # Normalization
-    for op in normalizer:
-        x = op(x)
-        x_org = op(x_org)
-        if do_y:
-            y = op(y)
-            
-    return x, y, x_org
+    new_x_batch = []
+    new_y_batch = []
+    new_x_org_batch = []
+    
+    for x, y, x_org in zip(x_batch, y_batch, x_org_batch):
+        # Augmentation
+        random.shuffle(augmentor)
+        augmentor = augmentor if len(augmentor) < N else augmentor[:N]
+        for op in augmentor:
+            options = op.options()
+            x = op(x, **random.choice(options))
+
+        if x.shape[:-1] == y.shape[:-1]:
+            do_y = True
+        else:
+            do_y = False
+
+        x = x.astype(np.float32)
+        y = y.astype(np.float32) if do_y else y.astype(np.int64)
+
+        # Fix grayscale
+        if x.ndim == 2:
+            x = x[..., None]
+            if y.ndim == 2 and do_y:
+                y = y[..., None]
+
+        # Normalization
+        for op in normalizer:
+            x = op(x)
+            x_org = op(x_org)
+            if do_y:
+                y = op(y)
+                
+        new_x_batch.append(x)
+        new_y_batch.append(y)
+        new_x_org_batch.append(x_org)
+
+    new_x_batch = np.array(new_x_batch)
+    new_y_batch = np.array(new_y_batch)
+    new_x_org_batch = np.array(new_x_org_batch)
+    
+    return new_x_batch, new_y_batch, new_x_org_batch
 
 
 def _flat_list(l):
@@ -59,9 +71,15 @@ def _flat_list(l):
 
 
 class _Generator(nn.Module):
+    '''
+        Set worker > 0 for multithreading
+        It may have problem if the total dataset is smaller than batch_size * buffer_size
+        Consider to set the worker = 0 for any problem
+    '''
     def __init__(self, 
                  *preprocessing_list, 
-                 include_y = False, 
+                 worker = 8,
+                 buffer = 8,
                  N = 2, 
                  M = 1):
         super().__init__()
@@ -71,7 +89,8 @@ class _Generator(nn.Module):
         self.phase = 0
         self.N = N
         self.M = M
-        self.include_y = include_y
+        self.worker = worker
+        self.buffer = buffer
         
         preprocessing_list = _flat_list(preprocessing_list)
         normalize_list = []
@@ -89,7 +108,6 @@ class _Generator(nn.Module):
             _processing_function,
             N = self.N,
             M = self.M,
-            include_y = False,
             normalizer = normalize_list,
             augmentor = augment_list
         )
@@ -98,7 +116,6 @@ class _Generator(nn.Module):
             _processing_function,
             N = self.N,
             M = self.M,
-            include_y = False,
             normalizer = normalize_list,
             augmentor = []
         )
@@ -126,15 +143,18 @@ class _Generator(nn.Module):
     
     def forward(self, ds):
         if self.train_ds is None and self.phase == 0:
-            ds = MapData(ds, self.train_processing_function)
             ds = BatchData(ds, self.batch_size, remainder = True)
+            if self.worker > 0:
+                ds = MultiProcessMapData(ds, self.worker, self.train_processing_function, self.buffer, strict=True)
+            else:
+                ds = MapData(ds, self.train_processing_function)
             ds = PrintData(ds)
             ds.reset_state()
             self.train_ds = BackgroundGenerator(inifinity_loop(ds), fp16=self.fp16)
             
         if self.val_ds is None and self.phase == 1:
-            ds = MapData(ds, self.val_processing_function)
             ds = BatchData(ds, self.batch_size, remainder = True)
+            ds = MapData(ds, self.val_processing_function)
             ds = PrintData(ds)
             ds.reset_state()
             self.val_ds = BackgroundGenerator(inifinity_loop(ds), fp16=self.fp16)
