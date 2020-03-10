@@ -3,6 +3,7 @@ from ...utils import inifinity_loop
 from tensorpack.dataflow import *
 from torch import nn
 import random
+import copy
 import numpy as np
 from functools import partial
 from ...dataset import Augmentations, Preprocessing
@@ -17,9 +18,9 @@ def _processing_function(
     data_key = 0,
     label_key = 1,
 ):
-    x = dp[data_key]
-    y = dp[label_key]
-    x_org = x.astype(np.float32)
+    x = dp[data_key].copy()
+    y = dp[label_key].copy()
+    x_org = copy.deepcopy(x).astype(np.float32)
 
     # Augmentation
     random.shuffle(augmentor)
