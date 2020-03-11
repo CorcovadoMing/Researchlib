@@ -27,11 +27,10 @@ def _processing_function(
     
     for x, y, x_org in zip(x_batch, y_batch, x_org_batch):
         # Augmentation
-        random.shuffle(augmentor)
-        augmentor = augmentor if len(augmentor) < N else augmentor[:N]
-        for op in augmentor:
-            options = op.options()
-            x = op(x, **random.choice(options))
+        this_augmentor = augmentor if len(augmentor) < N else np.random.choice(augmentor, N, replace=False)
+        for op in this_augmentor:
+            options = op.options(prob=1)
+            x = op(x, **np.random.choice(options))
 
         if x.shape[:-1] == y.shape[:-1]:
             do_y = True
