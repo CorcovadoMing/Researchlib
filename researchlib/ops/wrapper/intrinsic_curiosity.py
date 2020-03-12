@@ -38,6 +38,6 @@ class _IntrinsicCuriosity(nn.Module):
                                                                            reduction='none') \
                                                 + self.beta * \
                                                 (pred_next_state_encoding - next_state_encoding.detach()).abs().sum(-1)
-        return x
+            return x
         
         
