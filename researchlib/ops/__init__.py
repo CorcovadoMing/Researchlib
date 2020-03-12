@@ -67,6 +67,9 @@ from .checker import Checker
 
 from .prepare import _PrepareImage2d, _RandomAugment2d, _WeakAugment2d
 
+from .resnet import _ResNet18
+
+
 
 class op(object):
     # Submodules
@@ -77,8 +80,8 @@ class op(object):
     Buffer = Buffer
     Checker = Checker
     
-    
     MLP = _MLP
+    ResNet18 = _ResNet18
     
     TemplateBank = _TemplateBank
     SConv2d = _SConv2d

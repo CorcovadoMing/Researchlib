@@ -3,6 +3,7 @@ from ..utils import _register_method, ParameterManager, Annealer, update_optim
 from ..ops import op
 from ..models import Builder
 import math
+from ..loss import Loss
 
 
 __methods__ = []
@@ -22,6 +23,17 @@ def _clear_source(m):
         m.clear_source(True)
     except:
         pass
+    
+    
+def _to_half(m):
+    if isinstance(m, torch.nn.Module) and not isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
+        m.half()
+            
+def _fix(m):
+    if isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
+        m.float()
+    if type(m) == Loss.AdaptiveRobust:
+        m.float()
 
 
 @register_method
@@ -48,9 +60,10 @@ def step(self, **kwargs):
     try:
         self.model.apply(to_train_mode)
         self.model.train()
-
-        with torch.autograd.profiler.profile(use_cuda=True) as prof:
-            results = self.model({'phase': 0}) # 0: train, 1: val, 2: custom
+        if fp16:
+            self.model.apply(_to_half)
+            self.model.apply(_fix)
+        results = self.model({'phase': 0}) # 0: train, 1: val, 2: custom
     except:
         raise
     finally:
