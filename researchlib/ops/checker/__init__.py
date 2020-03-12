@@ -1,4 +1,4 @@
 from .equal import _Equal
 
-class Check(object):
+class Checker(object):
     Equal = _Equal
