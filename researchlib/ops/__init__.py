@@ -64,7 +64,7 @@ from .prob import Prob
 from .rl import RL
 from .buffer import Buffer
 
-from .prepare import _PrepareImage2d, _RandomAugment2d
+from .prepare import _PrepareImage2d, _RandomAugment2d, _WeakAugment2d
 
 
 class op(object):
@@ -89,6 +89,7 @@ class op(object):
     # Prepare
     PrepareImage2d = _PrepareImage2d 
     RandomAugment2d = _RandomAugment2d
+    WeakAugment2d = _WeakAugment2d
     
     # Pool
     CombinePool2d = _CombinePool2d
