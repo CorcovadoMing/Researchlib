@@ -10,7 +10,7 @@ class _Name(nn.Module):
     
     def forward(self, *x):
         if self.detach:
-            x = [i.detach() for i in x]
+            x = [i.clone().detach() for i in x]
         if self.select_index is not None:
             x = [i[self.select_index] for i in x]
         

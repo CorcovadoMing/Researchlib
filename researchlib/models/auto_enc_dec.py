@@ -21,10 +21,9 @@ def _check_dual_path(var):
 
         
 class _RecurrentBlock(nn.Module):
-    def __init__(self, begin_block, inner_block, end_block, skip_type = None, return_bottleneck = False):
+    def __init__(self, begin_block, inner_block, end_block, skip_type = None):
         super().__init__()
         self.skip_type = skip_type
-        self.return_bottleneck = return_bottleneck
         self.return_both = True
         self.is_final = False
         self.begin = begin_block
@@ -40,10 +39,8 @@ class _RecurrentBlock(nn.Module):
         x = self.begin(x)
         x = self.begin_mmixup(x)
         out = self.inner(x)
-
+        
         out, bottleneck = _check_dual_path(out)
-            
-        bottleneck = out if self.return_bottleneck else bottleneck
         
         out = self.inner_mmixup(out)
         if self.skip_type == 'add':
@@ -57,6 +54,40 @@ class _RecurrentBlock(nn.Module):
         else:
             return self.end_mmixup(out)
 
+        
+        
+class _BottleneckTransform(nn.Module):
+    def __init__(self, f, enable, do_transform):
+        super().__init__()
+        self.f = f
+        self.enable = enable
+        self.do_transform = do_transform
+#         self.s_transform = nn.Linear(16, 10)
+#         self.c_transform = nn.Conv2d(512, 512, 1)
+        
+#         self.s_transform_b = nn.Linear(10, 16)
+#         self.c_transform_b = nn.Conv2d(512, 512, 1)
+        
+    def forward(self, x):
+        x = self.f(x)
+        
+        if self.enable:
+#             if self.do_transform:
+#                 rec_shape = x.shape
+#                 x = self.c_transform(x)
+#                 x = x.view(x.size(0), x.size(1), -1)
+#                 out = self.s_transform(x)
+#                 x = self.s_transform_b(out)
+#                 x = x.view(x.size(0), x.size(1), *rec_shape[2:])
+#                 x = self.c_transform_b(x)
+#                 return x, out
+#             else:
+            return x, x
+        else:
+            return x, None
+        
+    
+    
 
 def _do_pool(id, pool_freq):
     if (isinstance(pool_freq, int) and id % pool_freq == 0) \
@@ -72,7 +103,7 @@ def AutoEncDec(
     total_blocks,
     down_type = 'residual',
     up_type = 'vgg',
-    filters = (128, 1024),
+    filters = (64, -1),
     filter_policy = 'default',
     stem = {'vgg': 1},
     preact = False,
@@ -165,10 +196,23 @@ def AutoEncDec(
                 id=cache_id, total_blocks=2*total_blocks+1, **kwargs),
 
             # Inner
-            _op_type_inner(f'{cache_id}', _unit, down_op, out_dim, out_dim,
-                do_pool=False, do_norm=do_norm, preact=preact,
-                id=cache_id+1, total_blocks=2*total_blocks+1, **kwargs) \
-            if id == 1 else structure,
+            _BottleneckTransform(
+                _op_type_inner(
+                    f'{cache_id}', 
+                    _unit, 
+                    down_op, 
+                    out_dim, 
+                    out_dim,
+                    do_pool=False, 
+                    do_norm=do_norm, 
+                    preact=preact,
+                    id=cache_id+1, 
+                    total_blocks=2*total_blocks+1, 
+                    **kwargs
+                ),
+                enable = id == 1,
+                do_transform = False
+            ) if id == 1 else structure,
 
             # End
             _op_type_end(f'{cache_id}', _unit, up_op, end_in_dim, in_dim,
@@ -176,7 +220,6 @@ def AutoEncDec(
                 id=2*total_blocks+1-cache_id, total_blocks=2*total_blocks+1, **kwargs),
 
             skip_type=_skip_type,
-            return_bottleneck=return_bottleneck and id==1,
         )
 
     structure.return_both = return_bottleneck
