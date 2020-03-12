@@ -17,14 +17,21 @@ def to_train_mode(m):
     except:
         pass
 
+def _clear_source(m):
+    try:
+        m.clear_source(True)
+    except:
+        pass
+
 
 @register_method
 def step(self, **kwargs):
-    
     parameter_manager = ParameterManager(**kwargs)
     fp16 = parameter_manager.get_param('fp16', False)
     batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
     buffered_epochs = 2
+    
+    self.model.apply(_clear_source)
     
     for k, v in self.model.graph.items():
         if type(v[0]) == op.Source:

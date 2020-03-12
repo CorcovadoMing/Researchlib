@@ -55,6 +55,6 @@ def _TorchDataset(name, is_train, shuffle, label_noise=0, noise_type='asymmetry'
         for i in range(len(target)):
             confusion_matrix[target[i], original_target[i]] += 1
         print(confusion_matrix)
-            
-        
-    return _NumpyDataset(data, target, shuffle, name = name)
+        return _NumpyDataset(data, target, original_target, shuffle = shuffle, name = name)
+    else:
+        return _NumpyDataset(data, target, shuffle = shuffle, name = name)

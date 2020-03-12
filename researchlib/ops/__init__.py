@@ -63,6 +63,7 @@ from .wrapper import Wrapper
 from .prob import Prob
 from .rl import RL
 from .buffer import Buffer
+from .check import Check
 
 from .prepare import _PrepareImage2d, _RandomAugment2d, _WeakAugment2d
 
@@ -74,6 +75,7 @@ class op(object):
     Prob = Prob
     RL = RL
     Buffer = Buffer
+    Check = Check
     
     
     MLP = _MLP

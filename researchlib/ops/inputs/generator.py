@@ -14,11 +14,9 @@ def _processing_function(
     normalizer,
     N,
     M,
-    data_key = 0,
-    label_key = 1,
 ):
-    x_batch = dp[data_key].copy()
-    y_batch = dp[label_key].copy()
+    x_batch = dp[0].copy()
+    y_batch = dp[1].copy()
     x_org_batch = copy.deepcopy(x_batch).astype(np.float32)
     
     new_x_batch = []
@@ -61,7 +59,7 @@ def _processing_function(
     new_y_batch = np.array(new_y_batch)
     new_x_org_batch = np.array(new_x_org_batch)
     
-    return new_x_batch, new_y_batch, new_x_org_batch
+    return [new_x_batch, new_y_batch, new_x_org_batch] + dp[2:]
 
 
 def _flat_list(l):
