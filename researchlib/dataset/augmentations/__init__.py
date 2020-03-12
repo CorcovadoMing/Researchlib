@@ -16,6 +16,7 @@ from .contrast import Contrast
 from .color import Color
 from .brightness import Brightness
 from .sharpness import Sharpness
+from .svd_blur import SVDBlur
 
 
 class Augmentations(object):
@@ -37,3 +38,4 @@ class Augmentations(object):
     Color = Color
     Brightness = Brightness
     Sharpness = Sharpness
+    SVDBlur = SVDBlur
