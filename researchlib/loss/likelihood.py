@@ -1,5 +1,6 @@
 from torch import nn
 import torch.nn.functional as F
+import torch
 
 
 class SmoothNLLoss(nn.Module):
@@ -50,3 +51,22 @@ class BCELoss(nn.Module):
         
     def forward(self, x, y):
         return F.binary_cross_entropy(x, y.float())
+    
+    
+class SLLoss(nn.Module):
+    def __init__(self, alpha=1, beta=1):
+        super().__init__()
+        self.alpha = alpha
+        self.beta = beta
+        
+    def forward(self, x, y):
+        if y.shape != x.shape:
+            y = F.one_hot(y, x.size(1))
+        x = x.float()
+        y = y.float()
+        x = torch.clamp(x, min=1e-7, max=1.0)
+        y = torch.clamp(y, min=1e-4, max=1.0)
+        ce = -(y * x.log()).sum(-1).mean()
+        rce = -(x * y.log()).sum(-1).mean()
+        return self.alpha * ce + self.beta * rce
+        

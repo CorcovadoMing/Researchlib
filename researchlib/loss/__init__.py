@@ -4,7 +4,7 @@ from .mapping import *
 #from .gan import GANLoss
 
 from .vae import VAELoss
-from .likelihood import SmoothNLLoss, SmoothNLLLoss, NLLoss, NLLLoss, BCELoss
+from .likelihood import SmoothNLLoss, SmoothNLLLoss, NLLoss, NLLLoss, BCELoss, SLLoss
 from .dice import DiceLoss, FlattenDiceLoss
 from .logcosh import LogCoshLoss
 from .huber import HuberLoss
@@ -29,6 +29,7 @@ class Loss(object):
     NLL = NLLLoss
     NL = NLLoss
     BCE = BCELoss
+    SL = SLLoss
     SmoothNL = SmoothNLLoss
     SmoothNLL = SmoothNLLLoss
     AdaptiveRobust = AdaptiveRobustLoss
