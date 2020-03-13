@@ -64,7 +64,7 @@ class SLLoss(nn.Module):
             y = F.one_hot(y, x.size(1))
         x = x.float()
         y = y.float()
-        x = torch.clamp(x, min=1e-7, max=1.0)
+        x = torch.clamp(x, min=1e-6, max=1.0)
         y = torch.clamp(y, min=1e-4, max=1.0)
         ce = -(y * x.log()).sum(-1).mean()
         rce = -(x * y.log()).sum(-1).mean()

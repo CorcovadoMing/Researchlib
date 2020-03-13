@@ -20,6 +20,7 @@ from .hitrate import Hitrate
 from .cluster import Cluster
 from .rl import RL
 from .psnr import PSNR
+from .aum import AUM
 
 
 class Metrics(object):
@@ -36,3 +37,4 @@ class Metrics(object):
     L2 = L2
     Hitrate = Hitrate
     PSNR = PSNR
+    AUM = AUM
