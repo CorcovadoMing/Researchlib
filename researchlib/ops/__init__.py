@@ -25,7 +25,7 @@ from .template_bank import _TemplateBank
 
 from .conv_variants import _SConv2d, _SepConv2d, _DilConv2d, _DiracConv1d, _DiracConv2d, _DiracConv3d
 
-from .activator import _GeLU, _Mish, _Swish, _DropReLU, _LogSoftmax, _Softmax, _LogSparsemax, _Sparsemax, _FTSwishPlus, _TReLU
+from .activator import _GeLU, _Mish, _Swish, _DropReLU, _LogSoftmax, _Softmax, _GumbelSoftmax, _LogSparsemax, _Sparsemax, _FTSwishPlus, _TReLU
 
 from .ghost_batchnorm import _GhostBatchNorm2d
 
@@ -68,6 +68,7 @@ from .checker import Checker
 from .prepare import _PrepareImage2d, _RandomAugment2d, _WeakAugment2d
 
 from .resnet import _ResNet18
+from .decoder import _AEDecoder2d
 
 
 
@@ -82,6 +83,8 @@ class op(object):
     
     MLP = _MLP
     ResNet18 = _ResNet18
+    
+    AEDecoder2d = _AEDecoder2d
     
     TemplateBank = _TemplateBank
     SConv2d = _SConv2d
@@ -212,6 +215,7 @@ class op(object):
     DropReLU = _DropReLU
     LogSoftmax = _LogSoftmax
     Softmax = _Softmax
+    GumbelSoftmax = _GumbelSoftmax
     LogSparsemax = _LogSparsemax
     Sparsemax = _Sparsemax
     FTSwishPlus = _FTSwishPlus

@@ -30,3 +30,14 @@ class _LogSoftmax(nn.Module):
             return F.log_softmax(x, self.dim)
         else:
             return F.log_softmax(x/self.temperature, self.dim)
+        
+        
+class _GumbelSoftmax(nn.Module):
+    def __init__(self, dim=-1, tau=1, hard=False):
+        super().__init__()
+        self.tau = tau
+        self.hard = hard
+        self.dim = dim
+    
+    def forward(self, x):
+        return F.gumbel_softmax(x, tau=self.tau, hard=self.hard, dim=self.dim)

@@ -26,23 +26,28 @@ class SmoothNLLLoss(nn.Module):
         return ((1 - self.smooth) * xent + self.smooth * kl).mean()
 
 
-class NLLoss(nn.Module):
-    def __init__(self):
-        super().__init__()
-    
-    def forward(self, x, y):
-        x = (x + 1e-6).log()
-        y = y.long()
-        return F.nll_loss(x, y)
-
-
 class NLLLoss(nn.Module):
     def __init__(self):
         super().__init__()
     
     def forward(self, x, y):
-        y = y.long()
-        return F.nll_loss(x, y)
+        if y.shape != x.shape:
+            y = F.one_hot(y, x.size(1))
+        x = torch.clamp(x, min=1e-6, max=1.0)
+        y = torch.clamp(y, min=1e-4, max=1.0)
+        return -(y * x).sum(-1).mean()
+    
+    
+class NLLoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+    
+    def forward(self, x, y):
+        if y.shape != x.shape:
+            y = F.one_hot(y, x.size(1))
+        x = torch.clamp(x, min=1e-6, max=1.0)
+        y = torch.clamp(y, min=1e-4, max=1.0)
+        return -(y * x.log()).sum(-1).mean()
     
     
 class BCELoss(nn.Module):
