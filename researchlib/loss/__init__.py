@@ -17,12 +17,14 @@ from .sparsemax import SparsemaxLoss
 
 from .cluster import Cluster
 from .segmentation import Segmentation
+from .noisy_classification import NoisyClassification
 
 
 class Loss(object):
     # Submodules
     Cluster = Cluster
     Segmentation = Segmentation
+    NoisyClassification = NoisyClassification
     
     # Ind
     L1 = L1Loss

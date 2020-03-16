@@ -32,7 +32,7 @@ class NLLLoss(nn.Module):
     
     def forward(self, x, y):
         if y.shape != x.shape:
-            y = F.one_hot(y, x.size(1))
+            y = F.one_hot(y, x.size(1)).to(x.dtype)
         x = torch.clamp(x, min=1e-6, max=1.0)
         y = torch.clamp(y, min=1e-4, max=1.0)
         return -(y * x).sum(-1).mean()
@@ -44,7 +44,7 @@ class NLLoss(nn.Module):
     
     def forward(self, x, y):
         if y.shape != x.shape:
-            y = F.one_hot(y, x.size(1))
+            y = F.one_hot(y, x.size(1)).to(x.dtype)
         x = torch.clamp(x, min=1e-6, max=1.0)
         y = torch.clamp(y, min=1e-4, max=1.0)
         return -(y * x.log()).sum(-1).mean()
@@ -66,9 +66,7 @@ class SLLoss(nn.Module):
         
     def forward(self, x, y):
         if y.shape != x.shape:
-            y = F.one_hot(y, x.size(1))
-        x = x.float()
-        y = y.float()
+            y = F.one_hot(y, x.size(1)).to(x.dtype)
         x = torch.clamp(x, min=1e-6, max=1.0)
         y = torch.clamp(y, min=1e-4, max=1.0)
         ce = -(y * x.log()).sum(-1).mean()
