@@ -14,12 +14,15 @@ from .adaptive_robust_loss import AdaptiveRobustLoss
 from .soft_dtw import SoftDTWLoss
 from .distance import L1Loss, L2Loss
 from .sparsemax import SparsemaxLoss
+
 from .cluster import Cluster
+from .segmentation import Segmentation
 
 
 class Loss(object):
-    # Categorical
+    # Submodules
     Cluster = Cluster
+    Segmentation = Segmentation
     
     # Ind
     L1 = L1Loss
