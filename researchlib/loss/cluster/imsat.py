@@ -7,23 +7,20 @@ class IMSAT(nn.Module):
         super().__init__()
     
     def entropy(self, p):
-        # compute entropy
-        if (len(p.size())) == 2:
-            return - torch.sum(p * torch.log(p + 1e-2)) / float(len(p))
-        elif (len(p.size())) == 1:
-            return - torch.sum(p * torch.log(p + 1e-2))
-        else:
-            raise NotImplementedError
+        p = torch.clamp(p, min=1e-2, max=1)
+        return - (p * p.log()).sum(-1).mean()
         
     def compute_entropy(self, p):
         p_avg = p.mean(0)
         return self.entropy(p), self.entropy(p_avg)
         
     def kl(self, p, q):
-        return torch.sum(p * torch.log((p / (q + 1e-2)) + 1e-2)) / float(len(p))
+        p = torch.clamp(p, min=1e-2, max=1)
+        q = torch.clamp(q, min=1e-2, max=1)
+        return - (p * q.log()).sum(-1).mean()
     
     def forward(self, p, q):
-        avg_etp, etp = self.compute_entropy(p)
+        etp, avg_etp = self.compute_entropy(p)
         p = p.detach()
         rsat = self.kl(p, q)
-        return rsat + 0.5 * (avg_etp - 4. * etp)
+        return rsat + 0.5 * etp - 2. * avg_etp
