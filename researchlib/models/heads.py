@@ -27,6 +27,7 @@ def Heads(out_dim, preact = False, reduce_type = 'concat', linear_bias = False, 
     layers = [
         # Preact
         op.__dict__[f'BatchNorm{dim_type}'](last_dim) if preact else None,
+        op.ReLU() if preact else None,
 
         # Normal heads
         op.__dict__[f'Conv{dim_type}'](last_dim, last_dim, 1, bias = linear_bias) if channels_transform else None,
