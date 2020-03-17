@@ -68,7 +68,7 @@ from .checker import Checker
 from .prepare import _PrepareImage2d, _RandomAugment2d, _WeakAugment2d
 
 from .resnet import _ResNet18
-from .decoder import _AEDecoder2d
+from .decoder import _AEDecoder2d, _VAEDecoder2d
 
 
 
@@ -85,6 +85,7 @@ class op(object):
     ResNet18 = _ResNet18
     
     AEDecoder2d = _AEDecoder2d
+    VAEDecoder2d = _VAEDecoder2d
     
     TemplateBank = _TemplateBank
     SConv2d = _SConv2d

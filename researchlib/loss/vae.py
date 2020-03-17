@@ -12,6 +12,7 @@ class VAELoss(nn.Module):
         super().__init__()
 
     def forward(self, x, recon_x, mu, logvar):
-        img_loss = F.mse_loss(x, recon_x)
+        img_loss = F.mse_loss(recon_x, x)
+        logvar = torch.clamp(logvar, min=-1e2, max=1e2)
         KLD = - 0.5 * (1 + logvar - mu.pow(2) - logvar.exp()).mean()
         return img_loss + KLD

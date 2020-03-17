@@ -219,7 +219,7 @@ class Liveplot:
                 else:
                     aux = np.zeros(i.size(0))
                     
-                if i.dim() < 3:
+                if i.dim() < 3 or (i.shape[1] != 1 and i.shape[1] != 3):
                     data = i.detach().cpu().float().view(i.size(0), -1).numpy()
                     pca = PCA(2)
                     r = pca.fit_transform(data)
