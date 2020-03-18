@@ -68,6 +68,7 @@ from .checker import Checker
 from .prepare import _PrepareImage2d, _RandomAugment2d, _WeakAugment2d
 
 from .resnet import _ResNet18
+from .preresnet import _PreResNet50
 from .decoder import _AEDecoder2d, _VAEDecoder2d
 
 
@@ -83,6 +84,7 @@ class op(object):
     
     MLP = _MLP
     ResNet18 = _ResNet18
+    PreResNet50 = _PreResNet50
     
     AEDecoder2d = _AEDecoder2d
     VAEDecoder2d = _VAEDecoder2d
