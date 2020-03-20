@@ -33,6 +33,7 @@ from .convrnn import Conv3dGRUCell
 
 from .qrnn import _QRNN
 from .lstm import _LSTM
+from .alstm import _ALSTM
 
 from .seq2seq import _Seq2Seq
 from .set2set import _Set2Set

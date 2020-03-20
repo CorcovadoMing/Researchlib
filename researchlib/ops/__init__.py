@@ -39,7 +39,7 @@ from .sequence import Conv3dRNN, Conv3dLSTM, Conv3dPeepholeLSTM, Conv3dGRU
 from .sequence import Conv1dRNNCell, Conv1dLSTMCell, Conv1dPeepholeLSTMCell, Conv1dGRUCell
 from .sequence import Conv2dRNNCell, Conv2dLSTMCell, Conv2dPeepholeLSTMCell, Conv2dGRUCell
 from .sequence import Conv3dRNNCell, Conv3dLSTMCell, Conv3dPeepholeLSTMCell, Conv3dGRUCell
-from .sequence import _QRNN, _LSTM, _Seq2Seq, _Set2Set
+from .sequence import _QRNN, _LSTM, _Seq2Seq, _Set2Set, _ALSTM
 
 from .encoding import _PositionalEncoding1d, _CoordinatesEncoding2d
 
@@ -183,6 +183,7 @@ class op(object):
     
     LSTM = _LSTM
     QRNN = _QRNN
+    ALSTM = _ALSTM
     
     Seq2Seq = _Seq2Seq
     Set2Set = _Set2Set
