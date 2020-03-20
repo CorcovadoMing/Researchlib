@@ -57,6 +57,9 @@ def fit(
     iterations = 0,
     multisteps = [],
     plot = False,
+    enable_liveplot = True,
+    opt_info = True,
+    data_info = True,
     init = None,
     same_init = False,
     freeze = {},
@@ -106,7 +109,7 @@ def fit(
             else:
                 self.test_loader_length = None
         if type(v[0]) == op.Generator:
-            v[0].prepare_state(fp16, batch_size)
+            v[0].prepare_state(fp16, batch_size, data_info)
     
     inner_epochs = parameter_manager.get_param('inner_epochs', 1)
     if iterations == 0:
@@ -119,7 +122,10 @@ def fit(
             self.train_loader_length = 1
             self.test_loader_length = None
     
-    liveplot = Liveplot(self.train_loader_length, self.test_loader_length, plot)
+    if enable_liveplot:
+        liveplot = Liveplot(self.train_loader_length, self.test_loader_length, plot)
+    else:
+        liveplot = None
     
     # ----------------------------------------------
     # MISC
@@ -131,7 +137,7 @@ def fit(
     
     if init is not None:
         self.init_model(init)
-        self.set_optimizer(lars)
+        self.set_optimizer(lars, opt_info)
         self.epoch = 1
     
         if same_init:
@@ -140,10 +146,11 @@ def fit(
                 self.load(init_model)
             else:
                 self.save(init_model)
-            self.set_optimizer(lars)
+            self.set_optimizer(lars, opt_info)
             self.epoch = 1
     else:
-        self.set_optimizer(lars)
+        if self.optimizer is None:
+            self.set_optimizer(lars, opt_info)
 
     
     fixed_mmixup = parameter_manager.get_param('fixed_mmixup', validator = lambda x: type(x) == list)
@@ -157,15 +164,14 @@ def fit(
     # ----------------------------------------------
     if len(self.experiment_name) == 0:
         self.start_experiment('default')
-        
-    exist_experiments = pickle.loads(liveplot.redis.get('experiment'))
-    if self.experiment_name not in exist_experiments:
-        exist_experiments.append(self.experiment_name)
+    
+    if liveplot is not None:
+        exist_experiments = pickle.loads(liveplot.redis.get('experiment'))
+        if self.experiment_name not in exist_experiments:
+            exist_experiments.append(self.experiment_name)
+        liveplot.redis.set('experiment', pickle.dumps(exist_experiments))
+    
     self.history.start_logfile(self.checkpoint_path)
-        
-    liveplot.redis.set('experiment', pickle.dumps(exist_experiments))
-    
-    
     
     
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -264,8 +270,9 @@ def fit(
             # ----------------------------------------------
             # Training stage
             # ----------------------------------------------
-            liveplot.redis.set('stage', 'train')
-            liveplot.train_timer.clear()
+            if liveplot is not None:
+                liveplot.redis.set('stage', 'train')
+                liveplot.train_timer.clear()
             # Training function
             loss_record, norm_record, metrics_record = self.train_fn(liveplot=liveplot,
                                                                      batch_size=batch_size,
@@ -286,9 +293,10 @@ def fit(
                                                                      support_set=support_set,
                                                                      way=way,
                                                                      shot=shot)
-            liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer[0].param_groups][-1])
-            liveplot.record(epoch, 'train_loss', loss_record)
-            liveplot.record(epoch, 'norm', norm_record)
+            if liveplot is not None:
+                liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer[0].param_groups][-1])
+                liveplot.record(epoch, 'train_loss', loss_record)
+                liveplot.record(epoch, 'norm', norm_record)
             self.history.add({'norm': norm_record}, prefix = 'train')
             self.history.add({'loss': loss_record}, prefix = 'train')
             self.history.add(metrics_record, prefix = 'train')
@@ -301,8 +309,9 @@ def fit(
             # Validation stage
             # ----------------------------------------------
             if self.test_loader_length is not None:
-                liveplot.redis.set('stage', 'validate')
-                liveplot.val_timer.clear()
+                if liveplot is not None:
+                    liveplot.redis.set('stage', 'validate')
+                    liveplot.val_timer.clear()
                 # Validation function
                 loss_record, metrics_record = self.validate_fn(liveplot=liveplot,
                                                                batch_size=batch_size,
@@ -310,7 +319,8 @@ def fit(
                                                                support_set=support_set,
                                                                way=way,
                                                                shot=shot)
-                liveplot.record(epoch, 'val_loss', loss_record)
+                if liveplot is not None:
+                    liveplot.record(epoch, 'val_loss', loss_record)
                 self.history.add({'loss': loss_record}, prefix = 'val')
                 self.history.add(metrics_record, prefix = 'val')
                 try:
@@ -347,8 +357,9 @@ def fit(
             # ----------------------------------------------
             # Post-config
             # ----------------------------------------------
-            liveplot.plot(self.epoch, self.history, epoch_str)
-            liveplot.cali_desc(self.val_model.checkpoint_state)
+            if liveplot is not None:
+                liveplot.plot(self.epoch, self.history, epoch_str)
+                liveplot.cali_desc(self.val_model.checkpoint_state)
             
             
             # Steps anneling
@@ -377,4 +388,5 @@ def fit(
         self.val_model.apply(_clear_output)
         self.unload_gpu()
         _STOP_GPU_MONITOR_ = True
-        liveplot.redis.set('stage', 'stop')
+        if liveplot is not None:
+            liveplot.redis.set('stage', 'stop')

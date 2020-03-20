@@ -117,7 +117,7 @@ def validate_fn(self, plot_wrong = -1, out = 'categorical', denormalizer = lambd
             if (self.test_loader_length > 1 and batch_idx == self.test_loader_length - 1) or self.test_loader_length == 1:
                 visualize = [results[i] for i in self.val_model.visualize_nodes]
             
-            if liveplot and (batch_idx % 5 == 0 or batch_idx == self.test_loader_length):
+            if liveplot is not None and (batch_idx % 5 == 0 or batch_idx == self.test_loader_length):
                 liveplot.update_val_desc(epoch, batch_idx, loss_record, metrics_record, self.val_model.checkpoint_state)
             
             if batch_idx == self.test_loader_length:

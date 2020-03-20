@@ -28,7 +28,7 @@ register_method = _register_method(__methods__)
 
 
 @register_method
-def set_optimizer(self, lars=False):
+def set_optimizer(self, lars=False, info=True):
     opt_mapping = {
         'adam': partial(Adam, betas = (0.9, 0.999), eps = 1e-4),
         'adamw': partial(AdamW, betas = (0.9, 0.999), eps = 1e-4),
@@ -66,10 +66,11 @@ def set_optimizer(self, lars=False):
     param_groups = [bias_group, no_decay_group]
     param_groups_num = [bias_group_num, no_decay_group_num]
     
-    print('loss_group', reduce(num_list_params, loss_params, 0))
-    print('normal_group', normal_group_num)
-    print('bias_group', bias_group_num)
-    print('no_decay_group', no_decay_group_num)
+    if info:
+        print('loss_group', reduce(num_list_params, loss_params, 0))
+        print('normal_group', normal_group_num)
+        print('bias_group', bias_group_num)
+        print('no_decay_group', no_decay_group_num)
 
     opt_fn = opt_mapping[self.optimizer_choice]
 

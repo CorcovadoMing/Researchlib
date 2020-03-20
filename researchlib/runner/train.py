@@ -179,11 +179,12 @@ def train_fn(self, **kwargs):
         if (self.train_loader_length > 1 and iteration_idx == self.train_loader_length - 1) or self.train_loader_length == 1:
             visualize = [results[i] for i in self.model.visualize_nodes]
         
-        if iteration_idx % 5 == 0 or iteration_idx == self.train_loader_length:
+        if liveplot is not None and (iteration_idx % 5 == 0 or iteration_idx == self.train_loader_length):
             liveplot.update_train_desc(epoch, iteration_idx, loss_record, metrics_record, self.val_model.checkpoint_state)
 
         if iteration_idx == self.train_loader_length:
-            liveplot.show_grid('train', visualize)
+            if liveplot is not None:
+                liveplot.show_grid('train', visualize)
             break
 
         Annealer._iteration_step()

@@ -83,6 +83,7 @@ class _Generator(nn.Module):
         self.train_ds = None
         self.val_ds = None
         self.fp16 = False
+        self.data_info = True
         self.phase = 0
         self.N = N
         self.M = M
@@ -117,9 +118,10 @@ class _Generator(nn.Module):
             augmentor = []
         )
         
-    def prepare_state(self, fp16, batch_size):
+    def prepare_state(self, fp16, batch_size, data_info=True):
         self.fp16 = fp16
         self.batch_size = batch_size
+        self.data_info = data_info
     
     def set_phase(self, phase):
         self.phase = phase
@@ -145,14 +147,16 @@ class _Generator(nn.Module):
                 ds = MultiProcessMapData(ds, self.worker, self.train_processing_function, self.buffer, strict=True)
             else:
                 ds = MapData(ds, self.train_processing_function)
-            ds = PrintData(ds)
+            if self.data_info:
+                ds = PrintData(ds)
             ds.reset_state()
             self.train_ds = BackgroundGenerator(inifinity_loop(ds), fp16=self.fp16)
             
         if self.val_ds is None and self.phase == 1:
             ds = BatchData(ds, self.batch_size, remainder = True)
             ds = MapData(ds, self.val_processing_function)
-            ds = PrintData(ds)
+            if self.data_info:
+                ds = PrintData(ds)
             ds.reset_state()
             self.val_ds = BackgroundGenerator(inifinity_loop(ds), fp16=self.fp16)
             

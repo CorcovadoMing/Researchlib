@@ -35,7 +35,7 @@ def profile(self, **kwargs):
             else:
                 self.test_loader_length = None
         if type(v[0]) == op.Generator:
-            v[0].prepare_state(fp16, batch_size)
+            v[0].prepare_state(fp16, batch_size, data_info=True)
     
     self.preload_gpu()
     try:
