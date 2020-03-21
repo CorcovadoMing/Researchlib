@@ -7,7 +7,7 @@ import plotly
 from dash.dependencies import Input, Output
 import time
 import random
-from multiprocessing import Process
+from threading import Thread
 import psutil
 import redis
 import pickle
@@ -215,8 +215,9 @@ class _Dashboard:
 
     def start(self):
         os.environ['WERKZEUG_RUN_MAIN'] = 'true'
-        self.flask_process = Process(
-            target = _app.run_server, kwargs = {
+        self.flask_process = Thread(
+            target = _app.run_server, 
+            kwargs = {
                 'debug': False,
                 'host': '0.0.0.0'
             }
