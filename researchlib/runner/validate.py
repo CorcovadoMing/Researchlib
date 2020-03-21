@@ -10,7 +10,18 @@ import numpy as np
 __methods__ = []
 register_method = _register_method(__methods__)
 
+def set_io_enable(m):
+    try:
+        m.set_enable()
+    except:
+        pass
 
+def set_io_disable(m):
+    try:
+        m.set_disable()
+    except:
+        pass
+    
 def to_eval_mode(m):
     if isinstance(m, Builder.Graph):
         m.train_mode = False
@@ -74,13 +85,13 @@ def validate(self, plot_wrong = -1, out = 'categorical', **kwargs):
 @register_method
 def validate_fn(self, plot_wrong = -1, out = 'categorical', denormalizer = lambda x: x, **kwargs):
     self.val_model.apply(to_eval_mode)
+    self.val_model.eval()
+    self.val_model.apply(set_io_enable)
     
     parameter_manager = ParameterManager(**kwargs)
 
     liveplot = parameter_manager.get_param('liveplot', None)
     epoch = parameter_manager.get_param('epoch', 1)
-
-    self.val_model.eval()
 
     loss_record = 0
     metrics_record = {key.replace('*', ''): 0 for key in self.val_model.monitor_nodes}
@@ -100,7 +111,7 @@ def validate_fn(self, plot_wrong = -1, out = 'categorical', denormalizer = lambd
                 g_label, t_label = results[out][wrong_index], y[wrong_index]
                 wrong_samples_labels += [(i, j) for i, j in zip(t_label, g_label)]
             
-            loss = sum([results[i] for i in self.model.optimize_nodes])
+            loss = sum([results[i] for i in self.val_model.optimize_nodes])
 
             for i in self.val_model.monitor_nodes:
                 if '*' in i:

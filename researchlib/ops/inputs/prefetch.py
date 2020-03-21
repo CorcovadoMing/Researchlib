@@ -11,7 +11,7 @@ else:
 
 def _worker(generator, queue, fp16):
     for data in generator:
-        data = [torch.from_numpy(i).pin_memory() if type(i) != torch.Tensor else i for i in data]
+        data = [torch.from_numpy(i) if type(i) != torch.Tensor else i for i in data]
         if fp16:
             data = [j.half() if i != 1 else j for i, j in enumerate(data)]
         data = [i.cuda(non_blocking=True) for i in data]
