@@ -50,6 +50,7 @@ def fit(
     policy = 'linear',
     warmup = 5,
     warmup_policy = 'linear',
+    expected_epochs = None,
     flatten = 0,
     flatten_lr = 0,
     final_anneal = 0,
@@ -57,7 +58,9 @@ def fit(
     iterations = 0,
     multisteps = [],
     plot = False,
+    use_simple_liveplot = False,
     enable_liveplot = True,
+    clear_data = True,
     opt_info = True,
     data_info = True,
     init = None,
@@ -84,17 +87,6 @@ def fit(
     # ----------------------------------------------
     # Setting loaders
     # ----------------------------------------------
-    
-    # Few shot learning
-    way = parameter_manager.get_param('way', None)
-    shot = parameter_manager.get_param('shot', None)
-    if way is not None and shot is not None:
-        if type(way) == int:
-            way = list(range(way))
-#         support_set = self.train_loader.get_support_set(classes=way, shot=shot)
-        support_set = None
-    else:
-        support_set = None
     
     fp16 = parameter_manager.get_param('fp16', False)
     batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
@@ -123,7 +115,7 @@ def fit(
             self.test_loader_length = None
     
     if enable_liveplot:
-        liveplot = Liveplot(self.train_loader_length, self.test_loader_length, plot)
+        liveplot = Liveplot(self.train_loader_length, self.test_loader_length, plot, use_simple_liveplot)
     else:
         liveplot = None
     
@@ -151,14 +143,11 @@ def fit(
     else:
         if self.optimizer is None:
             self.set_optimizer(lars, opt_info)
-
     
     fixed_mmixup = parameter_manager.get_param('fixed_mmixup', validator = lambda x: type(x) == list)
     random_mmixup = parameter_manager.get_param('random_mmixup', validator = lambda x: len(x) == 2 and type(x) == list)
     mmixup_alpha = parameter_manager.get_param('mmixup_alpha', validator = lambda x: type(x) == float)
-    
-    
-    
+        
     # ----------------------------------------------
     # Setting experiments
     # ----------------------------------------------
@@ -187,7 +176,9 @@ def fit(
     accum_grad = parameter_manager.get_param('accum_grad', 1)
     self.accum_idx = 0
     
-    self.multisteps = [int(i * epochs) if i < 1 else int(i) for i in multisteps]
+    if expected_epochs is None:
+        expected_epochs = epochs
+    self.multisteps = [int(i * expected_epochs) if i < 1 else int(i) for i in multisteps]
     step_decay = parameter_manager.get_param('step_decay', 0.1)
 
     # Weight decay
@@ -195,14 +186,16 @@ def fit(
     weight_decay_bias = parameter_manager.get_param('weight_decay_bias', True)
     if weight_decay > 0:
         weight_decay_policy = parameter_manager.get_param('weight_decay_policy', 'fixed')
-        Annealer.set_trace('weight_decay', epochs * iterations, [0, weight_decay], 'iteration', _anneal_policy(weight_decay_policy))
-        Annealer._iteration_step(key = 'weight_decay')
+        flag = Annealer.set_trace('weight_decay', epochs * iterations, [0, weight_decay], 'iteration', _anneal_policy(weight_decay_policy))
+        if flag:
+            Annealer._iteration_step(key = 'weight_decay')
         
     # Warmup
     warmup = max(0, warmup)
     if warmup > 0:
-        Annealer.set_trace('lr', warmup * iterations, [0, lr], 'iteration', _anneal_policy(warmup_policy))
-        Annealer._iteration_step(key = 'lr')
+        flag = Annealer.set_trace('lr', warmup * iterations, [0, lr], 'iteration', _anneal_policy(warmup_policy))
+        if flag:
+            Annealer._iteration_step(key = 'lr')
     
     # FP16
     def _to_half(m):
@@ -226,7 +219,8 @@ def fit(
     ema_freq = max(0, parameter_manager.get_param('ema_freq', 0))
     ema_momentum = parameter_manager.get_param('ema_momentum', 0.99)
     ema = True if ema_freq > 0 else False
-    self.val_model = copy.deepcopy(self.model) if ema else self.model
+    if self.val_model is None:
+        self.val_model = copy.deepcopy(self.model) if ema else self.model
     
     # ----------------------------------------------
     # Final verification
@@ -289,10 +283,7 @@ def fit(
                                                                      ema=ema,
                                                                      ema_freq=ema_freq,
                                                                      ema_momentum=ema_momentum,
-                                                                     grad_clip=grad_clip,
-                                                                     support_set=support_set,
-                                                                     way=way,
-                                                                     shot=shot)
+                                                                     grad_clip=grad_clip)
             if liveplot is not None:
                 liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer[0].param_groups][-1])
                 liveplot.record(epoch, 'train_loss', loss_record)
@@ -315,10 +306,7 @@ def fit(
                 # Validation function
                 loss_record, metrics_record = self.validate_fn(liveplot=liveplot,
                                                                batch_size=batch_size,
-                                                               epoch=epoch,
-                                                               support_set=support_set,
-                                                               way=way,
-                                                               shot=shot)
+                                                               epoch=epoch)
                 if liveplot is not None:
                     liveplot.record(epoch, 'val_loss', loss_record)
                 self.history.add({'loss': loss_record}, prefix = 'val')
@@ -337,6 +325,8 @@ def fit(
                 critic = metrics_record[self.val_model.checkpoint_node.replace('*', '')]
             else:
                 critic = None
+            
+            self.last_state = critic
 
             if save_checkpoint:
                 checkpoint_model_name = os.path.join(
@@ -382,9 +372,10 @@ def fit(
         raise
 
     finally:
-        self.model.apply(_clear_source)
+        if clear_data:
+            self.model.apply(_clear_source)
+            self.val_model.apply(_clear_source)
         self.model.apply(_clear_output)
-        self.val_model.apply(_clear_source)
         self.val_model.apply(_clear_output)
         self.unload_gpu()
         _STOP_GPU_MONITOR_ = True

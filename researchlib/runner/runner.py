@@ -63,6 +63,7 @@ class Runner:
         self.history = History()
 
         self.model = model
+        self.val_model = None
             
         self.num_params = num_model_params(model)
         

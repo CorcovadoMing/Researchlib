@@ -76,9 +76,6 @@ def train_fn(self, **kwargs):
     ema_freq = parameter_manager.get_param('ema_freq')
     ema_momentum = parameter_manager.get_param('ema_momentum')
     grad_clip = parameter_manager.get_param('grad_clip')
-    support_set = parameter_manager.get_param('support_set')
-    way = parameter_manager.get_param('way')
-    shot = parameter_manager.get_param('shot')
     rho = ema_momentum ** ema_freq
 
     loss_record = 0
@@ -196,21 +193,3 @@ def train_fn(self, **kwargs):
         metrics_record[i] /= iteration_idx
     
     return loss_record, norm_record, metrics_record
-
-
-
-#         if support_set is not None:
-#             support_x, support_y = support_set
-#             support_x = torch.from_numpy(support_x).to(inputs.device).to(inputs.dtype)
-#             support_x = support_x.view(-1, *inputs.shape[1:])
-#             outputs = self.model(inputs, support_x)  # Batch, shot, way
-
-#             # Deal with labels
-#             support_y = torch.from_numpy(support_y).to(targets.device).to(targets.dtype)
-#             support_y = support_y.expand(targets.size(0), -1, -1).transpose(-1, -2)  # Batch, shot, way
-#             targets = targets.unsqueeze(1).unsqueeze(2).expand(-1, shot, len(way))
-#             targets = targets.eq(support_y).to(inputs.dtype)
-#             targets *= (1 - 0.2 - (0.2/9))
-#             targets += (0.2/9)
-#         else:
-#             support_x, support_y = None, None

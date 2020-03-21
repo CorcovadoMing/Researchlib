@@ -76,7 +76,7 @@ class _Generator(nn.Module):
     def __init__(self, 
                  *preprocessing_list, 
                  worker = 8,
-                 buffer = 8,
+                 buffer = 2,
                  N = 2, 
                  M = 1):
         super().__init__()

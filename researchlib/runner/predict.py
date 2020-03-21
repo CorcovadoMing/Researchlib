@@ -64,9 +64,6 @@ def predict_fn(self, dict_input, outputs, **kwargs):
     parameter_manager = ParameterManager(**kwargs)
 
     fp16 = parameter_manager.get_param('fp16', False)
-    support_set = parameter_manager.get_param('support_set')
-    way = parameter_manager.get_param('way')
-    shot = parameter_manager.get_param('shot')
 
     self.val_model.eval()
 

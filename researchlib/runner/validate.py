@@ -79,9 +79,6 @@ def validate_fn(self, plot_wrong = -1, out = 'categorical', denormalizer = lambd
 
     liveplot = parameter_manager.get_param('liveplot', None)
     epoch = parameter_manager.get_param('epoch', 1)
-    support_set = parameter_manager.get_param('support_set')
-    way = parameter_manager.get_param('way')
-    shot = parameter_manager.get_param('shot')
 
     self.val_model.eval()
 

@@ -41,8 +41,9 @@ def _gpu_monitor_worker(membar, utilsbar):
 
 
 class Liveplot:
-    def __init__(self, train_iteration, val_iteration, _plot = False):
+    def __init__(self, train_iteration, val_iteration, _plot = False, _enable_full_plot = True):
         self._plot = _plot
+        self._enable_full_plot = _enable_full_plot
         self.history = hl.History()
         self.text_table = Texttable(max_width = 0)  #unlimited
         self.text_table.set_precision(4)
@@ -108,51 +109,52 @@ class Liveplot:
             self.norm_canvas = hl.Canvas()
 
         # Memory
-        gpu_count = nvmlDeviceGetCount()
-        total_bars = [Output() for _ in range(2 * gpu_count)]
-        self.gpu_mem_monitor = total_bars[::2]
-        self.gpu_utils_monitor = total_bars[1::2]
-        display(HBox(total_bars))
-        self.gpu_mem_monitor_bar = []
-        self.gpu_utils_monitor_bar = []
-        for i, (membar, utilsbar) in enumerate(zip(self.gpu_mem_monitor, self.gpu_utils_monitor)):
-            with membar:
-                self.gpu_mem_monitor_bar.append(
-                    IntProgress(orientation = 'vertical', bar_style = 'success')
-                )
-                self.gpu_mem_monitor_bar[-1].description = 'M' + str(i) + ': 0%'
-                self.gpu_mem_monitor_bar[-1].min = 0
-                self.gpu_mem_monitor_bar[-1].max = 100
-                display(self.gpu_mem_monitor_bar[-1])
+        if self._enable_full_plot:
+            gpu_count = nvmlDeviceGetCount()
+            total_bars = [Output() for _ in range(2 * gpu_count)]
+            self.gpu_mem_monitor = total_bars[::2]
+            self.gpu_utils_monitor = total_bars[1::2]
+            display(HBox(total_bars))
+            self.gpu_mem_monitor_bar = []
+            self.gpu_utils_monitor_bar = []
+            for i, (membar, utilsbar) in enumerate(zip(self.gpu_mem_monitor, self.gpu_utils_monitor)):
+                with membar:
+                    self.gpu_mem_monitor_bar.append(
+                        IntProgress(orientation = 'vertical', bar_style = 'success')
+                    )
+                    self.gpu_mem_monitor_bar[-1].description = 'M' + str(i) + ': 0%'
+                    self.gpu_mem_monitor_bar[-1].min = 0
+                    self.gpu_mem_monitor_bar[-1].max = 100
+                    display(self.gpu_mem_monitor_bar[-1])
 
-            with utilsbar:
-                self.gpu_utils_monitor_bar.append(
-                    IntProgress(orientation = 'vertical', bar_style = 'success')
-                )
-                self.gpu_utils_monitor_bar[-1].description = 'U' + str(i) + ': 0%'
-                self.gpu_utils_monitor_bar[-1].min = 0
-                self.gpu_utils_monitor_bar[-1].max = 100
-                display(self.gpu_utils_monitor_bar[-1])
-        
-        
-        # Customize
-        self.custom_train_output = Output()
-        self.custom_val_output = Output()
-        display(HBox([self.custom_train_output, self.custom_val_output]))
-        
-        # Log
-        self.text_log = Output()
-        display(self.text_log)
+                with utilsbar:
+                    self.gpu_utils_monitor_bar.append(
+                        IntProgress(orientation = 'vertical', bar_style = 'success')
+                    )
+                    self.gpu_utils_monitor_bar[-1].description = 'U' + str(i) + ': 0%'
+                    self.gpu_utils_monitor_bar[-1].min = 0
+                    self.gpu_utils_monitor_bar[-1].max = 100
+                    display(self.gpu_utils_monitor_bar[-1])
 
 
-        # Start monitor thread
-        global _STOP_GPU_MONITOR_
-        _STOP_GPU_MONITOR_ = False
-        self.thread = threading.Thread(
-            target = _gpu_monitor_worker,
-            args = (self.gpu_mem_monitor_bar, self.gpu_utils_monitor_bar)
-        )
-        self.thread.start()
+            # Customize
+            self.custom_train_output = Output()
+            self.custom_val_output = Output()
+            display(HBox([self.custom_train_output, self.custom_val_output]))
+
+            # Log
+            self.text_log = Output()
+            display(self.text_log)
+
+
+            # Start monitor thread
+            global _STOP_GPU_MONITOR_
+            _STOP_GPU_MONITOR_ = False
+            self.thread = threading.Thread(
+                target = _gpu_monitor_worker,
+                args = (self.gpu_mem_monitor_bar, self.gpu_utils_monitor_bar)
+            )
+            self.thread.start()
 
     def _process_num(self, var):
         if var is None:
@@ -205,82 +207,86 @@ class Liveplot:
         
         
     def show_grid(self, phase, tensor):
-        if phase == 'train':
-            out_stream = self.custom_train_output
-        else:
-            out_stream = self.custom_val_output
-            
-        with out_stream:
-            _display.clear_output(wait = True)
-            for i in tensor:
-                if type(i) == tuple or type(i) == list:
-                    i, aux = i
-                    aux = aux.detach().cpu().numpy()
-                else:
-                    aux = np.zeros(i.size(0))
-                    
-                if i.dim() < 3 or (i.shape[1] != 1 and i.shape[1] != 3):
-                    data = i.detach().cpu().float().view(i.size(0), -1).numpy()
-                    pca = PCA(2)
-                    r = pca.fit_transform(data)
-                    plt.figure(figsize=(5, 5))
-                    plt.scatter(r[:, 0], r[:, 1], c = aux)
-                    plt.grid()
-                    plt.tight_layout()
-                    plt.title(f'Explained Variance Ratio: {sum(pca.explained_variance_ratio_)}')
-                    plt.show()
-                else:
-                    unique_index = np.unique(aux)
-                    if unique_index.any() != 0:
-                        groups = len(unique_index)
-                        for index in unique_index:
-                            subgroup = i[aux==index].detach()[:8]
-                            img = torchvision.utils.make_grid(subgroup, len(subgroup), 0)
+        if self._enable_full_plot:
+            if phase == 'train':
+                out_stream = self.custom_train_output
+            else:
+                out_stream = self.custom_val_output
+
+            with out_stream:
+                _display.clear_output(wait = True)
+                for i in tensor:
+                    if type(i) == tuple or type(i) == list:
+                        i, aux = i
+                        aux = aux.detach().cpu().numpy()
+                    else:
+                        aux = np.zeros(i.size(0))
+
+                    if i.dim() < 3 or (i.shape[1] != 1 and i.shape[1] != 3):
+                        data = i.detach().cpu().float().view(i.size(0), -1).numpy()
+                        pca = PCA(2)
+                        r = pca.fit_transform(data)
+                        plt.figure(figsize=(5, 5))
+                        plt.scatter(r[:, 0], r[:, 1], c = aux)
+                        plt.grid()
+                        plt.tight_layout()
+                        plt.title(f'Explained Variance Ratio: {sum(pca.explained_variance_ratio_)}')
+                        plt.show()
+                    else:
+                        unique_index = np.unique(aux)
+                        if unique_index.any() != 0:
+                            groups = len(unique_index)
+                            for index in unique_index:
+                                subgroup = i[aux==index].detach()[:8]
+                                img = torchvision.utils.make_grid(subgroup, len(subgroup), 0)
+                                npimg = img.cpu().float().numpy()
+                                npimg += 1
+                                npimg /= 2
+                                npimg = np.clip(npimg, 0, 1)
+                                plt.figure(figsize=((5*len(subgroup))/6, 5))
+                                plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
+                                plt.axis('off')
+                                plt.tight_layout()
+                                plt.show()
+                        else:
+                            img = torchvision.utils.make_grid(i[:64].detach(), 8, 0)
                             npimg = img.cpu().float().numpy()
                             npimg += 1
                             npimg /= 2
                             npimg = np.clip(npimg, 0, 1)
-                            plt.figure(figsize=((5*len(subgroup))/6, 5))
+                            plt.figure(figsize=(5, 5))
                             plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
                             plt.axis('off')
                             plt.tight_layout()
                             plt.show()
-                    else:
-                        img = torchvision.utils.make_grid(i[:64].detach(), 8, 0)
-                        npimg = img.cpu().float().numpy()
-                        npimg += 1
-                        npimg /= 2
-                        npimg = np.clip(npimg, 0, 1)
-                        plt.figure(figsize=(5, 5))
-                        plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
-                        plt.axis('off')
-                        plt.tight_layout()
-                        plt.show()
 
             
     def plot(self, epoch, history_, epoch_str):
-        self.redis.set('history', pickle.dumps(history_.records))
-        if self._plot:
-            with self.loss_plot:
-                self.loss_canvas.draw_plot([self.history["train_loss"], self.history['val_loss']])
+        if self._enable_full_plot:
+            self.redis.set('history', pickle.dumps(history_.records))
+            if self._plot:
+                with self.loss_plot:
+                    self.loss_canvas.draw_plot([self.history["train_loss"], self.history['val_loss']])
 
-            with self.matrix_plot:
-                self.matrix_canvas.draw_plot([self.history['train_acc'], self.history['val_acc']])
+                with self.matrix_plot:
+                    self.matrix_canvas.draw_plot([self.history['train_acc'], self.history['val_acc']])
 
-            with self.lr_plot:
-                self.lr_canvas.draw_plot([self.history['lr']])
+                with self.lr_plot:
+                    self.lr_canvas.draw_plot([self.history['lr']])
 
-            with self.norm_plot:
-                self.norm_canvas.draw_plot([self.history['norm']])
+                with self.norm_plot:
+                    self.norm_canvas.draw_plot([self.history['norm']])
 
-        with self.text_log:
-            if epoch == 1:
-                self.text_table.add_row(['Epochs'] + list(history_.records.keys()))
-                self.text_table.set_cols_width(
-                    [6] + [len(format(i[-1], '.8f')) for i in list(history_.records.values())]
+            with self.text_log:
+                if epoch == 1:
+                    self.text_table.add_row(['Epochs'] + list(history_.records.keys()))
+                    self.text_table.set_cols_width(
+                        [6] + [len(format(i[-1], '.8f')) for i in list(history_.records.values())]
+                    )
+                self.text_table.add_row(
+                    [epoch_str] + [format(i[-1], '.4f') for i in list(history_.records.values())]
                 )
-            self.text_table.add_row(
-                [epoch_str] + [format(i[-1], '.4f') for i in list(history_.records.values())]
-            )
-            _display.clear_output(wait = True)
-            print(self.text_table.draw())
+                _display.clear_output(wait = True)
+                print(self.text_table.draw())
+
+        

@@ -44,15 +44,18 @@ class Annealer:
     def set_trace(
         cls, name, max_step, srange = [0, 1], anneal_when = 'iteration', anneal_fn = lambda x: x
     ):
-        cls.tracker[name] = {
-            'value': srange[0],
-            'srange': srange,
-            'anneal_fn': anneal_fn,
-            'anneal_when': anneal_when,
-            'cur_step': 0,
-            'max_step': max_step
-        }
-        return cls  # for checking
+        if name not in cls.tracker:
+            cls.tracker[name] = {
+                'value': srange[0],
+                'srange': srange,
+                'anneal_fn': anneal_fn,
+                'anneal_when': anneal_when,
+                'cur_step': 0,
+                'max_step': max_step
+            }
+            return True
+        else:
+            return False
 
     @classmethod
     def get_trace(cls, name):
