@@ -116,7 +116,7 @@ def validate_fn(self, plot_wrong = -1, out = 'categorical', denormalizer = lambd
             for i in self.val_model.monitor_nodes:
                 if '*' in i:
                     i = i.replace('*', '')
-                metrics_record[i] += results[i]
+                metrics_record[i] += results[i].item()
 
             loss_record += loss.item()
             

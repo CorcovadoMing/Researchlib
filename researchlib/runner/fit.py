@@ -39,7 +39,17 @@ def _clear_source(m):
         m.clear_source(True)
     except:
         pass
+
     
+def _to_half(m):
+        if isinstance(m, torch.nn.Module) and not isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
+            m.half()
+            
+def _fix(m):
+    if isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
+        m.float()
+    if type(m) == Loss.AdaptiveRobust:
+        m.float()
     
     
 @register_method
@@ -73,8 +83,6 @@ def fit(
     self.__class__.__fit_settings__[f'epoch_{self.epoch}-{self.epoch+epochs-1}'] = locals()
     
     parameter_manager = ParameterManager(**kwargs)
-    
-    self.model.apply(_clear_source)
 
     # ----------------------------------------------
     # Dashboard
@@ -129,6 +137,11 @@ def fit(
     
     if init is not None:
         self.init_model(init)
+        
+        if fp16:
+            self.model.apply(_to_half)
+            self.model.apply(_fix)
+        
         self.set_optimizer(lars, opt_info)
         self.epoch = 1
     
@@ -196,21 +209,6 @@ def fit(
         flag = Annealer.set_trace('lr', warmup * iterations, [0, lr], 'iteration', _anneal_policy(warmup_policy))
         if flag:
             Annealer._iteration_step(key = 'lr')
-    
-    # FP16
-    def _to_half(m):
-        if isinstance(m, torch.nn.Module) and not isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
-            m.half()
-            
-    def _fix(m):
-        if isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
-            m.float()
-        if type(m) == Loss.AdaptiveRobust:
-            m.float()
-            
-    if fp16:
-        self.model.apply(_to_half)
-        self.model.apply(_fix)
     
     # For convergence
     bias_scale = parameter_manager.get_param('bias_scale', 1)

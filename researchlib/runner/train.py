@@ -169,7 +169,7 @@ def train_fn(self, **kwargs):
         for i in self.model.monitor_nodes:
             if '*' in i:
                 continue
-            metrics_record[i] += results[i]
+            metrics_record[i] += results[i].item()
         
         iteration_idx += 1
         
