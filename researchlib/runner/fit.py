@@ -249,15 +249,16 @@ def fit(
             
             # Adjust lr schedule
             if self.epoch == (warmup + 1):
-                self.annealer.set_trace('lr', (expected_epochs - warmup - flatten) * iterations, [lr, flatten_lr], 'iteration', _anneal_policy(policy))
+                self.annealer.set_trace('lr', (expected_epochs - warmup - flatten) * iterations, [lr, flatten_lr], 'iteration', _anneal_policy(policy), force = True)
                 self.annealer._iteration_step(key = 'lr')
             
             if self.epoch == (expected_epochs - flatten + 1):
-                self.annealer.set_trace('lr', flatten * iterations, [flatten_lr, flatten_lr], 'iteration', _anneal_policy('fixed'))
+                self.annealer.set_trace('lr', flatten * iterations, [flatten_lr, flatten_lr], 'iteration', _anneal_policy('fixed'), force = True)
                 self.annealer._iteration_step(key = 'lr')
                 
             if self.epoch == (expected_epochs - final_anneal + 1):
-                self.annealer.set_trace('lr', final_anneal * iterations, [lr, 0], 'iteration', _anneal_policy('linear'))
+                self.annealer.set_trace('lr', final_anneal * iterations, [lr, 0], 'iteration', _anneal_policy('linear'), force = True)
+                self.annealer._iteration_step(key = 'lr')
                 
 
             # ----------------------------------------------

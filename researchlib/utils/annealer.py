@@ -45,8 +45,9 @@ class Annealer:
                     max_step, 
                     srange = [0, 1], 
                     anneal_when = 'iteration', 
-                    anneal_fn = lambda x: x):
-        if name not in self.tracker:
+                    anneal_fn = lambda x: x,
+                    force = False):
+        if force or name not in self.tracker:
             self.tracker[name] = {
                 'value': srange[0],
                 'srange': srange,
