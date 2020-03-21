@@ -83,6 +83,9 @@ def fit(
     self.__class__.__fit_settings__[f'epoch_{self.epoch}-{self.epoch+epochs-1}'] = locals()
     
     parameter_manager = ParameterManager(**kwargs)
+    
+    if expected_epochs is None:
+        expected_epochs = epochs
 
     # ----------------------------------------------
     # Dashboard
@@ -98,7 +101,7 @@ def fit(
     
     fp16 = parameter_manager.get_param('fp16', False)
     batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
-    buffered_epochs = epochs + 1
+    buffered_epochs = expected_epochs + 1
     
     for k, v in self.model.graph.items():
         if type(v[0]) == op.Source:
@@ -131,7 +134,7 @@ def fit(
     # MISC
     # ----------------------------------------------
     
-    Annealer._post_config(epochs, iterations)
+    self.annealer._post_config(expected_epochs, iterations)
     
     lars = parameter_manager.get_param('lars', False)
     
@@ -152,7 +155,7 @@ def fit(
             else:
                 self.save(init_model)
             self.set_optimizer(lars, opt_info)
-            self.epoch = 1
+            
     else:
         if self.optimizer is None:
             self.set_optimizer(lars, opt_info)
@@ -189,8 +192,6 @@ def fit(
     accum_grad = parameter_manager.get_param('accum_grad', 1)
     self.accum_idx = 0
     
-    if expected_epochs is None:
-        expected_epochs = epochs
     self.multisteps = [int(i * expected_epochs) if i < 1 else int(i) for i in multisteps]
     step_decay = parameter_manager.get_param('step_decay', 0.1)
 
@@ -199,16 +200,16 @@ def fit(
     weight_decay_bias = parameter_manager.get_param('weight_decay_bias', True)
     if weight_decay > 0:
         weight_decay_policy = parameter_manager.get_param('weight_decay_policy', 'fixed')
-        flag = Annealer.set_trace('weight_decay', epochs * iterations, [0, weight_decay], 'iteration', _anneal_policy(weight_decay_policy))
+        flag = self.annealer.set_trace('weight_decay', expected_epochs * iterations, [0, weight_decay], 'iteration', _anneal_policy(weight_decay_policy))
         if flag:
-            Annealer._iteration_step(key = 'weight_decay')
+            self.annealer._iteration_step(key = 'weight_decay')
         
     # Warmup
     warmup = max(0, warmup)
     if warmup > 0:
-        flag = Annealer.set_trace('lr', warmup * iterations, [0, lr], 'iteration', _anneal_policy(warmup_policy))
+        flag = self.annealer.set_trace('lr', warmup * iterations, [0, lr], 'iteration', _anneal_policy(warmup_policy))
         if flag:
-            Annealer._iteration_step(key = 'lr')
+            self.annealer._iteration_step(key = 'lr')
     
     # For convergence
     bias_scale = parameter_manager.get_param('bias_scale', 1)
@@ -236,7 +237,7 @@ def fit(
             # Adjust freeze schedule
             for module in freeze:
                 start, end, freeze_bn = freeze[module]
-                if epoch >= start and epoch < end:
+                if self.epoch >= start and self.epoch < end:
                     if freeze_bn:
                         module.eval()
                     for p in module.parameters():
@@ -247,16 +248,16 @@ def fit(
             
             
             # Adjust lr schedule
-            if epoch == (warmup + 1):
-                Annealer.set_trace('lr', (epochs - warmup - flatten) * iterations, [lr, flatten_lr], 'iteration', _anneal_policy(policy))
-                Annealer._iteration_step(key = 'lr')
+            if self.epoch == (warmup + 1):
+                self.annealer.set_trace('lr', (expected_epochs - warmup - flatten) * iterations, [lr, flatten_lr], 'iteration', _anneal_policy(policy))
+                self.annealer._iteration_step(key = 'lr')
             
-            if epoch == (epochs - flatten + 1):
-                Annealer.set_trace('lr', flatten * iterations, [flatten_lr, flatten_lr], 'iteration', _anneal_policy('fixed'))
-                Annealer._iteration_step(key = 'lr')
+            if self.epoch == (expected_epochs - flatten + 1):
+                self.annealer.set_trace('lr', flatten * iterations, [flatten_lr, flatten_lr], 'iteration', _anneal_policy('fixed'))
+                self.annealer._iteration_step(key = 'lr')
                 
-            if epoch == (epochs - final_anneal + 1):
-                Annealer.set_trace('lr', final_anneal * iterations, [lr, 0], 'iteration', _anneal_policy('linear'))
+            if self.epoch == (expected_epochs - final_anneal + 1):
+                self.annealer.set_trace('lr', final_anneal * iterations, [lr, 0], 'iteration', _anneal_policy('linear'))
                 
 
             # ----------------------------------------------
@@ -271,7 +272,7 @@ def fit(
                                                                      mmixup_alpha=mmixup_alpha, 
                                                                      fixed_mmixup=fixed_mmixup, 
                                                                      random_mmixup=random_mmixup,
-                                                                     epoch=epoch,
+                                                                     epoch=self.epoch,
                                                                      inner_epochs = inner_epochs,
                                                                      warmup=warmup,
                                                                      weight_decay=weight_decay,
@@ -283,14 +284,14 @@ def fit(
                                                                      ema_momentum=ema_momentum,
                                                                      grad_clip=grad_clip)
             if liveplot is not None:
-                liveplot.record(epoch, 'lr', [i['lr'] for i in self.optimizer[0].param_groups][-1])
-                liveplot.record(epoch, 'train_loss', loss_record)
-                liveplot.record(epoch, 'norm', norm_record)
+                liveplot.record(self.epoch, 'lr', [i['lr'] for i in self.optimizer[0].param_groups][-1])
+                liveplot.record(self.epoch, 'train_loss', loss_record)
+                liveplot.record(self.epoch, 'norm', norm_record)
             self.history.add({'norm': norm_record}, prefix = 'train')
             self.history.add({'loss': loss_record}, prefix = 'train')
             self.history.add(metrics_record, prefix = 'train')
             try:
-                liveplot.record(epoch, 'train_acc', self.history.records['train_acc'][-1])
+                liveplot.record(self.epoch, 'train_acc', self.history.records['train_acc'][-1])
             except:
                 pass
                 
@@ -304,13 +305,13 @@ def fit(
                 # Validation function
                 loss_record, metrics_record = self.validate_fn(liveplot=liveplot,
                                                                batch_size=batch_size,
-                                                               epoch=epoch)
+                                                               epoch=self.epoch)
                 if liveplot is not None:
-                    liveplot.record(epoch, 'val_loss', loss_record)
+                    liveplot.record(self.epoch, 'val_loss', loss_record)
                 self.history.add({'loss': loss_record}, prefix = 'val')
                 self.history.add(metrics_record, prefix = 'val')
                 try:
-                    liveplot.record(epoch, 'val_acc', self.history.records['val_acc'][-1])
+                    liveplot.record(self.epoch, 'val_acc', self.history.records['val_acc'][-1])
                 except:
                     pass
                         
@@ -352,12 +353,12 @@ def fit(
             
             # Steps anneling
             if self.epoch in self.multisteps:
-                srange = Annealer.get_srange('lr')
+                srange = self.annealer.get_srange('lr')
                 srange = [i * step_decay for i in srange]
-                Annealer.update_attr('lr', 'srange', srange)
+                self.annealer.update_attr('lr', 'srange', srange)
                 
             # Global epoch annealing
-            Annealer._epoch_step()
+            self.annealer._epoch_step()
             
             # Finish this epoch
             self.epoch += 1

@@ -2,7 +2,7 @@ from ..loss import loss_mapping, loss_ensemble
 from .history import History
 from .export import _Export
 from ..utils import *
-from ..utils import _add_methods_from, ParameterManager
+from ..utils import _add_methods_from, ParameterManager, Annealer
 from .save_load import _save_checkpoint, _load_checkpoint
 from .trainable_params_utils import num_model_params
 from torch.cuda import is_available
@@ -56,6 +56,7 @@ class Runner:
         self.checkpoint_path = ''
         self.optimizer = None
         self.epoch = 1
+        self.annealer = Annealer()
         self.is_cuda = is_available()
 
         self.optimizer_choice = optimizer

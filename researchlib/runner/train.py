@@ -1,6 +1,6 @@
 import torch
 from torch._six import inf
-from ..utils import _register_method, ParameterManager, Annealer, update_optim
+from ..utils import _register_method, ParameterManager, update_optim
 from ..ops import op
 from ..models import Builder
 
@@ -89,12 +89,12 @@ def train_fn(self, **kwargs):
     iteration_idx = 0
     while True:
         # Set LR
-        cur_lr = Annealer.get_trace('lr')
+        cur_lr = self.annealer.get_trace('lr')
         update_optim(self.optimizer, [cur_lr, cur_lr * bias_scale, cur_lr], key = 'lr')
 
         # Set weight decay
         if weight_decay > 0:
-            cur_weight_decay = Annealer.get_trace('weight_decay')
+            cur_weight_decay = self.annealer.get_trace('weight_decay')
             update_optim(
                 self.optimizer, [cur_weight_decay, (cur_weight_decay / bias_scale) if weight_decay_bias else 0, 0],
                 key = 'weight_decay'
@@ -184,7 +184,7 @@ def train_fn(self, **kwargs):
                 liveplot.show_grid('train', visualize)
             break
 
-        Annealer._iteration_step()
+        self.annealer._iteration_step()
     
     loss_record /= iteration_idx
     norm_record /= iteration_idx

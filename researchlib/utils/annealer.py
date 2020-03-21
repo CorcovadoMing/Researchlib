@@ -22,30 +22,32 @@ def _Poly2(tcur, srange, tmax):
     else:
         return end
     
-    
 def _Fixed(tcur, srange, tmax):
     start, end = srange
     return max(start, end)
 
 
 class Annealer:
-    tracker = {}
-
+    
     Cosine = _Cosine
     Linear = _Linear
     Fixed = _Fixed
     Poly2 = _Poly2
 
-    @classmethod
-    def reset(cls):
+    def __init__(self):
+        self.tracker = {}
+
+    def reset(self):
         cls.tracker = {}
     
-    @classmethod
-    def set_trace(
-        cls, name, max_step, srange = [0, 1], anneal_when = 'iteration', anneal_fn = lambda x: x
-    ):
-        if name not in cls.tracker:
-            cls.tracker[name] = {
+    def set_trace(self, 
+                    name, 
+                    max_step, 
+                    srange = [0, 1], 
+                    anneal_when = 'iteration', 
+                    anneal_fn = lambda x: x):
+        if name not in self.tracker:
+            self.tracker[name] = {
                 'value': srange[0],
                 'srange': srange,
                 'anneal_fn': anneal_fn,
@@ -57,59 +59,53 @@ class Annealer:
         else:
             return False
 
-    @classmethod
-    def get_trace(cls, name):
-        return cls.tracker[name]['value']
+    def get_trace(self, name):
+        return self.tracker[name]['value']
 
-    @classmethod
-    def _post_config(cls, epoch, iterations):
-        for key in cls.tracker:
-            if cls.tracker[key]['max_step'] is None:
-                if cls.tracker[key]['anneal_when'] == 'epoch':
-                    cls.tracker[key]['max_step'] = epoch
-                if cls.tracker[key]['anneal_when'] == 'iteration':
-                    cls.tracker[key]['max_step'] = epoch * iterations
+    def _post_config(self, epoch, iterations):
+        for key in self.tracker:
+            if self.tracker[key]['max_step'] is None:
+                if self.tracker[key]['anneal_when'] == 'epoch':
+                    self.tracker[key]['max_step'] = epoch
+                if self.tracker[key]['anneal_when'] == 'iteration':
+                    self.tracker[key]['max_step'] = epoch * iterations
     
-    @classmethod
-    def get_srange(cls, name):
-        return cls.tracker[name]['srange']
+    def get_srange(self, name):
+        return self.tracker[name]['srange']
 
-    @classmethod
-    def update_attr(cls, name, key, value):
-        cls.tracker[name][key] = value
+    def update_attr(self, name, key, value):
+        self.tracker[name][key] = value
 
-    @classmethod
-    def _iteration_step(cls, key = None):
+    def _iteration_step(self, key = None):
         if key is not None:
-            if cls.tracker[key]['anneal_when'] == 'iteration':
-                cls.tracker[key]['cur_step'] += 1
-                cls.tracker[key]['value'] = cls.tracker[key]['anneal_fn'](
-                    cls.tracker[key]['cur_step'], cls.tracker[key]['srange'],
-                    cls.tracker[key]['max_step']
+            if self.tracker[key]['anneal_when'] == 'iteration':
+                self.tracker[key]['cur_step'] += 1
+                self.tracker[key]['value'] = self.tracker[key]['anneal_fn'](
+                    self.tracker[key]['cur_step'], self.tracker[key]['srange'],
+                    self.tracker[key]['max_step']
                 )
         else:
-            for _key in cls.tracker:
-                if cls.tracker[_key]['anneal_when'] == 'iteration':
-                    cls.tracker[_key]['cur_step'] += 1
-                    cls.tracker[_key]['value'] = cls.tracker[_key]['anneal_fn'](
-                        cls.tracker[_key]['cur_step'], cls.tracker[_key]['srange'],
-                        cls.tracker[_key]['max_step']
+            for _key in self.tracker:
+                if self.tracker[_key]['anneal_when'] == 'iteration':
+                    self.tracker[_key]['cur_step'] += 1
+                    self.tracker[_key]['value'] = self.tracker[_key]['anneal_fn'](
+                        self.tracker[_key]['cur_step'], self.tracker[_key]['srange'],
+                        self.tracker[_key]['max_step']
                     )
 
-    @classmethod
-    def _epoch_step(cls, key = None):
+    def _epoch_step(self, key = None):
         if key is not None:
-            if cls.tracker[key]['anneal_when'] == 'epoch':
-                cls.tracker[key]['cur_step'] += 1
-                cls.tracker[key]['value'] = cls.tracker[key]['anneal_fn'](
-                    cls.tracker[key]['cur_step'], cls.tracker[key]['srange'],
-                    cls.tracker[key]['max_step']
+            if self.tracker[key]['anneal_when'] == 'epoch':
+                self.tracker[key]['cur_step'] += 1
+                self.tracker[key]['value'] = self.tracker[key]['anneal_fn'](
+                    self.tracker[key]['cur_step'], self.tracker[key]['srange'],
+                    self.tracker[key]['max_step']
                 )
         else:
-            for _key in cls.tracker:
-                if cls.tracker[_key]['anneal_when'] == 'epoch':
-                    cls.tracker[_key]['cur_step'] += 1
-                    cls.tracker[_key]['value'] = cls.tracker[_key]['anneal_fn'](
-                        cls.tracker[_key]['cur_step'], cls.tracker[_key]['srange'],
-                        cls.tracker[_key]['max_step']
+            for _key in self.tracker:
+                if self.tracker[_key]['anneal_when'] == 'epoch':
+                    self.tracker[_key]['cur_step'] += 1
+                    self.tracker[_key]['value'] = self.tracker[_key]['anneal_fn'](
+                        self.tracker[_key]['cur_step'], self.tracker[_key]['srange'],
+                        self.tracker[_key]['max_step']
                     )
