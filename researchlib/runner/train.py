@@ -99,6 +99,10 @@ def train_fn(self, **kwargs):
                 self.optimizer, [cur_weight_decay, (cur_weight_decay / bias_scale) if weight_decay_bias else 0, 0],
                 key = 'weight_decay'
             )
+        
+        # Set momentum
+        cur_mom = self.annealer.get_trace('momentum')
+        update_optim(self.optimizer, [cur_mom, cur_mom, cur_mom], key = 'momentum')
 
         if mmixup_alpha is not None:
             batch_size = inputs[0].size(0)

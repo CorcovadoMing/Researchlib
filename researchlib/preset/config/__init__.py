@@ -3,7 +3,7 @@ from .stepwise import Stepwise, Stepwise300
 from .poly import Poly
 from .cosine import Cosine, Cosine300, CosineForRandWireModel
 from .flat import Flat, Flat300
-
+from .manual import Manual
 
 class Config(object):
     Dawnfast = Dawnfast
@@ -15,3 +15,4 @@ class Config(object):
     CosineForRandWireModel = CosineForRandWireModel
     Flat = Flat
     Flat300 = Flat300
+    Manual = Manual

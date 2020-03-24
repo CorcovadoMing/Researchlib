@@ -194,13 +194,16 @@ def fit(
     
     self.multisteps = [int(i * expected_epochs) if i < 1 else int(i) for i in multisteps]
     step_decay = parameter_manager.get_param('step_decay', 0.1)
+    
+    # Momentum
+    momentum = parameter_manager.get_param('momentum', 0.9)
 
     # Weight decay
     weight_decay = parameter_manager.get_param('weight_decay', 5e-4)
     weight_decay_bias = parameter_manager.get_param('weight_decay_bias', True)
     if weight_decay > 0:
         weight_decay_policy = parameter_manager.get_param('weight_decay_policy', 'fixed')
-        flag = self.annealer.set_trace('weight_decay', expected_epochs * iterations, [0, weight_decay], 'iteration', _anneal_policy(weight_decay_policy))
+        flag = self.annealer.set_trace('weight_decay', expected_epochs * iterations, [weight_decay, weight_decay], 'iteration', _anneal_policy(weight_decay_policy))
         if flag:
             self.annealer._iteration_step(key = 'weight_decay')
         
@@ -259,6 +262,12 @@ def fit(
             if self.epoch == (expected_epochs - final_anneal + 1):
                 self.annealer.set_trace('lr', final_anneal * iterations, [lr, 0], 'iteration', _anneal_policy('linear'), force = True)
                 self.annealer._iteration_step(key = 'lr')
+                
+            # Overwritten policy
+            if policy == 'overwrite':
+                self.annealer.set_trace('lr', expected_epochs * iterations, [lr, lr], 'iteration', _anneal_policy('fixed'), force = True)
+                self.annealer.set_trace('weight_decay', expected_epochs * iterations, [weight_decay, weight_decay], 'iteration', _anneal_policy('fixed'), force = True)
+                self.annealer.set_trace('momentum', expected_epochs * iterations, [momentum, momentum], 'iteration', _anneal_policy('fixed'), force = True)
                 
 
             # ----------------------------------------------
