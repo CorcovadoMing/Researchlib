@@ -68,7 +68,7 @@ def fit(
     iterations = 0,
     multisteps = [],
     plot = False,
-    use_simple_liveplot = False,
+    full_liveplot = True,
     enable_liveplot = True,
     clear_data = True,
     opt_info = True,
@@ -126,7 +126,7 @@ def fit(
             self.test_loader_length = None
     
     if enable_liveplot:
-        liveplot = Liveplot(self.train_loader_length, self.test_loader_length, plot, use_simple_liveplot)
+        liveplot = Liveplot(self.train_loader_length, self.test_loader_length, plot, full_liveplot)
     else:
         liveplot = None
     

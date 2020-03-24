@@ -40,7 +40,7 @@ class PBT:
                                                                  weight_decay = self.wd[i],
                                                                  expected_epochs = (pbt_epochs * unit_epochs),
                                                                  init = init, 
-                                                                 use_simple_liveplot = False,
+                                                                 use_full_liveplot = False,
                                                                  opt_info = False,
                                                                  data_info = False,
                                                                  clear_data = False,
