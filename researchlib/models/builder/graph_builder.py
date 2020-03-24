@@ -113,7 +113,6 @@ class _Graph(nn.Module):
         super().__init__()
         
         self.visualize_nodes = []
-        self.output_nodes = []
         self.optimize_nodes = []
         self.monitor_nodes = []
         self.checkpoint_mode = None
@@ -137,8 +136,6 @@ class _Graph(nn.Module):
         node, node_type = cur_node
         if node_type == '__VISUAL__':
             self.visualize_nodes += list(node.keys())
-        elif node_type == '__OUTPUT__':
-            self.output_nodes += list(node.keys())
         elif node_type == '__OPTIMIZE__':
             self.optimize_nodes += list(node.keys())
         elif node_type == '__MONITOR_MAX__':
