@@ -197,6 +197,7 @@ def fit(
     
     # Momentum
     momentum = parameter_manager.get_param('momentum', 0.9)
+    self.annealer.set_trace('momentum', expected_epochs * iterations, [momentum, momentum], 'iteration', _anneal_policy('fixed'))
 
     # Weight decay
     weight_decay = parameter_manager.get_param('weight_decay', 5e-4)
