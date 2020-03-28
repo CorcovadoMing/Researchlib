@@ -14,10 +14,13 @@ from .adaptive_robust_loss import AdaptiveRobustLoss
 from .soft_dtw import SoftDTWLoss
 from .distance import L1Loss, L2Loss
 from .sparsemax import SparsemaxLoss
+from .center import CenterLoss
+
 
 from .cluster import Cluster
 from .segmentation import Segmentation
 from .noisy_classification import NoisyClassification
+
 
 
 class Loss(object):
@@ -48,6 +51,7 @@ class Loss(object):
     SoftDTW = SoftDTWLoss
     Sparsemax = SparsemaxLoss
     VAE = VAELoss
+    Center = CenterLoss
     
     
 #     'bce': F.binary_cross_entropy

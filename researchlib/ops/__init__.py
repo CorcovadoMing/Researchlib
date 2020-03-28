@@ -70,7 +70,7 @@ from .prepare import _PrepareImage2d, _RandomAugment2d, _WeakAugment2d
 from .resnet import _ResNet18
 from .preresnet import _PreResNet50
 from .decoder import _AEDecoder2d, _VAEDecoder2d
-
+from .coco import _COCO
 
 
 class op(object):
@@ -96,6 +96,8 @@ class op(object):
     DiracConv1d = _DiracConv1d
     DiracConv2d = _DiracConv2d
     DiracConv3d = _DiracConv3d
+    
+    COCO = _COCO
     
     # Prepare
     PrepareImage2d = _PrepareImage2d 
