@@ -4,6 +4,9 @@ from torch.autograd.function import Function
 
 
 class CenterLoss(nn.Module):
+    '''
+        Forward label assumes one-hot
+    '''
     def __init__(self, num_classes, feat_dim, size_average=True):
         super().__init__()
         self.centers = nn.Parameter(torch.randn(num_classes, feat_dim))
@@ -11,7 +14,7 @@ class CenterLoss(nn.Module):
         self.feat_dim = feat_dim
         self.size_average = size_average
 
-    def forward(self, label, feat):
+    def forward(self, feat, label):
         batch_size = feat.size(0)
         feat = feat.view(batch_size, -1)
         # To check the dim of centers and features
