@@ -175,7 +175,15 @@ class _Graph(nn.Module):
             else:
                 index = -1
 
-            cand = outputs[x]
+            if '$' in x:
+                x, key = x.split('$')
+                target_node = self.graph[x][0]
+                if len(key) == 0:
+                    cand = target_node.parameters()
+                else:
+                    cand = target_node._parameters[key]
+            else:
+                cand = outputs[x]
 
             # has index 
             if index >= 0:
