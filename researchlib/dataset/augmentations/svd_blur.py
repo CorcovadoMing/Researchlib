@@ -13,7 +13,7 @@ def _svd_blur(img, K):
     return rec
 
 
-class SVDBlur(namedtuple('SVDBlur', ('K'))):
+class SVDBlur(namedtuple('SVDBlur', ('img_size'))):
     def __call__(self, x, choice, K):
         return _svd_blur(x, K) if choice else x
 
@@ -21,7 +21,7 @@ class SVDBlur(namedtuple('SVDBlur', ('K'))):
         return [{
             'choice': b,
             'K': K
-        } for b in np.random.choice([True, False], p=[prob, 1-prob], size=1) for K in range(self.K-4)]
+        } for b in np.random.choice([True, False], p=[prob, 1-prob], size=1) for K in range(self.img_size-4)]
 
 
 

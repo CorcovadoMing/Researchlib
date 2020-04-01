@@ -17,6 +17,8 @@ from .color import Color
 from .brightness import Brightness
 from .sharpness import Sharpness
 from .svd_blur import SVDBlur
+from .clahe import CLAHE
+from .enhance import Enhance
 
 
 class Augmentations(object):
@@ -39,3 +41,5 @@ class Augmentations(object):
     Brightness = Brightness
     Sharpness = Sharpness
     SVDBlur = SVDBlur
+    CLAHE = CLAHE
+    Enhance = Enhance
