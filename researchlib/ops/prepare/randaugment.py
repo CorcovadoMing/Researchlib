@@ -21,7 +21,5 @@ def _RandomAugment2d(img_size):
         Augmentations.Color(),
         Augmentations.Brightness(),
         Augmentations.Sharpness(),
-        Augmentations.CLAHE(),
         Augmentations.SVDBlur(img_size),
-        Augmentations.Enhance(),
     ]

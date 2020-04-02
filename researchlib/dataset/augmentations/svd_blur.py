@@ -21,7 +21,7 @@ class SVDBlur(namedtuple('SVDBlur', ('img_size'))):
         return [{
             'choice': b,
             'K': K
-        } for b in np.random.choice([True, False], p=[prob, 1-prob], size=1) for K in range(self.img_size-4)]
+        } for b in np.random.choice([True, False], p=[prob, 1-prob], size=1) for K in range(self.img_size - (self.img_size//8))]
 
 
 
