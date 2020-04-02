@@ -1,9 +1,13 @@
 import ftplib
 import os
 import re
+from tqdm.auto import tqdm
+from ftplib import FTP 
+
 
 """
 MIT license: 2017 - Jwely
+Modified: Ming <rf37535@gmail.com>
 
 Example usage:
 ``` python
@@ -62,7 +66,11 @@ def _download_ftp_file(ftp_handle, name, dest, overwrite):
     if not os.path.exists(dest) or overwrite is True:
         try:
             with open(dest, 'wb') as f:
-                ftp_handle.retrbinary("RETR {0}".format(name), f.write)
+                with tqdm(total=ftp_handle.size(name), desc=name) as progress_bar:
+                    def callback(data):
+                        progress_bar.update(len(data))
+                        f.write(data)
+                    ftp_handle.retrbinary("RETR {0}".format(name), callback)
             print("downloaded: {0}".format(dest))
         except FileNotFoundError:
             print("FAILED: {0}".format(dest))
@@ -122,8 +130,6 @@ def download_ftp_tree(ftp_handle, path, destination, pattern=None, overwrite=Fal
 # ===================================================================================================================
 
 
-from ftplib import FTP 
-
 class FTPUtils:
     def __init__(self, address, user, passwd):
         self.address = address
@@ -137,7 +143,7 @@ class FTPUtils:
             ftp.cwd(os.path.join('/home/Drive', subfolder))
             return ftp.nlst()
     
-    def download(self, subfolder: str, target: list = [], download_folder: str = '.'):
+    def download(self, subfolder: str, target: list = [], download_folder: str = '.', overwrite: bool = False):
         if type(target) == str:
             target = [target]
         
@@ -146,4 +152,4 @@ class FTPUtils:
             ftp.cwd(os.path.join('/home/Drive', subfolder))
             
             for i in target:
-                download_ftp_tree(ftp, i, download_folder)
+                download_ftp_tree(ftp, i, download_folder, overwrite = overwrite)
