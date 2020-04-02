@@ -115,3 +115,35 @@ def download_ftp_tree(ftp_handle, path, destination, pattern=None, overwrite=Fal
         guess_by_extension=guess_by_extension)
 
     os.chdir(original_directory)  # reset working directory to what it was before function exec
+    
+    
+    
+    
+# ===================================================================================================================
+
+
+from ftplib import FTP 
+
+class FTPUtils:
+    def __init__(self, address, user, passwd):
+        self.address = address
+        self.user = user
+        self.passwd = passwd
+        self.ftp_connection = FTP(address)
+        
+    def ls(self, subfolder: str):
+        with FTP(self.address) as ftp:
+            ftp.login(self.user, self.passwd)
+            ftp.cwd(os.path.join('/home/Drive', subfolder))
+            return ftp.nlst()
+    
+    def download(self, subfolder: str, target: list = [], download_folder: str = '.'):
+        if type(target) == str:
+            target = [target]
+        
+        with FTP(self.address) as ftp:
+            ftp.login(self.user, self.passwd)
+            ftp.cwd(os.path.join('/home/Drive', subfolder))
+            
+            for i in target:
+                download_ftp_tree(ftp, i, download_folder)

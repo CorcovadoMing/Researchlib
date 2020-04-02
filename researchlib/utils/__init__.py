@@ -20,5 +20,5 @@ from .inifinity_loop import inifinity_loop
 from .annealer import Annealer
 from .switch_swa_mode import _switch_swa_mode
 from .build_config import build_config
-from .ftp import download_ftp_tree
+from .ftp import FTPUtils
 from .get_random_name import get_random_name
