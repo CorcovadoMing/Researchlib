@@ -5,6 +5,7 @@ from .environment import *
 
 # Vision Dataset
 from .np_dataset import _NumpyDataset
+from .lmdb_dataset import _LMDBDataset
 from .torch_dataset import _TorchDataset
 
 # LFS Dataset
@@ -19,4 +20,5 @@ class loader(object):
     utils = utils
     NumpyDataset = _NumpyDataset
     TorchDataset = _TorchDataset
+    LMDBDataset = _LMDBDataset
     LFS = _LFS
