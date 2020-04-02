@@ -1,4 +1,6 @@
+from apex.optimizers import FusedNovoGrad, FusedAdam, FusedLAMB, FusedSGD
 import torch_optimizer as extra_optim
+
 '''
 AccSGD: https://arxiv.org/abs/1803.05591
 AdaBound: https://arxiv.org/abs/1902.09843
@@ -10,6 +12,7 @@ RAdam: https://arxiv.org/abs/1908.03265
 SGDW: https://arxiv.org/abs/1608.03983
 Yogi: https://papers.nips.cc/paper/8186-adaptive-methods-for-nonconvex-optimization
 '''
+
 from torch.optim import *
 from .optimizer.adafactor import Adafactor
 from .optimizer.cocob import Cocob
@@ -30,16 +33,16 @@ register_method = _register_method(__methods__)
 @register_method
 def set_optimizer(self, lars=False, info=True):
     opt_mapping = {
-        'adam': partial(Adam, betas = (0.9, 0.999), eps = 1e-4),
-        'adamw': partial(AdamW, betas = (0.9, 0.999), eps = 1e-4),
-        'lamb': partial(extra_optim.Lamb, betas = (0.9, 0.999), eps = 1e-4),
-        'novograd': partial(extra_optim.NovoGrad, betas=(0.95, 0), eps = 1e-4),
+        'adam': partial(FusedAdam, adam_w_mode = False, eps = 1e-4),
+        'adamw': partial(FusedAdam, eps = 1e-4),
+        'lamb': partial(FusedLAMB, eps = 1e-4),
+        'novograd': partial(FusedNovoGrad, eps = 1e-4),
         'cocob': Cocob,
         'radam': extra_optim.RAdam,
-        'sgd-nomom': partial(SGD, lr = 1e-1),
-        'sgd': partial(SGD, lr = 1e-1, momentum = 0.9),
+        'sgd-nomom': partial(FusedSGD, lr = 1e-1),
+        'sgd': partial(FusedSGD, lr = 1e-1, momentum = 0.9),
         'accsgd': extra_optim.AccSGD,
-        'nesterov': partial(SGD, lr = 1e-2, momentum = 0.9, nesterov = True),
+        'nesterov': partial(FusedSGD, lr = 1e-2, momentum = 0.9, nesterov = True),
         'nag': partial(NAG, lr = 1e-1),
         'rmsprop': partial(RMSprop, eps = 1e-4),
         'adabound': partial(extra_optim.AdaBound, lr = 1e-3, final_lr = 0.1, eps = 1e-4),

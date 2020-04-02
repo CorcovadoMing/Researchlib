@@ -1,5 +1,5 @@
 major = '20'
-minor = '02'
+minor = '03'
 revise = '0'
 
 checkversion = f'{major}.{minor}'
