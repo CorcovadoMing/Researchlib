@@ -16,5 +16,5 @@ class Rotate(namedtuple('Rotate', ())):
         return {
             'choice': np.random.choice([True, False], p=[prob, 1-prob], size=1),
             'v': np.random.choice(np.linspace(-45, 45)),
-            'c': np.random.randint(0, 255)
+            'c': '#{:06x}'.format(np.random.randint(0, 16777215))
         }
