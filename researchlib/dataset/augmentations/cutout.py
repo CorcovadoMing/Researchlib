@@ -1,18 +1,17 @@
 import numpy as np
 from collections import namedtuple
+import imgaug.augmenters as iaa
 
 
 # Interface
-class Cutout(namedtuple('Cutout', ('h', 'w', 'cut'))):
-    def __call__(self, x, choice, x0, y0):
+class Cutout(namedtuple('Cutout', ())):
+    def __call__(self, x, choice):
         if choice:
-            x[y0:y0 + self.cut, x0:x0 + self.cut, :] = 0
+            aug = iaa.Cutout(size=0.25, fill_mode='constant', cval=(0, 255), fill_per_channel=0.5)
+            x = aug.augment_image(x)
         return x
 
     def options(self, prob=0.5):
-        W, H = self.w, self.h
         return {
             'choice': np.random.choice([True, False], p=[prob, 1-prob], size=1),
-            'x0': np.random.choice(range(W + 1 - self.cut)),
-            'y0': np.random.choice(range(W + 1 - self.cut))
         }

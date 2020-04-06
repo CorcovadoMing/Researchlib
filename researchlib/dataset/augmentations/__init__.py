@@ -19,6 +19,7 @@ from .sharpness import Sharpness
 from .svd_blur import SVDBlur
 from .sparkle import Sparkle
 from .scale import Scale
+from .jigsaw import Jigsaw
 
 
 class Augmentations(object):
@@ -43,3 +44,4 @@ class Augmentations(object):
     SVDBlur = SVDBlur
     Sparkle = Sparkle
     Scale = Scale
+    Jigsaw = Jigsaw
