@@ -7,7 +7,7 @@ import imgaug.augmenters as iaa
 class Jigsaw(namedtuple('Jigsaw', ())):
     def __call__(self, x, choice, r, c):
         if choice:
-            aug = iaa.Jigsaw(nb_rows=r, nb_cols=c)
+            aug = iaa.Jigsaw(nb_rows=r, nb_cols=c, max_steps=(1, 5))
             res = iaa.Resize({'height': x.shape[0], 'width': x.shape[1]})
             x = res.augment_image(aug.augment_image(x))
         return x

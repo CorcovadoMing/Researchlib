@@ -24,5 +24,5 @@ def _RandomAugment2d(img_size):
         Augmentations.SVDBlur(img_size),
         Augmentations.Sparkle(),
         Augmentations.Scale(),
-#         Augmentations.Jigsaw(),
+        Augmentations.Jigsaw(),
     ]
