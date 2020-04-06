@@ -223,7 +223,7 @@ class Liveplot:
                         aux = np.zeros(i.size(0))
 
                     if i.dim() < 3 or (i.shape[1] != 1 and i.shape[1] != 3):
-                        data = i.detach().cpu().float().view(i.size(0), -1).numpy()
+                        data = i.detach().cpu().float().reshape(i.size(0), -1).numpy()
                         pca = PCA(2)
                         r = pca.fit_transform(data)
                         plt.figure(figsize=(5, 5))
@@ -243,6 +243,13 @@ class Liveplot:
                                 npimg += 1
                                 npimg /= 2
                                 npimg = np.clip(npimg, 0, 1)
+#                                 if npimg.min() >= -1 and npimg.max <= 1:
+#                                     npimg += 1
+#                                     npimg /= 2
+#                                     npimg = np.clip()
+#                                 else:
+#                                     npimg -= npimg.min()
+#                                     npimg /= npimg.max()
                                 plt.figure(figsize=((5*len(subgroup))/6, 5))
                                 plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
                                 plt.axis('off')
@@ -254,6 +261,12 @@ class Liveplot:
                             npimg += 1
                             npimg /= 2
                             npimg = np.clip(npimg, 0, 1)
+#                             if npimg.min() >= -1 and npimg.max <= 1:
+#                                 npimg += 1
+#                                 npimg /= 2
+#                             else:
+#                                 npimg -= npimg.min()
+#                                 npimg /= npimg.max()
                             plt.figure(figsize=(5, 5))
                             plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
                             plt.axis('off')

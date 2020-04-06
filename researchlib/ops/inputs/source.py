@@ -1,5 +1,4 @@
 from .prefetch import BackgroundGenerator
-from ...utils import inifinity_loop
 from torch import nn
 
 

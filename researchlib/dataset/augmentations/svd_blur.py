@@ -18,10 +18,10 @@ class SVDBlur(namedtuple('SVDBlur', ('img_size'))):
         return _svd_blur(x, K) if choice else x
 
     def options(self, prob=0.5):
-        return [{
-            'choice': b,
-            'K': K
-        } for b in np.random.choice([True, False], p=[prob, 1-prob], size=1) for K in range(self.img_size - (self.img_size//8))]
+        return {
+            'choice': np.random.choice([True, False], p=[prob, 1-prob], size=1),
+            'K': np.random.choice(range(self.img_size - (self.img_size//8)))
+        }
 
 
 

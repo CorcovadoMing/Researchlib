@@ -22,4 +22,5 @@ def _RandomAugment2d(img_size):
         Augmentations.Brightness(),
         Augmentations.Sharpness(),
         Augmentations.SVDBlur(img_size),
+        Augmentations.Sparkle(),
     ]

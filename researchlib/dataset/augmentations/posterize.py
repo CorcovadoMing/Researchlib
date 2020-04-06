@@ -13,9 +13,9 @@ class Posterize(namedtuple('Posterize', ())):
         return x
 
     def options(self, prob=0.5):
-        return [{
-            'choice': b,
-            'v': v
-        } for b in np.random.choice([True, False], p=[prob, 1-prob], size=1) for v in range(4, 9)]
+        return {
+            'choice': np.random.choice([True, False], p=[prob, 1-prob], size=1),
+            'v': np.random.choice(range(4, 9))
+        }
 
 

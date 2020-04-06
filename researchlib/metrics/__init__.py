@@ -12,7 +12,7 @@
 from .categorical import Categorical
 from .meta_categorical import MetaCategorical
 from .binary_categorical import BinaryCategorical
-from .acc import Acc
+from .acc import Acc, FusedAcc
 from .ece import ECE
 from .l1 import L1
 from .l2 import L2
@@ -32,6 +32,7 @@ class Metrics(object):
     BinaryCategorical = BinaryCategorical
     
     Acc = Acc
+    FusedAcc = FusedAcc
     ECE = ECE
     L1 = L1
     L2 = L2

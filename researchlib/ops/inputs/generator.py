@@ -1,5 +1,4 @@
 from .prefetch import BackgroundGenerator
-from ...utils import inifinity_loop
 from tensorpack.dataflow import *
 from torch import nn
 import random
@@ -28,8 +27,7 @@ def _processing_function(
         # Augmentation
         this_augmentor = augmentor if len(augmentor) < N else np.random.choice(augmentor, N, replace=False)
         for op in this_augmentor:
-            options = op.options(prob=1)
-            x = op(x, **np.random.choice(options))
+            x = op(x, **op.options(prob=1))
 
         if x.shape[:-1] == y.shape[:-1]:
             do_y = True
@@ -152,7 +150,7 @@ class _Generator(nn.Module):
             if self.data_info:
                 ds = PrintData(ds)
             ds.reset_state()
-            self.train_ds = BackgroundGenerator(inifinity_loop(ds), fp16=self.fp16)
+            self.train_ds = BackgroundGenerator(ds, fp16=self.fp16)
             
         if self.val_ds is None and self.phase == 1:
             ds = BatchData(ds, self.batch_size, remainder = True)
@@ -160,7 +158,7 @@ class _Generator(nn.Module):
             if self.data_info:
                 ds = PrintData(ds)
             ds.reset_state()
-            self.val_ds = BackgroundGenerator(inifinity_loop(ds), fp16=self.fp16)
+            self.val_ds = BackgroundGenerator(ds, fp16=self.fp16)
             
         if self.phase == 0:
             return next(iter(self.train_ds))

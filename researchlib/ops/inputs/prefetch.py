@@ -9,6 +9,38 @@ else:
     import Queue
 
 
+class threadsafe_iter:
+    """Takes an iterator/generator and makes it thread-safe by
+    serializing call to the `next` method of given iterator/generator.
+    """
+    def __init__(self, it):
+        self.it = it
+        self.lock = threading.Lock()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        with self.lock:
+            return self.it.__next__()
+
+
+def threadsafe_generator(f):
+    """A decorator that takes a generator function and makes it thread-safe.
+    """
+    def g(*a, **kw):
+        return threadsafe_iter(f(*a, **kw))
+
+    return g
+
+
+@threadsafe_generator
+def _inifinity_loop(loader):
+    while True:
+        for data in loader:
+            yield data
+
+            
 def _worker(generator, queue, fp16):
     for data in generator:
         data = [torch.from_numpy(i) if type(i) != torch.Tensor else i for i in data]
@@ -19,10 +51,10 @@ def _worker(generator, queue, fp16):
 
 
 class BackgroundGenerator:
-    def __init__(self, generator, max_prefetch = 1, num_threads = 1, fp16 = False):
+    def __init__(self, generator, max_prefetch = 8, num_threads = 2, fp16 = False):
         self.queue = Queue.Queue(max_prefetch)
         self.fp16 = fp16
-        self.generator = generator
+        self.generator = _inifinity_loop(generator)
         self.worker_thread = [
             threading.Thread(
                 target = _worker, args = (self.generator, self.queue, self.fp16)

@@ -13,8 +13,7 @@ class TranslateX(namedtuple('TranslateX', ())):
         return x
 
     def options(self, prob=0.5):
-        return [{
-            'choice': b,
-            'v': v
-        } for b in np.random.choice([True, False], p=[prob, 1-prob], size=1) for v in np.linspace(-0.45, 0.45)]
-
+        return {
+            'choice': np.random.choice([True, False], p=[prob, 1-prob], size=1),
+            'v': np.random.choice(np.linspace(-0.5, 0.5))
+        }
