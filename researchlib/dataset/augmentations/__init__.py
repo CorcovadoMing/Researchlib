@@ -18,6 +18,7 @@ from .brightness import Brightness
 from .sharpness import Sharpness
 from .svd_blur import SVDBlur
 from .sparkle import Sparkle
+from .scale import Scale
 
 
 class Augmentations(object):
@@ -41,3 +42,4 @@ class Augmentations(object):
     Sharpness = Sharpness
     SVDBlur = SVDBlur
     Sparkle = Sparkle
+    Scale = Scale

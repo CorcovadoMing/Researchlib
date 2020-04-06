@@ -4,17 +4,16 @@ import imgaug.augmenters as iaa
 
 
 # Interface
-class Sparkle(namedtuple('Sparkle', ())):
-    def __call__(self, x, choice, p, s):
+class Scale(namedtuple('Scale', ())):
+    def __call__(self, x, choice, s):
         if choice:
-            aug = iaa.CoarseDropout(p, size_percent=s)
+            aug = iaa.Affine(scale=(1-s, 1+s))
             x = aug.augment_image(x)
         return x
 
     def options(self, prob=0.5):
         return {
             'choice': np.random.choice([True, False], p=[prob, 1-prob], size=1),
-            'p': np.random.random() * 0.5,
-            's': np.random.random() * 0.5
+            's': 0.5
         }
 
