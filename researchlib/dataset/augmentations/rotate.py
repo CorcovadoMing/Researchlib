@@ -4,11 +4,14 @@ from collections import namedtuple
 import PIL
 
 
-class Rotate(namedtuple('Rotate', ())):
+class Rotate(namedtuple('Rotate', ('fillcolor'))):
     def __call__(self, x, choice, v, c):
         if choice:
             x = _to_pil(x)
-            x = x.rotate(v, fillcolor=c)
+            if self.fillcolor:
+                x = x.rotate(v, fillcolor=c)
+            else:
+                x = x.rotate(v)
             x = _to_numpy(x)
         return x
 

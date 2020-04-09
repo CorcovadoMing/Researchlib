@@ -65,10 +65,11 @@ from .rl import RL
 from .buffer import Buffer
 from .checker import Checker
 
-from .prepare import _PrepareImage2d, _RandomAugment2d, _WeakAugment2d
+from .prepare import _PrepareImage2d, _RandAugment2d, _WeakAugment2d
 
 from .resnet import _ResNet18
 from .preresnet import _PreResNet50
+from .wideresnet import _WideResNet28x10
 from .decoder import _AEDecoder2d, _VAEDecoder2d
 from .coco import _COCO
 
@@ -85,6 +86,7 @@ class op(object):
     MLP = _MLP
     ResNet18 = _ResNet18
     PreResNet50 = _PreResNet50
+    WideResNet28x10 = _WideResNet28x10
     
     AEDecoder2d = _AEDecoder2d
     VAEDecoder2d = _VAEDecoder2d
@@ -101,7 +103,7 @@ class op(object):
     
     # Prepare
     PrepareImage2d = _PrepareImage2d 
-    RandomAugment2d = _RandomAugment2d
+    RandAugment2d = _RandAugment2d
     WeakAugment2d = _WeakAugment2d
     
     # Pool
