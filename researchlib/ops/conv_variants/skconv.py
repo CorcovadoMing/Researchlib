@@ -33,10 +33,9 @@ class _SKConv2d(nn.Module):
         
     def forward(self, x):
         features = torch.stack([i(x) for i in self.convs], dim=1)
-        U = torch.sum(features, dim=1)
+        U = features.sum(1)
         s = U.mean(-1).mean(-1)
         z = self.extractor(s)
         att = torch.stack([i(z) for i in self.transform], dim=1)
-        att = F.softmax(att, 1)
-        att = att.unsqueeze(-1).unsqueeze(-1)
-        return (features * att).sum(dim=1)
+        att = F.softmax(att, 1).view(*att.size(), 1, 1)
+        return (features * att).sum(1)
