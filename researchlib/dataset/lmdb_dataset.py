@@ -3,9 +3,15 @@ from .general_dataset import _GeneralLoader
 import cv2
 
 
-def _LMDBDataset(file_path, shuffle = True, name = '', shuffle_queue = 50000, total_shuffle = False):
+def _cv2_decode(data):
+    return [cv2.imdecode(data[0], cv2.IMREAD_COLOR)] + list(data[1:])
+
+def _LMDBDataset(file_path, shuffle = True, name = '', shuffle_queue = 10000, total_shuffle = False, workers = 8):
     df = LMDBSerializer.load(file_path, shuffle = total_shuffle)
-    df = MapDataComponent(df, lambda x: cv2.imdecode(x, cv2.IMREAD_UNCHANGED), 0)
+    if workers >= 0:
+        df = MultiProcessMapDataZMQ(df, workers, _cv2_decode)
+    else:
+        df = MapData(df, _cv2_decode)
     if shuffle:
         df = LocallyShuffleData(df, shuffle_queue)
     return _GeneralLoader(df, name)
