@@ -2,9 +2,14 @@ import glob
 import os
 import numpy as np
 import pandas as pd
-from cv2 import imread
 from tqdm.auto import tqdm
 from tensorpack.dataflow import *
+
+def _read_encode(path):
+    with open(path, 'rb') as f:
+        jpeg = f.read()
+        jpeg = np.asarray(bytearray(jpeg), dtype='uint8')
+        return jpeg
 
 
 class DataFlowBuilder(DataFlow):
@@ -20,9 +25,9 @@ class DataFlowBuilder(DataFlow):
     def __iter__(self):
         for path, mask, label in zip(self.data_sheet['Data Path'], self.data_sheet['Labels'], self.data_sheet['Remapping Labels']):
             if self.mask:
-                x, y = imread(path), imread(mask)
+                x, y = _read_encode(path), _read_encode(mask)
             else:
-                x, y = imread(path), label
+                x, y = _read_encode(path), label
             
             if self.bgr2rgb:
                 x = x[..., ::-1]
@@ -44,6 +49,8 @@ def Build(name: str, dataset_format: str, mask: bool = False, bgr2rgb: bool = Fa
     
     csv = glob.glob(f'{name}/*.csv')
     phase = list(map(lambda x: x.split('_')[-1].split('.')[0], csv))
+    
+    print(f'Found phase: {phase}')
     
     for i, j in tqdm(zip(csv, phase), total=len(csv)):
         data_sheet = pd.read_csv(i)

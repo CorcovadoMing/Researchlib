@@ -138,3 +138,35 @@ def Parse(name: str, path: str, parse_format: str, phase: str, label_mapping: st
         df.to_csv(output_path, index = False)
 
     print(f'Done.')
+    
+    
+    
+def ParseFromMapping(name: str, mapping: str, phase: str, force: bool = False) -> None:
+    
+    if force:
+        shutil.rmtree(name, ignore_errors = True)
+    os.makedirs(name, exist_ok = True)
+    
+    if type(mapping) is not list:
+        mapping = [mapping]
+    
+    if type(phase) is not list:
+        phase = [phase]
+    
+    assert len(phase) == len(mapping)
+    
+    for i, j in zip(mapping, phase):
+        
+        print(f'Found {len(i.keys())} in phase {j}')
+        
+        data_path = list(i.keys())
+        label = list(i.values())
+        numeric_label = list(i.values())
+    
+        output_path = os.path.join(name, f'parse_result_{j}.csv')
+        print(f'Write to {output_path}')
+        df = pd.DataFrame(list(zip(data_path, label, numeric_label)))
+        df.columns = ['Data Path', 'Labels', 'Remapping Labels']
+        df.to_csv(output_path, index = False)
+
+    print(f'Done.')
