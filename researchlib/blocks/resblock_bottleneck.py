@@ -10,7 +10,7 @@ def _branch_function(config, parameter_manager, **kwargs):
     preact_final_norm = parameter_manager.get_param('preact_final_norm', False)
     preact_final_norm_op = get_norm_op(config.norm_type, config.dim, config.out_dim) if config.do_norm and config.preact and preact_final_norm else None
     
-    hidden_size = config.out_dim // 4
+    hidden_size = config.out_dim // 2
     
     first_conv_kwargs = get_conv_config()
     first_conv_kwargs.update(**kwargs)
@@ -45,8 +45,8 @@ def _branch_function(config, parameter_manager, **kwargs):
     
     conv_op = [
         config._unit(f'{config.prefix}_m1', config._op, config.in_dim, hidden_size, **first_conv_kwargs),
-        config._unit(f'{config.prefix}_m2', config._op, hidden_size, hidden_size, **second_conv_kwargs), 
         op.Downsample(channels = hidden_size, filt_size = 3, stride = config.stride) if config.blur else None,
+        config._unit(f'{config.prefix}_m2', config._op, hidden_size, hidden_size, **second_conv_kwargs), 
         config._unit(f'{config.prefix}_m3', config._op, hidden_size, config.out_dim, **third_conv_kwargs), 
         preact_final_norm_op
     ]

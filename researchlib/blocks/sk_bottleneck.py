@@ -3,8 +3,8 @@ from torch import nn
 from .unit.utils import get_act_op, get_norm_op, is_transpose, get_dim
 from ..utils import ParameterManager
 from .utils import get_conv_config, padding_shortcut, projection_shortcut, SE_Attention, CBAM_Attention, get_shakedrop_op, get_shortcut_op, get_config, BernoulliSkip
-
-
+    
+    
 def _branch_function(config, parameter_manager, **kwargs):
     # Preact final norm
     preact_final_norm = parameter_manager.get_param('preact_final_norm', False)
@@ -30,7 +30,6 @@ def _branch_function(config, parameter_manager, **kwargs):
                               padding=config.padding,
                               do_pool=False,
                               erased_act=False,
-                              groups=32,
                               do_share_banks=config.do_share_banks,
                               bank=parameter_manager.get_param('bank'))
     
@@ -47,7 +46,7 @@ def _branch_function(config, parameter_manager, **kwargs):
     conv_op = [
         config._unit(f'{config.prefix}_m1', config._op, config.in_dim, hidden_size, **first_conv_kwargs),
         op.Downsample(channels = hidden_size, filt_size = 3, stride = config.stride) if config.blur else None,
-        config._unit(f'{config.prefix}_m2', config._op, hidden_size, hidden_size, **second_conv_kwargs), 
+        config._unit(f'{config.prefix}_m2', op.__dict__[f'SKConv{config.dim}'], hidden_size, hidden_size, **second_conv_kwargs), 
         config._unit(f'{config.prefix}_m3', config._op, hidden_size, config.out_dim, **third_conv_kwargs), 
         preact_final_norm_op
     ]
@@ -74,10 +73,10 @@ def _branch_function(config, parameter_manager, **kwargs):
     )
 
 
-def _ResnextBottleneckBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
+def _SKBottleneckBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
     '''
-        Aggregated Residual Transformations for Deep Neural Networks
-        https://arxiv.org/abs/1611.05431
+        Selective Kernel Networks
+        https://arxiv.org/abs/1903.06586
     '''
     
     parameter_manager = ParameterManager(**kwargs)

@@ -23,7 +23,7 @@ from .template_bank import _TemplateBank
 
 #============================================================================
 
-from .conv_variants import _SConv2d, _SepConv2d, _DilConv2d, _DiracConv1d, _DiracConv2d, _DiracConv3d, _PacConv2d, _PacConvTranspose2d, _PacPool2d
+from .conv_variants import _SConv2d, _SepConv2d, _DilConv2d, _DiracConv1d, _DiracConv2d, _DiracConv3d, _PacConv2d, _PacConvTranspose2d, _PacPool2d, _SKConv2d
 
 from .activator import _GeLU, _Mish, _Swish, _DropReLU, _LogSoftmax, _Softmax, _GumbelSoftmax, _LogSparsemax, _Sparsemax, _FTSwishPlus, _TReLU
 
@@ -73,6 +73,8 @@ from .wideresnet import _WideResNet28x10
 from .decoder import _AEDecoder2d, _VAEDecoder2d
 from .coco import _COCO
 
+from .presknet import _PreSKNet50
+
 
 class op(object):
     # Submodules
@@ -87,6 +89,7 @@ class op(object):
     ResNet18 = _ResNet18
     PreResNet50 = _PreResNet50
     WideResNet28x10 = _WideResNet28x10
+    PreSKNet50 = _PreSKNet50
     
     AEDecoder2d = _AEDecoder2d
     VAEDecoder2d = _VAEDecoder2d
@@ -247,6 +250,7 @@ class op(object):
     PacConv2d = _PacConv2d
     PacConvTranspose2d = _PacConvTranspose2d
     PacPool2d = _PacPool2d
+    SKConv2d = _SKConv2d
 
     # ShakeDrop
     ShakeDrop = _ShakeDrop
