@@ -37,6 +37,6 @@ class _SKConv2d(nn.Module):
         s = U.mean(-1).mean(-1)
         z = self.extractor(s)
         att = torch.stack([i(z) for i in self.transform], dim=1)
-        att = F.softmax(att, -1)
+        att = F.softmax(att, 1)
         att = att.unsqueeze(-1).unsqueeze(-1)
         return (features * att).sum(dim=1)
