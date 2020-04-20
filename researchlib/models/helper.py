@@ -30,6 +30,7 @@ def _get_op_type(type_object, cur_block, total_blocks, do_pool, do_expand):
         'whitening', 
         'rev-residual',
         'randwire',
+        'sk',
         'sk-bottleneck',
     ]:
         raise ValueError(f'Type {_type} is not supperted')
@@ -56,6 +57,8 @@ def _get_op_type(type_object, cur_block, total_blocks, do_pool, do_expand):
             _op_type = block.RevBlock
     elif _type == 'randwire':
         _op_type = block.RandWireBlock
+    elif _type == 'sk':
+        _op_type = block.SKBlock
     elif _type == 'sk-bottleneck':
         _op_type = block.SKBottleneckBlock
     return _op_type

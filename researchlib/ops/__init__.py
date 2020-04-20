@@ -74,6 +74,7 @@ from .decoder import _AEDecoder2d, _VAEDecoder2d
 from .coco import _COCO
 
 from .presknet import _PreSKNet50
+from .sknet import _SKNet50, _SKNet18
 
 
 class op(object):
@@ -90,6 +91,8 @@ class op(object):
     PreResNet50 = _PreResNet50
     WideResNet28x10 = _WideResNet28x10
     PreSKNet50 = _PreSKNet50
+    SKNet50 = _SKNet50
+    SKNet18 = _SKNet18
     
     AEDecoder2d = _AEDecoder2d
     VAEDecoder2d = _VAEDecoder2d

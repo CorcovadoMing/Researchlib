@@ -8,7 +8,8 @@ from .vggblock import _VGGBlock
 from .whitening_block import _WhiteningBlock
 from .revblock import _RevBlock
 from .randwireblock import _RandWireBlock
-from .sk_bottleneck import _SKBottleneckBlock
+from .skblock import _SKBlock
+from .skblock_bottleneck import _SKBottleneckBlock
 
 
 class block(object):
@@ -21,4 +22,5 @@ class block(object):
     VGGBlock = _VGGBlock
     RevBlock = _RevBlock
     RandWireBlock = _RandWireBlock
+    SKBlock = _SKBlock
     SKBottleneckBlock = _SKBottleneckBlock
