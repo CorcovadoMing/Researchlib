@@ -56,7 +56,7 @@ def _fix(m):
 def fit(
     self,
     epochs,
-    lr = 3e-3,
+    lr = 1e-1,
     policy = 'linear',
     warmup = 5,
     warmup_policy = 'linear',
@@ -77,6 +77,7 @@ def fit(
     same_init = False,
     freeze = {},
     save_checkpoint = True,
+    log = True,
     **kwargs
 ):
     
@@ -167,16 +168,14 @@ def fit(
     # ----------------------------------------------
     # Setting experiments
     # ----------------------------------------------
-    if len(self.experiment_name) == 0:
-        self.start_experiment('default')
-    
     if liveplot is not None:
         exist_experiments = pickle.loads(liveplot.redis.get('experiment'))
         if self.experiment_name not in exist_experiments:
             exist_experiments.append(self.experiment_name)
         liveplot.redis.set('experiment', pickle.dumps(exist_experiments))
     
-    self.history.start_logfile(self.checkpoint_path)
+    if log:
+        self.history.start_logfile(self.checkpoint_path)
     
     
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -375,7 +374,8 @@ def fit(
             self.epoch += 1
             
             # Update logfile
-            self.history.update_logfile()
+            if log:
+                self.history.update_logfile()
             
         
     except:

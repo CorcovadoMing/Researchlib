@@ -21,3 +21,4 @@ from .switch_swa_mode import _switch_swa_mode
 from .build_config import build_config
 from .ftp import FTPUtils
 from .get_random_name import get_random_name
+from .horus import Horus

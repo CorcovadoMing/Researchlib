@@ -1,5 +1,3 @@
-__settings = {}
-
 import warnings
 warnings.filterwarnings('ignore')
 

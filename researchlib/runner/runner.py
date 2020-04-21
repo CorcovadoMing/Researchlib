@@ -1,8 +1,7 @@
 from ..loss import loss_mapping, loss_ensemble
 from .history import History
 from .export import _Export
-from ..utils import *
-from ..utils import _add_methods_from, ParameterManager, Annealer
+from ..utils import _add_methods_from, ParameterManager, Annealer, get_random_name
 from .save_load import _save_checkpoint, _load_checkpoint
 from .trainable_params_utils import num_model_params
 from torch.cuda import is_available
@@ -46,13 +45,14 @@ class Runner:
     def __init__(
         self,
         model,
-        optimizer = 'sm3',
+        optimizer = 'sgd',
+        experiment = None,
         **kwargs
     ):
         self.__class__.__runner_settings__ = locals()
         parameter_manager = ParameterManager(**kwargs)
 
-        self.experiment_name = ''
+        self.experiment_name = experiment if experiment is not None else get_random_name()
         self.checkpoint_path = ''
         self.optimizer = None
         self.epoch = 1
