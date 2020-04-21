@@ -5,7 +5,7 @@ from .cosine import Cosine, Cosine300, CosineForRandWireModel
 from .flat import Flat, Flat300
 from .manual import Manual
 
-class Config(object):
+class Training(object):
     Dawnfast = Dawnfast
     Stepwise = Stepwise
     Stepwise300 = Stepwise300

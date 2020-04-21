@@ -18,7 +18,7 @@ from ...viskit import *
 from ...datakit import *
 from ...reproducer import *
 from ...experiments import *
-from ...preset import *
+from ...settings import *
 from ...regularizer import *
 
 import seaborn as sns

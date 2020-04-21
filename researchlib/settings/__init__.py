@@ -1,12 +1,12 @@
 from .pretrained import Pretrained
 from .scratch import Scratch
 from .dataset import Dataset
-from .config import Config
+from .training import Training
 from .application import Application
 
 class Preset(object):
     Pretrained = Pretrained
     Scratch = Scratch
-    Config = Config
+    Training = Training
     Dataset = Dataset
     Application = Application
