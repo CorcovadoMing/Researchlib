@@ -3,17 +3,20 @@ num_model_params = lambda model: sum(p.numel() for p in model.parameters() if p.
 num_list_params = lambda model: sum(p.numel() for p in model if p.requires_grad)
 
 
-def group_parameters(model, bias_key='bias', no_decay_key='coefficients'):
+def group_parameters(model, bias_key=['bias'], no_decay_key=['coefficients'], special_key=['x_min', 'x_max', 'y_min', 'y_max']):
     normal_group = []
     bias_group = []
     no_decay_group = []
+    special_group = []
     for k, v in trainable_params(model).items():
-        if bias_key in k:
+        if sum([k.find(i) > -1 for i in bias_key]) > 0:
             bias_group.append(v)
-        elif no_decay_key in k:
+        elif sum([k.find(i) > -1 for i in no_decay_key]) > 0:
             no_decay_group.append(v)
+        elif sum([k.find(i) > -1 for i in special_key]) > 0:
+            special_group.append(v)
         else:
             normal_group.append(v)
-    return normal_group, bias_group, no_decay_group
+    return normal_group, bias_group, no_decay_group, special_group
         
     
