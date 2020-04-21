@@ -6,7 +6,6 @@ import torch.nn.functional as F
 class _SKConv2d(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, bias=True, M=2, G=32, r=16, L=32, **kwargs):
         super().__init__()
-        from ...blocks.unit.conv import _Conv
         
         self.convs = nn.ModuleList([])
         for i in range(M):
@@ -18,7 +17,7 @@ class _SKConv2d(nn.Module):
                 'groups': G,
                 'bias': bias
             }
-            self.convs.append(_Conv('__sk', nn.Conv2d, in_channels, out_channels, **conv_kwargs))
+            self.convs.append(nn.Conv2d(in_channels, out_channels, **conv_kwargs))
         
         d = max(int(out_channels/r), L)
         self.extractor = nn.Sequential(
@@ -29,7 +28,7 @@ class _SKConv2d(nn.Module):
         
         self.transform = nn.ModuleList([])
         for i in range(M):
-            self.transform.append(nn.Linear(d, out_channels, bias=False))
+            self.transform.append(nn.Linear(d, out_channels))
         
     def forward(self, x):
         features = torch.stack([i(x) for i in self.convs], dim=1)
