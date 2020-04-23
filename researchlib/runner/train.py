@@ -72,6 +72,7 @@ def train_fn(self, **kwargs):
     weight_decay_bias = parameter_manager.get_param('weight_decay_bias')
     bias_scale = parameter_manager.get_param('bias_scale')
     accum_grad = parameter_manager.get_param('accum_grad')
+    mixout = parameter_manager.get_param('mixout')
     ema = parameter_manager.get_param('ema')
     ema_freq = parameter_manager.get_param('ema_freq')
     ema_momentum = parameter_manager.get_param('ema_momentum')
@@ -157,6 +158,16 @@ def train_fn(self, **kwargs):
         # //////////////////////////
         # // End of Inner Loop
         # //////////////////////////
+        
+        if mixout > 0:
+            for v, p_v, v_mask in zip(
+                self.model.parameters(),
+                self.mixout_prior.parameters(),
+                self.mixout_mask
+            ):
+                mask = (v_mask.uniform_() < mixout).to(v.dtype)
+                v = (1-mask) * v + mask * p_v
+            
         
         if ema and (iteration_idx + 1) % ema_freq == 0:
             for v, ema_v in zip(

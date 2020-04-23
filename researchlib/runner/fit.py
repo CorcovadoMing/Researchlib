@@ -51,7 +51,47 @@ def _fix(m):
     if type(m) == Loss.AdaptiveRobust:
         m.float()
     
+
+import torch
+import torch.nn as nn
+
+
+def MixoutWrapper(module: nn.Module, p: float = 0.5):
+    # duplicate all the parameters, making copies of them and freezing them
+    module._names = []
+    module._params_orig = dict()
+    _params_learned = nn.ParameterDict()
+    for n, q in list(module.named_parameters(recurse=False)):
+        c = q.clone().detach()
+        c.requires_grad = False
+        module._params_orig[n] = c
+        _params_learned[n] = q
+        module._names.append(n)
+        delattr(module, n)
+        setattr(module, n, c)
+    if module._names:
+        module._params_learned = _params_learned
+
+    def mixout(module, n):
+        o = module._params_orig[n]
+        mask = (torch.rand_like(o) < p).to(o.dtype)
+        return (
+            mask * module._params_orig[n]
+            + (1 - mask) * module._params_learned[n]
+            - p * module._params_orig[n]
+        ) / (1 - p)
     
+    def hook(module, input):
+        if module.training:
+            for n in module._names:
+                v = mixout(module, n)
+                setattr(module, n, v)
+
+    module.register_forward_pre_hook(hook)
+    return module
+
+
+
 @register_method
 def fit(
     self,
@@ -69,6 +109,7 @@ def fit(
     multisteps = [],
     plot = False,
     full_liveplot = True,
+    mixout = 0,
     enable_liveplot = True,
     clear_data = True,
     opt_info = True,
@@ -177,12 +218,10 @@ def fit(
     if log:
         self.history.start_logfile(self.checkpoint_path)
     
-    
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Initialization should be completed before this line
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     self.preload_gpu()
-    
     
     # ----------------------------------------------
     # optimizers, (LR, warmup, weight_decay, etc.,)
@@ -223,6 +262,10 @@ def fit(
     ema = True if ema_freq > 0 else False
     if self.val_model is None:
         self.val_model = copy.deepcopy(self.model) if ema else self.model
+        
+    if mixout > 0:
+        self.mixout_prior = copy.deepcopy(self.model)
+        self.mixout_mask = [torch.empty_like(i) for i in self.model.parameters()]
     
     # ----------------------------------------------
     # Final verification
@@ -289,6 +332,7 @@ def fit(
                                                                      weight_decay_bias=weight_decay_bias,
                                                                      bias_scale=bias_scale,
                                                                      accum_grad=accum_grad,
+                                                                     mixout=mixout,
                                                                      ema=ema,
                                                                      ema_freq=ema_freq,
                                                                      ema_momentum=ema_momentum,

@@ -10,7 +10,7 @@ class _OctConvBlock2d(nn.Module):
         kernel_size,
         stride = 1,
         padding = 0,
-        alphas = (0.5, 0.5),
+        alphas = (0.75, 0.75),
         pool = False,
         pooling_factor = 2,
         activator = nn.ReLU,
