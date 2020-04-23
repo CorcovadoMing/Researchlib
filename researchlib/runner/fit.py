@@ -52,46 +52,6 @@ def _fix(m):
         m.float()
     
 
-import torch
-import torch.nn as nn
-
-
-def MixoutWrapper(module: nn.Module, p: float = 0.5):
-    # duplicate all the parameters, making copies of them and freezing them
-    module._names = []
-    module._params_orig = dict()
-    _params_learned = nn.ParameterDict()
-    for n, q in list(module.named_parameters(recurse=False)):
-        c = q.clone().detach()
-        c.requires_grad = False
-        module._params_orig[n] = c
-        _params_learned[n] = q
-        module._names.append(n)
-        delattr(module, n)
-        setattr(module, n, c)
-    if module._names:
-        module._params_learned = _params_learned
-
-    def mixout(module, n):
-        o = module._params_orig[n]
-        mask = (torch.rand_like(o) < p).to(o.dtype)
-        return (
-            mask * module._params_orig[n]
-            + (1 - mask) * module._params_learned[n]
-            - p * module._params_orig[n]
-        ) / (1 - p)
-    
-    def hook(module, input):
-        if module.training:
-            for n in module._names:
-                v = mixout(module, n)
-                setattr(module, n, v)
-
-    module.register_forward_pre_hook(hook)
-    return module
-
-
-
 @register_method
 def fit(
     self,
