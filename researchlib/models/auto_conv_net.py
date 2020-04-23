@@ -58,7 +58,7 @@ def AutoConvNet(
     if stem is not None:
         stem_type, stem_layers = list(stem.items())[0]
         layers, in_dim, out_dim, info = push_stem(
-            _op if _stem_op is None else _stem_op, unit.Conv, layers, in_dim, out_dim, stem_type, stem_layers, preact, info, **kwargs
+            _op if _stem_op is None else _stem_op, _unit, layers, in_dim, out_dim, stem_type, stem_layers, preact, info, **kwargs
         )
     else:
         stem_layers = 0

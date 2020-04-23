@@ -27,7 +27,8 @@ def _return_op(mapping, key):
 def get_norm_op(norm_type, dim, channel):
     mapping = {
         'batch': op.__dict__[f'BatchNorm{dim}'],
-        'instance': op.__dict__[f'InstanceNorm{dim}']
+        'instance': op.__dict__[f'InstanceNorm{dim}'],
+        'frn': op.__dict__[f'FRN{dim}'],
     }
     return _return_op(mapping, norm_type)(channel)
 
