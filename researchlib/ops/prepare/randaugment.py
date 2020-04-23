@@ -1,9 +1,9 @@
 from ...dataset import Augmentations
 
 
-def _RandAugment2d(img_size, set='classification'):
+def _RandAugment2d(img_size, set='general'):
     _sets = {
-        'classification': [
+        'general': [
             Augmentations.CircularCrop(img_size, img_size, img_size//2),
             Augmentations.HFlip(),
             Augmentations.AutoContrast(),
@@ -27,28 +27,6 @@ def _RandAugment2d(img_size, set='classification'):
             Augmentations.Scale(),
             Augmentations.Jigsaw()
         ],
-        
-        'weak-supervise': [
-            Augmentations.CircularCrop(img_size, img_size, img_size//2),
-            Augmentations.HFlip(),
-            Augmentations.AutoContrast(),
-            Augmentations.Cutout(fillcolor=False),
-            Augmentations.Invert(),
-            Augmentations.Equalize(),
-            Augmentations.Identical(),
-            Augmentations.ShearX(),
-            Augmentations.ShearY(),
-            Augmentations.TranslateX(),
-            Augmentations.TranslateY(),
-            Augmentations.Rotate(fillcolor=False),
-            Augmentations.Solarize(),
-            Augmentations.Posterize(),
-            Augmentations.Contrast(),
-            Augmentations.Color(),
-            Augmentations.Brightness(),
-            Augmentations.Sharpness(),
-        ],
-        
     }
     
     return _sets[set]

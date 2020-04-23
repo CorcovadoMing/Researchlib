@@ -96,7 +96,7 @@ def train_fn(self, **kwargs):
         if weight_decay > 0:
             cur_weight_decay = self.annealer.get_trace('weight_decay')
             update_optim(
-                self.optimizer, [cur_weight_decay, (cur_weight_decay / bias_scale) if weight_decay_bias else 0, 0, cur_weight_decay * 1e2],
+                self.optimizer, [cur_weight_decay, (cur_weight_decay / bias_scale) if weight_decay_bias else 0, 0, cur_weight_decay / 10],
                 key = 'weight_decay'
             )
         

@@ -15,7 +15,6 @@ from .aaconv import _AAConv2d
 from .blur import Downsample as _Downsample
 from .manifold_mixup import _ManifoldMixup
 from .shake_batchnorm import _ShakeBatchNorm1d, _ShakeBatchNorm2d, _ShakeBatchNorm3d
-from .sasa import _SASA2d
 #from .act import * (need more implementation)
 #from .multihead_attention import * (Buggy)
 
@@ -23,7 +22,7 @@ from .template_bank import _TemplateBank
 
 #============================================================================
 
-from .conv_variants import _SConv2d, _SepConv2d, _DilConv2d, _DiracConv1d, _DiracConv2d, _DiracConv3d, _PacConv2d, _PacConvTranspose2d, _PacPool2d, _SKConv2d
+from .conv_variants import _SConv2d, _SepConv2d, _DilConv2d, _DiracConv1d, _DiracConv2d, _DiracConv3d, _PacConv2d, _PacConvTranspose2d, _PacPool2d, _SKConv2d, _RConv2d, _SASA2d
 
 from .activator import _GeLU, _Mish, _Swish, _DropReLU, _LogSoftmax, _Softmax, _GumbelSoftmax, _LogSparsemax, _Sparsemax, _FTSwishPlus, _TReLU
 
@@ -49,7 +48,6 @@ from .non_local import _EmbeddedGaussianNonLocalBlock1d, _EmbeddedGaussianNonLoc
 from .non_local import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _GaussianNonLocalBlock3d
 
 from .active_noise import _ActiveNoise
-from .rcl import _RConv2d
 from .inputs import _SetVariable, _UpdateVariable, _GetVariable, _Source, _Generator, _Preloop
 from .node import _To, _Subgraph, _Detach, _Name, _NoOp
 
@@ -67,7 +65,7 @@ from .checker import Checker
 
 from .prepare import _PrepareImage2d, _RandAugment2d, _WeakAugment2d
 
-from .resnet import _ResNet18
+from .resnet import _ResNet18, _ResNet50
 from .preresnet import _PreResNet50
 from .wideresnet import _WideResNet28x10
 from .decoder import _AEDecoder2d, _VAEDecoder2d
@@ -88,6 +86,7 @@ class op(object):
     
     MLP = _MLP
     ResNet18 = _ResNet18
+    ResNet50 = _ResNet50
     PreResNet50 = _PreResNet50
     WideResNet28x10 = _WideResNet28x10
     PreSKNet50 = _PreSKNet50
@@ -200,8 +199,6 @@ class op(object):
     
     ActiveNoise = _ActiveNoise
     
-    SASA2d = _SASA2d
-    RConv2d = _RConv2d
 
     # Non-Local
     ConcatNonLocalBlock1d = _ConcatNonLocalBlock1d
@@ -254,6 +251,8 @@ class op(object):
     PacConvTranspose2d = _PacConvTranspose2d
     PacPool2d = _PacPool2d
     SKConv2d = _SKConv2d
+    SASA2d = _SASA2d
+    RConv2d = _RConv2d
 
     # ShakeDrop
     ShakeDrop = _ShakeDrop
