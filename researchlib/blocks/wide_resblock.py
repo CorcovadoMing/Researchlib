@@ -31,7 +31,7 @@ def _branch_function(config, parameter_manager, **kwargs):
         ]
         pre_shared_norm_op = nn.Sequential(
             get_norm_op(config.norm_type, config.dim, config.in_dim),
-            get_act_op(config.act_type)
+            get_act_op(config.act_type, config.dim, config.in_dim)
         )
     else:
         conv_op = [

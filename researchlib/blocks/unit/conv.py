@@ -50,7 +50,7 @@ def _Conv(prefix, _op, in_dim, out_dim, **kwargs):
         norm_op.weight.requires_grad = False
     if freeze_bias:
         norm_op.bias.requires_grad = False
-    act_op = None if erased_act or not do_act else get_act_op(act_type, act_inplace)
+    act_op = None if erased_act or not do_act else get_act_op(act_type, dim, in_dim if preact else out_dim, act_inplace)
     pool_op = None if not do_pool else get_pool_op(pool_type, dim, pool_factor, out_dim)
     
     if preact:

@@ -85,7 +85,7 @@ def _SKBottleneckBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
     config = get_config(prefix, _unit, _op, in_dim, out_dim, parameter_manager)
     
     # Merge op
-    merge_act = get_act_op(config.act_type) if not config.preact and not config.erased_act else None
+    merge_act = get_act_op(config.act_type, config.dim, config.out_dim) if not config.preact and not config.erased_act else None
     merge_op = nn.Sequential(*list(filter(None, [merge_act])))
     
     # Shared BN
@@ -95,7 +95,7 @@ def _SKBottleneckBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
         shared_bn_op = nn.Sequential(
             *filter(None,[
                 get_norm_op(config.norm_type, config.dim, config.in_dim),
-                get_act_op(config.act_type) if not config.erased_act else None
+                get_act_op(config.act_type, config.dim, config.in_dim) if not config.erased_act else None
             ])
         )
     else:

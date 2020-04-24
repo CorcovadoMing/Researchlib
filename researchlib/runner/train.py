@@ -160,14 +160,14 @@ def train_fn(self, **kwargs):
         # //////////////////////////
         
         if mixout > 0:
-            mixout = cur_lr / 10
+            _ratio = cur_lr * mixout
             for v, p_v, v_mask in zip(
                 self.model.parameters(),
                 self.mixout_prior.parameters(),
                 self.mixout_mask
             ):
-                mask = (v_mask.uniform_() < mixout).to(v.dtype)
-                v.data = (mask) * (mixout * p_v.data + (1-mixout) * v.data)  + (1-mask) * v.data
+                mask = (v_mask.uniform_() < (_ratio)).to(v.dtype)
+                v.data = mask * (_ratio * p_v.data + (1-_ratio) * v.data)  + (1-mask) * v.data
             
         
         if ema and (iteration_idx + 1) % ema_freq == 0:
