@@ -42,11 +42,13 @@ def _clear_source(m):
 
     
 def _to_half(m):
-        if isinstance(m, torch.nn.Module) and not isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
+        if isinstance(m, torch.nn.Module) and not isinstance(m, torch.nn.modules.batchnorm._BatchNorm) and not type(m) == op.FRN2d and not type(m) == op.TLU2d:
             m.half()
             
 def _fix(m):
     if isinstance(m, torch.nn.modules.batchnorm._BatchNorm):
+        m.float()
+    if type(m) == op.FRN2d or type(m) == op.TLU2d:
         m.float()
     if type(m) == Loss.AdaptiveRobust:
         m.float()
