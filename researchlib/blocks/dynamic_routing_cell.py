@@ -15,26 +15,30 @@ class _DynamicRoutingCell(nn.Module):
         self.allow_down = allow_down
         
         self.cell_operations = nn.ModuleList([
-            i(channels, channels, kernel_size=3, padding=1, stride=1) for i in cell_operations
+            nn.Sequential(
+                i(channels, channels, kernel_size=3, padding=1, stride=1, bias=False),
+                nn.__dict__[f'BatchNorm{dim}'](channels),
+                nn.ReLU(inplace=True),
+            ) if i != op.Identical else i(channels, channels, kernel_size=3, padding=1, stride=1) for i in cell_operations
         ])
         
         self.out_transform = nn.ModuleList([
             nn.Sequential(
-                nn.__dict__[f'Conv{dim}'](channels, channels//2, 1),
+                nn.__dict__[f'Conv{dim}'](channels, channels//2, 1, bias=False),
                 nn.__dict__[f'UpsamplingBilinear{dim}'](scale_factor=2)
             ),
             op.Identical(),
-            nn.__dict__[f'Conv{dim}'](channels, channels*2, 1, 2, 0),
+            nn.__dict__[f'Conv{dim}'](channels, channels*2, 1, 2, 0, bias=False),
         ])
         
         self.soft_gate = nn.Sequential(
-            nn.__dict__[f'Conv{dim}'](channels, channels, 3, 1, 1),
+            nn.__dict__[f'Conv{dim}'](channels, channels, 3, 1, 1, bias=False),
             nn.__dict__[f'BatchNorm{dim}'](channels),
             nn.ReLU(inplace=True),
             nn.__dict__[f'AdaptiveAvgPool{dim}'](1),
             nn.__dict__[f'Conv{dim}'](channels, 3, 1),
             nn.Tanh(),
-            nn.ReLU(inplace=True)
+            nn.ReLU()
         )
         
         self.post_fix = [
@@ -54,7 +58,7 @@ class _DynamicRoutingCell(nn.Module):
     def forward(self, inputs):
         aggregated_x = sum(inputs)
         out = sum([i(aggregated_x) for i in self.cell_operations])
-        gates = self.soft_gate(out)
+        gates = self.soft_gate(aggregated_x)
         mask = (gates.sum(1, keepdim=True) == 0).to(gates.dtype)
         out = aggregated_x * mask + out * (1-mask)
         result = [i(out) * g for i, g, in zip(self.out_transform, gates.split(1, 1))]
