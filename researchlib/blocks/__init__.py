@@ -10,7 +10,7 @@ from .revblock import _RevBlock
 from .randwireblock import _RandWireBlock
 from .skblock import _SKBlock
 from .skblock_bottleneck import _SKBottleneckBlock
-
+from .dynamic_routing_cell import _DynamicRoutingCell
 
 class block(object):
     WhiteningBlock = _WhiteningBlock
@@ -24,3 +24,4 @@ class block(object):
     RandWireBlock = _RandWireBlock
     SKBlock = _SKBlock
     SKBottleneckBlock = _SKBottleneckBlock
+    DynamicRoutingCell = _DynamicRoutingCell

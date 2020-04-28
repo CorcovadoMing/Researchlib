@@ -1,7 +1,7 @@
 from torch import nn
 
 
-class _NoOp(nn.Module):
+class _Identical(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
     

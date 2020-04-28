@@ -3,3 +3,4 @@ from .subgraph import _Subgraph
 from .detach import _Detach
 from .name import _Name
 from .noop import _NoOp
+from .identical import _Identical

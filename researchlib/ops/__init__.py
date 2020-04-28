@@ -49,7 +49,7 @@ from .non_local import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _Gaus
 
 from .active_noise import _ActiveNoise
 from .inputs import _SetVariable, _UpdateVariable, _GetVariable, _Source, _Generator, _Preloop
-from .node import _To, _Subgraph, _Detach, _Name, _NoOp
+from .node import _To, _Subgraph, _Detach, _Name, _NoOp, _Identical
 
 from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation42d, _Anneal, _Argmax, _Argmin, _Mixture, _RPT, _SobelHorizontal2d, _SobelVertical2d, _Perception, _Gaussian2d
 from .pool import _CombinePool2d, _PixelShuffle2d
@@ -158,6 +158,7 @@ class op(object):
     Detach = _Detach
     Name = _Name
     NoOp = _NoOp
+    Identical = _Identical
     
     # Shaping
     View = _View
