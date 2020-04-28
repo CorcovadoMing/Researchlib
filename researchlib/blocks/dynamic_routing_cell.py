@@ -6,31 +6,25 @@ from .unit.utils import get_dim
 
 
 class _DynamicRoutingCell(nn.Module):
-    def __init__(self, _op, channels, cell_operations = [op.SepConv2d, op.Identical]):
+    def __init__(self, _op, channels, cell_operations = [op.SepConv2d, op.Identical], allow_up=True, allow_down=True):
         super().__init__()
         
         dim = get_dim(_op)
+        
+        self.allow_up = allow_up
+        self.allow_down = allow_down
         
         self.cell_operations = nn.ModuleList([
             i(channels, channels, kernel_size=3, padding=1, stride=1) for i in cell_operations
         ])
         
-        self.in_transform = nn.ModuleList([
-            nn.Sequential(
-                nn.__dict__[f'Conv{dim}'](channels*2, channels, 1),
-                nn.__dict__[f'UpsamplingBilinear{dim}'](scale_factor=2)
-            ),
-            op.Identical(),
-            nn.__dict__[f'Conv{dim}'](channels//2, channels, 1, 2, 0),
-        ])
-        
         self.out_transform = nn.ModuleList([
-            nn.__dict__[f'Conv{dim}'](channels, channels*2, 1, 2, 0),
-            op.Identical(),
             nn.Sequential(
                 nn.__dict__[f'Conv{dim}'](channels, channels//2, 1),
                 nn.__dict__[f'UpsamplingBilinear{dim}'](scale_factor=2)
-            )
+            ),
+            op.Identical(),
+            nn.__dict__[f'Conv{dim}'](channels, channels*2, 1, 2, 0),
         ])
         
         self.soft_gate = nn.Sequential(
@@ -48,13 +42,27 @@ class _DynamicRoutingCell(nn.Module):
             lambda x, y, check: x * check + y * (1-check),
             lambda x, y, check: y,
         ]
+        
+        if not self.allow_up:
+            self.out_transform = self.out_transform[1:]
+            self.post_fix = self.post_fix[1:]
+        
+        if not self.allow_down:
+            self.out_transform = self.out_transform[:-1]
+            self.post_fix = self.post_fix[:-1] 
     
-    def forward(self, *inputs):
-        aggregated_x = sum([j(i) for i, j in zip(inputs, self.in_transform)])
+    def forward(self, inputs):
+        aggregated_x = sum(inputs)
         out = sum([i(aggregated_x) for i in self.cell_operations])
         gates = self.soft_gate(out)
         mask = (gates.sum(1, keepdim=True) == 0).to(gates.dtype)
         out = aggregated_x * mask + out * (1-mask)
         result = [i(out) * g for i, g, in zip(self.out_transform, gates.split(1, 1))]
         result = [fix(out, y, mask) for fix, y in zip(self.post_fix, result)]
+        
+        if not self.allow_up:
+            result = [None] + result
+        if not self.allow_down:
+            rresult = result + [None]
+            
         return result
