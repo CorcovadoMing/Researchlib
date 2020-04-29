@@ -3,10 +3,11 @@ import torch
 import torch.nn.functional as F
 from ..ops import op
 from .unit.utils import get_dim
+from functools import partial
 
 
 class _DynamicRoutingCell(nn.Module):
-    def __init__(self, _op, channels, cell_operations = [op.Conv2d, op.Identical], allow_up=True, allow_down=True):
+    def __init__(self, _op, channels, cell_operations = [nn.Conv2d, op.Identical], allow_up=True, allow_down=True):
         super().__init__()
         
         dim = get_dim(_op)
@@ -16,12 +17,10 @@ class _DynamicRoutingCell(nn.Module):
         
         self.cell_operations = nn.ModuleList([
             nn.Sequential(
-                i(channels, channels, kernel_size=3, padding=1, stride=1, groups=channels//8, bias=False),
+                i(channels, channels, kernel_size=3, stride=1, padding=1, groups=channels//8, bias=False),
                 nn.__dict__[f'BatchNorm{dim}'](channels),
-                nn.ReLU(inplace=True),
-                i(channels, channels, kernel_size=3, padding=1, stride=1, groups=channels//8, bias=False),
-                nn.__dict__[f'BatchNorm{dim}'](channels),
-            ) if i != op.Identical else i(channels, channels, kernel_size=3, padding=1, stride=1) for i in cell_operations
+                nn.ReLU(inplace=True)
+            ) if i != op.Identical else i() for i in cell_operations
         ])
         
         self.out_transform = nn.ModuleList([
@@ -66,7 +65,7 @@ class _DynamicRoutingCell(nn.Module):
     
     def forward(self, inputs):
         aggregated_x = sum(inputs)
-        out = F.relu(sum([i(aggregated_x) for i in self.cell_operations]), inplace=True)
+        out = sum([i(aggregated_x) for i in self.cell_operations])
         gates = self.soft_gate(aggregated_x)
         mask = (gates.sum(1, keepdim=True) == 0).to(gates.dtype)
         out = aggregated_x * mask + out * (1-mask)
