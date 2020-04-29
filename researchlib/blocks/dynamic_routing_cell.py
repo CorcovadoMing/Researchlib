@@ -6,7 +6,7 @@ from .unit.utils import get_dim
 
 
 class _DynamicRoutingCell(nn.Module):
-    def __init__(self, _op, channels, cell_operations = [op.SepConv2d, op.Identical], allow_up=True, allow_down=True):
+    def __init__(self, _op, channels, cell_operations = [op.Conv2d, op.Identical], allow_up=True, allow_down=True):
         super().__init__()
         
         dim = get_dim(_op)
@@ -16,19 +16,27 @@ class _DynamicRoutingCell(nn.Module):
         
         self.cell_operations = nn.ModuleList([
             nn.Sequential(
-                i(channels, channels, kernel_size=3, padding=1, stride=1, bias=False),
+                i(channels, channels, kernel_size=3, padding=1, stride=1, groups=channels//8, bias=False),
                 nn.__dict__[f'BatchNorm{dim}'](channels),
                 nn.ReLU(inplace=True),
+                i(channels, channels, kernel_size=3, padding=1, stride=1, groups=channels//8, bias=False),
+                nn.__dict__[f'BatchNorm{dim}'](channels),
             ) if i != op.Identical else i(channels, channels, kernel_size=3, padding=1, stride=1) for i in cell_operations
         ])
         
         self.out_transform = nn.ModuleList([
             nn.Sequential(
                 nn.__dict__[f'Conv{dim}'](channels, channels//2, 1, bias=False),
+                nn.__dict__[f'BatchNorm{dim}'](channels//2),
+                nn.ReLU(inplace=True),
                 nn.__dict__[f'UpsamplingBilinear{dim}'](scale_factor=2)
             ),
             op.Identical(),
-            nn.__dict__[f'Conv{dim}'](channels, channels*2, 1, 2, 0, bias=False),
+            nn.Sequential(
+                nn.__dict__[f'Conv{dim}'](channels, channels*2, 1, 2, 0, bias=False),
+                nn.__dict__[f'BatchNorm{dim}'](channels*2),
+                nn.ReLU(inplace=True),
+            ),
         ])
         
         self.soft_gate = nn.Sequential(
@@ -53,11 +61,12 @@ class _DynamicRoutingCell(nn.Module):
         
         if not self.allow_down:
             self.out_transform = self.out_transform[:-1]
-            self.post_fix = self.post_fix[:-1] 
+            self.post_fix = self.post_fix[:-1]
+            
     
     def forward(self, inputs):
         aggregated_x = sum(inputs)
-        out = sum([i(aggregated_x) for i in self.cell_operations])
+        out = F.relu(sum([i(aggregated_x) for i in self.cell_operations]), inplace=True)
         gates = self.soft_gate(aggregated_x)
         mask = (gates.sum(1, keepdim=True) == 0).to(gates.dtype)
         out = aggregated_x * mask + out * (1-mask)
