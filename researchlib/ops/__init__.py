@@ -76,9 +76,13 @@ from .sknet import _SKNet50, _SKNet18
 from .frn import _FRN2d
 from .tlu import _TLU2d
 
+from .fuse_sampling import _FuseSampling2d
+
+
 class op(object):
     FRN2d = _FRN2d
     TLU2d = _TLU2d
+    FuseSampling2d = _FuseSampling2d
     
     # Submodules
     N2V = N2V

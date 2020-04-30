@@ -19,20 +19,19 @@ class _DynamicRoutingCell(nn.Module):
             nn.Sequential(
                 i(channels, channels, kernel_size=3, stride=1, padding=1, groups=channels//8, bias=False),
                 nn.__dict__[f'BatchNorm{dim}'](channels),
-                nn.ReLU(inplace=True)
             ) if i != op.Identical else i() for i in cell_operations
         ])
         
         self.out_transform = nn.ModuleList([
             nn.Sequential(
-                nn.__dict__[f'Conv{dim}'](channels, channels//2, 1, bias=False),
+                op.__dict__[f'Conv{dim}'](channels, channels//2, 1, bias=False),
                 nn.__dict__[f'BatchNorm{dim}'](channels//2),
                 nn.ReLU(inplace=True),
-                nn.__dict__[f'UpsamplingBilinear{dim}'](scale_factor=2)
+                nn.Upsample(scale_factor=2.0),
             ),
             op.Identical(),
             nn.Sequential(
-                nn.__dict__[f'Conv{dim}'](channels, channels*2, 1, 2, 0, bias=False),
+                op.__dict__[f'Conv{dim}'](channels, channels*2, 1, 2, bias=False),
                 nn.__dict__[f'BatchNorm{dim}'](channels*2),
                 nn.ReLU(inplace=True),
             ),
@@ -65,7 +64,7 @@ class _DynamicRoutingCell(nn.Module):
     
     def forward(self, inputs):
         aggregated_x = sum(inputs)
-        out = sum([i(aggregated_x) for i in self.cell_operations])
+        out = F.relu(sum([i(aggregated_x) for i in self.cell_operations]), inplace=True)
         gates = self.soft_gate(aggregated_x)
         mask = (gates.sum(1, keepdim=True) == 0).to(gates.dtype)
         out = aggregated_x * mask + out * (1-mask)
