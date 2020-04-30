@@ -19,7 +19,7 @@ from .optimizer.cocob import Cocob
 from .optimizer.lookahead import Lookahead
 from .optimizer.nag import NAG
 from .optimizer.sm3 import SM3
-
+from .optimizer.bb import BB
 from ..utils import _register_method, update_optim
 import torchcontrib
 from functools import partial, reduce
@@ -52,6 +52,7 @@ def set_optimizer(self, lars=False, info=True):
         'diffgrad': partial(extra_optim.DiffGrad, eps = 1e-4),
         'sgdw': partial(extra_optim.SGDW, momentum = 0.9),
         'yogi': partial(extra_optim.Yogi, eps = 1e-4),
+        'bb': BB,
     }
 
     loss_params = []
