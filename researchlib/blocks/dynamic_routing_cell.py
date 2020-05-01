@@ -74,6 +74,6 @@ class _DynamicRoutingCell(nn.Module):
         if not self.allow_up:
             result = [None] + result
         if not self.allow_down:
-            rresult = result + [None]
+            result = result + [None]
             
         return result

@@ -20,6 +20,7 @@ from .optimizer.lookahead import Lookahead
 from .optimizer.nag import NAG
 from .optimizer.sm3 import SM3
 from .optimizer.bb import BB
+from .optimizer.adax import AdaX, AdaXW
 from ..utils import _register_method, update_optim
 import torchcontrib
 from functools import partial, reduce
@@ -53,6 +54,8 @@ def set_optimizer(self, lars=False, info=True):
         'sgdw': partial(extra_optim.SGDW, momentum = 0.9),
         'yogi': partial(extra_optim.Yogi, eps = 1e-4),
         'bb': BB,
+        'adax': AdaX,
+        'adaxw': AdaXW,
     }
 
     loss_params = []

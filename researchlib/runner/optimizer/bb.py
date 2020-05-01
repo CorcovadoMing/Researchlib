@@ -94,7 +94,7 @@ class BB(Optimizer):
                     self.state[p]['grad_aver'].zero_()
 
             if state['bb_iter'] > 1:
-                if abs(sum_dp_dg) >= 1e-10:
+                if abs(sum_dp_dg) >= 1e-6:
                     lr_hat = sum_dp_norm / (sum_dp_dg * group['steps'])
                     lr_scaled = abs(lr_hat) * (state['bb_iter'] + 1)
                     if (lr_scaled > group['max_lr']) or (lr_scaled < group['min_lr']):

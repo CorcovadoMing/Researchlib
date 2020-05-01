@@ -103,7 +103,7 @@ def fit(
     
     fp16 = parameter_manager.get_param('fp16', False)
     batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
-    lr = lr * (batch_size / 256)
+    lr = lr * (batch_size / 128)
     buffered_epochs = expected_epochs + 1
     
     for k, v in self.model.graph.items():
