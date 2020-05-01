@@ -1,6 +1,90 @@
 from torch import nn
 
 
+class _ResNet(nn.Module):
+    '''
+        Deep Residual Learning for Image Recognition
+    '''
+    def __init__(self, size, head=None, in_dim=3, **kwargs):
+        super().__init__()
+        from ..models import AutoConvNet, Heads
+        from ..blocks import unit
+        from . import op
+        
+        total_blocks = int((math.log2(size)-3+1) * pool_freq)
+        _pool_freq = [i+pool_freq+1 for i in range(0, total_blocks, pool_freq)]
+        default_kwargs = dict(
+            _op = op.Conv2d,
+            _unit = unit.Conv,
+            input_dim = in_dim,
+            total_blocks = total_blocks,
+            stem={'vgg': 1}, 
+            type='residual', 
+            pool_freq=_pool_freq,
+            filters=filters,
+        )
+        default_kwargs.update(kwargs)
+        model = [AutoConvNet(**default_kwargs)]
+        if head != None:
+            model.append(Heads(head, reduce_type='avg'))
+        self.net = nn.Sequential(*model)
+            
+    def forward(self, x):
+        return self.net(x)
+
+
+        
+        
+        default_kwargs = dict(
+            _op = op.Conv2d,
+            _unit = unit.Conv,
+            input_dim = in_dim,
+            total_blocks = 8,
+            stem={'vgg': 1}, 
+            type='residual', 
+            pool_freq=[3,5,7],
+            filters=(64, -1),
+        )
+        default_kwargs.update(kwargs)
+        model = [AutoConvNet(**default_kwargs)]
+        if head != None:
+            model.append(Heads(head, reduce_type='avg'))
+        self.net = nn.Sequential(*model)
+    
+    def forward(self, x):
+        return self.net(x)
+    
+
+class _ResNet18(nn.Module):
+    '''
+        Deep Residual Learning for Image Recognition
+    '''
+    def __init__(self, head=None, in_dim=3, **kwargs):
+        super().__init__()
+        from ..models import AutoConvNet, Heads
+        from ..blocks import unit
+        from . import op
+        
+        default_kwargs = dict(
+            _op = op.Conv2d,
+            _unit = unit.Conv,
+            input_dim = in_dim,
+            total_blocks = 8,
+            stem={'vgg': 1}, 
+            type='residual', 
+            pool_freq=[3,5,7],
+            filters=(64, -1),
+        )
+        default_kwargs.update(kwargs)
+        model = [AutoConvNet(**default_kwargs)]
+        if head != None:
+            model.append(Heads(head, reduce_type='avg'))
+        self.net = nn.Sequential(*model)
+    
+    def forward(self, x):
+        return self.net(x)
+    
+
 class _ResNet18(nn.Module):
     '''
         Deep Residual Learning for Image Recognition

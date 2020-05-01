@@ -65,7 +65,7 @@ from .checker import Checker
 
 from .prepare import _PrepareImage2d, _RandAugment2d, _WeakAugment2d
 
-from .resnet import _ResNet18, _ResNet50
+from .resnet import _ResNet, _ResNet18, _ResNet50
 from .preresnet import _PreResNet50
 from .wideresnet import _WideResNet28x10
 from .decoder import _AEDecoder2d, _VAEDecoder2d
@@ -93,6 +93,7 @@ class op(object):
     Checker = Checker
     
     MLP = _MLP
+    ResNet = _ResNet
     ResNet18 = _ResNet18
     ResNet50 = _ResNet50
     PreResNet50 = _PreResNet50

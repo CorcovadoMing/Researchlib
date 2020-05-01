@@ -37,20 +37,37 @@ class DataFlowBuilder(DataFlow):
             yield x, y
     
     
-def Build(name: str, dataset_format: str, mask: bool = False, bgr2rgb: bool = False, shuffle=False) -> None:
+def Build(name: str, dataset_format: str, mask: bool = False, bgr2rgb: bool = False, shuffle: bool = False, split_ratio: float = 0.) -> None:
     '''
         @name: Parser output name
         @dataset_format: one of ['lmdb', 'numpy']
         @mask: True if label is mask or False if is numeric
         @bgr2rgb: Transfer to RGB if raw data is BGR
         @shuffle: Shuffle the dataset
+        @split_ratio: split the dataset
     '''
     
     support_type = ['lmdb', 'numpy']
     if dataset_format not in support_type:
         raise ValueError(f'Support dataset format is {support_type}')
     
-    csv = glob.glob(f'{name}/*.csv')
+    csv = glob.glob(f'{name}/parse_result*.csv')
+    phase = list(map(lambda x: x.split('_')[-1].split('.')[0], csv))
+    
+    print(f'Found phase: {phase}')
+    if split_ratio > 0:
+        print(f'Auto split is enabled, ratio: {split_ratio}')
+        original = pd.read_csv(csv[0])
+        if shuffle:
+            original = _shuffle(original)
+            original.reset_index(inplace=True, drop=True)
+        new_train = original[:int(split_ratio*len(original))]
+        new_val = original[int(split_ratio*len(original)):]
+        new_train.to_csv(f'{name}/auto_split_train.csv')
+        new_val.to_csv(f'{name}/auto_split_val.csv')
+        phase.append('val')
+    
+    csv = glob.glob(f'{name}/auto_split*.csv')
     phase = list(map(lambda x: x.split('_')[-1].split('.')[0], csv))
     
     print(f'Found phase: {phase}')
