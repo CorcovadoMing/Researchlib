@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 from tensorpack.dataflow import *
+from sklearn.utils import shuffle as _shuffle
+
 
 def _read_encode(path):
     with open(path, 'rb') as f:
@@ -35,12 +37,13 @@ class DataFlowBuilder(DataFlow):
             yield x, y
     
     
-def Build(name: str, dataset_format: str, mask: bool = False, bgr2rgb: bool = False) -> None:
+def Build(name: str, dataset_format: str, mask: bool = False, bgr2rgb: bool = False, shuffle=False) -> None:
     '''
         @name: Parser output name
         @dataset_format: one of ['lmdb', 'numpy']
         @mask: True if label is mask or False if is numeric
         @bgr2rgb: Transfer to RGB if raw data is BGR
+        @shuffle: Shuffle the dataset
     '''
     
     support_type = ['lmdb', 'numpy']
@@ -54,6 +57,10 @@ def Build(name: str, dataset_format: str, mask: bool = False, bgr2rgb: bool = Fa
     
     for i, j in tqdm(zip(csv, phase), total=len(csv)):
         data_sheet = pd.read_csv(i)
+        
+        if shuffle:
+            data_sheet = _shuffle(data_sheet)
+            data_sheet.reset_index(inplace=True, drop=True)
         
         output_file = os.path.join(name, j)
         df = DataFlowBuilder(data_sheet, mask, bgr2rgb)

@@ -1,8 +1,9 @@
-from .parse import Parse, ParseFromMapping
+from .parse import ParseClassificationDataset, ParseSegmentationDataset, ParseFromMapping
 from .build import Build
 
 
 class DataKit(object):
-    Parse = Parse
+    ParseSegmentationDataset = ParseSegmentationDataset
+    ParseClassificationDataset = ParseClassificationDataset
     ParseFromMapping = ParseFromMapping
     Build = Build
