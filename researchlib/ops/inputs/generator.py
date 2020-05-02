@@ -24,6 +24,9 @@ def _processing_function(
     new_x_org_batch = []
     
     for x, y, x_org in zip(x_batch, y_batch, x_org_batch):
+        x = x.astype(np.uint8)
+        y = y.astype(np.uint8)
+        
         # Augmentation
         this_augmentor = augmentor if len(augmentor) < N else np.random.choice(augmentor, N, replace=False)
         for op in this_augmentor:

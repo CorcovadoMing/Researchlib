@@ -6,7 +6,7 @@ from .builder import Builder
 from ..utils import ParameterManager
 from ..blocks import block
 from ..blocks import unit
-from .stem import push_stem
+from .stem import push_large_stem, push_small_stem
 from torch import nn
 from texttable import Texttable
 
@@ -27,6 +27,7 @@ def AutoConvNet(
     filters = (128, 1024),
     filter_policy = 'default',
     stem = {'vgg': 1},
+    stem_large = False,
     preact = False,
     pool_freq = 1,
     do_norm = True,
@@ -39,7 +40,7 @@ def AutoConvNet(
     Runner.__model_settings__[f'{type}-blocks{total_blocks}_input{input_dim}'] = locals()
     
     info = Texttable(max_width = 0)
-    info.add_row(['ID', 'In Dim', 'Out Dim', 'Do Pool?', 'Block Type', 'Keep Output?', 'Keep Input?', 'Groups'])
+    info.add_row(['ID', 'In Dim', 'Out Dim', 'Down/Up Sampling', 'Block Type', 'Keep Output?', 'Keep Input?', 'Groups'])
     
     parameter_manager = ParameterManager(**kwargs)
     share_group_banks = parameter_manager.get_param('share_group_banks', 0)
@@ -56,8 +57,9 @@ def AutoConvNet(
 
     # Stem
     if stem is not None:
+        stem_func = push_small_stem if not stem_large else push_large_stem
         stem_type, stem_layers = list(stem.items())[0]
-        layers, in_dim, out_dim, info = push_stem(
+        layers, in_dim, out_dim, info = stem_func(
             _op if _stem_op is None else _stem_op, _unit, layers, in_dim, out_dim, stem_type, stem_layers, preact, info, **kwargs
         )
     else:

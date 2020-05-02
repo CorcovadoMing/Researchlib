@@ -3,7 +3,7 @@ num_model_params = lambda model: sum(p.numel() for p in model.parameters() if p.
 num_list_params = lambda model: sum(p.numel() for p in model if p.requires_grad)
 
 
-def group_parameters(model, bias_key=['bias'], no_decay_key=['coefficients'], special_key=[]):
+def group_parameters(model, bias_key=['bias'], no_decay_key=['coefficients', 'eps'], special_key=[]):
     normal_group = []
     bias_group = []
     no_decay_group = []

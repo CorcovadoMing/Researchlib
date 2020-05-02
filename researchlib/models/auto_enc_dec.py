@@ -8,7 +8,7 @@ from ..blocks import block
 from ..blocks import unit
 from torch import nn
 import torch
-from .stem import push_stem
+from .stem import push_large_stem, push_small_stem
 from texttable import Texttable
 
 
@@ -106,6 +106,7 @@ def AutoEncDec(
     filters = (64, -1),
     filter_policy = 'default',
     stem = {'vgg': 1},
+    stem_large = False,
     preact = False,
     pool_freq = 1,
     do_norm = True,
@@ -138,9 +139,10 @@ def AutoEncDec(
 
     # Stem
     if stem is not None:
+        stem_func = push_small_stem if not stem_large else push_large_stem
         stem_type, stem_layers = list(stem.items())[0]
-        layers, in_dim, out_dim, info = push_stem(
-            down_op, unit.Conv, layers, in_dim, out_dim, stem_type, stem_layers, preact, info, **kwargs
+        layers, in_dim, out_dim, info = stem_func(
+            _op if _stem_op is None else _stem_op, _unit, layers, in_dim, out_dim, stem_type, stem_layers, preact, info, **kwargs
         )
     else:
         stem_layers = 0

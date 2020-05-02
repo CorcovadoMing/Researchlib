@@ -9,8 +9,8 @@ def _svd_blur(img, K):
         u, s, v = np.linalg.svd(data, full_matrices=True)
         s[-K:] = 0
         rec.append(((u * s) @ v))
-    rec = np.stack(rec, -1)
-    return rec
+    rec = np.clip(np.stack(rec, -1), 0, 255)
+    return rec.astype(np.uint8)
 
 
 class SVDBlur(namedtuple('SVDBlur', ('img_size'))):
