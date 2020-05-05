@@ -11,5 +11,5 @@ class _FRN2d(nn.Module):
     
     def forward(self, x):
         nu2 = x.abs().mean(dim=[2, 3], keepdims=True)
-        x = x  / torch.max((nu2 + torch.abs(self.eps)), torch.empty_like(nu2).fill_(1e-6))
+        x = x  / torch.max((nu2 + torch.abs(self.eps)), torch.empty_like(nu2).fill_(1e-3))
         return self.gamma * x + self.beta

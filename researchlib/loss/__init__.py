@@ -21,6 +21,7 @@ from .cluster import Cluster
 from .segmentation import Segmentation
 from .noisy_classification import NoisyClassification
 
+from .ohem import OHEM
 
 
 class Loss(object):
@@ -52,6 +53,8 @@ class Loss(object):
     Sparsemax = SparsemaxLoss
     VAE = VAELoss
     Center = CenterLoss
+    
+    OHEM = OHEM
     
     
 #     'bce': F.binary_cross_entropy

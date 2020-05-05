@@ -7,3 +7,4 @@ from .skconv import _SKConv2d
 from .rcl import _RConv2d
 from .sasa import _SASA2d
 from .ghost_conv import _GhostConv2d
+from .deconv import _FastDeconv2d

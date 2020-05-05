@@ -22,7 +22,7 @@ from .template_bank import _TemplateBank
 
 #============================================================================
 
-from .conv_variants import _SConv2d, _SepConv2d, _DilConv2d, _DiracConv1d, _DiracConv2d, _DiracConv3d, _PacConv2d, _PacConvTranspose2d, _PacPool2d, _SKConv2d, _RConv2d, _SASA2d, _GhostConv2d
+from .conv_variants import _SConv2d, _SepConv2d, _DilConv2d, _DiracConv1d, _DiracConv2d, _DiracConv3d, _PacConv2d, _PacConvTranspose2d, _PacPool2d, _SKConv2d, _RConv2d, _SASA2d, _GhostConv2d, _FastDeconv2d
 
 from .activator import _GeLU, _Mish, _Swish, _DropReLU, _LogSoftmax, _Softmax, _GumbelSoftmax, _LogSparsemax, _Sparsemax, _FTSwishPlus, _TReLU
 
@@ -83,6 +83,8 @@ class op(object):
     FRN2d = _FRN2d
     TLU2d = _TLU2d
     FuseSampling2d = _FuseSampling2d
+    
+    FastDeconv2d = _FastDeconv2d
     
     # Submodules
     N2V = N2V
