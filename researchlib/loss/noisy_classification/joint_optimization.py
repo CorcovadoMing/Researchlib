@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 
 
-class JointOptimizationLoss(nn.Module):
+class JointOptimizationNLLoss(nn.Module):
     def __init__(self, alpha=1.2, beta=0.8):
         super().__init__()
         self.alpha = alpha

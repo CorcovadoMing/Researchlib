@@ -1,5 +1,5 @@
-from .joint_optimization import JointOptimizationLoss
+from .joint_optimization import JointOptimizationNLLoss
 
 
 class NoisyClassification(object):
-    JointOptimization = JointOptimizationLoss
+    JointOptimizationNL = JointOptimizationNLLoss

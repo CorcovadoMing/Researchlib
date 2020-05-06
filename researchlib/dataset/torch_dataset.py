@@ -32,6 +32,8 @@ def _TorchDataset(name, is_train, shuffle, label_noise=0, noise_type='asymmetry'
         data = np.array(ds.data).astype(np.float32)
         target = np.array(ds.targets)
     
+    id_list = list(range(len(target)))
+    
     if label_noise != 0:
         original_target = copy.deepcopy(target)
         total_class = target.max() + 1
@@ -55,6 +57,6 @@ def _TorchDataset(name, is_train, shuffle, label_noise=0, noise_type='asymmetry'
         for i in range(len(target)):
             confusion_matrix[target[i], original_target[i]] += 1
         print(confusion_matrix)
-        return _NumpyDataset(data, target, original_target, shuffle = shuffle, name = name)
+        return _NumpyDataset(data, target, original_target, id_list, shuffle = shuffle, name = name)
     else:
-        return _NumpyDataset(data, target, target, shuffle = shuffle, name = name)
+        return _NumpyDataset(data, target, target, id_list, shuffle = shuffle, name = name)
