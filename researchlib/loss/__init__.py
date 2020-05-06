@@ -22,6 +22,7 @@ from .segmentation import Segmentation
 from .noisy_classification import NoisyClassification
 
 from .ohem import OHEM
+from .class_balance import ClassBalance
 
 
 class Loss(object):
@@ -55,6 +56,7 @@ class Loss(object):
     Center = CenterLoss
     
     OHEM = OHEM
+    ClassBalance = ClassBalance
     
     
 #     'bce': F.binary_cross_entropy
