@@ -5,12 +5,12 @@ import PIL
 
 
 class TranslateX(namedtuple('TranslateX', ())):
-    def __call__(self, x, choice, v):
+    def __call__(self, x, y, choice, v):
         if choice:
             x = _to_pil(x)
             x = x.transform(x.size, PIL.Image.AFFINE, (1, 0, v, 0, 1, 0))
             x = _to_numpy(x)
-        return x
+        return x, y
 
     def options(self, prob=0.5):
         return {

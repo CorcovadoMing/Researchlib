@@ -5,12 +5,12 @@ import PIL
 
 
 class Equalize(namedtuple('Equalize', ())):
-    def __call__(self, x, choice):
+    def __call__(self, x, y, choice):
         if choice:
             x = _to_pil(x)
             x = PIL.ImageOps.equalize(x)
             x = _to_numpy(x)
-        return x
+        return x, y
 
     def options(self, prob=0.5):
         return {'choice': np.random.choice([True, False], p=[prob, 1-prob], size=1)}

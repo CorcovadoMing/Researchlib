@@ -5,12 +5,12 @@ import PIL
 
 
 class Sharpness(namedtuple('Sharpness', ())):
-    def __call__(self, x, choice, v):
+    def __call__(self, x, y, choice, v):
         if choice:
             x = _to_pil(x)
             x = PIL.ImageEnhance.Sharpness(x).enhance(v)
             x = _to_numpy(x)
-        return x
+        return x, y
 
     def options(self, prob=0.5):
         return {

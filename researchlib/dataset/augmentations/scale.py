@@ -5,11 +5,11 @@ import imgaug.augmenters as iaa
 
 # Interface
 class Scale(namedtuple('Scale', ())):
-    def __call__(self, x, choice, s):
+    def __call__(self, x, y, choice, s):
         if choice:
             aug = iaa.Affine(scale=(1-s, 1+s))
             x = aug.augment_image(x)
-        return x
+        return x, y
 
     def options(self, prob=0.5):
         return {

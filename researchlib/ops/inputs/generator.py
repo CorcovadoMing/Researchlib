@@ -27,16 +27,16 @@ def _processing_function(
         x = x.astype(np.uint8)
         y = y.astype(np.uint8)
         
-        # Augmentation
-        this_augmentor = augmentor if len(augmentor) < N else np.random.choice(augmentor, N, replace=False)
-        for op in this_augmentor:
-            x = op(x, **op.options(prob=1))
-
         if x.shape[:-1] == y.shape[:-1]:
             do_y = True
         else:
             do_y = False
-
+        
+        # Augmentation
+        this_augmentor = augmentor if len(augmentor) < N else np.random.choice(augmentor, N, replace=False)
+        for op in this_augmentor:
+            x, y = op(x, y, **op.options(prob=1))
+            
         x = x.astype(np.float32)
         y = y.astype(np.float32) if do_y else y.astype(np.int64)
 

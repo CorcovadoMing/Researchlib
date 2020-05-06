@@ -5,12 +5,12 @@ import PIL
 
 
 class AutoContrast(namedtuple('AutoContrast', ())):
-    def __call__(self, x, choice):
+    def __call__(self, x, y, choice):
         if choice:
             x = _to_pil(x)
             x = PIL.ImageOps.autocontrast(x)
             x = _to_numpy(x)
-        return x
+        return x, y
 
     def options(self, prob=0.5):
         return {

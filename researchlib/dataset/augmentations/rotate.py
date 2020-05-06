@@ -5,7 +5,7 @@ import PIL
 
 
 class Rotate(namedtuple('Rotate', ('fillcolor'))):
-    def __call__(self, x, choice, v, c):
+    def __call__(self, x, y, choice, v, c):
         if choice:
             x = _to_pil(x)
             if self.fillcolor:
@@ -13,7 +13,7 @@ class Rotate(namedtuple('Rotate', ('fillcolor'))):
             else:
                 x = x.rotate(v)
             x = _to_numpy(x)
-        return x
+        return x, y
 
     def options(self, prob=0.5):
         return {

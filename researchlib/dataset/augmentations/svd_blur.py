@@ -14,8 +14,8 @@ def _svd_blur(img, K):
 
 
 class SVDBlur(namedtuple('SVDBlur', ('img_size'))):
-    def __call__(self, x, choice, K):
-        return _svd_blur(x, K) if choice else x
+    def __call__(self, x, y, choice, K):
+        return (_svd_blur(x, K), y) if choice else (x, y)
 
     def options(self, prob=0.5):
         return {
