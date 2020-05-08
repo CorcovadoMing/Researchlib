@@ -13,11 +13,11 @@ class JointOptimizationNLLoss(nn.Module):
         if y.shape != x.shape:
             y = F.one_hot(y, x.size(1)).to(x.dtype)
         x_avg = x.mean(0)
-        prior = torch.ones(x.size(1)).to(x.dtype).to(x.device) / x.size(1)
         x_avg = torch.clamp(x_avg, min=1e-6, max=1.0)
         y = torch.clamp(y, min=1e-6, max=1.0)
         x = torch.clamp(x, min=1e-6, max=1.0)
+        prior = torch.ones(x.size(1)).to(x.dtype).to(x.device) / x.size(1)
         loss_p = -(prior * x_avg.log()).sum(-1).mean()
-        loss_e = -(y * y.log()).sum(-1).mean()
-        loss_n = -(y * x.log()).sum(-1).mean()
-        return loss_n + self.alpha * loss_p + self.beta * loss_e
+        loss_e = -(x * x.log()).sum(-1).mean()
+        loss_c = -(y * x.log()).sum(-1).mean()
+        return loss_c + self.alpha * loss_p + self.beta * loss_e
