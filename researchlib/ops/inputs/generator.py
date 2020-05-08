@@ -38,12 +38,12 @@ def _processing_function(
             x, y = op(x, y, **op.options(prob=1))
             
         x = x.astype(np.float32)
-        y = y.astype(np.float32) if do_y else y.astype(np.int64)
+        y = y.astype(np.float32) if (y.ndim > 1) else y.astype(np.int64)
 
         # Fix grayscale
         if x.ndim == 2:
             x = x[..., None]
-            if y.ndim == 2 and do_y:
+            if do_y:
                 y = y[..., None]
 
         # Normalization

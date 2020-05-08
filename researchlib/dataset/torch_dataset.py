@@ -1,12 +1,13 @@
 import torchvision
 import torch
+import torch.nn.functional as F
 import numpy as np
 import random
 import copy
 from .np_dataset import _NumpyDataset
 
 
-def _TorchDataset(name, is_train, shuffle, label_noise=0, noise_type='asymmetry'):
+def _TorchDataset(name, is_train, shuffle, noise_ratio=0, noise_type='asymmetry', label_mapping=None):
     noise_type_candidates = ['asymmetry', 'symmetry']
     if noise_type not in noise_type_candidates:
         raise ValueError(f'Noise type can only be one of the {noise_type_candidates}')
@@ -33,23 +34,22 @@ def _TorchDataset(name, is_train, shuffle, label_noise=0, noise_type='asymmetry'
         target = np.array(ds.targets)
     
     id_list = list(range(len(target)))
+    total_class = target.max() + 1
+    original_target = copy.deepcopy(target)
     
-    if label_noise != 0:
-        original_target = copy.deepcopy(target)
-        total_class = target.max() + 1
-        
+    if noise_ratio != 0:
         print(f'Apply label noise type: {noise_type}')
         print(f'Total classes: {total_class}')
         
         if noise_type == 'asymmetry':
             noise_idx = list(range(len(target)))
             random.shuffle(noise_idx)
-            noise_idx = noise_idx[:int(len(target)*label_noise)]
+            noise_idx = noise_idx[:int(len(target)*noise_ratio)]
             target[noise_idx] = (target[noise_idx] + 1) % total_class
         else:
             noise_idx = list(range(len(target)))
             random.shuffle(noise_idx)
-            noise_idx = noise_idx[:int(len(target)*label_noise)]
+            noise_idx = noise_idx[:int(len(target)*noise_ratio)]
             for i in noise_idx:
                 target[i] = np.random.choice(np.delete(np.arange(total_class), target[i]))
         
@@ -57,6 +57,24 @@ def _TorchDataset(name, is_train, shuffle, label_noise=0, noise_type='asymmetry'
         for i in range(len(target)):
             confusion_matrix[target[i], original_target[i]] += 1
         print(confusion_matrix)
-        return _NumpyDataset(data, target, original_target, id_list, shuffle = shuffle, name = name)
-    else:
-        return _NumpyDataset(data, target, target, id_list, shuffle = shuffle, name = name)
+    
+    if label_mapping is not None:
+        print(f'Load label mapping {label_mapping} as the label ...')
+        mapping = torch.load(label_mapping)
+        shape = list(mapping.values())[0].shape
+        new_target = []
+        for i in id_list:
+            if i in mapping:
+                new_target.append(mapping[i].numpy())
+            else:
+                target_i = np.array(target[i])
+                if target_i.shape != shape:
+                    arr = np.zeros([total_class])
+                    arr[target_i] = 1
+                    new_target.append(arr)
+                else:
+                    new_target.append(target_i)
+        target = np.stack(new_target)
+        print(f'Done')
+            
+    return _NumpyDataset(data, target, original_target, id_list, shuffle = shuffle, name = name)
