@@ -12,7 +12,7 @@ class _ResNet(nn.Module):
         from ..blocks import unit
         from . import op
         
-        use_large_stem = True if size >= 128 else False
+        use_large_stem = True if size >= 64 else False
         total_blocks = (int((math.log2(size)-3+1) - (2 if use_large_stem else 0)) * pool_freq)
         _pool_freq = [i+pool_freq+1 for i in range(0, total_blocks, pool_freq)]
         default_kwargs = dict(

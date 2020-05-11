@@ -77,7 +77,7 @@ class _Generator(nn.Module):
     '''
     def __init__(self, 
                  *preprocessing_list, 
-                 worker = 8,
+                 worker = 4,
                  buffer = 8,
                  N = 2, 
                  M = 1):
@@ -146,7 +146,7 @@ class _Generator(nn.Module):
         if self.train_ds is None and self.phase == 0:
             ds = BatchData(ds, self.batch_size, remainder = True)
             if self.worker > 0:
-                ds = MultiThreadMapData(ds, num_thread=self.worker, map_func=self.train_processing_function, buffer_size=self.buffer, strict=True)
+                ds = MultiThreadMapData(ds, num_thread=self.worker//2, map_func=self.train_processing_function, buffer_size=self.buffer, strict=True)
                 ds = MultiProcessRunnerZMQ(ds, self.worker, self.buffer)
             else:
                 ds = MapData(ds, self.train_processing_function)
