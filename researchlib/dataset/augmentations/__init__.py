@@ -1,4 +1,4 @@
-from .crop import CircularCrop
+from .crop import CircularCrop, ZeroPaddedCrop
 from .hflip import HFlip
 from .cutout import Cutout
 from .autocontrast import AutoContrast
@@ -24,6 +24,7 @@ from .jigsaw import Jigsaw
 
 class Augmentations(object):
     CircularCrop = CircularCrop
+    ZeroPaddedCrop = ZeroPaddedCrop
     HFlip = HFlip
     Cutout = Cutout
     AutoContrast = AutoContrast
