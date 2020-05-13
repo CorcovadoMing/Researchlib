@@ -23,4 +23,4 @@ class IMSAT(nn.Module):
         etp, avg_etp = self.compute_entropy(p)
         p = p.detach()
         rsat = self.kl(p, q)
-        return rsat + 0.5 * etp - 2. * avg_etp
+        return rsat + 0.5 * etp - avg_etp

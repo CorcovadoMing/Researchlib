@@ -21,9 +21,9 @@ class SoftBootstrappingNLLoss(Module):
         if y.shape != x.shape:
             y = F.one_hot(y, x.size(1)).to(x.dtype)
         x = torch.clamp(x, min=1e-6, max=1.0)
-        y = torch.clamp(y, min=1e-4, max=1.0)
+        y = torch.clamp(y, min=1e-6, max=1.0)
             
-        loss = -((self.beta * y + (1.0 - self.beta) * x) * x.log()) 
+        loss = -((self.beta * y + (1.0 - self.beta) * x) * x.log()).sum(-1)
 
         if self.reduction == 'mean':
             return loss.mean()
@@ -45,10 +45,10 @@ class HardBootstrappingNLLoss(Module):
         if y.shape != x.shape:
             y = F.one_hot(y, x.size(1)).to(x.dtype)
         x = torch.clamp(x, min=1e-6, max=1.0)
-        y = torch.clamp(y, min=1e-4, max=1.0)
+        y = torch.clamp(y, min=1e-6, max=1.0)
         
         z = F.one_hot(x.argmax(-1), x.size(1))
-        loss = -((self.beta * y + (1.0 - self.beta) * z) * x.log()) 
+        loss = -((self.beta * y + (1.0 - self.beta) * z) * x.log()).sum(-1)
 
         if self.reduction == 'mean':
             return loss.mean()
