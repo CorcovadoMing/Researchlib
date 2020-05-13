@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 from graphviz import Digraph
 
@@ -118,6 +119,10 @@ class _Graph(nn.Module):
         self.checkpoint_mode = None
         self.checkpoint_node = None
         self.checkpoint_state = None
+        self.parallelism = None
+        self.under_parallel = False
+        self.parallel_start_node = ''
+        self.parallel_end_node = ''
         
         if len(net) == 1 and type(net[0]) == dict:
             self.graph = build_graph(net[0])
@@ -130,7 +135,16 @@ class _Graph(nn.Module):
         self.train_mode = True
         
         for path, (val, _) in self.graph.items(): 
-            setattr(self, path.replace('/', '_'), val)
+            setattr(self, path, val)
+    
+    
+    def data_parallel(self, start_node, end_node, device_ids=None, main_device=None):
+        self.device_ids = list(range(torch.cuda.device_count())) if device_ids is None else device_ids
+        self.main_device = self.device_ids[0] if main_device is None else main_device
+        self.parallelism = 'data'
+        self.parallel_start_node = start_node
+        self.parallel_end_node = end_node
+        
     
     def _parse_node(self, cur_node):
         node, node_type = cur_node
@@ -149,6 +163,7 @@ class _Graph(nn.Module):
         elif node_type == '__MONITOR__':
             self.monitor_nodes += list(node.keys())
         return node
+    
     
     def _expand_net(self, net):
         result = {}
@@ -213,6 +228,18 @@ class _Graph(nn.Module):
             
             if k not in outputs:
                 inp = self.prepare_inp(inp, outputs)
+    
+                if k == self.parallel_start_node:
+                    self.under_parallel = True
+                
+                if k == self.parallel_end_node:
+                    inp = [nn.parallel.gather(i, self.main_device) for i in inp]
+                    self.under_parallel = False
+                
+                if self.under_parallel:
+                    p_inp = [nn.parallel.scatter(i, self.device_ids) for i in inp]
+                    p_node = nn.parallel.replicate(node, self.device_ids)
+                    p_node = p_node[:len(p_inp[0])]
                 
                 # No cache in pipeline of shared models
                 if type(node) == list:
@@ -221,7 +248,12 @@ class _Graph(nn.Module):
                         inp = [inp]
                     outputs[k] = inp[0]
                 else:
-                    outputs[k] = node(*inp)
+                    if self.under_parallel:
+                        outputs[k] = nn.parallel.parallel_apply(p_node, *p_inp)
+                    else:
+                        outputs[k] = node(*inp)
+                    
+                    # Sub graph
                     if type(node) == _Graph:
                         if node._seq_auto_build:
                             key_list = list(node.outputs.keys())
