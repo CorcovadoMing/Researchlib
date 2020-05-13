@@ -48,7 +48,7 @@ from .non_local import _EmbeddedGaussianNonLocalBlock1d, _EmbeddedGaussianNonLoc
 from .non_local import _GaussianNonLocalBlock1d, _GaussianNonLocalBlock2d, _GaussianNonLocalBlock3d
 
 from .active_noise import _ActiveNoise
-from .inputs import _SetVariable, _UpdateVariable, _GetVariable, _Source, _Generator, _Preloop
+from .inputs import _SetVariable, _UpdateVariable, _GetVariable, _Source, _Generator, _Preloop, _GeneratorDev
 from .node import _To, _Subgraph, _Detach, _Name, _NoOp, _Identical
 
 from .nonparams import _Flip, _Average, _WeightedAverage, _Add, _Sum, _Rotation42d, _Anneal, _Argmax, _Argmin, _Mixture, _RPT, _SobelHorizontal2d, _SobelVertical2d, _Perception, _Gaussian2d
@@ -63,7 +63,7 @@ from .rl import RL
 from .buffer import Buffer
 from .checker import Checker
 
-from .prepare import _PrepareImage2d, _RandAugment2d, _WeakAugment2d
+from .prepare import _PrepareImage2d, _RandAugment2d, _WeakAugment2d, _FastRandAugment2d, _FastWeakAugment2d
 
 from .resnet import _ResNet, _ResNet18, _ResNet50
 from .preresnet import _PreResNet50
@@ -78,8 +78,16 @@ from .tlu import _TLU2d
 
 from .fuse_sampling import _FuseSampling2d
 
+from .storage import Storage
+
 
 class op(object):
+    Storage = Storage
+    
+    GeneratorDev = _GeneratorDev
+    FastRandAugment2d = _FastRandAugment2d
+    FastWeakAugment2d = _FastWeakAugment2d
+    
     FRN2d = _FRN2d
     TLU2d = _TLU2d
     FuseSampling2d = _FuseSampling2d

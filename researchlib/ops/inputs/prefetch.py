@@ -45,13 +45,14 @@ def _worker(generator, queue, fp16):
     for data in generator:
         data = [torch.from_numpy(i) if type(i) != torch.Tensor else i for i in data]
         if fp16:
-            data = [j.half() if i != 1 else j for i, j in enumerate(data)]
+            data_shape = data[0].shape
+            data = [i.half() if i.shape == data_shape else i for i in data]
         data = [i.cuda(non_blocking=True) for i in data]
         queue.put(data)
 
 
 class BackgroundGenerator:
-    def __init__(self, generator, max_prefetch = 8, num_threads = 2, fp16 = False):
+    def __init__(self, generator, max_prefetch = 2, num_threads = 2, fp16 = False):
         self.queue = Queue.Queue(max_prefetch)
         self.fp16 = fp16
         self.generator = _inifinity_loop(generator)
