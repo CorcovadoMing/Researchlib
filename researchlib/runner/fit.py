@@ -114,7 +114,7 @@ def fit(
                 self.test_loader_length = math.ceil(v[0].val_source_generator.__len__() / batch_size)
             else:
                 self.test_loader_length = None
-        if type(v[0]) == op.Generator:
+        if type(v[0]) == op.Generator or type(v[0]) == op.GeneratorDev:
             v[0].prepare_state(fp16, batch_size, data_info)
     
     inner_epochs = parameter_manager.get_param('inner_epochs', 1)

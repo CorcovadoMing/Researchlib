@@ -33,7 +33,7 @@ def _TorchDataset(name, is_train, shuffle, noise_ratio=0, noise_type='asymmetry'
         data = np.array(ds.data).astype(np.float32)
         target = np.array(ds.targets)
     
-    id_list = list(range(len(target)))
+    id_list = np.arange(len(target)).astype(np.int64)
     total_class = target.max() + 1
     original_target = copy.deepcopy(target)
     
@@ -59,6 +59,7 @@ def _TorchDataset(name, is_train, shuffle, noise_ratio=0, noise_type='asymmetry'
         print(confusion_matrix)
     
     if label_mapping is not None:
+        count = 0
         print(f'Load label mapping {label_mapping} as the label ...')
         mapping = torch.load(label_mapping)
         shape = list(mapping.values())[0].shape
@@ -67,6 +68,7 @@ def _TorchDataset(name, is_train, shuffle, noise_ratio=0, noise_type='asymmetry'
             if i in mapping:
                 new_target.append(mapping[i].numpy())
             else:
+                count += 1
                 target_i = np.array(target[i])
                 if target_i.shape != shape:
                     arr = np.zeros([total_class])
@@ -75,6 +77,6 @@ def _TorchDataset(name, is_train, shuffle, noise_ratio=0, noise_type='asymmetry'
                 else:
                     new_target.append(target_i)
         target = np.stack(new_target)
-        print(f'Done')
+        print(f'Done. Missing {count} labels')
             
     return _NumpyDataset(data, target, original_target, id_list, shuffle = shuffle, name = name)
