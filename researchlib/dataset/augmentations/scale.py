@@ -7,7 +7,7 @@ import imgaug.augmenters as iaa
 class Scale(namedtuple('Scale', ())):
     def __call__(self, x, y, choice, s):
         if choice:
-            aug = iaa.Affine(scale=(1-s, 1+s))
+            aug = iaa.Affine(scale=(1-s, 1+s), mode='wrap', order=0)
             x = aug.augment_image(x)
         return x, y
 

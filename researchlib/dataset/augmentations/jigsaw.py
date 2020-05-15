@@ -15,8 +15,8 @@ class Jigsaw(namedtuple('Jigsaw', ())):
     def options(self, prob=0.5):
         return {
             'choice': np.random.choice([True, False], p=[prob, 1-prob], size=1),
-            'r': np.random.randint(1, 10),
-            'c': np.random.randint(1, 10),
+            'r': np.random.randint(2, 6),
+            'c': np.random.randint(2, 6),
         }
 
 

@@ -8,11 +8,11 @@ def _cv2_decode(data):
 
 def _LMDBDataset(file_path, shuffle = True, name = '', shuffle_queue = 10000, total_shuffle = False, workers = 2):
     df = LMDBSerializer.load(file_path, shuffle = total_shuffle)
+    if shuffle:
+        df = LocallyShuffleData(df, shuffle_queue)
     if workers >= 0:
         df = MultiProcessMapDataZMQ(df, workers, _cv2_decode)
     else:
         df = MapData(df, _cv2_decode)
-    if shuffle:
-        df = LocallyShuffleData(df, shuffle_queue)
     return _GeneralLoader(df, name)
     
