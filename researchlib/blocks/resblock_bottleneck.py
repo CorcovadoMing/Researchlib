@@ -73,48 +73,46 @@ def _branch_function(config, parameter_manager, **kwargs):
     )
     
     
-def _ResBottleneckBlock(prefix, _unit, _op, in_dim, out_dim, **kwargs):
+class _ResBottleneckBlock(nn.Module):
     '''
         Deep Residual Learning for Image Recognition
         https://arxiv.org/abs/1512.03385
     '''
-    
-    parameter_manager = ParameterManager(**kwargs)
-    
-    # Utils
-    config = get_config(prefix, _unit, _op, in_dim, out_dim, parameter_manager)
-    
-    # Merge op
-    merge_act = get_act_op(config.act_type, config.dim, config.out_dim) if not config.preact and not config.erased_act else None
-    merge_op = nn.Sequential(*list(filter(None, [merge_act])))
-    
-    # Shared BN
-    preact_bn_shared = parameter_manager.get_param('preact_bn_shared', False) and config.preact and (config.in_dim != config.out_dim or config.do_pool)
-    setattr(config, 'preact_bn_shared', preact_bn_shared)
-    if preact_bn_shared:
-        shared_bn_op = nn.Sequential(
-            *filter(None,[
-                get_norm_op(config.norm_type, config.dim, config.in_dim),
-                get_act_op(config.act_type, config.dim, config.in_dim) if not config.erased_act else None
-            ])
-        )
-    else:
-        shared_bn_op = op.NoOp()
-        
-    branch_op = _branch_function(config, parameter_manager, **kwargs)
-    if config.stochastic_depth:
-        k = (config.id - 1) / config.total_blocks
-        pl = (1-k) + 0.5 * k
-        branch_op = BernoulliSkip(branch_op, pl)
-    shortcut_op = get_shortcut_op(config, parameter_manager, **kwargs)
+    def __init__(self,prefix, _unit, _op, in_dim, out_dim, **kwargs):
+        super().__init__()
 
+        parameter_manager = ParameterManager(**kwargs)
 
-    flow = {
-        f'{prefix}_shared_bn': (shared_bn_op, [f'{prefix}_input']),
-        f'{prefix}_branch': branch_op,
-        f'{prefix}_shortcut': (shortcut_op, [f'{prefix}_shared_bn']),
-        f'{prefix}_add': (op.Add, [f'{prefix}_shortcut', f'{prefix}_branch']),
-        f'{prefix}_output': merge_op
-    }
+        # Utils
+        config = get_config(prefix, _unit, _op, in_dim, out_dim, parameter_manager)
 
-    return op.Subgraph(flow, in_node=f'{prefix}_input', out_node=f'{prefix}_output')
+        # Merge op
+        merge_act = get_act_op(config.act_type, config.dim, config.out_dim) if not config.preact and not config.erased_act else None
+        self.merge_op = nn.Sequential(*list(filter(None, [merge_act])))
+
+        # Shared BN
+        preact_bn_shared = parameter_manager.get_param('preact_bn_shared', False) and config.preact and (config.in_dim != config.out_dim or config.do_pool)
+        setattr(config, 'preact_bn_shared', preact_bn_shared)
+        if preact_bn_shared:
+            self.shared_bn_op = nn.Sequential(
+                *filter(None,[
+                    get_norm_op(config.norm_type, config.dim, config.in_dim),
+                    get_act_op(config.act_type, config.dim, config.in_dim) if not config.erased_act else None
+                ])
+            )
+        else:
+            self.shared_bn_op = op.NoOp()
+
+        self.branch_op = _branch_function(config, parameter_manager, **kwargs)
+        if config.stochastic_depth:
+            k = (config.id - 1) / config.total_blocks
+            pl = (1-k) + 0.5 * k
+            self.branch_op = BernoulliSkip(self.branch_op, pl)
+        self.shortcut_op = get_shortcut_op(config, parameter_manager, **kwargs)
+
+    
+    def forward(self, x):
+        x = self.shared_bn_op(x)
+        shortcut = self.shortcut_op(x)
+        x = self.branch_op(x)
+        return self.merge_op(x + shortcut)
