@@ -1,5 +1,6 @@
 from collections import namedtuple
 import torch
+from torch import nn
 
     
 class Acc(namedtuple('Acc', [])):
@@ -12,10 +13,13 @@ class Acc(namedtuple('Acc', [])):
         return x.eq(y).float().mean()
 
     
-class FusedAcc(namedtuple('FusedAcc', ('topk'))):
-    def __call__(self, x, y):
+class FusedAcc(nn.Module):
+    def __init__(self, topk):
+        super().__init__()
+        self.topk = topk
+        
+    def forward(self, x, y):
         with torch.no_grad():
-            x, y = x.detach(), y.detach()
             if y.numel() != x.size(0):
                 y = y.argmax(-1)
             y = y.view(-1)
