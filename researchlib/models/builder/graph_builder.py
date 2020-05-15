@@ -229,14 +229,14 @@ class _Graph(nn.Module):
             if k not in outputs:
                 inp = self.prepare_inp(inp, outputs)
     
-                if k == self.parallel_start_node:
+                if k == self.parallel_start_node and self.training:
                     self.under_parallel = True
                 
-                if k == self.parallel_end_node:
+                if k == self.parallel_end_node and self.training:
                     inp = [nn.parallel.gather(i, self.main_device) for i in inp]
                     self.under_parallel = False
                 
-                if self.under_parallel:
+                if self.under_parallel and self.training:
                     p_inp = [nn.parallel.scatter(i, self.device_ids) for i in inp]
                     p_node = nn.parallel.replicate(node, self.device_ids)
                     p_node = p_node[:len(p_inp[0])]

@@ -55,17 +55,17 @@ def validate(self, plot_wrong = -1, out = 'categorical', **kwargs):
     
     denormalizer = lambda x: x
     for k, v in self.val_model.graph.items():
-        if type(v[0]) == op.Source:
-            v[0].prepare_generator(buffered_epochs)
-            self.train_loader_length = math.ceil(v[0].train_source_generator.__len__() / batch_size)
-            if v[0].val_source is not None:
-                self.test_loader_length = math.ceil(v[0].val_source_generator.__len__() / batch_size)
+        if type(v) == op.Source:
+            v.prepare_generator(buffered_epochs)
+            self.train_loader_length = math.ceil(v.train_source_generator.__len__() / batch_size)
+            if v.val_source is not None:
+                self.test_loader_length = math.ceil(v.val_source_generator.__len__() / batch_size)
             else:
                 self.test_loader_length = None
-        if type(v[0]) == op.Generator:
-            v[0].prepare_state(fp16, batch_size)
-        if type(v[0]) == op.Normalize:
-            denormalizer = v[0].denormalizer
+        if type(v) == op.Generator:
+            v.prepare_state(fp16, batch_size)
+        if type(v) == op.Normalize:
+            denormalizer = v.denormalizer
             
     
     self.preload_gpu()
