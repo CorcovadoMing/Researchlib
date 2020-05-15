@@ -25,7 +25,7 @@ def _RandAugment2d(img_size, set='general'):
             Augmentations.SVDBlur(img_size),
             Augmentations.Sparkle(),
             Augmentations.Scale(),
-            Augmentations.Jigsaw()
+            Augmentations.Jigsaw(),
         ],
     }
     
