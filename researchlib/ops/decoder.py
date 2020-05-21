@@ -12,17 +12,17 @@ class _AEDecoder2d(nn.Module):
             model += [
                 nn.ConvTranspose2d(cur_dim, cur_dim//2, 4, 2, 1, bias=False),
                 nn.BatchNorm2d(cur_dim//2),
-                nn.ReLU()
+                nn.ReLU(inplace=True)
             ]
             cur_dim = cur_dim//2
         assert not (to_rgb and to_grayscale)
         if to_rgb:
             model += [
-                nn.Conv2d(cur_dim, 3, 1, bias=False),
+                nn.Conv2d(cur_dim, 3, 1),
             ]
         if to_grayscale:
             model += [
-                nn.Conv2d(cur_dim, 1, 1, bias=False),
+                nn.Conv2d(cur_dim, 1, 1),
             ]
         self.f = nn.Sequential(*model)
     
@@ -63,17 +63,17 @@ class _VAEDecoder2d(nn.Module):
             model += [
                 nn.ConvTranspose2d(cur_dim, cur_dim//2, 4, 2, 1, bias=False),
                 nn.BatchNorm2d(cur_dim//2),
-                nn.ReLU()
+                nn.ReLU(inplace=True)
             ]
             cur_dim = cur_dim//2
         assert not (to_rgb and to_grayscale)
         if to_rgb:
             model += [
-                nn.Conv2d(cur_dim, 3, 1, bias=False),
+                nn.Conv2d(cur_dim, 3, 1),
             ]
         if to_grayscale:
             model += [
-                nn.Conv2d(cur_dim, 1, 1, bias=False),
+                nn.Conv2d(cur_dim, 1, 1),
             ]
         self.decode = nn.Sequential(*model)
         self.dimension = dimension

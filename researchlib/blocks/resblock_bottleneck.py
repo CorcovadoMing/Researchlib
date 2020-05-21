@@ -10,7 +10,7 @@ def _branch_function(config, parameter_manager, **kwargs):
     preact_final_norm = parameter_manager.get_param('preact_final_norm', False)
     preact_final_norm_op = get_norm_op(config.norm_type, config.dim, config.out_dim) if config.do_norm and config.preact and preact_final_norm else None
     
-    hidden_size = config.out_dim // 2
+    hidden_size = config.out_dim // parameter_manager.get_param('bottleneck_ratio', 2)
     
     first_conv_kwargs = get_conv_config()
     first_conv_kwargs.update(**kwargs)

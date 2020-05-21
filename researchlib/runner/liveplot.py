@@ -175,8 +175,8 @@ class Liveplot:
         self.cache = (epoch, loss_record, metrics_collection, track_best, misc)
         self.train_progress_bar.value = batch_idx
         self.train_progress_label_text.value = f'Epoch: {epoch}, Loss: {self._process_num(loss_record)}, {metrics_collection}, Track best: {self._process_num(track_best)}, {misc}'
-        self.redis.set('desc', self.train_progress_label_text.value)
-        self.redis.set('progress', progress)
+#         self.redis.set('desc', self.train_progress_label_text.value)
+#         self.redis.set('progress', progress)
         
     
     def update_val_desc(self, epoch, batch_idx, loss_record, monitor_record, track_best):
@@ -192,14 +192,14 @@ class Liveplot:
         self.cache = (epoch, loss_record, metrics_collection, track_best, misc)
         self.val_progress_bar.value = batch_idx
         self.val_progress_label_text.value = f'Epoch: {epoch}, Loss: {self._process_num(loss_record)}, {metrics_collection}, Track best: {self._process_num(track_best)}, {misc}'
-        self.redis.set('desc', self.val_progress_label_text.value)
-        self.redis.set('progress', progress)
+#         self.redis.set('desc', self.val_progress_label_text.value)
+#         self.redis.set('progress', progress)
     
     
     def cali_desc(self, track_best):
         (epoch, loss_record, metrics_collection, _, misc) = self.cache
         self.train_progress_label_text.value = f'Epoch: {epoch}, Loss: {self._process_num(loss_record)}, {metrics_collection}, Track best: {self._process_num(track_best)}, {misc}'
-        self.redis.set('desc', self.train_progress_label_text.value)
+#         self.redis.set('desc', self.train_progress_label_text.value)
         
 
     def record(self, epoch, key, value, mode = ''):
@@ -276,7 +276,7 @@ class Liveplot:
             
     def plot(self, epoch, history_, epoch_str):
         if self._enable_full_plot:
-            self.redis.set('history', pickle.dumps(history_.records))
+#             self.redis.set('history', pickle.dumps(history_.records))
             if self._plot:
                 with self.loss_plot:
                     self.loss_canvas.draw_plot([self.history["train_loss"], self.history['val_loss']])

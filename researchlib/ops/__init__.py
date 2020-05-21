@@ -65,6 +65,7 @@ from .checker import Checker
 
 from .prepare import _PrepareImage2d, _RandAugment2d, _WeakAugment2d, _FastRandAugment2d, _FastWeakAugment2d
 
+from .pyramidnet import _PyramidNet110, _PyramidNet272
 from .vgg import _VGG19
 from .resnet import _ResNet, _ResNet18, _ResNet50
 from .preresnet import _PreResNet50
@@ -113,6 +114,8 @@ class op(object):
     SKNet50 = _SKNet50
     SKNet18 = _SKNet18
     VGG19 = _VGG19
+    PyramidNet110 = _PyramidNet110
+    PyramidNet272 = _PyramidNet272
     
     AEDecoder2d = _AEDecoder2d
     VAEDecoder2d = _VAEDecoder2d

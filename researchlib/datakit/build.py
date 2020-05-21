@@ -25,7 +25,7 @@ class DataFlowBuilder(DataFlow):
         return len(self.data_sheet)
         
     def __iter__(self):
-        for path, mask, label in zip(self.data_sheet['Data Path'], self.data_sheet['Labels'], self.data_sheet['Remapping Labels']):
+        for idx, (path, mask, label) in enumerate(zip(self.data_sheet['Data Path'], self.data_sheet['Labels'], self.data_sheet['Remapping Labels'])):
             if self.mask:
                 x, y = _read_encode(path), _read_encode(mask)
             else:
@@ -34,7 +34,7 @@ class DataFlowBuilder(DataFlow):
             if self.bgr2rgb:
                 x = x[..., ::-1]
                 
-            yield x, y
+            yield x, y, idx
     
     
 def Build(name: str, dataset_format: str, mask: bool = False, bgr2rgb: bool = False, shuffle: bool = False, split_ratio: float = 0.) -> None:

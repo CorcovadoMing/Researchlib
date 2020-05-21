@@ -36,7 +36,6 @@ def push_large_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, 
             **normal_stem_kwargs
         )
     )
-    layers.append(op.ManifoldMixup())
     
     id = 2
     _in_dim = _out_dim
@@ -54,7 +53,6 @@ def push_large_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, 
             **normal_stem_kwargs
         )
     )
-    layers.append(op.ManifoldMixup())
     
     id = 3
     _in_dim = _out_dim
@@ -73,7 +71,6 @@ def push_large_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, 
             **final_stem_kwargs
         )
     )
-    layers.append(op.ManifoldMixup())
     
     layers.append(op.__dict__[f'MaxPool{_get_dim_type(_op)}'](3, 2, 1))
     in_dim = out_dim
@@ -105,7 +102,6 @@ def push_small_stem(_op, unit, layers, in_dim, out_dim, stem_type, stem_layers, 
                 **stem_kwargs
             )
         )
-        layers.append(op.ManifoldMixup())
         in_dim = out_dim
 
     return layers, in_dim, out_dim, info

@@ -29,20 +29,15 @@ class _RecurrentBlock(nn.Module):
         self.begin = begin_block
         self.inner = inner_block
         self.end = end_block
-        self.begin_mmixup = op.ManifoldMixup()
-        self.inner_mmixup = op.ManifoldMixup()
-        self.end_mmixup = op.ManifoldMixup()
 
     def forward(self, x):
         x, bottleneck = _check_dual_path(x)
         
         x = self.begin(x)
-        x = self.begin_mmixup(x)
         out = self.inner(x)
         
         out, bottleneck = _check_dual_path(out)
         
-        out = self.inner_mmixup(out)
         if self.skip_type == 'add':
             out = out + x
         elif self.skip_type == 'concat':
@@ -50,9 +45,9 @@ class _RecurrentBlock(nn.Module):
         out = self.end(out)
         
         if self.return_both:
-            return self.end_mmixup(out), bottleneck
+            return out, bottleneck
         else:
-            return self.end_mmixup(out)
+            return out
 
         
         
@@ -127,9 +122,6 @@ def AutoEncDec(
     base_dim, max_dim = filters
     block_group = 0
     layers = []
-
-    # Input mixup
-    layers.append(op.ManifoldMixup())
 
     in_dim = input_dim
     out_dim = base_dim

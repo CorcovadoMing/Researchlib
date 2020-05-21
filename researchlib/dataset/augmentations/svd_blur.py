@@ -22,12 +22,16 @@ def randomized_svd(M, k=8):
     
     
 def _svd_blur(img, K):
+    img = img.astype(np.float32)
     rec = []
     for i in range(img.shape[-1]):
         u, s, v = randomized_svd(img[..., i])
         s[..., -K:] = 0
-        rec.append((u * s) @ v)
-    return np.clip(np.stack(rec, -1), 0, 255).astype(np.uint8)
+        r = (u * s) @ v
+        rec.append(r)
+    s = np.stack(rec, -1).astype(np.uint8)
+    s = np.clip(s, 0, 255)
+    return s
 
 
 class SVDBlur(namedtuple('SVDBlur', ('img_size'))):
@@ -37,7 +41,7 @@ class SVDBlur(namedtuple('SVDBlur', ('img_size'))):
     def options(self, prob=0.5):
         return {
             'choice': np.random.choice([True, False], p=[prob, 1-prob], size=1),
-            'K': np.random.choice(range(self.img_size - (self.img_size//16)))
+            'K': np.random.choice(range(6))
         }
 
 

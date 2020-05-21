@@ -35,7 +35,7 @@ class padding_shortcut(nn.Module):
             return torch.cat(
                 (
                     x,
-                    torch.zeros((x.size(0), self.out_dim - self.in_dim, *x.shape[2:]), device = x.device).to(x.dtype)
+                    torch.zeros((x.size(0), self.out_dim - self.in_dim, *x.shape[2:]), device=x.device, dtype=x.dtype)
                 ), 1)
         
         
@@ -51,7 +51,7 @@ class projection_shortcut(nn.Module):
             pool_op = op.Downsample(channels = in_dim, filt_size = 3, stride = stride) if blur else pool_op
             reduction_op = [
                 pool_op,
-                _op(in_dim, out_dim, kernel_size = 1, bias = False),
+                _op(in_dim, out_dim, kernel_size = 1),
                 norm_op if shortcut_norm else None
             ]
         else:

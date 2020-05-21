@@ -49,9 +49,6 @@ def AutoConvNet(
     block_group = 0
     layers = []
 
-    # Input mixup
-    layers.append(op.ManifoldMixup())
-
     in_dim = input_dim
     out_dim = base_dim
 
@@ -137,7 +134,6 @@ def AutoConvNet(
                 **layer_kwargs
             )
         )
-        layers.append(op.ManifoldMixup())
         in_dim = out_dim
 
     # must verify after all keys get registered

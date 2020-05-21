@@ -1,10 +1,10 @@
-from ....models import AutoConvNet, Heads, Node
-from ....ops import op
-from ....blocks import unit
 from torch import nn
 
 
 def PyramidNet110(in_node, out_node, head=None, in_dim=3, **kwargs):
+    from ..models import AutoConvNet, Heads
+    from ..blocks import unit
+    from . import op
     default_kwargs = dict(
         _op = op.Conv2d,
         _unit = unit.Conv,
@@ -28,6 +28,9 @@ def PyramidNet110(in_node, out_node, head=None, in_dim=3, **kwargs):
 
 
 def PyramidNet272(in_node, out_node, head=None, in_dim=3, **kwargs):
+    from ..models import AutoConvNet, Heads
+    from ..blocks import unit
+    from . import op
     default_kwargs = dict(
         _op = op.Conv2d,
         _unit = unit.Conv,

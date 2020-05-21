@@ -103,7 +103,6 @@ def fit(
     
     fp16 = parameter_manager.get_param('fp16', False)
     batch_size = parameter_manager.get_param('batch_size', 512, validator = lambda x: x > 0 and type(x) == int)
-    lr = lr * (batch_size / 128)
     buffered_epochs = expected_epochs + 1
     
     for k, v in self.model.graph.items():
@@ -162,10 +161,6 @@ def fit(
     else:
         if self.optimizer is None:
             self.set_optimizer(lars, opt_info)
-    
-    fixed_mmixup = parameter_manager.get_param('fixed_mmixup', validator = lambda x: type(x) == list)
-    random_mmixup = parameter_manager.get_param('random_mmixup', validator = lambda x: len(x) == 2 and type(x) == list)
-    mmixup_alpha = parameter_manager.get_param('mmixup_alpha', validator = lambda x: type(x) == float)
         
     # ----------------------------------------------
     # Setting experiments
@@ -283,9 +278,6 @@ def fit(
             # Training function
             loss_record, norm_record, metrics_record = self.train_fn(liveplot=liveplot,
                                                                      batch_size=batch_size,
-                                                                     mmixup_alpha=mmixup_alpha, 
-                                                                     fixed_mmixup=fixed_mmixup, 
-                                                                     random_mmixup=random_mmixup,
                                                                      epoch=self.epoch,
                                                                      inner_epochs = inner_epochs,
                                                                      warmup=warmup,

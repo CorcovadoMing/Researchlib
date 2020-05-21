@@ -62,9 +62,6 @@ def train_fn(self, **kwargs):
 
     liveplot = parameter_manager.get_param('liveplot', required = True)
     batch_size = parameter_manager.get_param('batch_size')
-    mmixup_alpha = parameter_manager.get_param('mmixup_alpha')
-    fixed_mmixup = parameter_manager.get_param('fixed_mmixup')
-    random_mmixup = parameter_manager.get_param('random_mmixup')
     epoch = parameter_manager.get_param('epoch')
     inner_epochs = parameter_manager.get_param('inner_epochs')
     warmup = parameter_manager.get_param('warmup')
@@ -104,18 +101,6 @@ def train_fn(self, **kwargs):
         # Set momentum
         cur_mom = self.annealer.get_trace('momentum')
         update_optim(self.optimizer, [cur_mom, cur_mom, cur_mom], key = 'momentum')
-
-        if mmixup_alpha is not None:
-            batch_size = inputs[0].size(0)
-            if fixed_mmixup is None and random_mmixup is None:
-                random_mmixup = [0, op.ManifoldMixup.block_counter]
-            lam = op.ManifoldMixup.setup_batch(
-                mmixup_alpha, batch_size, fixed_mmixup, random_mmixup
-            )
-            targets, targets_res = op.ManifoldMixup.get_y(targets)
-        else:
-            targets_res = None
-            lam = None
             
         # //////////////////////////
         # // Inner Loop
