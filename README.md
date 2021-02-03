@@ -1,4 +1,7 @@
-# researchlib
+# Researchlib
+
+This was an internal experimental library aim to rapidly deal with different type of domain applications. This library will not get further updates anymore. It's has been replaced by [CaTorch](https://github.com/CorcovadoMing/catorch) which is currently internal only. Will be public soon.
+
 
 ### Setup the environment
 1. Pull the docker container for researchlib
